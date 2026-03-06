@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('/fonts/public/dm-sans/DMSans-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('/fonts/public/dm-sans/DMSans-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Thunder';
+    src: url('/fonts/public/thunder/Thunder-BoldLC.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Thunder';
+    src: url('/fonts/public/thunder/Thunder-SemiBoldLC.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme {
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Thunder', 'Impact', sans-serif;
+    --color-bcz-red: #FF2D2D;
+    --color-bcz-dark: #0A0A0A;
+    --color-bcz-darker: #050505;
+    --color-bcz-card: #141414;
+    --color-bcz-surface: #0F0F0F;
+    --color-bcz-border: #222222;
+    --color-bcz-muted: #888888;
+    --color-bcz-dim: #666666;
+    --color-bcz-subtle: #444444;
+    --color-bcz-faint: #333333;
+    --color-bcz-light: #CCCCCC;
+    --color-bcz-lighter: #AAAAAA;
+}

@@ -1,0 +1,11 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/* Richer Editor */
+@import '../../../../vendor/awcodes/richer-editor/resources/css/index.css';
+@source '../../../../vendor/awcodes/richer-editor/resources/views/**/*.blade.php';
+
+/* Badgeable Column */
+@source '../../../../vendor/awcodes/filament-badgeable-column/resources/**/*.blade.php';
