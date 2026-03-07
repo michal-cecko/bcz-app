@@ -3,26 +3,43 @@
 namespace Database\Seeders;
 
 use App\Enums\RoleEnum;
+use App\Models\Team;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
         $this->call(RoleSeeder::class);
+        $this->call(TeamSeeder::class);
+        $this->call(SportCategorySeeder::class);
+        $this->call(SettingSeeder::class);
 
-        $superAdmin = User::factory()->create([
-            'name' => 'Super Admin',
-            'email' => 'ceckomichal@gmail.com',
-        ]);
+        $superAdmin = User::firstOrCreate(
+            ['email' => 'ceckomichal@gmail.com'],
+            [
+                'name' => 'Super Admin',
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'password' => bcrypt('password'),
+            ],
+        );
 
-        $superAdmin->assignRole(RoleEnum::SuperAdmin);
+        $superAdmin->assignRole(RoleEnum::SUPER_ADMIN);
+
+        $bczTeam = Team::query()->where('slug', 'bcz-club')->first();
+
+        if ($bczTeam) {
+            $superAdmin->teams()->attach($bczTeam, [
+                'is_active' => true,
+                'joined_at' => now(),
+            ]);
+        }
+
+        $this->call(DemoDataSeeder::class);
     }
 }

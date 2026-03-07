@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\Concerns\HasUuidV7;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class RegistrationFee extends Model
+{
+    use HasFactory, HasUuidV7;
+
+    protected $fillable = [
+        'competition_id',
+        'athlete_category_id',
+        'amount',
+        'currency',
+        'description',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'decimal:2',
+        ];
+    }
+
+    public function competition(): BelongsTo
+    {
+        return $this->belongsTo(Competition::class);
+    }
+
+    public function athleteCategory(): BelongsTo
+    {
+        return $this->belongsTo(AthleteCategory::class);
+    }
+}

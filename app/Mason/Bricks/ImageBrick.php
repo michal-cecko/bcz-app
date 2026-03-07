@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Mason\Bricks;
+
+use Awcodes\Mason\Brick;
+use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
+use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
+
+class ImageBrick extends Brick
+{
+    public static function getId(): string
+    {
+        return 'image';
+    }
+
+    public static function getIcon(): string|Heroicon|Htmlable|null
+    {
+        return Heroicon::OutlinedPhoto;
+    }
+
+    public static function toHtml(array $config, ?array $data = null): ?string
+    {
+        return view('mason.bricks.image.index', $config)->render();
+    }
+
+    public static function configureBrickAction(Action $action): Action
+    {
+        return $action
+            ->slideOver()
+            ->schema([
+                MediaPicker::make('image')
+                    ->required(),
+                TextInput::make('alt')
+                    ->label('Alt text'),
+                TextInput::make('caption'),
+            ]);
+    }
+}

@@ -24,58 +24,58 @@ class UserPolicyTest extends TestCase
 
     public function test_superadmin_can_view_any_users(): void
     {
-        $superAdmin = $this->createUserWithRole(RoleEnum::SuperAdmin);
+        $superAdmin = $this->createUserWithRole(RoleEnum::SUPER_ADMIN);
 
         $this->assertTrue((new UserPolicy)->viewAny($superAdmin));
     }
 
     public function test_admin_can_view_any_users(): void
     {
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertTrue((new UserPolicy)->viewAny($admin));
     }
 
     public function test_coach_can_view_any_users(): void
     {
-        $coach = $this->createUserWithRole(RoleEnum::Coach);
+        $coach = $this->createUserWithRole(RoleEnum::COACH);
 
         $this->assertTrue((new UserPolicy)->viewAny($coach));
     }
 
     public function test_editor_can_view_any_users(): void
     {
-        $editor = $this->createUserWithRole(RoleEnum::Editor);
+        $editor = $this->createUserWithRole(RoleEnum::EDITOR);
 
         $this->assertTrue((new UserPolicy)->viewAny($editor));
     }
 
     public function test_athlete_can_view_any_users(): void
     {
-        $athlete = $this->createUserWithRole(RoleEnum::Athlete);
+        $athlete = $this->createUserWithRole(RoleEnum::ATHLETE);
 
         $this->assertTrue((new UserPolicy)->viewAny($athlete));
     }
 
     public function test_judge_cannot_view_any_users(): void
     {
-        $judge = $this->createUserWithRole(RoleEnum::Judge);
+        $judge = $this->createUserWithRole(RoleEnum::JUDGE);
 
         $this->assertFalse((new UserPolicy)->viewAny($judge));
     }
 
     public function test_customer_cannot_view_any_users(): void
     {
-        $customer = $this->createUserWithRole(RoleEnum::Customer);
+        $customer = $this->createUserWithRole(RoleEnum::CUSTOMER);
 
         $this->assertFalse((new UserPolicy)->viewAny($customer));
     }
 
     public function test_athlete_can_only_view_other_athletes(): void
     {
-        $athlete = $this->createUserWithRole(RoleEnum::Athlete);
-        $otherAthlete = $this->createUserWithRole(RoleEnum::Athlete);
-        $coach = $this->createUserWithRole(RoleEnum::Coach);
+        $athlete = $this->createUserWithRole(RoleEnum::ATHLETE);
+        $otherAthlete = $this->createUserWithRole(RoleEnum::ATHLETE);
+        $coach = $this->createUserWithRole(RoleEnum::COACH);
 
         $policy = new UserPolicy;
 
@@ -85,9 +85,9 @@ class UserPolicyTest extends TestCase
 
     public function test_coach_can_view_any_user(): void
     {
-        $coach = $this->createUserWithRole(RoleEnum::Coach);
-        $athlete = $this->createUserWithRole(RoleEnum::Athlete);
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
+        $coach = $this->createUserWithRole(RoleEnum::COACH);
+        $athlete = $this->createUserWithRole(RoleEnum::ATHLETE);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $policy = new UserPolicy;
 
@@ -97,79 +97,79 @@ class UserPolicyTest extends TestCase
 
     public function test_superadmin_can_update_admin(): void
     {
-        $superAdmin = $this->createUserWithRole(RoleEnum::SuperAdmin);
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
+        $superAdmin = $this->createUserWithRole(RoleEnum::SUPER_ADMIN);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertTrue((new UserPolicy)->update($superAdmin, $admin));
     }
 
     public function test_admin_cannot_update_other_admin(): void
     {
-        $admin1 = $this->createUserWithRole(RoleEnum::Admin);
-        $admin2 = $this->createUserWithRole(RoleEnum::Admin);
+        $admin1 = $this->createUserWithRole(RoleEnum::ADMIN);
+        $admin2 = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertFalse((new UserPolicy)->update($admin1, $admin2));
     }
 
     public function test_admin_can_update_self(): void
     {
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertTrue((new UserPolicy)->update($admin, $admin));
     }
 
     public function test_admin_can_update_regular_user(): void
     {
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
-        $coach = $this->createUserWithRole(RoleEnum::Coach);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
+        $coach = $this->createUserWithRole(RoleEnum::COACH);
 
         $this->assertTrue((new UserPolicy)->update($admin, $coach));
     }
 
     public function test_coach_cannot_update_user(): void
     {
-        $coach = $this->createUserWithRole(RoleEnum::Coach);
-        $athlete = $this->createUserWithRole(RoleEnum::Athlete);
+        $coach = $this->createUserWithRole(RoleEnum::COACH);
+        $athlete = $this->createUserWithRole(RoleEnum::ATHLETE);
 
         $this->assertFalse((new UserPolicy)->update($coach, $athlete));
     }
 
     public function test_superadmin_can_delete_admin(): void
     {
-        $superAdmin = $this->createUserWithRole(RoleEnum::SuperAdmin);
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
+        $superAdmin = $this->createUserWithRole(RoleEnum::SUPER_ADMIN);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertTrue((new UserPolicy)->delete($superAdmin, $admin));
     }
 
     public function test_admin_cannot_delete_other_admin(): void
     {
-        $admin1 = $this->createUserWithRole(RoleEnum::Admin);
-        $admin2 = $this->createUserWithRole(RoleEnum::Admin);
+        $admin1 = $this->createUserWithRole(RoleEnum::ADMIN);
+        $admin2 = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertFalse((new UserPolicy)->delete($admin1, $admin2));
     }
 
     public function test_admin_cannot_delete_superadmin(): void
     {
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
-        $superAdmin = $this->createUserWithRole(RoleEnum::SuperAdmin);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
+        $superAdmin = $this->createUserWithRole(RoleEnum::SUPER_ADMIN);
 
         $this->assertFalse((new UserPolicy)->delete($admin, $superAdmin));
     }
 
     public function test_admin_can_delete_regular_user(): void
     {
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
-        $coach = $this->createUserWithRole(RoleEnum::Coach);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
+        $coach = $this->createUserWithRole(RoleEnum::COACH);
 
         $this->assertTrue((new UserPolicy)->delete($admin, $coach));
     }
 
     public function test_no_one_can_delete_self(): void
     {
-        $superAdmin = $this->createUserWithRole(RoleEnum::SuperAdmin);
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
+        $superAdmin = $this->createUserWithRole(RoleEnum::SUPER_ADMIN);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertFalse((new UserPolicy)->delete($superAdmin, $superAdmin));
         $this->assertFalse((new UserPolicy)->delete($admin, $admin));
@@ -177,14 +177,14 @@ class UserPolicyTest extends TestCase
 
     public function test_admin_can_create_users(): void
     {
-        $admin = $this->createUserWithRole(RoleEnum::Admin);
+        $admin = $this->createUserWithRole(RoleEnum::ADMIN);
 
         $this->assertTrue((new UserPolicy)->create($admin));
     }
 
     public function test_coach_cannot_create_users(): void
     {
-        $coach = $this->createUserWithRole(RoleEnum::Coach);
+        $coach = $this->createUserWithRole(RoleEnum::COACH);
 
         $this->assertFalse((new UserPolicy)->create($coach));
     }

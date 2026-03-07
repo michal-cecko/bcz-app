@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TeamInvitationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -117,3 +118,11 @@ Route::get('/sutaz/world-freerunning-championship-2026/vysledky-ukoncena', funct
 Route::get('/sutaz/world-freerunning-championship-2026/registracia-coskoro', function () {
     return view('pages.sutaz-registracia-coskoro');
 })->name('sutaz.registracia-coskoro');
+
+Route::middleware('signed')->group(function () {
+    Route::get('/team-invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])
+        ->name('team-invitations.accept');
+    Route::get('/team-invitations/{invitation}/register', [TeamInvitationController::class, 'showRegisterForm'])
+        ->name('team-invitations.register');
+    Route::post('/team-invitations/{invitation}/register', [TeamInvitationController::class, 'register']);
+});

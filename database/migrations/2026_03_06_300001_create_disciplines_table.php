@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('disciplines', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->json('name');
+            $table->json('description')->nullable();
+            $table->json('scoring_description')->nullable();
+            $table->string('icon')->nullable();
+            $table->string('image')->nullable();
+            $table->string('scoring_format');
+            $table->unsignedInteger('sort_order')->default(0);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('disciplines');
+    }
+};

@@ -9,3 +9,10 @@
 
 /* Badgeable Column */
 @source '../../../../vendor/awcodes/filament-badgeable-column/resources/**/*.blade.php';
+
+/* Mason */
+@import '../../../../vendor/awcodes/mason/resources/css/plugin.css';
+@source '../../../../vendor/awcodes/mason/resources/**/*.blade.php';
+
+/* Media Library Pro */
+@import '../../../../vendor/ralphjsmit/laravel-filament-media-library/resources/css/index.css';

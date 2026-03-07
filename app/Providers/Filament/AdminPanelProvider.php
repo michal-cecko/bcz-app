@@ -2,7 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\Team;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,8 +13,11 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -20,6 +25,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
+use RalphJSmit\Filament\MediaLibrary\FilamentMediaLibrary;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -35,8 +41,35 @@ class AdminPanelProvider extends PanelProvider
             ->unsavedChangesAlerts()
             ->databaseTransactions()
             ->profile()
+            ->emailChangeVerification()
             ->passwordReset()
+            ->tenant(Team::class, ownershipRelationship: 'teams')
+            ->userMenuItems([
+                Action::make('my-team')
+                    ->label('Môj tím')
+                    ->url(fn (): string => \App\Filament\Resources\Teams\TeamResource::getUrl('view', ['record' => \Filament\Facades\Filament::getTenant()]))
+                    ->icon(Heroicon::OutlinedUserGroup),
+                Action::make('settings')
+                    ->label('Nastavenia')
+                    ->url(fn (): string => \App\Filament\Resources\Settings\SettingResource::getUrl())
+                    ->icon(Heroicon::OutlinedCog6Tooth),
+            ])
+            ->databaseNotifications()
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn (): View => view('filament.topbar-inquiry-badge'),
+            )
             ->sidebarCollapsibleOnDesktop()
+            ->collapsibleNavigationGroups()
+            ->navigationGroups([
+                'Súťaže',
+                'Podujatia',
+                'Šport',
+                'Organizácia',
+                'Tréningy',
+                'Obsah',
+            ])
+            ->font('DM Sans')
             ->colors([
                 'primary' => Color::Emerald,
             ])
@@ -64,7 +97,14 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->plugin(FilamentShieldPlugin::make())
-            ->plugin(FilamentApexChartsPlugin::make());
+            ->plugin(
+                FilamentShieldPlugin::make()
+                    ->scopeToTenant(false)
+            )
+            ->plugin(FilamentApexChartsPlugin::make())
+            ->plugin(
+                FilamentMediaLibrary::make()
+                    ->spatieTagsIntegration()
+            );
     }
 }

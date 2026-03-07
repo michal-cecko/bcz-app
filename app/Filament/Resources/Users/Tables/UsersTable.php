@@ -16,18 +16,24 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->searchable(),
+                    ->label('Meno')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('email')
-                    ->label('Email address')
-                    ->searchable(),
+                    ->label('E-mail')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('roles.name')
+                    ->label('Roly')
                     ->badge(),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Vytvorené')
+                    ->since()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Aktualizované')
+                    ->since()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

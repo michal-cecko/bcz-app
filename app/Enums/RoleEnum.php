@@ -2,13 +2,25 @@
 
 namespace App\Enums;
 
-enum RoleEnum: string
+use App\Enums\Concerns\EnumHelper;
+use Filament\Support\Contracts\HasLabel;
+
+enum RoleEnum: string implements HasLabel
 {
-    case SuperAdmin = 'SUPERADMIN';
-    case Admin = 'ADMIN';
-    case Coach = 'COACH';
-    case Athlete = 'ATHLETE';
-    case Editor = 'EDITOR';
-    case Judge = 'JUDGE';
-    case Customer = 'CUSTOMER';
+    use EnumHelper;
+
+    public function getLabel(): string
+    {
+        return $this->translation();
+    }
+
+    case SUPER_ADMIN = 'SUPERADMIN';
+    case OWNER = 'OWNER';
+    case ADMIN = 'ADMIN';
+    case TEAM_ADMIN = 'TEAMADMIN';
+    case COACH = 'COACH';
+    case ATHLETE = 'ATHLETE';
+    case EDITOR = 'EDITOR';
+    case JUDGE = 'JUDGE';
+    case CUSTOMER = 'CUSTOMER';
 }

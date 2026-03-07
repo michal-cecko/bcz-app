@@ -11,62 +11,69 @@ class UserPolicy
     use HandlesAuthorization;
 
     /**
-     * SUPERADMIN + ADMIN + COACH + EDITOR + ATHLETE can see the list.
+     * SUPERADMIN + OWNER + ADMIN + TEAMADMIN + COACH + EDITOR + ATHLETE can see the list.
      * JUDGE + CUSTOMER cannot.
      */
     public function viewAny(User $authUser): bool
     {
         return $authUser->hasRole([
-            RoleEnum::SuperAdmin,
-            RoleEnum::Admin,
-            RoleEnum::Coach,
-            RoleEnum::Editor,
-            RoleEnum::Athlete,
+            RoleEnum::SUPER_ADMIN,
+            RoleEnum::OWNER,
+            RoleEnum::ADMIN,
+            RoleEnum::TEAM_ADMIN,
+            RoleEnum::COACH,
+            RoleEnum::EDITOR,
+            RoleEnum::ATHLETE,
         ]);
     }
 
     /**
-     * SUPERADMIN + ADMIN can view any user.
-     * COACH + EDITOR can view any user.
+     * SUPERADMIN + OWNER + ADMIN can view any user.
+     * TEAMADMIN + COACH + EDITOR can view any user.
      * ATHLETE can only view other athletes.
      */
     public function view(User $authUser, User $user): bool
     {
-        if ($authUser->hasRole([RoleEnum::SuperAdmin, RoleEnum::Admin, RoleEnum::Coach, RoleEnum::Editor])) {
+        if ($authUser->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::OWNER, RoleEnum::ADMIN, RoleEnum::TEAM_ADMIN, RoleEnum::COACH, RoleEnum::EDITOR])) {
             return true;
         }
 
-        if ($authUser->hasRole(RoleEnum::Athlete)) {
-            return $user->hasRole(RoleEnum::Athlete);
+        if ($authUser->hasRole(RoleEnum::ATHLETE)) {
+            return $user->hasRole(RoleEnum::ATHLETE);
         }
 
         return false;
     }
 
     /**
-     * Only SUPERADMIN + ADMIN can create users.
+     * Only SUPERADMIN + OWNER + ADMIN can create users.
      */
     public function create(User $authUser): bool
     {
-        return $authUser->hasRole([RoleEnum::SuperAdmin, RoleEnum::Admin]);
+        return $authUser->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::OWNER, RoleEnum::ADMIN]);
     }
 
     /**
      * SUPERADMIN can update anyone.
-     * ADMIN can update anyone except other ADMINs/SUPERADMINs (self-edit allowed).
+     * OWNER can update anyone except SUPERADMIN.
+     * ADMIN can update anyone except SUPERADMIN/OWNER/ADMIN (self-edit allowed).
      */
     public function update(User $authUser, User $user): bool
     {
-        if ($authUser->hasRole(RoleEnum::SuperAdmin)) {
+        if ($authUser->hasRole(RoleEnum::SUPER_ADMIN)) {
             return true;
         }
 
-        if ($authUser->hasRole(RoleEnum::Admin)) {
+        if ($authUser->hasRole(RoleEnum::OWNER)) {
+            return ! $user->hasRole(RoleEnum::SUPER_ADMIN);
+        }
+
+        if ($authUser->hasRole(RoleEnum::ADMIN)) {
             if ($authUser->id === $user->id) {
                 return true;
             }
 
-            return ! $user->hasRole([RoleEnum::Admin, RoleEnum::SuperAdmin]);
+            return ! $user->hasRole([RoleEnum::ADMIN, RoleEnum::OWNER, RoleEnum::SUPER_ADMIN]);
         }
 
         return false;
@@ -74,7 +81,8 @@ class UserPolicy
 
     /**
      * SUPERADMIN can delete anyone (except self).
-     * ADMIN can delete non-ADMIN/non-SUPERADMIN users (not self).
+     * OWNER can delete non-SUPERADMIN users (not self).
+     * ADMIN can delete non-ADMIN/non-OWNER/non-SUPERADMIN users (not self).
      */
     public function delete(User $authUser, User $user): bool
     {
@@ -82,12 +90,16 @@ class UserPolicy
             return false;
         }
 
-        if ($authUser->hasRole(RoleEnum::SuperAdmin)) {
+        if ($authUser->hasRole(RoleEnum::SUPER_ADMIN)) {
             return true;
         }
 
-        if ($authUser->hasRole(RoleEnum::Admin)) {
-            return ! $user->hasRole([RoleEnum::Admin, RoleEnum::SuperAdmin]);
+        if ($authUser->hasRole(RoleEnum::OWNER)) {
+            return ! $user->hasRole(RoleEnum::SUPER_ADMIN);
+        }
+
+        if ($authUser->hasRole(RoleEnum::ADMIN)) {
+            return ! $user->hasRole([RoleEnum::ADMIN, RoleEnum::OWNER, RoleEnum::SUPER_ADMIN]);
         }
 
         return false;
@@ -95,31 +107,31 @@ class UserPolicy
 
     public function restore(User $authUser, User $user): bool
     {
-        return $authUser->hasRole([RoleEnum::SuperAdmin, RoleEnum::Admin]);
+        return $authUser->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::OWNER, RoleEnum::ADMIN]);
     }
 
     public function forceDelete(User $authUser, User $user): bool
     {
-        return $authUser->hasRole(RoleEnum::SuperAdmin);
+        return $authUser->hasRole(RoleEnum::SUPER_ADMIN);
     }
 
     public function forceDeleteAny(User $authUser): bool
     {
-        return $authUser->hasRole(RoleEnum::SuperAdmin);
+        return $authUser->hasRole(RoleEnum::SUPER_ADMIN);
     }
 
     public function restoreAny(User $authUser): bool
     {
-        return $authUser->hasRole([RoleEnum::SuperAdmin, RoleEnum::Admin]);
+        return $authUser->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::OWNER, RoleEnum::ADMIN]);
     }
 
     public function replicate(User $authUser, User $user): bool
     {
-        return $authUser->hasRole([RoleEnum::SuperAdmin, RoleEnum::Admin]);
+        return $authUser->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::OWNER, RoleEnum::ADMIN]);
     }
 
     public function reorder(User $authUser): bool
     {
-        return $authUser->hasRole(RoleEnum::SuperAdmin);
+        return $authUser->hasRole(RoleEnum::SUPER_ADMIN);
     }
 }
