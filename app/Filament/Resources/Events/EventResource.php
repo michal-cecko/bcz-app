@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Events;
 
+use App\Filament\Clusters\Events\EventsCluster;
 use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ListEvents;
@@ -27,7 +28,7 @@ class EventResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Podujatia';
+    protected static ?string $cluster = EventsCluster::class;
 
     protected static ?int $navigationSort = 2;
 

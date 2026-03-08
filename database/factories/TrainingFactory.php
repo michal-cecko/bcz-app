@@ -23,7 +23,6 @@ class TrainingFactory extends Factory
             'title' => ['sk' => fake()->words(3, true), 'en' => fake()->words(3, true)],
             'description' => ['sk' => fake()->sentence(), 'en' => fake()->sentence()],
             'age_group' => fake()->randomElement(['6-10', '10-14', '14-18', '18+']),
-            'frequency' => fake()->randomElement(['1x weekly', '2x weekly', '3x weekly']),
             'duration_minutes' => fake()->randomElement([60, 90, 120]),
             'start_time' => fake()->time('H:i'),
             'schedule_days' => fake()->randomElements(['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], 2),

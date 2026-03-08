@@ -41,14 +41,14 @@ class FaqCategoryForm
                         Select::make('color')
                             ->label('Farba')
                             ->options([
-                                '#6366f1' => 'Primary (fialová)',
-                                '#3b82f6' => 'Info (modrá)',
-                                '#22c55e' => 'Success (zelená)',
-                                '#f59e0b' => 'Warning (žltá)',
-                                '#ef4444' => 'Danger (červená)',
-                                '#6b7280' => 'Gray (sivá)',
-                                '#ec4899' => 'Pink (ružová)',
-                                '#f97316' => 'Orange (oranžová)',
+                                '#6366f1' => 'Fialová',
+                                '#3b82f6' => 'Modrá',
+                                '#22c55e' => 'Zelená',
+                                '#f59e0b' => 'Žltá',
+                                '#ef4444' => 'Červená',
+                                '#6b7280' => 'Sivá',
+                                '#ec4899' => 'Ružová',
+                                '#f97316' => 'Oranžová',
                                 '#14b8a6' => 'Teal (tyrkysová)',
                             ])
                             ->searchable(),

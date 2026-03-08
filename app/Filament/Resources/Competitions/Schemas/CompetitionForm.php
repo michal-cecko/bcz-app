@@ -28,8 +28,11 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class CompetitionForm
 {
@@ -192,38 +195,101 @@ class CompetitionForm
                                     ->schema([
                                         Repeater::make('registration_form_schema')
                                             ->label('Vlastné polia')
-                                            ->table([
-                                                TableColumn::make('Label'),
-                                                TableColumn::make('Name'),
-                                                TableColumn::make('Type'),
-                                                TableColumn::make('Required'),
-                                                TableColumn::make('Width'),
-                                                TableColumn::make('Placeholder'),
-                                                TableColumn::make('Options'),
-                                            ])
+                                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                                            ->columns(2)
                                             ->schema([
                                                 TextInput::make('label')
-                                                    ->required(),
+                                                    ->label('Názov poľa')
+                                                    ->required()
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn (Set $set, ?string $state) => $set('name', Str::slug($state ?? '', '_'))),
                                                 TextInput::make('name')
-                                                    ->required(),
+                                                    ->label('Kľúč')
+                                                    ->required()
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->live(),
                                                 Select::make('type')
+                                                    ->label('Typ poľa')
                                                     ->options(RegistrationFieldTypeEnum::class)
                                                     ->required()
-                                                    ->default(RegistrationFieldTypeEnum::TEXT_INPUT),
-                                                Toggle::make('required')
-                                                    ->default(false),
+                                                    ->default(RegistrationFieldTypeEnum::TEXT_INPUT)
+                                                    ->live(),
                                                 Select::make('width')
+                                                    ->label('Šírka')
                                                     ->options([
                                                         'half' => 'Polovica',
                                                         'full' => 'Celý riadok',
                                                     ])
                                                     ->default('half'),
-                                                TextInput::make('placeholder'),
+                                                TextInput::make('placeholder')
+                                                    ->label('Placeholder')
+                                                    ->hidden(fn (Get $get): bool => in_array($get('type'), [
+                                                        RegistrationFieldTypeEnum::SELECT->value,
+                                                        RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                        RegistrationFieldTypeEnum::DATE_PICKER->value,
+                                                        RegistrationFieldTypeEnum::YEAR_PICKER->value,
+                                                        RegistrationFieldTypeEnum::TIME_PICKER->value,
+                                                        RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                    ])),
                                                 TextInput::make('options')
-                                                    ->placeholder('Čiarkou oddelené (pre Select/MultiSelect)'),
+                                                    ->label('Možnosti')
+                                                    ->placeholder('Čiarkou oddelené')
+                                                    ->required(fn (Get $get): bool => in_array($get('type'), [
+                                                        RegistrationFieldTypeEnum::SELECT->value,
+                                                        RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                    ]))
+                                                    ->hidden(fn (Get $get): bool => ! in_array($get('type'), [
+                                                        RegistrationFieldTypeEnum::SELECT->value,
+                                                        RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                    ])),
+                                                Toggle::make('required')
+                                                    ->label('Povinné')
+                                                    ->default(false),
+                                                Section::make('Podmienka zobrazenia')
+                                                    ->schema([
+                                                        Toggle::make('has_condition')
+                                                            ->label('Podmienené zobrazenie')
+                                                            ->helperText('Zobraziť toto pole len ak iné pole má konkrétnu hodnotu')
+                                                            ->default(false)
+                                                            ->live(),
+                                                        Select::make('condition_field')
+                                                            ->label('Pole')
+                                                            ->helperText('Pole, od ktorého závisí zobrazenie')
+                                                            ->options(function (Get $get): array {
+                                                                $items = $get('../../');
+                                                                if (! is_array($items)) {
+                                                                    return [];
+                                                                }
+                                                                $options = [];
+                                                                foreach ($items as $item) {
+                                                                    if (! empty($item['name']) && ! empty($item['label'])) {
+                                                                        $options[$item['name']] = $item['label'];
+                                                                    }
+                                                                }
+
+                                                                return $options;
+                                                            })
+                                                            ->required(fn (Get $get): bool => (bool) $get('has_condition'))
+                                                            ->hidden(fn (Get $get): bool => ! $get('has_condition')),
+                                                        TextInput::make('condition_value')
+                                                            ->label('Očakávaná hodnota')
+                                                            ->placeholder('napr. áno')
+                                                            ->helperText('Pole sa zobrazí len ak referenčné pole má túto hodnotu')
+                                                            ->required(fn (Get $get): bool => (bool) $get('has_condition'))
+                                                            ->hidden(fn (Get $get): bool => ! $get('has_condition')),
+                                                    ])
+                                                    ->collapsible()
+                                                    ->collapsed()
+                                                    ->columnSpanFull(),
                                             ])
+                                            ->addActionLabel('Pridať pole')
+                                            ->deleteAction(fn ($action) => $action->requiresConfirmation())
                                             ->defaultItems(0)
                                             ->reorderable()
+                                            ->reorderableWithButtons()
+                                            ->cloneable()
+                                            ->collapsible()
                                             ->columnSpanFull(),
                                     ])
                                     ->collapsible(),

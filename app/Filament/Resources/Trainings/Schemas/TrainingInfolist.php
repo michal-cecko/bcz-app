@@ -94,9 +94,6 @@ class TrainingInfolist
                                 Section::make('Rozvrh')
                                     ->icon('heroicon-o-clock')
                                     ->schema([
-                                        TextEntry::make('frequency')
-                                            ->label('Frekvencia')
-                                            ->placeholder('-'),
                                         TextEntry::make('duration_minutes')
                                             ->label('Trvanie')
                                             ->suffix(' minút')

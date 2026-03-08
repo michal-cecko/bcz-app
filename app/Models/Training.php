@@ -30,7 +30,6 @@ class Training extends Model
         'description',
         'age_group',
         'gender',
-        'frequency',
         'duration_minutes',
         'start_time',
         'schedule_days',

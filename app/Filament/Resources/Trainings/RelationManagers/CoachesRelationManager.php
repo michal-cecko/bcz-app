@@ -6,6 +6,7 @@ use App\Enums\CoachRoleEnum;
 use Filament\Actions\AttachAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -15,6 +16,8 @@ use Filament\Tables\Table;
 class CoachesRelationManager extends RelationManager
 {
     protected static string $relationship = 'coaches';
+
+    protected static ?string $title = 'Tréneri';
 
     public function form(Schema $schema): Schema
     {
@@ -59,6 +62,7 @@ class CoachesRelationManager extends RelationManager
                     ]),
             ])
             ->recordActions([
+                EditAction::make(),
                 DetachAction::make(),
             ])
             ->toolbarActions([

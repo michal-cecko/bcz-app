@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Trainings\RelationManagers;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -77,6 +79,8 @@ class RegistrationsRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([

@@ -32,8 +32,6 @@ class TrainingsTable
                     ->state(fn (Training $record): ?string => $record->sportCategory?->getTranslation('name', 'sk')),
                 TextColumn::make('age_group')
                     ->label('Veková skupina'),
-                TextColumn::make('frequency')
-                    ->label('Frekvencia'),
                 TextColumn::make('pricing_type')
                     ->label('Typ ceny')
                     ->badge(),

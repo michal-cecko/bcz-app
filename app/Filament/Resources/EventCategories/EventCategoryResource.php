@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\EventCategories;
 
+use App\Filament\Clusters\Events\EventsCluster;
 use App\Filament\Resources\EventCategories\Pages\CreateEventCategory;
 use App\Filament\Resources\EventCategories\Pages\EditEventCategory;
 use App\Filament\Resources\EventCategories\Pages\ListEventCategories;
@@ -27,7 +28,7 @@ class EventCategoryResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Podujatia';
+    protected static ?string $cluster = EventsCluster::class;
 
     protected static ?int $navigationSort = 1;
 

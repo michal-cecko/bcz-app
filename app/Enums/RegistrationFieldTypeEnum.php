@@ -3,8 +3,9 @@
 namespace App\Enums;
 
 use App\Enums\Concerns\EnumHelper;
+use Filament\Support\Contracts\HasLabel;
 
-enum RegistrationFieldTypeEnum: string
+enum RegistrationFieldTypeEnum: string implements HasLabel
 {
     use EnumHelper;
 
