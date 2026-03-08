@@ -2,15 +2,16 @@
 
 namespace App\Filament\Resources\EventCategories\Schemas;
 
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
+use Guava\IconPicker\Forms\Components\IconPicker;
 use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class EventCategoryForm
@@ -18,6 +19,7 @@ class EventCategoryForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(2)
             ->components([
                 Section::make('Základné údaje')
                     ->schema([
@@ -59,8 +61,20 @@ class EventCategoryForm
                         TextInput::make('slug')
                             ->disabled()
                             ->dehydrated(),
-                        ColorPicker::make('color')
-                            ->label('Farba'),
+                        Select::make('color')
+                            ->label('Farba')
+                            ->options([
+                                '#6366f1' => 'Primary (fialová)',
+                                '#3b82f6' => 'Info (modrá)',
+                                '#22c55e' => 'Success (zelená)',
+                                '#f59e0b' => 'Warning (žltá)',
+                                '#ef4444' => 'Danger (červená)',
+                                '#6b7280' => 'Gray (sivá)',
+                                '#ec4899' => 'Pink (ružová)',
+                                '#f97316' => 'Orange (oranžová)',
+                                '#14b8a6' => 'Teal (tyrkysová)',
+                            ])
+                            ->searchable(),
                         Toggle::make('is_active')
                             ->label('Aktívna')
                             ->default(true),
@@ -165,9 +179,10 @@ class EventCategoryForm
                                     ->required(),
                                 TextInput::make('description')
                                     ->label('Popis'),
-                                TextInput::make('icon')
+                                IconPicker::make('icon')
                                     ->label('Ikona')
-                                    ->placeholder('napr. heroicon-o-star'),
+                                    ->sets(['heroicons'])
+                                    ->columns(3),
                             ])
                             ->defaultItems(0)
                             ->reorderable()
@@ -192,9 +207,10 @@ class EventCategoryForm
                                 TextInput::make('label')
                                     ->label('Popis')
                                     ->required(),
-                                TextInput::make('icon')
+                                IconPicker::make('icon')
                                     ->label('Ikona')
-                                    ->placeholder('napr. heroicon-o-users'),
+                                    ->sets(['heroicons'])
+                                    ->columns(3),
                             ])
                             ->defaultItems(0)
                             ->reorderable()

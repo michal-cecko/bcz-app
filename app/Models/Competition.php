@@ -41,6 +41,7 @@ class Competition extends Model
         'is_public_registration',
         'is_published',
         'published_at',
+        'registration_form_schema',
     ];
 
     protected function casts(): array
@@ -57,6 +58,7 @@ class Competition extends Model
             'is_public_registration' => 'boolean',
             'is_published' => 'boolean',
             'published_at' => 'datetime',
+            'registration_form_schema' => 'json',
         ];
     }
 

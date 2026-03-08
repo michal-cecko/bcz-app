@@ -11,6 +11,7 @@ use App\Filament\Resources\Teams\RelationManagers\MembersRelationManager;
 use App\Filament\Resources\Teams\Schemas\TeamForm;
 use App\Filament\Resources\Teams\Tables\TeamsTable;
 use App\Models\Team;
+use App\Services\SubscriptionLimitService;
 use BackedEnum;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\KeyValueEntry;
@@ -21,6 +22,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use RalphJSmit\Filament\MediaLibrary\Filament\Infolists\Components\MediaEntry;
 
 class TeamResource extends Resource
@@ -29,15 +31,27 @@ class TeamResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static ?string $modelLabel = 'Tím';
+    protected static ?string $modelLabel = 'tím';
 
     protected static ?string $pluralModelLabel = 'Tímy';
+
+    protected static bool $hasTitleCaseModelLabel = false;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Organizácia';
 
     protected static ?int $navigationSort = 1;
 
     protected static bool $isScopedToTenant = false;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('name', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -82,6 +96,44 @@ class TeamResource extends Resource
                                         TextEntry::make('created_at')
                                             ->label('Vytvorený')
                                             ->dateTime(),
+                                    ]),
+
+                                Section::make('Predplatné')
+                                    ->schema([
+                                        TextEntry::make('current_plan')
+                                            ->label('Aktuálny plán')
+                                            ->state(fn (Team $record): string => $record->currentSubscription?->plan?->getTranslation('name', 'sk') ?? 'Žiadny'),
+                                        TextEntry::make('subscription_status')
+                                            ->label('Stav')
+                                            ->badge()
+                                            ->state(fn (Team $record) => $record->currentSubscription?->status),
+                                        TextEntry::make('subscription_period')
+                                            ->label('Obdobie')
+                                            ->state(fn (Team $record) => $record->currentSubscription?->billing_period?->getLabel())
+                                            ->placeholder('-'),
+                                        TextEntry::make('subscription_ends')
+                                            ->label('Platné do')
+                                            ->state(fn (Team $record): ?string => $record->currentSubscription?->ends_at?->format('d.m.Y'))
+                                            ->placeholder('Neobmedzene'),
+                                        TextEntry::make('usage_stats')
+                                            ->label('Využitie')
+                                            ->state(function (Team $record): string {
+                                                $service = app(SubscriptionLimitService::class);
+                                                $members = $service->getUsage($record, 'max_members');
+                                                $trainings = $service->getUsage($record, 'max_trainings');
+                                                $competitions = $service->getUsage($record, 'max_competitions_yearly');
+                                                $events = $service->getUsage($record, 'max_events_yearly');
+
+                                                $memberLimit = $service->getRemainingQuota($record, 'max_members');
+                                                $trainingLimit = $service->getRemainingQuota($record, 'max_trainings');
+
+                                                return "Členovia: {$members}"
+                                                    .($memberLimit !== null ? " (zostáva: {$memberLimit})" : '')
+                                                    ." | Tréningy: {$trainings}"
+                                                    .($trainingLimit !== null ? " (zostáva: {$trainingLimit})" : '')
+                                                    ." | Súťaže: {$competitions}"
+                                                    ." | Podujatia: {$events}";
+                                            }),
                                     ]),
 
                                 Section::make('Sociálne siete')

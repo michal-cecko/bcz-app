@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CompetitionReports;
 
+use App\Filament\Clusters\Competitions\CompetitionsCluster;
 use App\Filament\Resources\CompetitionReports\Pages\CreateCompetitionReport;
 use App\Filament\Resources\CompetitionReports\Pages\EditCompetitionReport;
 use App\Filament\Resources\CompetitionReports\Pages\ListCompetitionReports;
@@ -13,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class CompetitionReportResource extends Resource
 {
@@ -20,15 +22,27 @@ class CompetitionReportResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static ?string $modelLabel = 'Report zo súťaže';
+    protected static ?string $modelLabel = 'report zo súťaže';
 
     protected static ?string $pluralModelLabel = 'Reporty zo súťaží';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Súťaže';
+    protected static bool $hasTitleCaseModelLabel = false;
+
+    protected static ?string $cluster = CompetitionsCluster::class;
 
     protected static ?int $navigationSort = 4;
 
     protected static bool $isScopedToTenant = false;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('title', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {

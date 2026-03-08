@@ -17,11 +17,6 @@ enum InquiryStatusEnum: string implements HasColor, HasIcon, HasLabel
     case IN_PROGRESS = 'in_progress';
     case RESOLVED = 'resolved';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

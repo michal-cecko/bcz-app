@@ -11,9 +11,4 @@ enum MembershipPeriodEnum: string implements HasLabel
 
     case MONTHLY = 'monthly';
     case YEARLY = 'yearly';
-
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
 }

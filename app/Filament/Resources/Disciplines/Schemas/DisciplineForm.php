@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\Disciplines\Schemas;
 
-use App\Enums\ScoringFormatEnum;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
+use Guava\IconPicker\Forms\Components\IconPicker;
 use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class DisciplineForm
@@ -16,60 +16,59 @@ class DisciplineForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(2)
             ->components([
-                Section::make('Základné údaje')
+                Grid::make(2)
+                    ->columnSpanFull()
                     ->schema([
-                        Tabs::make('Preklady')
-                            ->tabs([
-                                Tabs\Tab::make('SK')
-                                    ->schema([
-                                        TextInput::make('name.sk')
-                                            ->label('Názov (SK)')
-                                            ->required(),
-                                        Textarea::make('description.sk')
-                                            ->label('Popis (SK)')
-                                            ->rows(3),
-                                        Textarea::make('scoring_description.sk')
-                                            ->label('Popis hodnotenia (SK)')
-                                            ->rows(2),
-                                    ]),
-                                Tabs\Tab::make('EN')
-                                    ->schema([
-                                        TextInput::make('name.en')
-                                            ->label('Názov (EN)'),
-                                        Textarea::make('description.en')
-                                            ->label('Popis (EN)')
-                                            ->rows(3),
-                                        Textarea::make('scoring_description.en')
-                                            ->label('Popis hodnotenia (EN)')
-                                            ->rows(2),
-                                    ]),
-                                Tabs\Tab::make('CZ')
-                                    ->schema([
-                                        TextInput::make('name.cz')
-                                            ->label('Názov (CZ)'),
-                                        Textarea::make('description.cz')
-                                            ->label('Popis (CZ)')
-                                            ->rows(3),
-                                        Textarea::make('scoring_description.cz')
-                                            ->label('Popis hodnotenia (CZ)')
-                                            ->rows(2),
-                                    ]),
+                        Section::make('Preklady')
+                            ->schema([
+                                Tabs::make('Preklady')
+                                    ->tabs([
+                                        Tabs\Tab::make('SK')
+                                            ->schema([
+                                                TextInput::make('name.sk')
+                                                    ->label('Názov (SK)')
+                                                    ->required(),
+                                                Textarea::make('description.sk')
+                                                    ->label('Popis (SK)')
+                                                    ->rows(3),
+                                            ]),
+                                        Tabs\Tab::make('EN')
+                                            ->schema([
+                                                TextInput::make('name.en')
+                                                    ->label('Názov (EN)'),
+                                                Textarea::make('description.en')
+                                                    ->label('Popis (EN)')
+                                                    ->rows(3),
+                                            ]),
+                                        Tabs\Tab::make('CZ')
+                                            ->schema([
+                                                TextInput::make('name.cz')
+                                                    ->label('Názov (CZ)'),
+                                                Textarea::make('description.cz')
+                                                    ->label('Popis (CZ)')
+                                                    ->rows(3),
+                                            ]),
+                                    ])
+                                    ->columnSpanFull(),
                             ])
-                            ->columnSpanFull(),
-                        Select::make('scoring_format')
-                            ->label('Formát hodnotenia')
-                            ->options(ScoringFormatEnum::class)
-                            ->required(),
-                        TextInput::make('icon')
-                            ->label('Ikona')
-                            ->placeholder('napr. heroicon-o-bolt'),
-                        MediaPicker::make('image')
-                            ->label('Obrázok'),
-                        TextInput::make('sort_order')
-                            ->label('Poradie')
-                            ->numeric()
-                            ->default(0),
+                            ->columnSpan(1),
+
+                        Section::make('Nastavenia')
+                            ->schema([
+                                IconPicker::make('icon')
+                                    ->label('Ikona')
+                                    ->sets(['heroicons'])
+                                    ->columns(3),
+                                MediaPicker::make('image')
+                                    ->label('Obrázok'),
+                                TextInput::make('sort_order')
+                                    ->label('Poradie')
+                                    ->numeric()
+                                    ->default(0),
+                            ])
+                            ->columnSpan(1),
                     ]),
             ]);
     }

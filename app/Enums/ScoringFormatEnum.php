@@ -11,9 +11,4 @@ enum ScoringFormatEnum: string implements HasLabel
 
     case POINTS = 'points';
     case COACH_DECISION = 'coach_decision';
-
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
 }

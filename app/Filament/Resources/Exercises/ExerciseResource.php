@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Exercises;
 
+use App\Filament\Clusters\Trainings\TrainingsCluster;
 use App\Filament\Resources\Exercises\Pages\CreateExercise;
 use App\Filament\Resources\Exercises\Pages\EditExercise;
 use App\Filament\Resources\Exercises\Pages\ListExercises;
@@ -13,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ExerciseResource extends Resource
 {
@@ -20,15 +22,27 @@ class ExerciseResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBolt;
 
-    protected static ?string $modelLabel = 'Cvik';
+    protected static ?string $modelLabel = 'cvik';
 
     protected static ?string $pluralModelLabel = 'Cviky';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Šport';
+    protected static bool $hasTitleCaseModelLabel = false;
+
+    protected static ?string $cluster = TrainingsCluster::class;
 
     protected static ?int $navigationSort = 3;
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('name', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {

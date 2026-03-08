@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ExerciseCategories;
 
+use App\Filament\Clusters\Trainings\TrainingsCluster;
 use App\Filament\Resources\ExerciseCategories\Pages\CreateExerciseCategory;
 use App\Filament\Resources\ExerciseCategories\Pages\EditExerciseCategory;
 use App\Filament\Resources\ExerciseCategories\Pages\ListExerciseCategories;
@@ -13,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ExerciseCategoryResource extends Resource
 {
@@ -20,15 +22,27 @@ class ExerciseCategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $modelLabel = 'Kategória cvikov';
+    protected static ?string $modelLabel = 'kategóriu cvikov';
 
     protected static ?string $pluralModelLabel = 'Kategórie cvikov';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Šport';
+    protected static bool $hasTitleCaseModelLabel = false;
+
+    protected static ?string $cluster = TrainingsCluster::class;
 
     protected static ?int $navigationSort = 2;
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('name', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\StripeConnectController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TeamInvitationController;
 use Illuminate\Support\Facades\Route;
 
@@ -126,3 +128,13 @@ Route::middleware('signed')->group(function () {
         ->name('team-invitations.register');
     Route::post('/team-invitations/{invitation}/register', [TeamInvitationController::class, 'register']);
 });
+
+Route::middleware('auth')->group(function () {
+    Route::get('/stripe/connect/{team}/onboard', [StripeConnectController::class, 'onboard'])
+        ->name('stripe.connect.onboard');
+    Route::get('/stripe/connect/callback', [StripeConnectController::class, 'callback'])
+        ->name('stripe.connect.callback');
+});
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])
+    ->name('stripe.webhook');

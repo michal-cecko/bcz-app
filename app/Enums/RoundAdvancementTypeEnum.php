@@ -11,9 +11,4 @@ enum RoundAdvancementTypeEnum: string implements HasLabel
 
     case TOP_BY_POINTS = 'top_by_points';
     case BATTLE_WINNER = 'battle_winner';
-
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
 }

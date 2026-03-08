@@ -28,6 +28,7 @@ class TrainingForm
         return $schema
             ->components([
                 Grid::make(3)
+                    ->columnSpanFull()
                     ->schema([
                         Grid::make(1)
                             ->schema([
@@ -122,15 +123,16 @@ class TrainingForm
                                     ]),
 
                                 Section::make('Registračný formulár')
-                                    ->description('Definícia vlastných polí pre registračný formulár')
+                                    ->description('Predvolené polia: Meno, Priezvisko, Email. Ďalšie polia definujte nižšie.')
                                     ->schema([
                                         Repeater::make('registration_form_schema')
-                                            ->label('Schéma formulára')
+                                            ->label('Vlastné polia')
                                             ->table([
                                                 TableColumn::make('Label'),
                                                 TableColumn::make('Name'),
                                                 TableColumn::make('Type'),
                                                 TableColumn::make('Required'),
+                                                TableColumn::make('Width'),
                                                 TableColumn::make('Placeholder'),
                                                 TableColumn::make('Options'),
                                             ])
@@ -145,6 +147,12 @@ class TrainingForm
                                                     ->default(RegistrationFieldTypeEnum::TEXT_INPUT),
                                                 Toggle::make('required')
                                                     ->default(false),
+                                                Select::make('width')
+                                                    ->options([
+                                                        'half' => 'Polovica',
+                                                        'full' => 'Celý riadok',
+                                                    ])
+                                                    ->default('half'),
                                                 TextInput::make('placeholder'),
                                                 TextInput::make('options')
                                                     ->placeholder('Čiarkou oddelené (pre Select/MultiSelect)'),

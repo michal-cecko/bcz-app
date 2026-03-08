@@ -11,6 +11,11 @@ trait EnumHelper
         return __($key);
     }
 
+    public function getLabel(): string
+    {
+        return $this->translation();
+    }
+
     /**
      * @return array<string, string>
      */

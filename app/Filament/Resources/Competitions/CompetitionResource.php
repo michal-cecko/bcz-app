@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Competitions;
 
+use App\Filament\Clusters\Competitions\CompetitionsCluster;
 use App\Filament\Resources\Competitions\Pages\CreateCompetition;
 use App\Filament\Resources\Competitions\Pages\EditCompetition;
 use App\Filament\Resources\Competitions\Pages\ListCompetitions;
+use App\Filament\Resources\Competitions\RelationManagers\JudgesRelationManager;
 use App\Filament\Resources\Competitions\RelationManagers\RegistrationsRelationManager;
 use App\Filament\Resources\Competitions\RelationManagers\RoundsRelationManager;
 use App\Filament\Resources\Competitions\RelationManagers\TimetableRelationManager;
@@ -16,6 +18,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class CompetitionResource extends Resource
 {
@@ -23,15 +26,27 @@ class CompetitionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFire;
 
-    protected static ?string $modelLabel = 'Súťaž';
+    protected static ?string $modelLabel = 'súťaž';
 
     protected static ?string $pluralModelLabel = 'Súťaže';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Súťaže';
+    protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static ?int $navigationSort = 3;
+    protected static ?string $cluster = CompetitionsCluster::class;
+
+    protected static ?int $navigationSort = 1;
 
     protected static bool $isScopedToTenant = false;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('name', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -49,6 +64,7 @@ class CompetitionResource extends Resource
             RegistrationsRelationManager::class,
             RoundsRelationManager::class,
             TimetableRelationManager::class,
+            JudgesRelationManager::class,
         ];
     }
 

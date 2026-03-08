@@ -12,7 +12,9 @@
         "awcodes/richer-editor": "^2.1",
         "bezhansalleh/filament-shield": "^4.1",
         "cheesegrits/filament-google-maps": "^5.0",
+        "endroid/qr-code": "^6.1",
         "filament/filament": "^5.3",
+        "guava/filament-icon-picker": "^4.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "leandrocfe/filament-apex-charts": "^5.0",
@@ -21,7 +23,8 @@
         "spatie/laravel-medialibrary": "^11.21",
         "spatie/laravel-sluggable": "^3.8",
         "spatie/laravel-tags": "^4.11",
-        "spatie/laravel-translatable": "^6.13"
+        "spatie/laravel-translatable": "^6.13",
+        "stripe/stripe-php": "^19.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

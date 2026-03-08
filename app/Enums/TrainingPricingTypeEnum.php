@@ -17,11 +17,6 @@ enum TrainingPricingTypeEnum: string implements HasColor, HasIcon, HasLabel
     case PAID = 'paid';
     case MEMBERSHIP_REQUIRED = 'membership_required';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

@@ -15,11 +15,6 @@ enum SponsorTagEnum: string implements HasColor, HasLabel
     case PARTNER = 'partner';
     case SUPPORTER = 'supporter';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

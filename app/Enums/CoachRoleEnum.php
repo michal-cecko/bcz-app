@@ -13,11 +13,6 @@ enum CoachRoleEnum: string implements HasColor, HasLabel
     case MAIN = 'main';
     case SECONDARY = 'secondary';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

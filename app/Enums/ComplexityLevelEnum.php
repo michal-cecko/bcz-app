@@ -15,11 +15,6 @@ enum ComplexityLevelEnum: string implements HasColor, HasLabel
     case ADVANCED = 'advanced';
     case ELITE = 'elite';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

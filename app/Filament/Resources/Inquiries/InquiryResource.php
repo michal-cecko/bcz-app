@@ -22,15 +22,21 @@ class InquiryResource extends Resource
 {
     protected static ?string $model = Inquiry::class;
 
+    protected static ?string $recordTitleAttribute = 'name';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
 
-    protected static ?string $modelLabel = 'Dopyt';
+    protected static ?string $modelLabel = 'dopyt';
 
     protected static ?string $pluralModelLabel = 'Dopyty';
+
+    protected static bool $hasTitleCaseModelLabel = false;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Obsah';
 
     protected static ?int $navigationSort = 10;
+
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
 

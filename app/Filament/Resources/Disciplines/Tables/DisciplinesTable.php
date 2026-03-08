@@ -24,9 +24,6 @@ class DisciplinesTable
                     ->label('Názov')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('scoring_format')
-                    ->label('Formát hodnotenia')
-                    ->badge(),
                 TextColumn::make('competitions_count')
                     ->counts('competitions')
                     ->label('Súťaže')

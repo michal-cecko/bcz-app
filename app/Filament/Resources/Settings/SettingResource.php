@@ -17,11 +17,15 @@ class SettingResource extends Resource
 {
     protected static ?string $model = Setting::class;
 
+    protected static ?string $recordTitleAttribute = 'key';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
-    protected static ?string $modelLabel = 'Nastavenie';
+    protected static ?string $modelLabel = 'nastavenie';
 
     protected static ?string $pluralModelLabel = 'Nastavenia';
+
+    protected static bool $hasTitleCaseModelLabel = false;
 
     protected static bool $shouldRegisterNavigation = false;
 

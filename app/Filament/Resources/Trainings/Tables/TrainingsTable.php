@@ -7,6 +7,7 @@ use App\Models\Training;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -71,7 +72,9 @@ class TrainingsTable
                 TernaryFilter::make('is_active')
                     ->label('Aktívny'),
             ])
+            ->recordUrl(fn (Training $record): string => \App\Filament\Resources\Trainings\TrainingResource::getUrl('view', ['record' => $record]))
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

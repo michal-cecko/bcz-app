@@ -6,6 +6,7 @@ use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class CompetitionRegistration extends Model
 {
@@ -49,5 +50,10 @@ class CompetitionRegistration extends Model
     public function registrationFee(): BelongsTo
     {
         return $this->belongsTo(RegistrationFee::class);
+    }
+
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
     }
 }

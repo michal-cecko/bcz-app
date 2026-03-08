@@ -16,7 +16,7 @@ class TimetableRelationManager extends RelationManager
 {
     protected static string $relationship = 'timetableEntries';
 
-    protected static ?string $title = 'Časový rozvrh';
+    protected static ?string $title = 'Harmonogram';
 
     public function form(Schema $schema): Schema
     {

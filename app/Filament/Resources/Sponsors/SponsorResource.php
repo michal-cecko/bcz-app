@@ -18,11 +18,15 @@ class SponsorResource extends Resource
 {
     protected static ?string $model = Sponsor::class;
 
+    protected static ?string $recordTitleAttribute = 'name';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedHeart;
 
-    protected static ?string $modelLabel = 'Sponzor';
+    protected static ?string $modelLabel = 'sponzora';
 
     protected static ?string $pluralModelLabel = 'Sponzori';
+
+    protected static bool $hasTitleCaseModelLabel = false;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Obsah';
 

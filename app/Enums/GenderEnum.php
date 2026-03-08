@@ -11,9 +11,4 @@ enum GenderEnum: string implements HasLabel
 
     case MALE = 'male';
     case FEMALE = 'female';
-
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
 }

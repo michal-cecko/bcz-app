@@ -9,11 +9,6 @@ enum RoleEnum: string implements HasLabel
 {
     use EnumHelper;
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     case SUPER_ADMIN = 'SUPERADMIN';
     case OWNER = 'OWNER';
     case ADMIN = 'ADMIN';

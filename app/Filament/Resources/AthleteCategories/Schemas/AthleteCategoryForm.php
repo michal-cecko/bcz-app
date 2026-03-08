@@ -55,10 +55,6 @@ class AthleteCategoryForm
                             ->placeholder('Žiadna (najvyššia úroveň)')
                             ->preload()
                             ->searchable(['name->sk']),
-                        Select::make('gender')
-                            ->label('Pohlavie')
-                            ->options(GenderEnum::class)
-                            ->placeholder('Všetky'),
                         TextInput::make('sort_order')
                             ->label('Poradie')
                             ->numeric()
@@ -84,6 +80,11 @@ class AthleteCategoryForm
                             ->label('Max. vek')
                             ->numeric()
                             ->suffix('rokov'),
+                        Select::make('gender')
+                            ->label('Pohlavie')
+                            ->options(GenderEnum::class)
+                            ->placeholder('Všetky')
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
             ]);

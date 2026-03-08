@@ -7,10 +7,15 @@ use App\Enums\ComplexityLevelEnum;
 use App\Enums\GenderEnum;
 use App\Enums\InquiryReasonEnum;
 use App\Enums\InquiryStatusEnum;
+use App\Enums\MembershipPeriodEnum;
+use App\Enums\MembershipStatusEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PayoutStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\RoundAdvancementTypeEnum;
-use App\Enums\ScoringFormatEnum;
 use App\Enums\SponsorTagEnum;
+use App\Enums\SubscriptionStatusEnum;
 use App\Enums\TimetableEntryStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\AthleteCategory;
@@ -33,11 +38,16 @@ use App\Models\ExerciseCategory;
 use App\Models\Faq;
 use App\Models\FaqCategory;
 use App\Models\Inquiry;
+use App\Models\Membership;
+use App\Models\Payment;
 use App\Models\RegistrationFee;
 use App\Models\RoundPart;
 use App\Models\Sponsor;
 use App\Models\SportCategory;
+use App\Models\SubscriptionPlan;
 use App\Models\Team;
+use App\Models\TeamPayout;
+use App\Models\TeamSubscription;
 use App\Models\TimetableEntry;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
@@ -55,6 +65,7 @@ class DemoDataSeeder extends Seeder
         ]);
 
         $sportCategories = SportCategory::all();
+        $sportCategories->each(fn (SportCategory $cat) => $cat->update(['team_id' => $bczTeam->id]));
         $parkour = $sportCategories->firstWhere('slug', 'parkour-freerunning');
         $streetWorkout = $sportCategories->firstWhere('slug', 'street-workout');
 
@@ -90,13 +101,13 @@ class DemoDataSeeder extends Seeder
 
         // --- Exercise Categories & Exercises ---
         $exerciseCategories = collect([
-            ['name' => ['sk' => 'Skoky', 'en' => 'Jumps'], 'description' => ['sk' => 'Rôzne typy skokov']],
-            ['name' => ['sk' => 'Vaults', 'en' => 'Vaults'], 'description' => ['sk' => 'Prekonávanie prekážok']],
-            ['name' => ['sk' => 'Statické prvky', 'en' => 'Static Holds'], 'description' => ['sk' => 'Statické silové prvky']],
-            ['name' => ['sk' => 'Dynamické prvky', 'en' => 'Dynamic Moves'], 'description' => ['sk' => 'Dynamické pohyby']],
-        ])->map(function ($data, $index) use ($parkour, $streetWorkout) {
-            $cat = ExerciseCategory::factory()->create(array_merge($data, ['sort_order' => $index]));
-            $cat->sportCategories()->attach($index < 2 ? $parkour : $streetWorkout);
+            ['name' => ['sk' => 'Ťahy', 'en' => 'Pull'], 'description' => ['sk' => 'Ťahové cviky (zhyby, šplh, ...)']],
+            ['name' => ['sk' => 'Tlaky', 'en' => 'Push'], 'description' => ['sk' => 'Tlakové cviky (kliky, stojky, ...)']],
+            ['name' => ['sk' => 'Nohy', 'en' => 'Legs'], 'description' => ['sk' => 'Cviky na nohy (drepy, výskoky, ...)']],
+            ['name' => ['sk' => 'Jadro', 'en' => 'Core'], 'description' => ['sk' => 'Cviky na jadro tela (brušné svaly, ...)']],
+        ])->map(function ($data, $index) use ($bczTeam, $parkour, $streetWorkout) {
+            $cat = ExerciseCategory::factory()->create(array_merge($data, ['sort_order' => $index, 'team_id' => $bczTeam->id]));
+            $cat->sportCategories()->attach($index < 2 ? $streetWorkout : $parkour);
 
             return $cat;
         });
@@ -233,22 +244,39 @@ class DemoDataSeeder extends Seeder
         // --- Disciplines ---
         $disciplines = collect([
             [
-                'name' => ['sk' => 'Speed Run', 'en' => 'Speed Run'],
-                'description' => ['sk' => 'Rýchlostná disciplína cez prekážkovú dráhu.'],
-                'scoring_format' => ScoringFormatEnum::POINTS,
+                'name' => ['sk' => 'Statika', 'en' => 'Statics'],
+                'description' => ['sk' => 'Statické prvky a výdrže.', 'en' => 'Static elements and holds.'],
                 'sort_order' => 1,
             ],
             [
-                'name' => ['sk' => 'Freestyle', 'en' => 'Freestyle'],
-                'description' => ['sk' => 'Voľná zostava s hodnotením tvorivosti a techniky.'],
-                'scoring_format' => ScoringFormatEnum::POINTS,
+                'name' => ['sk' => 'Dynamika', 'en' => 'Dynamics'],
+                'description' => ['sk' => 'Dynamické pohyby a akrobatické prvky.', 'en' => 'Dynamic movements and acrobatic elements.'],
                 'sort_order' => 2,
             ],
             [
-                'name' => ['sk' => 'Battle', 'en' => 'Battle'],
-                'description' => ['sk' => '1v1 súboj hodnotený rozhodcami.'],
-                'scoring_format' => ScoringFormatEnum::COACH_DECISION,
+                'name' => ['sk' => 'Kombinácie', 'en' => 'Combos'],
+                'description' => ['sk' => 'Kombinácie rôznych prvkov do plynulých zostáv.', 'en' => 'Combinations of various elements into fluid routines.'],
                 'sort_order' => 3,
+            ],
+            [
+                'name' => ['sk' => 'Silová dynamika', 'en' => 'Strength dynamics'],
+                'description' => ['sk' => 'Silové dynamické prvky.', 'en' => 'Strength-based dynamic elements.'],
+                'sort_order' => 4,
+            ],
+            [
+                'name' => ['sk' => 'Statické výdrže', 'en' => 'Static holds'],
+                'description' => ['sk' => 'Výdrže v statických pozíciách.', 'en' => 'Holds in static positions.'],
+                'sort_order' => 5,
+            ],
+            [
+                'name' => ['sk' => 'Kalistenika', 'en' => 'Calisthenics'],
+                'description' => ['sk' => 'Cvičenie s vlastnou váhou tela.', 'en' => 'Bodyweight exercise training.'],
+                'sort_order' => 6,
+            ],
+            [
+                'name' => ['sk' => 'Parkour', 'en' => 'Parkour'],
+                'description' => ['sk' => 'Prekonávanie prekážok efektívnym pohybom.', 'en' => 'Overcoming obstacles through efficient movement.'],
+                'sort_order' => 7,
             ],
         ])->map(fn ($data) => Discipline::factory()->create($data));
 
@@ -598,5 +626,228 @@ class DemoDataSeeder extends Seeder
             'is_visible' => false,
             'sort_order' => 6,
         ]);
+
+        // --- Phase 5-6: Memberships, Payments, Subscriptions, Payouts ---
+
+        // Enable membership on BCZ team
+        $bczTeam->update([
+            'membership_enabled' => true,
+            'membership_fee_amount' => 20.00,
+            'membership_fee_currency' => 'EUR',
+            'membership_period' => MembershipPeriodEnum::YEARLY,
+            'membership_description' => 'Ročné členstvo v BCZ Club zahŕňa prístup k tréningom a zľavy na súťaže.',
+            'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
+            'bank_account_name' => 'BCZ Club o.z.',
+        ]);
+
+        // Memberships for athletes
+        $memberships = collect();
+        $athletes->each(function (User $athlete, $index) use ($bczTeam, &$memberships) {
+            $status = $index < 5 ? MembershipStatusEnum::ACTIVE : ($index < 7 ? MembershipStatusEnum::EXPIRED : MembershipStatusEnum::PENDING);
+            $startsAt = $status === MembershipStatusEnum::EXPIRED ? now()->subYear()->subMonth() : now()->subMonths(rand(1, 6));
+            $endsAt = $status === MembershipStatusEnum::EXPIRED ? now()->subMonth() : now()->addMonths(rand(3, 12));
+
+            $membership = Membership::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $athlete->id,
+                'status' => $status,
+                'period' => MembershipPeriodEnum::YEARLY,
+                'fee_amount' => 20.00,
+                'fee_currency' => 'EUR',
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+            ]);
+
+            $memberships->push($membership);
+        });
+
+        // Payments for memberships (completed)
+        $memberships->where('status', MembershipStatusEnum::ACTIVE)->each(function (Membership $membership) use ($bczTeam) {
+            $method = collect([PaymentMethodEnum::MANUAL, PaymentMethodEnum::BANK_TRANSFER, PaymentMethodEnum::CASH, PaymentMethodEnum::STRIPE])->random();
+
+            Payment::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $membership->user_id,
+                'payable_type' => 'membership',
+                'payable_id' => $membership->id,
+                'amount' => $membership->fee_amount,
+                'currency' => $membership->fee_currency,
+                'status' => PaymentStatusEnum::COMPLETED,
+                'payment_method' => $method,
+                'variable_symbol' => $method === PaymentMethodEnum::BANK_TRANSFER ? (string) rand(1000000000, 9999999999) : null,
+                'stripe_payment_id' => $method === PaymentMethodEnum::STRIPE ? 'pi_demo_'.fake()->regexify('[a-zA-Z0-9]{16}') : null,
+                'paid_at' => $membership->starts_at->addDays(rand(0, 7)),
+            ]);
+        });
+
+        // Payments for training registrations
+        $trainingRegistrations = TrainingRegistration::where('user_id', '!=', null)->get();
+        $trainingRegistrations->take(3)->each(function (TrainingRegistration $registration) use ($bczTeam) {
+            Payment::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $registration->user_id,
+                'payable_type' => 'training_registration',
+                'payable_id' => $registration->id,
+                'amount' => 15.00,
+                'currency' => 'EUR',
+                'status' => PaymentStatusEnum::COMPLETED,
+                'payment_method' => PaymentMethodEnum::STRIPE,
+                'stripe_payment_id' => 'pi_demo_'.fake()->regexify('[a-zA-Z0-9]{16}'),
+                'paid_at' => now()->subDays(rand(1, 30)),
+            ]);
+        });
+
+        // Payments for competition registrations
+        $compRegistrations = CompetitionRegistration::where('status', 'confirmed')->get();
+        $compRegistrations->take(4)->each(function (CompetitionRegistration $registration) use ($bczTeam) {
+            Payment::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $registration->user_id,
+                'payable_type' => 'competition_registration',
+                'payable_id' => $registration->id,
+                'amount' => 25.00,
+                'currency' => 'EUR',
+                'status' => PaymentStatusEnum::COMPLETED,
+                'payment_method' => PaymentMethodEnum::BANK_TRANSFER,
+                'variable_symbol' => (string) rand(1000000000, 9999999999),
+                'paid_at' => now()->subDays(rand(10, 60)),
+            ]);
+        });
+
+        // Pending payment
+        Payment::create([
+            'team_id' => $bczTeam->id,
+            'user_id' => $athletes->last()->id,
+            'payable_type' => 'membership',
+            'payable_id' => $memberships->last()->id,
+            'amount' => 20.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::PENDING,
+            'payment_method' => PaymentMethodEnum::BANK_TRANSFER,
+            'variable_symbol' => (string) rand(1000000000, 9999999999),
+        ]);
+
+        // Refunded payment
+        Payment::create([
+            'team_id' => $bczTeam->id,
+            'user_id' => $customers->first()->id,
+            'payable_type' => 'training_registration',
+            'payable_id' => $trainingRegistrations->first()->id,
+            'amount' => 15.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::REFUNDED,
+            'payment_method' => PaymentMethodEnum::STRIPE,
+            'stripe_payment_id' => 'pi_demo_refunded_'.fake()->regexify('[a-zA-Z0-9]{12}'),
+            'paid_at' => now()->subDays(45),
+            'refunded_at' => now()->subDays(30),
+            'notes' => 'Zrušená registrácia na tréning.',
+        ]);
+
+        // --- Team Subscriptions ---
+        $freePlan = SubscriptionPlan::where('tier', 'free')->first();
+        $proPlan = SubscriptionPlan::where('tier', 'pro')->first();
+
+        if ($freePlan) {
+            // BCZ team gets Pro plan
+            if ($proPlan) {
+                TeamSubscription::create([
+                    'team_id' => $bczTeam->id,
+                    'subscription_plan_id' => $proPlan->id,
+                    'status' => SubscriptionStatusEnum::ACTIVE,
+                    'billing_period' => MembershipPeriodEnum::YEARLY,
+                    'amount' => 789.00,
+                    'currency' => 'EUR',
+                    'starts_at' => now()->subMonths(3),
+                    'ends_at' => now()->addMonths(9),
+                ]);
+            }
+
+            // Second team gets Free plan
+            TeamSubscription::create([
+                'team_id' => $secondTeam->id,
+                'subscription_plan_id' => $freePlan->id,
+                'status' => SubscriptionStatusEnum::ACTIVE,
+                'billing_period' => MembershipPeriodEnum::MONTHLY,
+                'amount' => 0,
+                'currency' => 'EUR',
+                'starts_at' => now()->subMonths(6),
+            ]);
+        }
+
+        // --- Team Payouts ---
+        TeamPayout::create([
+            'team_id' => $bczTeam->id,
+            'gross_amount' => 350.00,
+            'fee_amount' => 17.50,
+            'net_amount' => 332.50,
+            'currency' => 'EUR',
+            'status' => PayoutStatusEnum::COMPLETED,
+            'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
+            'bank_account_name' => 'BCZ Club o.z.',
+            'reference' => 'PAYOUT-2026-01',
+            'period_from' => now()->subMonths(3)->startOfMonth(),
+            'period_to' => now()->subMonths(3)->endOfMonth(),
+            'paid_at' => now()->subMonths(2)->startOfMonth()->addDays(5),
+        ]);
+
+        TeamPayout::create([
+            'team_id' => $bczTeam->id,
+            'gross_amount' => 520.00,
+            'fee_amount' => 26.00,
+            'net_amount' => 494.00,
+            'currency' => 'EUR',
+            'status' => PayoutStatusEnum::COMPLETED,
+            'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
+            'bank_account_name' => 'BCZ Club o.z.',
+            'reference' => 'PAYOUT-2026-02',
+            'period_from' => now()->subMonths(2)->startOfMonth(),
+            'period_to' => now()->subMonths(2)->endOfMonth(),
+            'paid_at' => now()->subMonth()->startOfMonth()->addDays(5),
+        ]);
+
+        TeamPayout::create([
+            'team_id' => $bczTeam->id,
+            'gross_amount' => 415.00,
+            'fee_amount' => 20.75,
+            'net_amount' => 394.25,
+            'currency' => 'EUR',
+            'status' => PayoutStatusEnum::PROCESSING,
+            'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
+            'bank_account_name' => 'BCZ Club o.z.',
+            'reference' => 'PAYOUT-2026-03',
+            'period_from' => now()->subMonth()->startOfMonth(),
+            'period_to' => now()->subMonth()->endOfMonth(),
+        ]);
+
+        TeamPayout::create([
+            'team_id' => $bczTeam->id,
+            'gross_amount' => 280.00,
+            'fee_amount' => 14.00,
+            'net_amount' => 266.00,
+            'currency' => 'EUR',
+            'status' => PayoutStatusEnum::PENDING,
+            'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
+            'bank_account_name' => 'BCZ Club o.z.',
+            'reference' => 'PAYOUT-2026-04',
+            'period_from' => now()->startOfMonth(),
+            'period_to' => now()->endOfMonth(),
+        ]);
+
+        // Memberships for second team
+        User::factory(3)->create()->each(function (User $user) use ($secondTeam) {
+            $user->assignRole(RoleEnum::ATHLETE);
+            $user->teams()->attach($secondTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
+
+            Membership::create([
+                'team_id' => $secondTeam->id,
+                'user_id' => $user->id,
+                'status' => MembershipStatusEnum::ACTIVE,
+                'period' => MembershipPeriodEnum::MONTHLY,
+                'fee_amount' => 10.00,
+                'fee_currency' => 'EUR',
+                'starts_at' => now()->subMonth(),
+                'ends_at' => now()->addMonths(11),
+            ]);
+        });
     }
 }

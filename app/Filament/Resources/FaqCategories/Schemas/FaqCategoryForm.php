@@ -2,17 +2,19 @@
 
 namespace App\Filament\Resources\FaqCategories\Schemas;
 
-use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
+use Guava\IconPicker\Forms\Components\IconPicker;
 
 class FaqCategoryForm
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(2)
             ->components([
                 Tabs::make('Preklady')
                     ->tabs([
@@ -36,11 +38,24 @@ class FaqCategoryForm
                     ->columnSpanFull(),
                 Section::make('Vzhľad a poradie')
                     ->schema([
-                        ColorPicker::make('color')
-                            ->label('Farba'),
-                        TextInput::make('icon')
+                        Select::make('color')
+                            ->label('Farba')
+                            ->options([
+                                '#6366f1' => 'Primary (fialová)',
+                                '#3b82f6' => 'Info (modrá)',
+                                '#22c55e' => 'Success (zelená)',
+                                '#f59e0b' => 'Warning (žltá)',
+                                '#ef4444' => 'Danger (červená)',
+                                '#6b7280' => 'Gray (sivá)',
+                                '#ec4899' => 'Pink (ružová)',
+                                '#f97316' => 'Orange (oranžová)',
+                                '#14b8a6' => 'Teal (tyrkysová)',
+                            ])
+                            ->searchable(),
+                        IconPicker::make('icon')
                             ->label('Ikona')
-                            ->placeholder('napr. heroicon-o-question-mark-circle'),
+                            ->sets(['heroicons'])
+                            ->columns(3),
                         TextInput::make('sort_order')
                             ->label('Poradie')
                             ->numeric()

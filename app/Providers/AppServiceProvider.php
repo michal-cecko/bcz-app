@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\CompetitionRegistration;
 use App\Models\MediaLibraryFolder;
 use App\Models\MediaLibraryItem;
+use App\Models\Membership;
 use App\Models\Team;
+use App\Models\TeamSubscription;
+use App\Models\TrainingRegistration;
 use App\Observers\TeamObserver;
 use App\Services\UuidMediaLibraryItemDriver;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -27,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Relation::morphMap([
             'filament_media_library_item' => MediaLibraryItem::class,
+            'membership' => Membership::class,
+            'training_registration' => TrainingRegistration::class,
+            'competition_registration' => CompetitionRegistration::class,
+            'team_subscription' => TeamSubscription::class,
         ]);
 
         $this->app->bind(

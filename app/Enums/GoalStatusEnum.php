@@ -15,11 +15,6 @@ enum GoalStatusEnum: string implements HasColor, HasLabel
     case ACTIVE = 'active';
     case COMPLETED = 'completed';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

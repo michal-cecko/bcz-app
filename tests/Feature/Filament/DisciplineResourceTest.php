@@ -3,7 +3,6 @@
 namespace Tests\Feature\Filament;
 
 use App\Enums\RoleEnum;
-use App\Enums\ScoringFormatEnum;
 use App\Filament\Resources\Disciplines\Pages\CreateDiscipline;
 use App\Filament\Resources\Disciplines\Pages\EditDiscipline;
 use App\Filament\Resources\Disciplines\Pages\ListDisciplines;
@@ -57,16 +56,13 @@ class DisciplineResourceTest extends TestCase
     {
         Livewire::test(CreateDiscipline::class)
             ->fillForm([
-                'name.sk' => 'Freestyle',
-                'scoring_format' => ScoringFormatEnum::POINTS->value,
+                'name.sk' => 'Statics',
             ])
             ->call('create')
             ->assertNotified()
             ->assertRedirect();
 
-        $this->assertDatabaseHas('disciplines', [
-            'scoring_format' => ScoringFormatEnum::POINTS->value,
-        ]);
+        $this->assertDatabaseCount('disciplines', 1);
     }
 
     public function test_can_edit_discipline(): void
@@ -96,14 +92,13 @@ class DisciplineResourceTest extends TestCase
         $this->assertDatabaseMissing('disciplines', ['id' => $discipline->id]);
     }
 
-    public function test_scoring_format_is_required(): void
+    public function test_name_sk_is_required(): void
     {
         Livewire::test(CreateDiscipline::class)
             ->fillForm([
-                'name.sk' => 'Test',
-                'scoring_format' => null,
+                'name.sk' => null,
             ])
             ->call('create')
-            ->assertHasFormErrors(['scoring_format' => 'required']);
+            ->assertHasFormErrors(['name.sk' => 'required']);
     }
 }

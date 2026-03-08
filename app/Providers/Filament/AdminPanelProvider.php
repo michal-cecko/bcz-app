@@ -62,18 +62,16 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->collapsibleNavigationGroups()
             ->navigationGroups([
-                'Súťaže',
                 'Podujatia',
-                'Šport',
                 'Organizácia',
-                'Tréningy',
                 'Obsah',
             ])
             ->font('DM Sans')
             ->colors([
-                'primary' => Color::Emerald,
+                'primary' => Color::Sky,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,

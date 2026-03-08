@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class EventResource extends Resource
 {
@@ -20,15 +21,27 @@ class EventResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
-    protected static ?string $modelLabel = 'Podujatie';
+    protected static ?string $modelLabel = 'podujatie';
 
     protected static ?string $pluralModelLabel = 'Podujatia';
+
+    protected static bool $hasTitleCaseModelLabel = false;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Podujatia';
 
     protected static ?int $navigationSort = 2;
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('title', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {

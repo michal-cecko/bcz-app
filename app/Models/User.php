@@ -135,4 +135,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return $this->belongsToMany(Competition::class, 'competition_judges')
             ->withPivot('discipline_id');
     }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(Membership::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

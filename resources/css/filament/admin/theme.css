@@ -14,5 +14,8 @@
 @import '../../../../vendor/awcodes/mason/resources/css/plugin.css';
 @source '../../../../vendor/awcodes/mason/resources/**/*.blade.php';
 
+/* Icon Picker */
+@source '../../../../vendor/guava/filament-icon-picker/resources/**/*';
+
 /* Media Library Pro */
 @import '../../../../vendor/ralphjsmit/laravel-filament-media-library/resources/css/index.css';

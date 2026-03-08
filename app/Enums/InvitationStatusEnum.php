@@ -18,11 +18,6 @@ enum InvitationStatusEnum: string implements HasColor, HasIcon, HasLabel
     case Declined = 'declined';
     case Expired = 'expired';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

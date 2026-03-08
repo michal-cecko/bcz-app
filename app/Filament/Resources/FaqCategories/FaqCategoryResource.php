@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class FaqCategoryResource extends Resource
 {
@@ -21,15 +22,27 @@ class FaqCategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedQuestionMarkCircle;
 
-    protected static ?string $modelLabel = 'Kategória FAQ';
+    protected static ?string $modelLabel = 'kategóriu FAQ';
 
     protected static ?string $pluralModelLabel = 'Kategórie FAQ';
+
+    protected static bool $hasTitleCaseModelLabel = false;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Obsah';
 
     protected static ?int $navigationSort = 11;
 
     protected static bool $isScopedToTenant = false;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('title', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {

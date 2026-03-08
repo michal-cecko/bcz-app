@@ -17,11 +17,6 @@ enum InquiryReasonEnum: string implements HasColor, HasLabel
     case COMPETITION = 'competition';
     case OTHER = 'other';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

@@ -40,6 +40,23 @@ class SettingSeeder extends Seeder
                 'value' => 'sk',
                 'is_exposed' => true,
             ],
+            [
+                'key' => 'stripe_platform_fee_percent',
+                'label' => ['sk' => 'Poplatok platformy (Stripe)', 'en' => 'Platform Fee (Stripe)'],
+                'description' => ['sk' => 'Percentuálny poplatok z platieb cez Stripe Connect.', 'en' => 'Percentage fee from Stripe Connect payments.'],
+                'type' => SettingTypeEnum::NUMBER,
+                'value' => 5,
+                'is_exposed' => false,
+            ],
+            [
+                'key' => 'supported_currencies',
+                'label' => ['sk' => 'Podporované meny', 'en' => 'Supported Currencies'],
+                'description' => ['sk' => 'Dostupné meny pre platby.', 'en' => 'Available currencies for payments.'],
+                'type' => SettingTypeEnum::MULTI_SELECT,
+                'options' => ['EUR', 'CZK', 'USD', 'GBP', 'PLN'],
+                'value' => ['EUR', 'CZK', 'USD'],
+                'is_exposed' => false,
+            ],
         ];
 
         foreach ($settings as $setting) {

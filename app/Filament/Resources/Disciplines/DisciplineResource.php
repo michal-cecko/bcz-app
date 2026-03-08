@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Disciplines;
 
+use App\Filament\Clusters\Competitions\CompetitionsCluster;
 use App\Filament\Resources\Disciplines\Pages\CreateDiscipline;
 use App\Filament\Resources\Disciplines\Pages\EditDiscipline;
 use App\Filament\Resources\Disciplines\Pages\ListDisciplines;
@@ -13,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DisciplineResource extends Resource
 {
@@ -20,15 +22,27 @@ class DisciplineResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTrophy;
 
-    protected static ?string $modelLabel = 'Disciplína';
+    protected static ?string $modelLabel = 'disciplínu';
 
     protected static ?string $pluralModelLabel = 'Disciplíny';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Súťaže';
+    protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static ?int $navigationSort = 1;
+    protected static ?string $cluster = CompetitionsCluster::class;
+
+    protected static ?int $navigationSort = 2;
 
     protected static bool $isScopedToTenant = false;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->getTranslation('name', 'sk');
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -15,11 +15,11 @@
     <x-filament::icon
         icon="heroicon-o-envelope"
         class="h-6 w-6"
-        style="color: #52525D;"
+        style="color: #71717b;"
     />
 
     @if ($count > 0)
-        <div class="absolute right-0 top-0" style="transform: translate(18px, -10px);">
+        <div class="absolute right-0 top-0">
             <x-filament::badge color="warning" size="xs">
                 {{ $count }}
             </x-filament::badge>

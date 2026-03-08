@@ -15,9 +15,4 @@ enum SettingTypeEnum: string implements HasLabel
     case SELECT = 'select';
     case MULTI_SELECT = 'multi_select';
     case TEAM_SELECT = 'team_select';
-
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
 }

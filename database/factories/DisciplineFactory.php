@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\ScoringFormatEnum;
 use App\Models\Discipline;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -16,7 +15,6 @@ class DisciplineFactory extends Factory
         return [
             'name' => ['sk' => fake()->word(), 'en' => fake()->word()],
             'description' => ['sk' => fake()->sentence(), 'en' => fake()->sentence()],
-            'scoring_format' => fake()->randomElement(ScoringFormatEnum::cases()),
             'sort_order' => fake()->numberBetween(0, 10),
         ];
     }

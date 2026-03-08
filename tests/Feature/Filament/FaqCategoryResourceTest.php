@@ -57,14 +57,14 @@ class FaqCategoryResourceTest extends TestCase
         Livewire::test(CreateFaqCategory::class)
             ->fillForm([
                 'title.sk' => 'Test Category',
-                'color' => '#ff0000',
+                'color' => '#6366f1',
             ])
             ->call('create')
             ->assertNotified()
             ->assertRedirect();
 
         $this->assertDatabaseHas('faq_categories', [
-            'color' => '#ff0000',
+            'color' => '#6366f1',
         ]);
     }
 

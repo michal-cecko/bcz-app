@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Competitions\RelationManagers;
 
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -49,6 +50,9 @@ class RegistrationsRelationManager extends RelationManager
                 DateTimePicker::make('registered_at')
                     ->label('Registrovaný')
                     ->default(now()),
+                KeyValue::make('form_data')
+                    ->label('Dáta formulára')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -85,6 +89,20 @@ class RegistrationsRelationManager extends RelationManager
                     ->label('Registrovaný')
                     ->dateTime()
                     ->sortable(),
+                TextColumn::make('form_data')
+                    ->label('Dáta formulára')
+                    ->formatStateUsing(function (mixed $state): string {
+                        if (empty($state)) {
+                            return '-';
+                        }
+
+                        return collect($state)
+                            ->map(fn ($value, $key) => "{$key}: {$value}")
+                            ->implode(', ');
+                    })
+                    ->placeholder('-')
+                    ->wrap()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ]);
     }
 }

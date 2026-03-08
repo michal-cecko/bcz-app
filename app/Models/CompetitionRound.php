@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RoundAdvancementTypeEnum;
+use App\Enums\ScoringFormatEnum;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ class CompetitionRound extends Model
         'athlete_category_id',
         'round_number',
         'name',
+        'scoring_format',
         'advancement_type',
         'advance_count',
         'battle_size',
@@ -27,6 +29,7 @@ class CompetitionRound extends Model
     protected function casts(): array
     {
         return [
+            'scoring_format' => ScoringFormatEnum::class,
             'advancement_type' => RoundAdvancementTypeEnum::class,
             'round_number' => 'integer',
             'advance_count' => 'integer',

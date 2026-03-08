@@ -8,7 +8,12 @@ use App\Enums\InquiryReasonEnum;
 use App\Enums\InquiryStatusEnum;
 use App\Enums\InvitationStatusEnum;
 use App\Enums\MembershipPeriodEnum;
+use App\Enums\MembershipStatusEnum;
+use App\Enums\PayableTypeEnum;
+use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PayoutStatusEnum;
+use App\Enums\PlanTierEnum;
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RoleEnum;
 use App\Enums\RoundAdvancementTypeEnum;
@@ -16,6 +21,7 @@ use App\Enums\ScoringFormatEnum;
 use App\Enums\SettingTypeEnum;
 use App\Enums\SponsorTagEnum;
 use App\Enums\SportCategoryTypeEnum;
+use App\Enums\SubscriptionStatusEnum;
 use App\Enums\TimetableEntryStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 
@@ -128,5 +134,41 @@ return [
         RoleEnum::EDITOR->value => 'Editor',
         RoleEnum::JUDGE->value => 'Porotca',
         RoleEnum::CUSTOMER->value => 'Zákazník',
+    ],
+    PaymentMethodEnum::class => [
+        PaymentMethodEnum::MANUAL->value => 'Manuálne',
+        PaymentMethodEnum::BANK_TRANSFER->value => 'Bankový prevod',
+        PaymentMethodEnum::CASH->value => 'Hotovosť',
+        PaymentMethodEnum::STRIPE->value => 'Stripe',
+    ],
+    MembershipStatusEnum::class => [
+        MembershipStatusEnum::ACTIVE->value => 'Aktívne',
+        MembershipStatusEnum::EXPIRED->value => 'Expirované',
+        MembershipStatusEnum::CANCELLED->value => 'Zrušené',
+        MembershipStatusEnum::PENDING->value => 'Čakajúce',
+    ],
+    PayableTypeEnum::class => [
+        PayableTypeEnum::MEMBERSHIP->value => 'Členstvo',
+        PayableTypeEnum::TRAINING_REGISTRATION->value => 'Registrácia na tréning',
+        PayableTypeEnum::COMPETITION_REGISTRATION->value => 'Registrácia na súťaž',
+    ],
+    SubscriptionStatusEnum::class => [
+        SubscriptionStatusEnum::ACTIVE->value => 'Aktívne',
+        SubscriptionStatusEnum::TRIALING->value => 'Skúšobné',
+        SubscriptionStatusEnum::PAST_DUE->value => 'Po splatnosti',
+        SubscriptionStatusEnum::CANCELLED->value => 'Zrušené',
+        SubscriptionStatusEnum::EXPIRED->value => 'Expirované',
+    ],
+    PlanTierEnum::class => [
+        PlanTierEnum::FREE->value => 'Zadarmo',
+        PlanTierEnum::STARTER->value => 'Starter',
+        PlanTierEnum::PRO->value => 'Pro',
+        PlanTierEnum::ENTERPRISE->value => 'Enterprise',
+    ],
+    PayoutStatusEnum::class => [
+        PayoutStatusEnum::PENDING->value => 'Čaká na odoslanie',
+        PayoutStatusEnum::PROCESSING->value => 'Spracováva sa',
+        PayoutStatusEnum::COMPLETED->value => 'Odoslaná',
+        PayoutStatusEnum::FAILED->value => 'Zlyhala',
     ],
 ];

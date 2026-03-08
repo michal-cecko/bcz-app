@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Competitions\Schemas;
 
+use App\Enums\RegistrationFieldTypeEnum;
 use App\Mason\Bricks\CtaBrick;
 use App\Mason\Bricks\DividerBrick;
 use App\Mason\Bricks\FeatureCardsBrick;
@@ -132,6 +133,7 @@ class CompetitionForm
                             ]),
 
                         Tabs\Tab::make('Registrácia')
+                            ->columns(2)
                             ->schema([
                                 DateTimePicker::make('registration_opens_at')
                                     ->label('Otvorenie registrácie'),
@@ -184,6 +186,47 @@ class CompetitionForm
                                             ->reorderable(false)
                                             ->columnSpanFull(),
                                     ]),
+
+                                Section::make('Registračný formulár')
+                                    ->description('Predvolené polia: Meno, Priezvisko, Email, Kategória. Ďalšie polia definujte nižšie.')
+                                    ->schema([
+                                        Repeater::make('registration_form_schema')
+                                            ->label('Vlastné polia')
+                                            ->table([
+                                                TableColumn::make('Label'),
+                                                TableColumn::make('Name'),
+                                                TableColumn::make('Type'),
+                                                TableColumn::make('Required'),
+                                                TableColumn::make('Width'),
+                                                TableColumn::make('Placeholder'),
+                                                TableColumn::make('Options'),
+                                            ])
+                                            ->schema([
+                                                TextInput::make('label')
+                                                    ->required(),
+                                                TextInput::make('name')
+                                                    ->required(),
+                                                Select::make('type')
+                                                    ->options(RegistrationFieldTypeEnum::class)
+                                                    ->required()
+                                                    ->default(RegistrationFieldTypeEnum::TEXT_INPUT),
+                                                Toggle::make('required')
+                                                    ->default(false),
+                                                Select::make('width')
+                                                    ->options([
+                                                        'half' => 'Polovica',
+                                                        'full' => 'Celý riadok',
+                                                    ])
+                                                    ->default('half'),
+                                                TextInput::make('placeholder'),
+                                                TextInput::make('options')
+                                                    ->placeholder('Čiarkou oddelené (pre Select/MultiSelect)'),
+                                            ])
+                                            ->defaultItems(0)
+                                            ->reorderable()
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->collapsible(),
                             ]),
 
                         Tabs\Tab::make('Kategórie')

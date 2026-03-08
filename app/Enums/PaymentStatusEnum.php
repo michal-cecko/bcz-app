@@ -18,11 +18,6 @@ enum PaymentStatusEnum: string implements HasColor, HasIcon, HasLabel
     case FAILED = 'failed';
     case REFUNDED = 'refunded';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {

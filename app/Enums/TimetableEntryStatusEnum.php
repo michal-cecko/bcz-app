@@ -17,11 +17,6 @@ enum TimetableEntryStatusEnum: string implements HasColor, HasIcon, HasLabel
     case IN_PROGRESS = 'in_progress';
     case FINISHED = 'finished';
 
-    public function getLabel(): string
-    {
-        return $this->translation();
-    }
-
     public function getColor(): string
     {
         return match ($this) {
