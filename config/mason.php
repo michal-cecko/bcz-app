@@ -8,7 +8,7 @@ return [
         'views_path' => 'mason',
     ],
     'preview' => [
-        'layout' => 'mason::iframe-preview', // Set to your layout view path, e.g., 'layouts.preview'
+        'layout' => 'mason.preview-layout',
     ],
     'entry' => [
         'layout' => 'mason::iframe-entry', // Set to your layout view path, e.g., 'layouts.entry'

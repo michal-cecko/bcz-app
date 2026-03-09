@@ -2,8 +2,11 @@
 
 namespace App\Mason\Bricks;
 
+use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
@@ -13,6 +16,11 @@ class GalleryBrick extends Brick
     public static function getId(): string
     {
         return 'gallery';
+    }
+
+    public static function getLabel(): string
+    {
+        return __('bricks.names.gallery');
     }
 
     public static function getIcon(): string|Heroicon|Htmlable|null
@@ -30,9 +38,23 @@ class GalleryBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                MediaPicker::make('images')
-                    ->multiple()
-                    ->reorderable(),
+                TranslatableBrickFields::group(fn (string $locale) => [
+                    TextInput::make("label.{$locale}")
+                        ->label(__('bricks.fields.label')),
+                    TextInput::make("title.{$locale}")
+                        ->label(__('bricks.fields.title')),
+                ]),
+                Repeater::make('images')
+                    ->label(__('bricks.gallery.images'))
+                    ->schema([
+                        MediaPicker::make('image')
+                            ->label(__('bricks.fields.image'))
+                            ->required(),
+                    ])
+                    ->reorderable()
+                    ->reorderableWithButtons()
+                    ->cloneable()
+                    ->collapsible(),
             ]);
     }
 }

@@ -1,8 +1,9 @@
+@php $media = brick_media($image ?? null); @endphp
 <figure>
-    @if(! empty($image))
-        <img src="{{ Storage::url($image) }}" alt="{{ $alt ?? '' }}" class="w-full rounded-lg">
+    @if($media->url)
+        <img src="{{ $media->url }}" alt="{{ brick_trans($alt ?? []) ?: $media->alt }}" class="w-full rounded-lg">
     @endif
-    @if(! empty($caption))
-        <figcaption class="mt-2 text-sm text-gray-500 text-center">{{ $caption }}</figcaption>
+    @if(! empty($caption) || $media->caption)
+        <figcaption class="mt-2 text-sm text-gray-500 text-center">{{ brick_trans($caption ?? []) ?: $media->caption }}</figcaption>
     @endif
 </figure>

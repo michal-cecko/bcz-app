@@ -84,7 +84,11 @@ class SubscriptionPlanForm
                                     ->numeric()
                                     ->required()
                                     ->minValue(0),
-                            ]),
+                            ])
+                            ->reorderable()
+                            ->reorderableWithButtons()
+                            ->cloneable()
+                            ->collapsible(),
                     ])
                     ->columnSpanFull(),
 

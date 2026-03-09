@@ -23,6 +23,7 @@ class TeamSeeder extends Seeder
                     'youtube' => 'https://youtube.com/@bczclub',
                 ],
                 'is_active' => true,
+                'default_locale' => 'sk',
             ],
         );
     }

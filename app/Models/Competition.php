@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\Linkable;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,11 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class Competition extends Model
+class Competition extends Model implements Linkable
 {
     use HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
 
@@ -120,6 +122,26 @@ class Competition extends Model
 
             return (int) $inProgress->actual_start_time->diffInMinutes($inProgress->scheduled_time, false);
         });
+    }
+
+    public function getLinkUrl(): string
+    {
+        return '/sutaz/'.$this->slug;
+    }
+
+    public function getLinkLabel(): string
+    {
+        return $this->getTranslation('name', app()->getLocale())
+            ?: $this->getTranslation('name', 'sk');
+    }
+
+    public static function linkableOptions(): Collection
+    {
+        return static::query()
+            ->where('is_published', true)
+            ->orderByDesc('date_start')
+            ->get()
+            ->mapWithKeys(fn (Competition $c) => [$c->id => $c->getLinkLabel()]);
     }
 
     public function organizerTeam(): BelongsTo

@@ -1,10 +1,15 @@
 {{-- Rebranding Banner --}}
-<div class="w-full h-8 bg-[#1A1A1A] flex items-center justify-center gap-2 text-[11px]">
-    <span class="text-bcz-muted hidden sm:inline">Nová značka, rovnaká vášeň:</span>
-    <span class="text-bcz-dim hidden sm:inline">Street Workout Kysuce</span>
-    <span class="text-bcz-muted font-bold hidden sm:inline">→</span>
-    <img src="/logo/logo-horizontal-short-white.svg" alt="BCZ Club" class="h-3.5">
-</div>
+@php
+    $topbarShowUntil = \App\Models\Setting::get('topbar_show_until');
+@endphp
+@if($topbarShowUntil && now()->lte(\Carbon\Carbon::parse($topbarShowUntil)))
+    <div class="w-full h-8 bg-[#1A1A1A] flex items-center justify-center gap-2 text-[11px]">
+        <span class="text-bcz-muted hidden sm:inline">Nová značka, rovnaká vášeň:</span>
+        <span class="text-bcz-dim hidden sm:inline">Street Workout Kysuce</span>
+        <span class="text-bcz-muted font-bold hidden sm:inline">→</span>
+        <img src="/logo/logo-horizontal-short-white.svg" alt="BCZ Club" class="h-3.5">
+    </div>
+@endif
 
 {{-- Header --}}
 <header x-data="{ mobileOpen: false }" class="w-full bg-bcz-dark sticky top-0 z-50 border-b border-bcz-border/30">
@@ -15,12 +20,11 @@
 
         {{-- Desktop Nav --}}
         <nav class="hidden xl:flex items-center gap-6">
-            <a href="{{ route('about') }}" class="text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">O NÁS</a>
-            <a href="#pillars" class="text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">SÚŤAŽE</a>
-            <a href="{{ route('treningy') }}" class="text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">TRÉNINGY V ČADCI</a>
-            <a href="#" class="text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">TRÉNINGY V BANSKEJ BYSTRICI</a>
-            <a href="#pillars" class="text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">VYSTÚPENIA</a>
-            <a href="#footer" class="text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">KONTAKT</a>
+            @foreach(collect($headerMenu->items ?? [])->sortBy('sort_order') as $item)
+                <a href="{{ \App\Services\LinkResolver::resolve($item) ?? ($item['url'] ?? '#') }}" target="{{ $item['target'] ?? '_self' }}" class="text-bcz-muted text-xs font-medium tracking-widest uppercase hover:text-white transition-colors">
+                    {{ $item['label_' . app()->getLocale()] ?? $item['label_sk'] }}
+                </a>
+            @endforeach
         </nav>
 
         <div class="flex items-center gap-4">
@@ -50,12 +54,11 @@
         class="xl:hidden bg-bcz-dark border-t border-bcz-border/30 px-5 pb-6"
     >
         <nav class="flex flex-col gap-4 pt-4">
-            <a href="{{ route('about') }}" class="text-bcz-muted text-sm font-medium tracking-widest hover:text-white transition-colors py-1">O NÁS</a>
-            <a href="#pillars" class="text-bcz-muted text-sm font-medium tracking-widest hover:text-white transition-colors py-1">SÚŤAŽE</a>
-            <a href="{{ route('treningy') }}" class="text-bcz-muted text-sm font-medium tracking-widest hover:text-white transition-colors py-1">TRÉNINGY V ČADCI</a>
-            <a href="#" class="text-bcz-muted text-sm font-medium tracking-widest hover:text-white transition-colors py-1">TRÉNINGY V BANSKEJ BYSTRICI</a>
-            <a href="#pillars" class="text-bcz-muted text-sm font-medium tracking-widest hover:text-white transition-colors py-1">VYSTÚPENIA</a>
-            <a href="#footer" class="text-bcz-muted text-sm font-medium tracking-widest hover:text-white transition-colors py-1">KONTAKT</a>
+            @foreach(collect($headerMenu->items ?? [])->sortBy('sort_order') as $item)
+                <a href="{{ \App\Services\LinkResolver::resolve($item) ?? ($item['url'] ?? '#') }}" target="{{ $item['target'] ?? '_self' }}" class="text-bcz-muted text-sm font-medium tracking-widest uppercase hover:text-white transition-colors py-1">
+                    {{ $item['label_' . app()->getLocale()] ?? $item['label_sk'] }}
+                </a>
+            @endforeach
             <a href="/admin" class="md:hidden bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center mt-2">
                 PRIDAJ SA
             </a>

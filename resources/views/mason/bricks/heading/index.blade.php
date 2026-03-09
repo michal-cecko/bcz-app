@@ -8,4 +8,4 @@
     };
 @endphp
 
-<{{ $tag }} class="{{ $classes }}">{{ $text ?? '' }}</{{ $tag }}>
+<{{ $tag }} class="{{ $classes }}">{{ brick_trans($text ?? []) }}</{{ $tag }}>

@@ -1,125 +1,56 @@
 <?php
 
+use App\Http\Controllers\CompetitionController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\StripeConnectController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
+use App\Http\Controllers\TrainingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('pages.home');
-})->name('home');
+Route::get('/', [PageController::class, 'show'])
+    ->defaults('slug', '/')
+    ->name('home');
 
-Route::get('/o-nas', function () {
-    return view('pages.about');
-})->name('about');
+// Trainings (platform-wide)
+Route::get('/treningy', [TrainingController::class, 'index'])->name('treningy');
+Route::get('/trening/{training:slug}', [TrainingController::class, 'show'])->name('training.show');
 
-Route::get('/zakladatel-ceo-dominik-klimek', function () {
-    return view('pages.dominik-klimek');
-})->name('dominik-klimek');
+// Competitions (platform-wide)
+Route::get('/sutaze', [CompetitionController::class, 'index'])->name('sutaze');
+Route::get('/sutaz/{competition:slug}', [CompetitionController::class, 'show'])->name('competition.show');
 
-Route::get('/treningy', function () {
-    return view('pages.treningy');
-})->name('treningy');
+// Events (BCZ-only)
+Route::get('/vystupenia', [EventController::class, 'index'])->name('vystupenia');
+Route::get('/vystupenie/{event:slug}', [EventController::class, 'show'])->name('event.show');
 
-Route::get('/trening/parkour-teens', function () {
-    return view('pages.trening');
-})->name('trening.parkour-teens');
+// Team-scoped routes
+Route::prefix('tim/{team:slug}')->name('team.')->group(function () {
+    Route::get('/', [TeamController::class, 'show'])->name('show');
+    Route::get('/treningy', [TeamController::class, 'trainings'])->name('trainings');
+    Route::get('/sutaze', [TeamController::class, 'competitions'])->name('competitions');
+    Route::get('/clenovia', [TeamController::class, 'members'])->name('members');
+});
 
-Route::get('/trener/michal-cecko', function () {
-    return view('pages.trener');
-})->name('trener.michal-cecko');
+// Named routes for system pages (used by static templates)
+Route::get('/o-nas', [PageController::class, 'show'])->defaults('slug', 'o-nas')->name('about');
+Route::get('/kontakt', [PageController::class, 'show'])->defaults('slug', 'kontakt')->name('kontakt');
+Route::get('/faq', [PageController::class, 'show'])->defaults('slug', 'faq')->name('faq');
+Route::get('/podporte-nas', [PageController::class, 'show'])->defaults('slug', 'podporte-nas')->name('podporte-nas');
+Route::get('/zakladatel-ceo-dominik-klimek', [PageController::class, 'show'])->defaults('slug', 'zakladatel-ceo-dominik-klimek')->name('dominik-klimek');
+Route::get('/dva-percenta-z-dane', [PageController::class, 'show'])->defaults('slug', 'dva-percenta-z-dane')->name('dva-percenta');
+Route::get('/vystupenia-workshopy', [PageController::class, 'show'])->defaults('slug', 'vystupenia-workshopy')->name('vystupenia-workshopy');
+Route::get('/prednasky', [PageController::class, 'show'])->defaults('slug', 'prednasky')->name('prednasky');
+Route::get('/workshopy', [PageController::class, 'show'])->defaults('slug', 'workshopy')->name('workshopy');
+Route::get('/kategoria/parkour-freerunning', [PageController::class, 'show'])->defaults('slug', 'kategoria/parkour-freerunning')->name('parkour-freerunning');
+Route::get('/kategoria/street-workout', [PageController::class, 'show'])->defaults('slug', 'kategoria/street-workout')->name('street-workout');
 
-Route::get('/archiv-treningov', function () {
-    return view('pages.archiv-treningov');
-})->name('archiv-treningov');
-
-Route::get('/kategoria/parkour-freerunning', function () {
-    return view('pages.parkour-freerunning');
-})->name('kategoria.parkour-freerunning');
-
-Route::get('/kategoria/street-workout', function () {
-    return view('pages.street-workout');
-})->name('kategoria.street-workout');
-
-Route::get('/vystupenia-workshopy', function () {
-    return view('pages.vystupenia-workshopy');
-})->name('vystupenia-workshopy');
-
-Route::get('/vystupenia', function () {
-    return view('pages.vystupenia');
-})->name('vystupenia');
-
-Route::get('/prednasky', function () {
-    return view('pages.prednasky');
-})->name('prednasky');
-
-Route::get('/workshopy', function () {
-    return view('pages.workshopy');
-})->name('workshopy');
-
-Route::get('/archiv-podujati', function () {
-    return view('pages.archiv-podujati');
-})->name('archiv-podujati');
-
-Route::get('/vystupenie/grape-festival-2024', function () {
-    return view('pages.vystupenie-detail');
-})->name('vystupenie.grape-festival-2024');
-
-Route::get('/prednaska/sos-cadca', function () {
-    return view('pages.prednaska-detail');
-})->name('prednaska.sos-cadca');
-
-Route::get('/workshop/kurz-stojky', function () {
-    return view('pages.workshop-detail');
-})->name('workshop.kurz-stojky');
-
-Route::get('/kontakt', function () {
-    return view('pages.kontakt');
-})->name('kontakt');
-
-Route::get('/faq', function () {
-    return view('pages.faq');
-})->name('faq');
-
-Route::get('/archiv-trenerov', function () {
-    return view('pages.archiv-trenerov');
-})->name('archiv-trenerov');
-
-Route::get('/podporte-nas', function () {
-    return view('pages.podporte-nas');
-})->name('podporte-nas');
-
-Route::get('/dva-percenta-z-dane', function () {
-    return view('pages.dva-percenta');
-})->name('dva-percenta');
-
-Route::get('/sutaze', function () {
-    return view('pages.sutaze');
-})->name('sutaze');
-
-Route::get('/sutaz/world-freerunning-championship-2026/popis', function () {
-    return view('pages.sutaz-popis');
-})->name('sutaz.popis');
-
-Route::get('/sutaz/world-freerunning-championship-2026/harmonogram', function () {
-    return view('pages.sutaz-harmonogram');
-})->name('sutaz.harmonogram');
-
-Route::get('/sutaz/world-freerunning-championship-2026/vysledky', function () {
-    return view('pages.sutaz-vysledky');
-})->name('sutaz.vysledky');
-
-Route::get('/sutaz/world-freerunning-championship-2026/registracia', function () {
-    return view('pages.sutaz-registracia');
-})->name('sutaz.registracia');
-
-Route::get('/sutaz/world-freerunning-championship-2026/vysledky-ukoncena', function () {
-    return view('pages.sutaz-vysledky-ukoncena');
-})->name('sutaz.vysledky-ukoncena');
-
-Route::get('/sutaz/world-freerunning-championship-2026/registracia-coskoro', function () {
-    return view('pages.sutaz-registracia-coskoro');
-})->name('sutaz.registracia-coskoro');
+// Redirects from old static routes
+Route::redirect('/archiv-treningov', '/treningy', 301);
+Route::redirect('/archiv-podujati', '/vystupenia', 301)->name('archiv-podujati');
+Route::redirect('/archiv-trenerov', '/treningy', 301);
 
 Route::middleware('signed')->group(function () {
     Route::get('/team-invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])
@@ -138,3 +69,7 @@ Route::middleware('auth')->group(function () {
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])
     ->name('stripe.webhook');
+
+Route::get('/{slug}', [PageController::class, 'show'])
+    ->where('slug', '^(?!admin|stripe|team-invitations).*$')
+    ->name('page.show');

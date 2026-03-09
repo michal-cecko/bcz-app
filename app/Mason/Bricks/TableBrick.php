@@ -2,10 +2,10 @@
 
 namespace App\Mason\Bricks;
 
+use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
@@ -15,6 +15,11 @@ class TableBrick extends Brick
     public static function getId(): string
     {
         return 'table';
+    }
+
+    public static function getLabel(): string
+    {
+        return __('bricks.names.table');
     }
 
     public static function getIcon(): string|Heroicon|Htmlable|null
@@ -33,27 +38,41 @@ class TableBrick extends Brick
             ->slideOver()
             ->schema([
                 Repeater::make('headers')
-                    ->table([
-                        TableColumn::make('Label'),
-                    ])
-                    ->schema([
-                        TextInput::make('label')
-                            ->required(),
-                    ])
-                    ->reorderable(),
+                    ->label(__('bricks.table.headers'))
+                    ->simple(
+                        TranslatableBrickFields::group(fn (string $locale) => [
+                            TextInput::make("label.{$locale}")
+                                ->label(__('bricks.fields.label'))
+                                ->required(),
+                        ]),
+                    )
+                    ->reorderable()
+                    ->reorderableWithButtons()
+                    ->cloneable()
+                    ->collapsible(),
                 Repeater::make('rows')
+                    ->label(__('bricks.table.rows'))
+                    ->addActionLabel('Pridať riadok')
                     ->schema([
                         Repeater::make('cells')
-                            ->table([
-                                TableColumn::make('Value'),
-                            ])
-                            ->schema([
-                                TextInput::make('value'),
-                            ])
+                            ->label(__('bricks.table.cells'))
+                            ->addActionLabel('Pridať hodnotu')
+                            ->simple(
+                                TranslatableBrickFields::group(fn (string $locale) => [
+                                    TextInput::make("value.{$locale}")
+                                        ->label(__('bricks.fields.value')),
+                                ]),
+                            )
+                            ->reorderable()
+                            ->reorderableWithButtons()
+                            ->cloneable()
+                            ->collapsible()
                             ->columnSpanFull(),
                     ])
                     ->collapsible()
-                    ->reorderable(),
+                    ->reorderable()
+                    ->reorderableWithButtons()
+                    ->cloneable(),
             ]);
     }
 }

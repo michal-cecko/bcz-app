@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Sponsors;
 
+use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Resources\Sponsors\Pages\CreateSponsor;
 use App\Filament\Resources\Sponsors\Pages\EditSponsor;
 use App\Filament\Resources\Sponsors\Pages\ListSponsors;
@@ -28,9 +29,9 @@ class SponsorResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Obsah';
+    protected static ?string $cluster = ContentCluster::class;
 
-    protected static ?int $navigationSort = 12;
+    protected static ?int $navigationSort = 3;
 
     protected static bool $isScopedToTenant = false;
 

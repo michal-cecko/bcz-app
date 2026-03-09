@@ -2,8 +2,9 @@
 
 namespace App\Mason\Bricks;
 
+use App\Mason\Support\BrickRichEditor;
+use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
-use Awcodes\RicherEditor\RicherEditor;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
@@ -13,6 +14,11 @@ class RichTextBrick extends Brick
     public static function getId(): string
     {
         return 'rich-text';
+    }
+
+    public static function getLabel(): string
+    {
+        return __('bricks.names.rich-text');
     }
 
     public static function getIcon(): string|Heroicon|Htmlable|null
@@ -30,8 +36,11 @@ class RichTextBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                RicherEditor::make('content')
-                    ->required(),
+                TranslatableBrickFields::group(fn (string $locale) => [
+                    BrickRichEditor::make("content.{$locale}")
+                        ->label(__('bricks.fields.content'))
+                        ->required(),
+                ]),
             ]);
     }
 }

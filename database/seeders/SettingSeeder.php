@@ -57,6 +57,46 @@ class SettingSeeder extends Seeder
                 'value' => ['EUR', 'CZK', 'USD'],
                 'is_exposed' => false,
             ],
+            [
+                'key' => 'topbar_show_until',
+                'label' => ['sk' => 'Zobrazovať top bar do', 'en' => 'Show top bar until'],
+                'description' => ['sk' => 'Dátum, do ktorého sa zobrazí rebranding lišta v hlavičke. Prázdne = skrytá.', 'en' => 'Date until which the rebranding bar is shown in the header. Empty = hidden.'],
+                'type' => SettingTypeEnum::DATE,
+                'value' => null,
+                'is_exposed' => false,
+            ],
+            [
+                'key' => 'rebranding_modal_show_until',
+                'label' => ['sk' => 'Zobrazovať rebranding modal do', 'en' => 'Show rebranding modal until'],
+                'description' => ['sk' => 'Dátum, do ktorého sa zobrazí rebranding modal na frontende. Prázdne = skrytý.', 'en' => 'Date until which the rebranding modal is shown on frontend. Empty = hidden.'],
+                'type' => SettingTypeEnum::DATE,
+                'value' => null,
+                'is_exposed' => false,
+            ],
+            [
+                'key' => 'social_instagram_url',
+                'label' => ['sk' => 'Instagram URL', 'en' => 'Instagram URL'],
+                'description' => ['sk' => 'Predvolená URL adresa Instagram profilu.', 'en' => 'Default Instagram profile URL.'],
+                'type' => SettingTypeEnum::TEXT,
+                'value' => 'https://www.instagram.com/bfreak.sk',
+                'is_exposed' => true,
+            ],
+            [
+                'key' => 'social_facebook_url',
+                'label' => ['sk' => 'Facebook URL', 'en' => 'Facebook URL'],
+                'description' => ['sk' => 'Predvolená URL adresa Facebook stránky.', 'en' => 'Default Facebook page URL.'],
+                'type' => SettingTypeEnum::TEXT,
+                'value' => 'https://www.facebook.com/bfreak.sk',
+                'is_exposed' => true,
+            ],
+            [
+                'key' => 'social_youtube_url',
+                'label' => ['sk' => 'YouTube URL', 'en' => 'YouTube URL'],
+                'description' => ['sk' => 'Predvolená URL adresa YouTube kanálu.', 'en' => 'Default YouTube channel URL.'],
+                'type' => SettingTypeEnum::TEXT,
+                'value' => 'https://www.youtube.com/@bfreak',
+                'is_exposed' => true,
+            ],
         ];
 
         foreach ($settings as $setting) {

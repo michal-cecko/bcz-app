@@ -22,20 +22,23 @@
 
         <div class="grid grid-cols-2 md:grid-cols-3 gap-8 lg:gap-20">
             <div class="flex flex-col gap-5">
-                <span class="text-bcz-red text-[11px] font-bold tracking-widest">OBJAVTE</span>
+                <span class="text-bcz-red text-[11px] font-bold tracking-widest">{{ strtoupper($footerDiscoverMenu?->getTranslation('label', app()->getLocale()) ?? 'OBJAVTE') }}</span>
                 <div class="flex flex-col gap-3">
-                    <a href="#" class="text-bcz-muted text-sm hover:text-white transition-colors">O nás</a>
-                    <a href="#" class="text-bcz-muted text-sm hover:text-white transition-colors">Náš tím</a>
-                    <a href="#" class="text-bcz-muted text-sm hover:text-white transition-colors">Kontakt</a>
+                    @foreach(collect($footerDiscoverMenu?->items ?? [])->sortBy('sort_order') as $item)
+                        <a href="{{ \App\Services\LinkResolver::resolve($item) ?? ($item['url'] ?? '#') }}" target="{{ $item['target'] ?? '_self' }}" class="text-bcz-muted text-sm hover:text-white transition-colors">
+                            {{ $item['label_' . app()->getLocale()] ?? $item['label_sk'] }}
+                        </a>
+                    @endforeach
                 </div>
             </div>
             <div class="flex flex-col gap-5">
-                <span class="text-bcz-red text-[11px] font-bold tracking-widest">PROGRAMY</span>
+                <span class="text-bcz-red text-[11px] font-bold tracking-widest">{{ strtoupper($footerProgramsMenu?->getTranslation('label', app()->getLocale()) ?? 'PROGRAMY') }}</span>
                 <div class="flex flex-col gap-3">
-                    <a href="#" class="text-bcz-muted text-sm hover:text-white transition-colors">Súťaže</a>
-                    <a href="#" class="text-bcz-muted text-sm hover:text-white transition-colors">Tréningy</a>
-                    <a href="#" class="text-bcz-muted text-sm hover:text-white transition-colors">Vystúpenia</a>
-                    <a href="#" class="text-bcz-muted text-sm hover:text-white transition-colors">Školské workshopy</a>
+                    @foreach(collect($footerProgramsMenu?->items ?? [])->sortBy('sort_order') as $item)
+                        <a href="{{ \App\Services\LinkResolver::resolve($item) ?? ($item['url'] ?? '#') }}" target="{{ $item['target'] ?? '_self' }}" class="text-bcz-muted text-sm hover:text-white transition-colors">
+                            {{ $item['label_' . app()->getLocale()] ?? $item['label_sk'] }}
+                        </a>
+                    @endforeach
                 </div>
             </div>
             <div class="flex flex-col gap-5 col-span-2 md:col-span-1">

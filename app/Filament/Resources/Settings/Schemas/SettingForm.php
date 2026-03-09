@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Settings\Schemas;
 
 use App\Enums\SettingTypeEnum;
 use App\Models\Team;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -63,6 +64,11 @@ class SettingForm
                             ->options(fn () => Team::query()->pluck('name', 'id')->toArray())
                             ->searchable()
                             ->visible(fn (Get $get): bool => in_array($get('type'), [SettingTypeEnum::TEAM_SELECT, SettingTypeEnum::TEAM_SELECT->value])),
+
+                        DatePicker::make('value')
+                            ->label('Hodnota')
+                            ->nullable()
+                            ->visible(fn (Get $get): bool => in_array($get('type'), [SettingTypeEnum::DATE, SettingTypeEnum::DATE->value])),
                     ]),
             ]);
     }

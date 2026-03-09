@@ -2,6 +2,7 @@
 
 namespace App\Mason\Bricks;
 
+use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
@@ -13,6 +14,11 @@ class DividerBrick extends Brick
     public static function getId(): string
     {
         return 'divider';
+    }
+
+    public static function getLabel(): string
+    {
+        return __('bricks.names.divider');
     }
 
     public static function getIcon(): string|Heroicon|Htmlable|null
@@ -29,8 +35,11 @@ class DividerBrick extends Brick
     {
         return $action
             ->schema([
-                TextInput::make('label')
-                    ->placeholder('Optional label'),
+                TranslatableBrickFields::group(fn (string $locale) => [
+                    TextInput::make("label.{$locale}")
+                        ->label(__('bricks.fields.label'))
+                        ->placeholder(__('bricks.divider.label_placeholder')),
+                ]),
             ]);
     }
 }

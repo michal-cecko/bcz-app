@@ -9,7 +9,7 @@
                     <div class="text-3xl font-bold">{{ $item['number'] }}</div>
                 @endif
                 @if(! empty($item['label']))
-                    <div class="text-sm text-gray-500 mt-1">{{ $item['label'] }}</div>
+                    <div class="text-sm text-gray-500 mt-1">{{ brick_trans($item['label']) }}</div>
                 @endif
             </div>
         @endforeach

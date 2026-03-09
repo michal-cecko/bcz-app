@@ -67,21 +67,29 @@ class CompetitionForm
                                 TextInput::make('slug')
                                     ->disabled()
                                     ->dehydrated(),
-                                Mason::make('description')
-                                    ->label('Popis')
-                                    ->bricks([
-                                        HeroBrick::class,
-                                        RichTextBrick::class,
-                                        ImageBrick::class,
-                                        ImageTextBrick::class,
-                                        FeatureCardsBrick::class,
-                                        CtaBrick::class,
-                                        GalleryBrick::class,
-                                        DividerBrick::class,
-                                        QuoteBrick::class,
-                                        HeadingBrick::class,
-                                        StatsBrick::class,
-                                        TableBrick::class,
+                                Tabs::make('Popis preklady')
+                                    ->tabs([
+                                        Tabs\Tab::make('SK')
+                                            ->schema([
+                                                Mason::make('description.sk')
+                                                    ->label('Popis (SK)')
+                                                    ->bricks(self::bricks())
+                                                    ->columnSpanFull(),
+                                            ]),
+                                        Tabs\Tab::make('EN')
+                                            ->schema([
+                                                Mason::make('description.en')
+                                                    ->label('Popis (EN)')
+                                                    ->bricks(self::bricks())
+                                                    ->columnSpanFull(),
+                                            ]),
+                                        Tabs\Tab::make('CZ')
+                                            ->schema([
+                                                Mason::make('description.cz')
+                                                    ->label('Popis (CZ)')
+                                                    ->bricks(self::bricks())
+                                                    ->columnSpanFull(),
+                                            ]),
                                     ])
                                     ->columnSpanFull(),
 
@@ -315,5 +323,24 @@ class CompetitionForm
                     ])
                     ->columnSpanFull(),
             ]);
+    }
+
+    /** @return list<class-string<\Awcodes\Mason\Brick>> */
+    private static function bricks(): array
+    {
+        return [
+            HeroBrick::class,
+            RichTextBrick::class,
+            ImageBrick::class,
+            ImageTextBrick::class,
+            FeatureCardsBrick::class,
+            CtaBrick::class,
+            GalleryBrick::class,
+            DividerBrick::class,
+            QuoteBrick::class,
+            HeadingBrick::class,
+            StatsBrick::class,
+            TableBrick::class,
+        ];
     }
 }

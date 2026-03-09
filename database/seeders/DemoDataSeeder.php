@@ -38,6 +38,7 @@ use App\Models\ExerciseCategory;
 use App\Models\Faq;
 use App\Models\FaqCategory;
 use App\Models\Inquiry;
+use App\Models\MediaLibraryItem;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\RegistrationFee;
@@ -94,10 +95,30 @@ class DemoDataSeeder extends Seeder
 
         // --- Media Library Folder Structure ---
         $folderService = app(MediaLibraryFolderService::class);
-        $allUsers = $coaches->merge($athletes)->merge($judges)->merge($customers);
-        $allUsers->each(function (User $user) use ($folderService) {
-            $folderService->ensureUserFolders($user);
+        $teamFolder = $folderService->ensureTeamFolder($bczTeam);
+
+        // Athlete folders inside "Atléti" subfolder
+        $athletes->each(function (User $user, int $index) use ($folderService, $bczTeam) {
+            $athleteFolder = $folderService->ensureAthleteFolder($user, $bczTeam);
+
+            // Upload placeholder profile picture
+            $item = MediaLibraryItem::create(['folder_id' => $athleteFolder->id]);
+            $item->addMediaFromUrl("https://picsum.photos/seed/athlete-{$index}/400/500")
+                ->usingFileName("profile-{$index}.jpg")
+                ->toMediaCollection('library');
         });
+
+        // Coach folders
+        $coaches->each(function (User $user) use ($folderService, $bczTeam) {
+            $folderService->ensureUserFolder($user, $bczTeam);
+        });
+
+        // Upload team logo placeholder
+        $logoItem = MediaLibraryItem::create(['folder_id' => $teamFolder->id]);
+        $logoItem->addMediaFromUrl('https://picsum.photos/seed/bcz-logo/200/200')
+            ->usingFileName('bcz-club-logo.png')
+            ->toMediaCollection('library');
+        $bczTeam->update(['logo' => $logoItem->id]);
 
         // --- Exercise Categories & Exercises ---
         $exerciseCategories = collect([
@@ -584,48 +605,27 @@ class DemoDataSeeder extends Seeder
         ]);
 
         // --- Phase 5: Sponsors ---
-        Sponsor::factory()->create([
-            'name' => 'Red Bull',
-            'tag' => SponsorTagEnum::MAIN_SPONSOR,
-            'link' => 'https://www.redbull.com/sk-sk',
-            'is_visible' => true,
-            'sort_order' => 1,
-        ]);
-        Sponsor::factory()->create([
-            'name' => 'Nike',
-            'tag' => SponsorTagEnum::MAIN_SPONSOR,
-            'link' => 'https://www.nike.com',
-            'is_visible' => true,
-            'sort_order' => 2,
-        ]);
-        Sponsor::factory()->create([
-            'name' => 'Denník N',
-            'tag' => SponsorTagEnum::MEDIAL_SPONSOR,
-            'link' => 'https://dennikn.sk',
-            'is_visible' => true,
-            'sort_order' => 3,
-        ]);
-        Sponsor::factory()->create([
-            'name' => 'Město Bratislava',
-            'tag' => SponsorTagEnum::PARTNER,
-            'link' => 'https://bratislava.sk',
-            'is_visible' => true,
-            'sort_order' => 4,
-        ]);
-        Sponsor::factory()->create([
-            'name' => 'Decathlon',
-            'tag' => SponsorTagEnum::SUPPORTER,
-            'link' => 'https://www.decathlon.sk',
-            'is_visible' => true,
-            'sort_order' => 5,
-        ]);
-        Sponsor::factory()->create([
-            'name' => 'GymBeam',
-            'tag' => SponsorTagEnum::SUPPORTER,
-            'link' => 'https://www.gymbeam.sk',
-            'is_visible' => false,
-            'sort_order' => 6,
-        ]);
+        $webContentFolder = $folderService->ensureWebContentFolder();
+
+        $sponsorData = [
+            ['name' => 'Red Bull', 'tag' => SponsorTagEnum::MAIN_SPONSOR, 'link' => 'https://www.redbull.com/sk-sk', 'is_visible' => true, 'sort_order' => 1],
+            ['name' => 'Nike', 'tag' => SponsorTagEnum::MAIN_SPONSOR, 'link' => 'https://www.nike.com', 'is_visible' => true, 'sort_order' => 2],
+            ['name' => 'Denník N', 'tag' => SponsorTagEnum::MEDIAL_SPONSOR, 'link' => 'https://dennikn.sk', 'is_visible' => true, 'sort_order' => 3],
+            ['name' => 'Město Bratislava', 'tag' => SponsorTagEnum::PARTNER, 'link' => 'https://bratislava.sk', 'is_visible' => true, 'sort_order' => 4],
+            ['name' => 'Decathlon', 'tag' => SponsorTagEnum::SUPPORTER, 'link' => 'https://www.decathlon.sk', 'is_visible' => true, 'sort_order' => 5],
+            ['name' => 'GymBeam', 'tag' => SponsorTagEnum::SUPPORTER, 'link' => 'https://www.gymbeam.sk', 'is_visible' => false, 'sort_order' => 6],
+        ];
+
+        foreach ($sponsorData as $index => $data) {
+            $logoItem = MediaLibraryItem::create(['folder_id' => $webContentFolder->id]);
+            $logoItem->addMediaFromUrl("https://picsum.photos/seed/sponsor-{$index}/200/100")
+                ->usingFileName('sponsor-'.\Illuminate\Support\Str::slug($data['name']).'.png')
+                ->toMediaCollection('library');
+
+            Sponsor::factory()->create(array_merge($data, [
+                'logo' => $logoItem->id,
+            ]));
+        }
 
         // --- Phase 5-6: Memberships, Payments, Subscriptions, Payouts ---
 

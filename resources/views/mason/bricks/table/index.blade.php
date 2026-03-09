@@ -4,7 +4,7 @@
             <thead>
                 <tr class="bg-gray-100">
                     @foreach($headers as $header)
-                        <th class="border border-gray-300 px-4 py-2 text-left font-semibold">{{ $header['label'] ?? '' }}</th>
+                        <th class="border border-gray-300 px-4 py-2 text-left font-semibold">{{ brick_trans($header['label'] ?? []) }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -12,7 +12,7 @@
                 @foreach($rows as $row)
                     <tr>
                         @foreach($row['cells'] ?? [] as $cell)
-                            <td class="border border-gray-300 px-4 py-2">{{ $cell['value'] ?? '' }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ brick_trans($cell['value'] ?? []) }}</td>
                         @endforeach
                     </tr>
                 @endforeach

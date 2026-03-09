@@ -9,10 +9,16 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @filamentStyles
     @livewireStyles
+    <style>[x-cloak] { display: none !important; }</style>
     <link rel="stylesheet" href="{{ asset('css/filament/filament/app.css') }}">
 </head>
 <body class="bg-bcz-dark text-white font-sans antialiased">
+@php
+    $rebrandingShowUntil = \App\Models\Setting::get('rebranding_modal_show_until');
+@endphp
+@if($rebrandingShowUntil && now()->lte(\Carbon\Carbon::parse($rebrandingShowUntil)))
     @livewire('rebranding-modal')
+@endif
 
     @include('partials.header')
 

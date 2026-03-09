@@ -13,18 +13,21 @@ class TrainingController extends Controller
         $defaultTeamId = Setting::get('default_team_id');
 
         $trainings = Training::query()
-            ->where('team_id', $defaultTeamId)
             ->where('is_active', true)
-            ->with(['sportCategory', 'coaches'])
+            ->with(['sportCategory', 'coaches', 'team'])
+            ->orderByRaw('team_id = ? DESC', [$defaultTeamId])
             ->orderBy('sort_order')
             ->get();
 
-        return view('pages.trainings.index', compact('trainings'));
+        return view('pages.trainings.index', [
+            'trainings' => $trainings,
+            'team' => null,
+        ]);
     }
 
     public function show(Training $training): View
     {
-        $training->load(['sportCategory', 'coaches.coachProfile']);
+        $training->load(['sportCategory', 'coaches.coachProfile', 'team']);
 
         return view('pages.trainings.show', compact('training'));
     }

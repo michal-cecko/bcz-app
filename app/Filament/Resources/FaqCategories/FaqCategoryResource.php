@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\FaqCategories;
 
+use App\Filament\Clusters\Content\ContentCluster;
 use App\Filament\Resources\FaqCategories\Pages\CreateFaqCategory;
 use App\Filament\Resources\FaqCategories\Pages\EditFaqCategory;
 use App\Filament\Resources\FaqCategories\Pages\ListFaqCategories;
@@ -28,9 +29,9 @@ class FaqCategoryResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Obsah';
+    protected static ?string $cluster = ContentCluster::class;
 
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 4;
 
     protected static bool $isScopedToTenant = false;
 

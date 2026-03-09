@@ -13,7 +13,7 @@ class CompetitionReport extends Model
     use HasFactory, HasTranslations, HasUuidV7;
 
     /** @var list<string> */
-    public array $translatable = ['title'];
+    public array $translatable = ['title', 'content'];
 
     protected $fillable = [
         'competition_id',
@@ -27,7 +27,6 @@ class CompetitionReport extends Model
     protected function casts(): array
     {
         return [
-            'content' => 'json',
             'is_published' => 'boolean',
             'published_at' => 'datetime',
         ];

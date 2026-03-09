@@ -74,24 +74,51 @@ class CompetitionReportForm
 
                 Section::make('Obsah')
                     ->schema([
-                        Mason::make('content')
-                            ->label('Obsah')
-                            ->bricks([
-                                HeroBrick::class,
-                                RichTextBrick::class,
-                                ImageBrick::class,
-                                ImageTextBrick::class,
-                                FeatureCardsBrick::class,
-                                CtaBrick::class,
-                                GalleryBrick::class,
-                                DividerBrick::class,
-                                QuoteBrick::class,
-                                HeadingBrick::class,
-                                StatsBrick::class,
-                                TableBrick::class,
+                        Tabs::make('Obsah preklady')
+                            ->tabs([
+                                Tabs\Tab::make('SK')
+                                    ->schema([
+                                        Mason::make('content.sk')
+                                            ->label('Obsah (SK)')
+                                            ->bricks(self::bricks())
+                                            ->columnSpanFull(),
+                                    ]),
+                                Tabs\Tab::make('EN')
+                                    ->schema([
+                                        Mason::make('content.en')
+                                            ->label('Obsah (EN)')
+                                            ->bricks(self::bricks())
+                                            ->columnSpanFull(),
+                                    ]),
+                                Tabs\Tab::make('CZ')
+                                    ->schema([
+                                        Mason::make('content.cz')
+                                            ->label('Obsah (CZ)')
+                                            ->bricks(self::bricks())
+                                            ->columnSpanFull(),
+                                    ]),
                             ])
                             ->columnSpanFull(),
                     ]),
             ]);
+    }
+
+    /** @return list<class-string<\Awcodes\Mason\Brick>> */
+    private static function bricks(): array
+    {
+        return [
+            HeroBrick::class,
+            RichTextBrick::class,
+            ImageBrick::class,
+            ImageTextBrick::class,
+            FeatureCardsBrick::class,
+            CtaBrick::class,
+            GalleryBrick::class,
+            DividerBrick::class,
+            QuoteBrick::class,
+            HeadingBrick::class,
+            StatsBrick::class,
+            TableBrick::class,
+        ];
     }
 }

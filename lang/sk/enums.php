@@ -9,6 +9,8 @@ use App\Enums\InquiryStatusEnum;
 use App\Enums\InvitationStatusEnum;
 use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
+use App\Enums\MenuLocationEnum;
+use App\Enums\PageStatusEnum;
 use App\Enums\PayableTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
@@ -90,6 +92,7 @@ return [
         SettingTypeEnum::SELECT->value => 'Výber',
         SettingTypeEnum::MULTI_SELECT->value => 'Viacnásobný výber',
         SettingTypeEnum::TEAM_SELECT->value => 'Výber tímu',
+        SettingTypeEnum::DATE->value => 'Dátum',
     ],
     SponsorTagEnum::class => [
         SponsorTagEnum::MAIN_SPONSOR->value => 'Hlavný sponzor',
@@ -170,5 +173,15 @@ return [
         PayoutStatusEnum::PROCESSING->value => 'Spracováva sa',
         PayoutStatusEnum::COMPLETED->value => 'Odoslaná',
         PayoutStatusEnum::FAILED->value => 'Zlyhala',
+    ],
+    PageStatusEnum::class => [
+        PageStatusEnum::Draft->value => 'Koncept',
+        PageStatusEnum::Published->value => 'Publikovaná',
+        PageStatusEnum::Archived->value => 'Archivovaná',
+    ],
+    MenuLocationEnum::class => [
+        MenuLocationEnum::Header->value => 'Hlavička',
+        MenuLocationEnum::FooterDiscover->value => 'Päta — Objavte',
+        MenuLocationEnum::FooterPrograms->value => 'Päta — Programy',
     ],
 ];

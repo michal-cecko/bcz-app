@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\Linkable;
 use App\Enums\GenderEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Concerns\HasUuidV7;
@@ -11,11 +12,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class Training extends Model
+class Training extends Model implements Linkable
 {
     use HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
 
@@ -70,6 +72,26 @@ class Training extends Model
         return SlugOptions::create()
             ->generateSlugsFrom(fn (Training $model) => $model->getTranslation('title', 'sk'))
             ->saveSlugsTo('slug');
+    }
+
+    public function getLinkUrl(): string
+    {
+        return '/trening/'.$this->slug;
+    }
+
+    public function getLinkLabel(): string
+    {
+        return $this->getTranslation('title', app()->getLocale())
+            ?: $this->getTranslation('title', 'sk');
+    }
+
+    public static function linkableOptions(): Collection
+    {
+        return static::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->mapWithKeys(fn (Training $t) => [$t->id => $t->getLinkLabel()]);
     }
 
     public function sportCategory(): BelongsTo

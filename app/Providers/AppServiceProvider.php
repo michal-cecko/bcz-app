@@ -2,16 +2,20 @@
 
 namespace App\Providers;
 
+use App\Enums\MenuLocationEnum;
 use App\Models\CompetitionRegistration;
 use App\Models\MediaLibraryFolder;
 use App\Models\MediaLibraryItem;
 use App\Models\Membership;
+use App\Models\Menu;
 use App\Models\Team;
 use App\Models\TeamSubscription;
 use App\Models\TrainingRegistration;
 use App\Observers\TeamObserver;
 use App\Services\UuidMediaLibraryItemDriver;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use RalphJSmit\Filament\MediaLibrary\Drivers\MediaLibraryItemDriver;
 
@@ -48,5 +52,26 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Team::observe(TeamObserver::class);
+
+        View::composer('partials.header', function ($view) {
+            $view->with('headerMenu', Cache::remember('menu_header', 3600, function () {
+                return Menu::query()->where('location', MenuLocationEnum::Header)->first();
+            }));
+        });
+
+        View::composer('partials.footer', function ($view) {
+            $view->with('footerDiscoverMenu', Cache::remember('menu_footer_discover', 3600, function () {
+                return Menu::query()->where('location', MenuLocationEnum::FooterDiscover)->first();
+            }));
+            $view->with('footerProgramsMenu', Cache::remember('menu_footer_programs', 3600, function () {
+                return Menu::query()->where('location', MenuLocationEnum::FooterPrograms)->first();
+            }));
+        });
+
+        Menu::saved(function () {
+            Cache::forget('menu_header');
+            Cache::forget('menu_footer_discover');
+            Cache::forget('menu_footer_programs');
+        });
     }
 }

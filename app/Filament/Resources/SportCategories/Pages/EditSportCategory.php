@@ -7,7 +7,6 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Enums\Alignment;
-use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 
 class EditSportCategory extends EditRecord
@@ -15,8 +14,6 @@ class EditSportCategory extends EditRecord
     protected static string $resource = SportCategoryResource::class;
 
     public static string|Alignment $formActionsAlignment = Alignment::End;
-
-    protected Width|string|null $maxContentWidth = Width::Full;
 
     protected function getHeaderActions(): array
     {

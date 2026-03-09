@@ -186,6 +186,9 @@ class EventCategoryForm
                             ])
                             ->defaultItems(0)
                             ->reorderable()
+                            ->reorderableWithButtons()
+                            ->cloneable()
+                            ->collapsible()
                             ->columnSpanFull(),
                     ])
                     ->collapsible(),
@@ -214,6 +217,9 @@ class EventCategoryForm
                             ])
                             ->defaultItems(0)
                             ->reorderable()
+                            ->reorderableWithButtons()
+                            ->cloneable()
+                            ->collapsible()
                             ->columnSpanFull(),
                     ])
                     ->collapsible(),

@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\Settings\SettingResource;
+use App\Filament\Resources\Teams\TeamResource;
 use App\Models\Team;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
@@ -47,11 +49,11 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 Action::make('my-team')
                     ->label('Môj tím')
-                    ->url(fn (): string => \App\Filament\Resources\Teams\TeamResource::getUrl('view', ['record' => \Filament\Facades\Filament::getTenant()]))
+                    ->url(fn (): string => TeamResource::getUrl('view', ['record' => \Filament\Facades\Filament::getTenant()]))
                     ->icon(Heroicon::OutlinedUserGroup),
                 Action::make('settings')
                     ->label('Nastavenia')
-                    ->url(fn (): string => \App\Filament\Resources\Settings\SettingResource::getUrl())
+                    ->url(fn (): string => SettingResource::getUrl())
                     ->icon(Heroicon::OutlinedCog6Tooth),
             ])
             ->databaseNotifications()
@@ -105,6 +107,8 @@ class AdminPanelProvider extends PanelProvider
             ->plugin(FilamentApexChartsPlugin::make())
             ->plugin(
                 FilamentMediaLibrary::make()
+                    ->navigationLabel('Knižnica médií')
+                    ->title('Knižnica médií')
                     ->spatieTagsIntegration()
             );
     }

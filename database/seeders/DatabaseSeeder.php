@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
         $this->call(SettingSeeder::class);
         $this->call(CurrencySeeder::class);
         $this->call(SubscriptionPlanSeeder::class);
+        $this->call(PageSeeder::class);
+        $this->call(MenuSeeder::class);
 
         $superAdmin = User::firstOrCreate(
             ['email' => 'ceckomichal@gmail.com'],

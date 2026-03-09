@@ -1,3 +1,3 @@
 <div class="prose prose-lg max-w-none">
-    {!! $content ?? '' !!}
+    {!! brick_trans($content ?? []) !!}
 </div>

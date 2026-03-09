@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\Linkable;
 use App\Enums\MembershipPeriodEnum;
 use App\Models\Concerns\HasUuidV7;
 use Filament\Models\Contracts\HasAvatar;
@@ -11,11 +12,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class Team extends Model implements HasAvatar
+class Team extends Model implements HasAvatar, Linkable
 {
     use HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
 
@@ -38,6 +40,7 @@ class Team extends Model implements HasAvatar
         'bank_account_iban',
         'bank_account_name',
         'stripe_connect_account_id',
+        'default_locale',
     ];
 
     protected function casts(): array
@@ -64,6 +67,25 @@ class Team extends Model implements HasAvatar
         }
 
         return rescue(fn () => $mediaLibraryItem->getItem()?->getUrl(), null, false);
+    }
+
+    public function getLinkUrl(): string
+    {
+        return '/tim/'.$this->slug;
+    }
+
+    public function getLinkLabel(): string
+    {
+        return $this->getTranslation('name', app()->getLocale())
+            ?: $this->getTranslation('name', 'sk');
+    }
+
+    public static function linkableOptions(): Collection
+    {
+        return static::query()
+            ->where('is_active', true)
+            ->get()
+            ->mapWithKeys(fn (Team $t) => [$t->id => $t->getLinkLabel()]);
     }
 
     public function getSlugOptions(): SlugOptions
