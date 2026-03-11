@@ -1,4 +1,6 @@
 @php
+    use App\Services\QrPaymentService;
+
     $bankTitle = brick_trans($bank_title ?? []);
     $qrTitle = brick_trans($qr_title ?? []);
     $qrDescription = brick_trans($qr_description ?? []);
@@ -10,6 +12,22 @@
     $taxLinkHref = brick_link(['link_type' => $tax_link_type ?? '', 'link_model_id' => $tax_link_model_id ?? '', 'link_url' => $tax_link_url ?? '']);
     $contactTitle = brick_trans($contact_title ?? []);
     $contactDescription = brick_trans($contact_description ?? []);
+
+    // QR code — translatable per locale
+    $qrImage = null;
+    $qrIbanRaw = brick_trans($iban ?? []);
+    $qrIban = $qrIbanRaw ? str_replace(' ', '', $qrIbanRaw) : '';
+    $qrAccountNumber = brick_trans($account_number ?? []);
+    $qrVs = brick_trans($qr_variable_symbol ?? []);
+    $qrRecipient = brick_trans($qr_recipient_name ?? []);
+    $qrFormat = brick_trans($qr_format ?? []) ?: 'pay_by_square';
+
+    if ($qrIban || $qrAccountNumber) {
+        $qrImage = match ($qrFormat) {
+            'qr_platba' => QrPaymentService::qrPlatba($qrIban ?: $qrAccountNumber, null, 'CZK', $qrVs ?: '', $qrRecipient ?: ''),
+            default => QrPaymentService::payBySquare($qrIban, null, 'EUR', $qrVs ?: '', $qrRecipient ?: ''),
+        };
+    }
 @endphp
 
 <section class="py-[60px]">
@@ -23,9 +41,7 @@
                         @if($bankTitle)
                             <div class="flex items-center gap-4 mb-6">
                                 <div class="rounded-xl bg-[#FF2D2D20] w-12 h-12 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-bcz-red" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>
-                                    </svg>
+                                    <x-filament::icon icon="heroicon-o-building-library" class="w-6 h-6 text-bcz-red" />
                                 </div>
                                 <h3 class="font-display font-bold text-[24px] tracking-wide">{{ $bankTitle }}</h3>
                             </div>
@@ -34,29 +50,31 @@
                         <div class="flex flex-col">
                             @foreach($bank_rows as $index => $row)
                                 <div class="flex justify-between py-4 {{ $loop->last ? '' : 'border-b border-[#222222]' }}">
-                                    <span class="text-[#888888] text-[14px]">{{ $row['label'] ?? '' }}</span>
-                                    <span class="text-white text-[14px] font-semibold">{{ $row['value'] ?? '' }}</span>
+                                    <span class="text-[#888888] text-[14px]">{{ brick_trans($row['label'] ?? []) }}</span>
+                                    <span class="text-white text-[14px] font-semibold text-right">{{ brick_trans($row['value'] ?? []) }}</span>
                                 </div>
                             @endforeach
                         </div>
 
                         {{-- QR section --}}
-                        @if($qrTitle || ! empty($iban_copy))
-                            <div class="flex items-start gap-6 pt-6 mt-2 border-t border-[#222222]">
-                                <div class="rounded-xl bg-white w-[140px] h-[140px] flex items-center justify-center shrink-0">
-                                    <span class="text-[#888888] text-sm font-mono">QR</span>
-                                </div>
-                                <div class="flex flex-col gap-2">
+                        @if($qrTitle || $qrImage)
+                            <div class="flex flex-col sm:flex-row items-start gap-6 pt-6 mt-2 border-t border-[#222222]">
+                                @if($qrImage)
+                                    <div class="rounded-xl bg-white max-sm:w-full max-sm:aspect-square w-[140px] h-[140px] flex items-center justify-center shrink-0 p-2">
+                                        <img src="data:image/png;base64,{{ $qrImage }}" alt="QR kód" class="w-full h-full object-contain">
+                                    </div>
+                                @endif
+                                <div class="flex flex-col gap-2 w-full">
                                     @if($qrTitle)
                                         <p class="text-white font-semibold text-[16px]">{{ $qrTitle }}</p>
                                     @endif
                                     @if($qrDescription)
                                         <p class="text-[#888888] text-[14px] leading-relaxed">{{ $qrDescription }}</p>
                                     @endif
-                                    @if(! empty($iban_copy))
+                                    @if($qrIban)
                                         <button
                                             x-data
-                                            @click="navigator.clipboard.writeText('{{ $iban_copy }}')"
+                                            @click="navigator.clipboard.writeText('{{ $qrIban }}')"
                                             class="flex items-center gap-2 rounded-lg bg-[#222222] px-4 py-2.5 text-white text-[13px] font-medium w-fit hover:bg-[#333333] transition mt-1"
                                         >
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -77,9 +95,7 @@
                         @if($usageTitle)
                             <div class="flex items-center gap-4 mb-4">
                                 <div class="rounded-xl bg-[#22C55E20] w-12 h-12 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-[#22C55E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                                    </svg>
+                                    <x-filament::icon icon="heroicon-o-viewfinder-circle" class="w-6 h-6 text-[#22C55E]" />
                                 </div>
                                 <h3 class="font-display font-bold text-[24px] tracking-wide">{{ $usageTitle }}</h3>
                             </div>
@@ -100,8 +116,8 @@
                                         @endif
                                     </div>
                                     <div>
-                                        <p class="text-white font-semibold text-[16px]">{{ $item['title'] ?? '' }}</p>
-                                        <p class="text-[#888888] text-[14px] leading-relaxed">{{ $item['description'] ?? '' }}</p>
+                                        <p class="text-white font-semibold text-[16px]">{{ brick_trans($item['title'] ?? []) }}</p>
+                                        <p class="text-[#888888] text-[14px] leading-relaxed">{{ brick_trans($item['description'] ?? []) }}</p>
                                     </div>
                                 </div>
                             @endforeach
@@ -112,8 +128,8 @@
 
             {{-- Right column --}}
             <div class="flex flex-col gap-6 w-full lg:w-[400px] shrink-0">
-                {{-- Tax card (2% z dane) --}}
-                @if($taxTitle)
+                {{-- Tax card (2% z dane) — visible Jan–Apr --}}
+                @if($taxTitle && isTwoPercentVisible())
                     <div class="rounded-2xl bg-[#FF2D2D10] border border-[#FF2D2D40] p-8">
                         <div class="flex items-center gap-4 mb-5">
                             <div class="rounded-xl bg-bcz-red w-12 h-12 flex items-center justify-center">
@@ -140,9 +156,7 @@
                     <div class="rounded-2xl bg-[#111111] border border-[#222222] p-8">
                         <div class="flex items-center gap-4 mb-5">
                             <div class="rounded-xl bg-[#3B82F620] w-12 h-12 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-[#3B82F6]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                                </svg>
+                                <x-filament::icon icon="heroicon-o-envelope" class="w-6 h-6 text-[#3B82F6]" />
                             </div>
                             <h3 class="text-white font-semibold text-[20px]">{{ $contactTitle }}</h3>
                         </div>

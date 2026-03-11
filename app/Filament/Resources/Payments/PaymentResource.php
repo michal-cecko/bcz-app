@@ -108,7 +108,7 @@ class PaymentResource extends Resource
                                             ->label('Pay by Square (SK)')
                                             ->state(function ($record): ?HtmlString {
                                                 $qrService = app(\App\Services\QrPaymentService::class);
-                                                $qr = $qrService->generatePayBySquare($record);
+                                                $qr = $qrService->generatePayBySquareForPayment($record);
 
                                                 return $qr ? new HtmlString('<img src="data:image/png;base64,'.$qr.'" alt="Pay by Square" class="w-48">') : null;
                                             })
@@ -117,7 +117,7 @@ class PaymentResource extends Resource
                                             ->label('QR Platba (CZ)')
                                             ->state(function ($record): ?HtmlString {
                                                 $qrService = app(\App\Services\QrPaymentService::class);
-                                                $qr = $qrService->generateQrPlatba($record);
+                                                $qr = $qrService->generateQrPlatbaForPayment($record);
 
                                                 return $qr ? new HtmlString('<img src="data:image/png;base64,'.$qr.'" alt="QR Platba" class="w-48">') : null;
                                             })

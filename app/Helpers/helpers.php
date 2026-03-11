@@ -74,6 +74,19 @@ if (! function_exists('brick_media')) {
     }
 }
 
+if (! function_exists('isTwoPercentVisible')) {
+    /**
+     * Whether the "2% z dane" campaign is currently active.
+     * Visible from January 1st through April 30th each year.
+     */
+    function isTwoPercentVisible(): bool
+    {
+        $now = now();
+
+        return $now->month >= 1 && $now->month <= 4;
+    }
+}
+
 if (! function_exists('brick_link')) {
     /**
      * Resolve structured link data from a Mason brick config to a URL string.

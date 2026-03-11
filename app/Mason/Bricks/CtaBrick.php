@@ -9,6 +9,7 @@ use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -47,18 +48,40 @@ class CtaBrick extends Brick
                         ->label(__('bricks.fields.description')),
                     LinkPickerField::make('button_', $locale, null, 'button_text', __('bricks.cta.button_text')),
                 ]),
+                Select::make('button_icon')
+                    ->label('Ikona primárneho tlačidla')
+                    ->options([
+                        'heroicon-o-heart' => 'Srdce',
+                        'heroicon-o-arrow-right' => 'Šípka',
+                        'heroicon-o-rocket-launch' => 'Raketa',
+                        'heroicon-o-star' => 'Hviezda',
+                        'heroicon-o-bolt' => 'Blesk',
+                        'heroicon-o-gift' => 'Darček',
+                        'heroicon-o-hand-raised' => 'Ruka',
+                        'heroicon-o-phone' => 'Telefón',
+                    ])
+                    ->native(false)
+                    ->placeholder('Žiadna ikona'),
+                Fieldset::make('Sekundárne tlačidlo')
+                    ->schema([
+                        TranslatableBrickFields::group(fn (string $locale) => [
+                            TextInput::make("secondary_text.{$locale}")
+                                ->label('Text tlačidla'),
+                            LinkPickerField::make('secondary_', $locale),
+                        ]),
+                    ]),
                 Select::make('background_color')
                     ->label(__('bricks.cta.background_color'))
                     ->options([
+                        '#0A0A0A' => 'Tmavá (BCZ Dark)',
                         '#dc2626' => 'Červená (BCZ Red)',
-                        '#1a1a2e' => 'Tmavá (BCZ Dark)',
                         '#1f2937' => 'Šedá (Gray 800)',
                         '#111827' => 'Čierna (Gray 900)',
                         '#0f172a' => 'Tmavomodrá (Slate 900)',
                         '#14532d' => 'Zelená (Green 900)',
                         '#7c2d12' => 'Oranžová (Orange 900)',
                     ])
-                    ->default('#1f2937')
+                    ->default('#0A0A0A')
                     ->native(false),
             ]);
     }

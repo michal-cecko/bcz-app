@@ -38,12 +38,56 @@ class StatsBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
+                TranslatableBrickFields::group(fn (string $locale) => [
+                    TextInput::make("badge.{$locale}")
+                        ->label('Odznak (voliteľný)')
+                        ->placeholder('TRANSPARENTNOSŤ'),
+                ]),
+                Select::make('badge_color')
+                    ->label('Farba odznaku')
+                    ->options([
+                        '#22C55E' => 'Zelená',
+                        '#FF2D2D' => 'Červená',
+                        '#3B82F6' => 'Modrá',
+                        '#8B5CF6' => 'Fialová',
+                        '#F59E0B' => 'Žltá',
+                        '#EC4899' => 'Ružová',
+                    ])
+                    ->default('#22C55E')
+                    ->native(false),
+                TranslatableBrickFields::group(fn (string $locale) => [
+                    TextInput::make("title.{$locale}")
+                        ->label('Nadpis sekcie'),
+                    TextInput::make("description.{$locale}")
+                        ->label('Popis sekcie'),
+                ]),
+                Select::make('background_color')
+                    ->label('Farba pozadia')
+                    ->options([
+                        '#0D0D0D' => 'Tmavá',
+                        '#0A0A0A' => 'Čierna',
+                        '#111111' => 'Tmavošedá',
+                        '#1f2937' => 'Šedá (Gray 800)',
+                    ])
+                    ->default('#0D0D0D')
+                    ->native(false),
                 Repeater::make('items')
                     ->label(__('bricks.stats.items'))
                     ->schema([
                         TextInput::make('number')
                             ->label(__('bricks.fields.number'))
                             ->required(),
+                        Select::make('color')
+                            ->label('Farba čísla')
+                            ->options([
+                                '#22C55E' => 'Zelená',
+                                '#FF2D2D' => 'Červená',
+                                '#3B82F6' => 'Modrá',
+                                '#8B5CF6' => 'Fialová',
+                                '#F59E0B' => 'Žltá',
+                                '#FFFFFF' => 'Biela',
+                            ])
+                            ->native(false),
                         Select::make('icon')
                             ->label(__('bricks.fields.icon'))
                             ->options([
@@ -56,22 +100,7 @@ class StatsBrick extends Brick
                                 'heroicon-o-arrow-trending-up' => 'Trending Up',
                                 'heroicon-o-chart-bar' => 'Chart Bar',
                                 'heroicon-o-clock' => 'Clock',
-                                'heroicon-o-cog-6-tooth' => 'Cog',
-                                'heroicon-o-cube' => 'Cube',
-                                'heroicon-o-globe-alt' => 'Globe',
-                                'heroicon-o-hand-raised' => 'Hand Raised',
-                                'heroicon-o-light-bulb' => 'Light Bulb',
-                                'heroicon-o-map-pin' => 'Map Pin',
-                                'heroicon-o-megaphone' => 'Megaphone',
-                                'heroicon-o-musical-note' => 'Musical Note',
-                                'heroicon-o-puzzle-piece' => 'Puzzle',
-                                'heroicon-o-rocket-launch' => 'Rocket',
-                                'heroicon-o-shield-check' => 'Shield Check',
-                                'heroicon-o-sparkles' => 'Sparkles',
-                                'heroicon-o-user-group' => 'User Group',
-                                'heroicon-o-wrench' => 'Wrench',
                                 'heroicon-o-check-badge' => 'Check Badge',
-                                'heroicon-o-flag' => 'Flag',
                             ])
                             ->searchable(),
                         TranslatableBrickFields::group(fn (string $locale) => [

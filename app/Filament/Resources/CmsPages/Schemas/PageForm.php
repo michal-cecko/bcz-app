@@ -7,6 +7,7 @@ use App\Mason\Bricks\AboutPreviewBrick;
 use App\Mason\Bricks\ContactFormBrick;
 use App\Mason\Bricks\CtaBrick;
 use App\Mason\Bricks\DividerBrick;
+use App\Mason\Bricks\DonationInfoBrick;
 use App\Mason\Bricks\FaqBrick;
 use App\Mason\Bricks\FeatureCardsBrick;
 use App\Mason\Bricks\FounderSpotlightBrick;
@@ -169,6 +170,7 @@ class PageForm
             FounderSpotlightBrick::class,
             SocialCtaBrick::class,
             SponsorsBrick::class,
+            DonationInfoBrick::class,
         ];
     }
 }

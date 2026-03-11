@@ -114,12 +114,12 @@ class MembershipsTable
 
                         $html = '<div class="space-y-4">';
 
-                        $skQr = $qrService->generatePayBySquare($latestPayment);
+                        $skQr = $qrService->generatePayBySquareForPayment($latestPayment);
                         if ($skQr) {
                             $html .= '<div><h3 class="font-semibold mb-2">Pay by Square (SK)</h3><img src="data:image/png;base64,'.$skQr.'" alt="Pay by Square" class="w-48"></div>';
                         }
 
-                        $czQr = $qrService->generateQrPlatba($latestPayment);
+                        $czQr = $qrService->generateQrPlatbaForPayment($latestPayment);
                         if ($czQr) {
                             $html .= '<div><h3 class="font-semibold mb-2">QR Platba (CZ)</h3><img src="data:image/png;base64,'.$czQr.'" alt="QR Platba" class="w-48"></div>';
                         }

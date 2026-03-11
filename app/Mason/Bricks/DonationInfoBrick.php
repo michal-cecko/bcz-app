@@ -7,11 +7,12 @@ use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Tabs;
 use Filament\Support\Icons\Heroicon;
-use Guava\FilamentIconPicker\Forms\IconPicker;
+use Guava\IconPicker\Forms\Components\IconPicker;
 use Illuminate\Contracts\Support\Htmlable;
 
 class DonationInfoBrick extends Brick
@@ -52,15 +53,15 @@ class DonationInfoBrick extends Brick
                                 Repeater::make('bank_rows')
                                     ->label('Riadky bankových údajov')
                                     ->schema([
-                                        TextInput::make('label')
-                                            ->label('Označenie')
-                                            ->required(),
-                                        TextInput::make('value')
-                                            ->label('Hodnota')
-                                            ->required(),
+                                        TranslatableBrickFields::group(fn (string $locale) => [
+                                            TextInput::make("label.{$locale}")
+                                                ->label('Označenie'),
+                                            TextInput::make("value.{$locale}")
+                                                ->label('Hodnota'),
+                                        ]),
                                     ])
-                                    ->columns(2)
                                     ->reorderable()
+                                    ->collapsible()
                                     ->defaultItems(0)
                                     ->columnSpanFull(),
                                 TranslatableBrickFields::group(fn (string $locale) => [
@@ -69,8 +70,30 @@ class DonationInfoBrick extends Brick
                                     TextInput::make("qr_description.{$locale}")
                                         ->label('Popis QR sekcie'),
                                 ]),
-                                TextInput::make('iban_copy')
-                                    ->label('IBAN na kopírovanie'),
+                                Fieldset::make('QR kód a platobné údaje')
+                                    ->schema([
+                                        TranslatableBrickFields::group(fn (string $locale) => [
+                                            TextInput::make("iban.{$locale}")
+                                                ->label('IBAN')
+                                                ->helperText('Používa sa na kopírovanie aj generovanie QR kódu.'),
+                                            TextInput::make("account_number.{$locale}")
+                                                ->label('Číslo účtu (voliteľné)')
+                                                ->helperText('Český formát, napr. 1503666677/5500. Ak je vyplnené, použije sa pre QR Platba.'),
+                                            TextInput::make("qr_recipient_name.{$locale}")
+                                                ->label('Meno príjemcu'),
+                                            TextInput::make("qr_variable_symbol.{$locale}")
+                                                ->label('Variabilný symbol (voliteľný)'),
+                                            Select::make("qr_format.{$locale}")
+                                                ->label('Formát QR kódu')
+                                                ->options([
+                                                    'pay_by_square' => 'Pay by Square — SK (EUR)',
+                                                    'qr_platba' => 'QR Platba / SPD — CZ (CZK)',
+                                                ])
+                                                ->default('pay_by_square')
+                                                ->native(false),
+                                        ]),
+                                    ])
+                                    ->columns(1),
                             ]),
                         Tabs\Tab::make('Využitie darov')
                             ->schema([
@@ -85,17 +108,29 @@ class DonationInfoBrick extends Brick
                                     ->schema([
                                         IconPicker::make('icon')
                                             ->label('Ikona'),
-                                        TextInput::make('color')
+                                        Select::make('color')
                                             ->label('Farba ikony')
-                                            ->placeholder('#FF2D2D'),
-                                        TextInput::make('title')
-                                            ->label('Nadpis')
-                                            ->required(),
-                                        TextInput::make('description')
-                                            ->label('Popis')
-                                            ->required(),
+                                            ->options([
+                                                '#FF2D2D' => 'Červená',
+                                                '#3B82F6' => 'Modrá',
+                                                '#22C55E' => 'Zelená',
+                                                '#8B5CF6' => 'Fialová',
+                                                '#F59E0B' => 'Žltá',
+                                                '#EC4899' => 'Ružová',
+                                                '#14B8A6' => 'Tyrkysová',
+                                                '#F97316' => 'Oranžová',
+                                            ])
+                                            ->default('#FF2D2D')
+                                            ->native(false),
+                                        TranslatableBrickFields::group(fn (string $locale) => [
+                                            TextInput::make("title.{$locale}")
+                                                ->label('Nadpis')
+                                                ->required(),
+                                            TextInput::make("description.{$locale}")
+                                                ->label('Popis')
+                                                ->required(),
+                                        ]),
                                     ])
-                                    ->columns(2)
                                     ->reorderable()
                                     ->collapsible()
                                     ->defaultItems(0)
@@ -111,13 +146,15 @@ class DonationInfoBrick extends Brick
                                             TextInput::make("tax_description.{$locale}")
                                                 ->label('Popis'),
                                         ]),
-                                        LinkPickerField::make('tax_', label: 'Odkaz na 2% stránku'),
+                                        LinkPickerField::make('tax_', label: 'Odkaz na 2% stránku')
+                                            ->columnSpanFull(),
                                         TranslatableBrickFields::group(fn (string $locale) => [
                                             TextInput::make("tax_button_text.{$locale}")
                                                 ->label('Text tlačidla'),
                                         ]),
                                     ]),
                                 Fieldset::make('Kontaktná karta')
+                                    ->columns(1)
                                     ->schema([
                                         TranslatableBrickFields::group(fn (string $locale) => [
                                             TextInput::make("contact_title.{$locale}")
