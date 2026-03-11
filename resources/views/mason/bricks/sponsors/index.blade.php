@@ -3,7 +3,7 @@
         @foreach($sponsors as $sponsor)
             @php
                 $logo = brick_media($sponsor->logo);
-                $tagLabel = $sponsor->tag ? __('enums.' . \App\Enums\SponsorTagEnum::class . '.' . $sponsor->tag->value) : null;
+                $tagLabel = $sponsor->tag?->getLabel();
             @endphp
             <a href="{{ $sponsor->link ?? '#' }}" class="group flex flex-col items-center gap-3 transition-all" target="_blank" rel="noopener">
                 @if($logo->url)

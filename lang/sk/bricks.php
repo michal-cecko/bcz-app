@@ -27,6 +27,7 @@ return [
         'founder-spotlight' => 'Zakladateľ',
         'social-cta' => 'Sociálne siete CTA',
         'sponsors' => 'Sponzori',
+        'donation-info' => 'Informácie o darovaní',
     ],
 
     // Link picker
@@ -127,10 +128,10 @@ return [
 
     // FAQ brick
     'faq' => [
-        'categories' => 'Kategórie',
-        'categories_help' => 'Prázdne = zobraziť všetky kategórie',
-        'limit' => 'Limit',
-        'limit_help' => 'Prázdne = zobraziť všetky otázky',
+        'show_all' => 'Zobraziť všetky',
+        'show_all_help' => 'Zobrazí všetky publikované otázky',
+        'questions' => 'Otázky',
+        'questions_help' => 'Vyberte konkrétne otázky na zobrazenie',
         'show_all_link' => 'Text odkazu "Zobraziť všetky"',
     ],
 

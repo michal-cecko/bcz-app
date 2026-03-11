@@ -21,11 +21,13 @@ class SubscriptionPlanSeeder extends Seeder
                     'cs' => 'Základní plán pro začínající týmy.',
                 ],
                 'features' => [
-                    'sk' => ['Neobmedzený počet členov', 'Základné funkcie'],
-                    'en' => ['Unlimited members', 'Basic features'],
-                    'cs' => ['Neomezený počet členů', 'Základní funkce'],
+                    'sk' => ['Neobmedzený počet členov', 'Základné funkcie', '100 MB úložisko'],
+                    'en' => ['Unlimited members', 'Basic features', '100 MB storage'],
+                    'cs' => ['Neomezený počet členů', 'Základní funkce', '100 MB úložiště'],
                 ],
-                'limits' => null,
+                'limits' => [
+                    'storage_limit_mb' => 100,
+                ],
                 'sort_order' => 1,
                 'prices' => [
                     ['currency_code' => 'EUR', 'price_monthly' => 0, 'price_yearly' => 0],
@@ -41,15 +43,16 @@ class SubscriptionPlanSeeder extends Seeder
                     'cs' => 'Pro malé týmy s rozšířenými funkcemi.',
                 ],
                 'features' => [
-                    'sk' => ['Až 50 členov', 'Až 5 tréningov', 'Až 2 súťaže ročne', 'Až 5 podujatí ročne'],
-                    'en' => ['Up to 50 members', 'Up to 5 trainings', 'Up to 2 competitions/year', 'Up to 5 events/year'],
-                    'cs' => ['Až 50 členů', 'Až 5 tréninků', 'Až 2 soutěže ročně', 'Až 5 událostí ročně'],
+                    'sk' => ['Až 50 členov', 'Až 5 tréningov', 'Až 2 súťaže ročne', 'Až 5 podujatí ročne', '1 GB úložisko'],
+                    'en' => ['Up to 50 members', 'Up to 5 trainings', 'Up to 2 competitions/year', 'Up to 5 events/year', '1 GB storage'],
+                    'cs' => ['Až 50 členů', 'Až 5 tréninků', 'Až 2 soutěže ročně', 'Až 5 událostí ročně', '1 GB úložiště'],
                 ],
                 'limits' => [
                     'max_members' => 50,
                     'max_trainings' => 5,
                     'max_competitions_yearly' => 2,
                     'max_events_yearly' => 5,
+                    'storage_limit_mb' => 1024,
                 ],
                 'sort_order' => 2,
                 'prices' => [
@@ -66,14 +69,15 @@ class SubscriptionPlanSeeder extends Seeder
                     'cs' => 'Pro střední týmy s plnými funkcemi.',
                 ],
                 'features' => [
-                    'sk' => ['Až 200 členov', 'Neobmedzené tréningy', 'Až 10 súťaží ročne', 'Až 20 podujatí ročne', 'Vlastný branding'],
-                    'en' => ['Up to 200 members', 'Unlimited trainings', 'Up to 10 competitions/year', 'Up to 20 events/year', 'Custom branding'],
-                    'cs' => ['Až 200 členů', 'Neomezené tréninky', 'Až 10 soutěží ročně', 'Až 20 událostí ročně', 'Vlastní branding'],
+                    'sk' => ['Až 200 členov', 'Neobmedzené tréningy', 'Až 10 súťaží ročne', 'Až 20 podujatí ročne', 'Vlastný branding', '5 GB úložisko'],
+                    'en' => ['Up to 200 members', 'Unlimited trainings', 'Up to 10 competitions/year', 'Up to 20 events/year', 'Custom branding', '5 GB storage'],
+                    'cs' => ['Až 200 členů', 'Neomezené tréninky', 'Až 10 soutěží ročně', 'Až 20 událostí ročně', 'Vlastní branding', '5 GB úložiště'],
                 ],
                 'limits' => [
                     'max_members' => 200,
                     'max_competitions_yearly' => 10,
                     'max_events_yearly' => 20,
+                    'storage_limit_mb' => 5120,
                 ],
                 'sort_order' => 3,
                 'prices' => [
@@ -90,9 +94,9 @@ class SubscriptionPlanSeeder extends Seeder
                     'cs' => 'Pro velké organizace bez limitů.',
                 ],
                 'features' => [
-                    'sk' => ['Neobmedzený počet členov', 'Neobmedzené tréningy', 'Neobmedzené súťaže', 'Neobmedzené podujatia', 'Vlastný branding', 'Prioritná podpora'],
-                    'en' => ['Unlimited members', 'Unlimited trainings', 'Unlimited competitions', 'Unlimited events', 'Custom branding', 'Priority support'],
-                    'cs' => ['Neomezený počet členů', 'Neomezené tréninky', 'Neomezené soutěže', 'Neomezené události', 'Vlastní branding', 'Prioritní podpora'],
+                    'sk' => ['Neobmedzený počet členov', 'Neobmedzené tréningy', 'Neobmedzené súťaže', 'Neobmedzené podujatia', 'Vlastný branding', 'Prioritná podpora', 'Neobmedzené úložisko'],
+                    'en' => ['Unlimited members', 'Unlimited trainings', 'Unlimited competitions', 'Unlimited events', 'Custom branding', 'Priority support', 'Unlimited storage'],
+                    'cs' => ['Neomezený počet členů', 'Neomezené tréninky', 'Neomezené soutěže', 'Neomezené události', 'Vlastní branding', 'Prioritní podpora', 'Neomezené úložiště'],
                 ],
                 'limits' => null,
                 'sort_order' => 4,

@@ -87,9 +87,9 @@
                                                 <span>
                                                     {{ collect($training->schedule_days)->pluck('day')->join(', ') }}
                                                     @if($training->start_time)
-                                                        &middot; {{ $training->start_time }}
+                                                        &middot; {{ \Illuminate\Support\Str::substr($training->start_time, 0, 5) }}
                                                         @if($training->duration_minutes)
-                                                            - {{ \Carbon\Carbon::createFromFormat('H:i', $training->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}
+                                                            - {{ \Carbon\Carbon::createFromFormat('H:i:s', $training->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}
                                                         @endif
                                                     @endif
                                                 </span>

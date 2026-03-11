@@ -19,3 +19,18 @@
 
 /* Media Library Pro */
 @import '../../../../vendor/ralphjsmit/laravel-filament-media-library/resources/css/index.css';
+
+/* Center global search in topbar */
+@media (min-width: 640px) {
+    .fi-topbar {
+        position: relative;
+    }
+
+    .fi-topbar .fi-global-search-ctn {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 28rem;
+    }
+}

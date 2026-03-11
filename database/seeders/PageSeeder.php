@@ -407,7 +407,12 @@ class PageSeeder extends Seeder
             ]),
             self::brick('faq', [
                 'heading' => ['sk' => 'Najčastejšie otázky'],
-                'limit' => 3,
+                'faq_ids' => \App\Models\Faq::query()
+                    ->where('is_published', true)
+                    ->orderBy('sort_order')
+                    ->limit(3)
+                    ->pluck('id')
+                    ->all(),
                 'link_link_type' => 'page',
                 'link_link_model_id' => self::pageId('faq'),
                 'link_text' => ['sk' => 'Zobraziť všetky často kladené otázky'],
@@ -425,6 +430,7 @@ class PageSeeder extends Seeder
             ]),
             self::brick('faq', [
                 'heading' => ['sk' => 'Všetky otázky'],
+                'show_all' => true,
             ]),
             self::brick('cta', [
                 'title' => ['sk' => 'Nenašli ste odpoveď?'],
@@ -448,28 +454,38 @@ class PageSeeder extends Seeder
                 'cta_link_type' => 'custom',
                 'cta_link_url' => ['sk' => '#bank'],
             ]),
-            self::brick('table', [
-                'headers' => [
-                    ['label' => ['sk' => 'Údaj']],
-                    ['label' => ['sk' => 'Hodnota']],
+            self::brick('donation-info', [
+                'bank_title' => ['sk' => 'Bankové údaje'],
+                'bank_rows' => [
+                    ['label' => 'Názov organizácie', 'value' => 'BCZ Club, občianske združenie'],
+                    ['label' => 'IČO', 'value' => '52 841 235'],
+                    ['label' => 'IBAN', 'value' => 'SK89 0900 0000 0051 8742 6513'],
+                    ['label' => 'SWIFT/BIC', 'value' => 'GIBASKBX'],
+                    ['label' => 'Banka', 'value' => 'Slovenská sporiteľňa, a.s.'],
+                    ['label' => 'Variabilný symbol', 'value' => date('Y')],
                 ],
-                'rows' => [
-                    ['cells' => [['value' => ['sk' => 'Názov']], ['value' => ['sk' => 'BCZ Club, občianske združenie']]]],
-                    ['cells' => [['value' => ['sk' => 'IČO']], ['value' => ['sk' => '52 841 235']]]],
-                    ['cells' => [['value' => ['sk' => 'IBAN']], ['value' => ['sk' => 'SK89 0900 0000 0051 8742 6513']]]],
-                    ['cells' => [['value' => ['sk' => 'SWIFT/BIC']], ['value' => ['sk' => 'GIBASKBX']]]],
-                    ['cells' => [['value' => ['sk' => 'Banka']], ['value' => ['sk' => 'Slovenská sporiteľňa, a.s.']]]],
-                    ['cells' => [['value' => ['sk' => 'Variabilný symbol']], ['value' => ['sk' => date('Y')]]]],
+                'qr_title' => ['sk' => 'Rýchla platba cez QR kód'],
+                'qr_description' => ['sk' => 'Naskenujte QR kód svojou bankovou aplikáciou a platba sa vyplní automaticky.'],
+                'iban_copy' => 'SK8909000000005187426513',
+                'usage_title' => ['sk' => 'Na čo používame dary'],
+                'usage_description' => ['sk' => 'Každý cent z vašich darov ide priamo na rozvoj komunity a zlepšovanie tréningových podmienok.'],
+                'usage_items' => [
+                    ['icon' => 'heroicon-o-wrench-screwdriver', 'color' => '#FF2D2D', 'title' => 'Cvičebné pomôcky', 'description' => 'Podložky, odporové gumy, švihadlá a ďalšie vybavenie.'],
+                    ['icon' => 'heroicon-o-building-office', 'color' => '#3B82F6', 'title' => 'Hrazdy a bradlá', 'description' => 'Inštalácia a údržba street workout prvkov v Čadci a okolí.'],
+                    ['icon' => 'heroicon-o-shield-check', 'color' => '#22C55E', 'title' => 'Bezpečnostné vybavenie', 'description' => 'Crash pady, žinenky a ochranné pomôcky.'],
+                    ['icon' => 'heroicon-o-calendar-days', 'color' => '#F59E0B', 'title' => 'Workshopy a podujatia', 'description' => 'Bezplatné workshopy a podujatia pre verejnosť.'],
+                    ['icon' => 'heroicon-o-user-group', 'color' => '#8B5CF6', 'title' => 'Rozvoj komunity', 'description' => 'Prenájom priestorov, cestovné a propagácia.'],
                 ],
-            ]),
-            self::brick('feature-cards', [
-                'cards' => [
-                    ['icon' => 'heroicon-o-wrench-screwdriver', 'title' => ['sk' => 'Cvičebné pomôcky'], 'description' => ['sk' => 'Nákup nových podložiek, odporových gúm, švihadiel a ďalšieho vybavenia pre tréningy.']],
-                    ['icon' => 'heroicon-o-building-office', 'title' => ['sk' => 'Hrazdy a bradlá'], 'description' => ['sk' => 'Inštalácia a údržba street workout prvkov v Čadci a okolí.']],
-                    ['icon' => 'heroicon-o-shield-check', 'title' => ['sk' => 'Bezpečnostné vybavenie'], 'description' => ['sk' => 'Crash pady, žinenky a ochranné pomôcky pre bezpečný tréning akrobacie.']],
-                    ['icon' => 'heroicon-o-calendar-days', 'title' => ['sk' => 'Workshopy a podujatia'], 'description' => ['sk' => 'Organizácia bezplatných workshopov a podujatí pre verejnosť.']],
-                    ['icon' => 'heroicon-o-user-group', 'title' => ['sk' => 'Rozvoj komunity'], 'description' => ['sk' => 'Prenájom priestorov, cestovné náklady trénerov a propagácia aktivít.']],
-                ],
+                'tax_title' => ['sk' => '2% z dane'],
+                'tax_description' => ['sk' => 'Darujte nám 2% z vašej dane. Nestojí vás to nič navyše — tieto peniaze by inak išli štátu.'],
+                'tax_link_type' => 'page',
+                'tax_link_model_id' => self::pageId('tax_donation'),
+                'tax_button_text' => ['sk' => 'Viac informácií'],
+                'contact_title' => ['sk' => 'Potrebujete poradiť?'],
+                'contact_description' => ['sk' => 'Radi vám pomôžeme s akýmikoľvek otázkami ohľadom darovania.'],
+                'contact_email' => 'podpora@bczclub.sk',
+                'contact_phone' => '+421 900 123 456',
+                'contact_address' => 'Palárikova 123, 022 01 Čadca',
             ]),
             self::brick('stats', [
                 'items' => [
@@ -569,12 +585,9 @@ class PageSeeder extends Seeder
                 ],
             ]),
             self::brick('faq', [
-                'items' => [
-                    ['question' => ['sk' => 'Koľko ma to bude stáť?'], 'answer' => ['sk' => '<p>Nič. Tieto 2% by ste aj tak zaplatili štátu ako daň. Rozhodujete len o tom, kam pôjdu.</p>'], 'category' => ['sk' => '2% z dane']],
-                    ['question' => ['sk' => 'Do kedy musím podať vyhlásenie?'], 'answer' => ['sk' => '<p>Zamestnanci do 30. apríla, SZČO a firmy do 31. marca (alebo v predĺženej lehote).</p>'], 'category' => ['sk' => '2% z dane']],
-                    ['question' => ['sk' => 'Ako zistím, či boli moje 2% poukázané?'], 'answer' => ['sk' => '<p>Daňový úrad vás informuje, ak o to požiadate v tlačive. My informácie o darcoch nedostávame.</p>'], 'category' => ['sk' => '2% z dane']],
-                    ['question' => ['sk' => 'Môžem darovať aj viac ako 2%?'], 'answer' => ['sk' => '<p>Áno, môžete nás podporiť aj priamym finančným darom na náš účet. Navštívte stránku <a href="/podporte-nas">Podporte nás</a>.</p>'], 'category' => ['sk' => '2% z dane']],
-                ],
+                'heading' => ['sk' => 'Často kladené otázky'],
+                'show_all' => true,
+                'faq_ids' => [],
             ]),
             self::brick('cta', [
                 'title' => ['sk' => 'Vaše 2% pomáhajú'],

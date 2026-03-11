@@ -4,22 +4,31 @@ namespace Database\Seeders;
 
 use App\Enums\MenuLocationEnum;
 use App\Models\Menu;
+use App\Models\Page;
 use Illuminate\Database\Seeder;
 
 class MenuSeeder extends Seeder
 {
+    /** @var array<string, string> */
+    private array $pageIds = [];
+
     public function run(): void
     {
+        $this->pageIds = Page::query()
+            ->whereNotNull('system_key')
+            ->pluck('id', 'system_key')
+            ->all();
+
         Menu::query()->updateOrCreate(
             ['location' => MenuLocationEnum::Header],
             [
                 'label' => ['sk' => 'Hlavné menu', 'en' => 'Main Menu', 'cz' => 'Hlavní menu'],
                 'items' => [
-                    ['label_sk' => 'O nás', 'label_en' => 'About Us', 'label_cz' => 'O nás', 'link_type' => 'custom', 'link_url' => '/o-nas', 'target' => '_self', 'sort_order' => 0],
-                    ['label_sk' => 'Súťaže', 'label_en' => 'Competitions', 'label_cz' => 'Soutěže', 'link_type' => 'custom', 'link_url' => '/sutaze', 'target' => '_self', 'sort_order' => 1],
-                    ['label_sk' => 'Tréningy', 'label_en' => 'Trainings', 'label_cz' => 'Tréninky', 'link_type' => 'custom', 'link_url' => '/treningy', 'target' => '_self', 'sort_order' => 2],
-                    ['label_sk' => 'Vystúpenia', 'label_en' => 'Events', 'label_cz' => 'Vystoupení', 'link_type' => 'custom', 'link_url' => '/vystupenia', 'target' => '_self', 'sort_order' => 3],
-                    ['label_sk' => 'Kontakt', 'label_en' => 'Contact', 'label_cz' => 'Kontakt', 'link_type' => 'custom', 'link_url' => '/kontakt', 'target' => '_self', 'sort_order' => 4],
+                    $this->pageItem('O nás', 'About Us', 'O nás', 'about', 0),
+                    $this->pageItem('Súťaže', 'Competitions', 'Soutěže', 'competitions', 1),
+                    $this->pageItem('Tréningy', 'Trainings', 'Tréninky', 'trainings', 2),
+                    $this->pageItem('Vystúpenia', 'Events', 'Vystoupení', 'events', 3),
+                    $this->pageItem('Kontakt', 'Contact', 'Kontakt', 'contact', 4),
                 ],
             ],
         );
@@ -29,9 +38,9 @@ class MenuSeeder extends Seeder
             [
                 'label' => ['sk' => 'Objavte', 'en' => 'Discover', 'cz' => 'Objevte'],
                 'items' => [
-                    ['label_sk' => 'O nás', 'label_en' => 'About Us', 'label_cz' => 'O nás', 'link_type' => 'custom', 'link_url' => '/o-nas', 'target' => '_self', 'sort_order' => 0],
+                    $this->pageItem('O nás', 'About Us', 'O nás', 'about', 0),
                     ['label_sk' => 'Náš tím', 'label_en' => 'Our Team', 'label_cz' => 'Náš tým', 'link_type' => 'custom', 'link_url' => '/o-nas#tim', 'target' => '_self', 'sort_order' => 1],
-                    ['label_sk' => 'Kontakt', 'label_en' => 'Contact', 'label_cz' => 'Kontakt', 'link_type' => 'custom', 'link_url' => '/kontakt', 'target' => '_self', 'sort_order' => 2],
+                    $this->pageItem('Kontakt', 'Contact', 'Kontakt', 'contact', 2),
                 ],
             ],
         );
@@ -41,12 +50,28 @@ class MenuSeeder extends Seeder
             [
                 'label' => ['sk' => 'Programy', 'en' => 'Programs', 'cz' => 'Programy'],
                 'items' => [
-                    ['label_sk' => 'Súťaže', 'label_en' => 'Competitions', 'label_cz' => 'Soutěže', 'link_type' => 'custom', 'link_url' => '/sutaze', 'target' => '_self', 'sort_order' => 0],
-                    ['label_sk' => 'Tréningy', 'label_en' => 'Trainings', 'label_cz' => 'Tréninky', 'link_type' => 'custom', 'link_url' => '/treningy', 'target' => '_self', 'sort_order' => 1],
-                    ['label_sk' => 'Vystúpenia', 'label_en' => 'Events', 'label_cz' => 'Vystoupení', 'link_type' => 'custom', 'link_url' => '/vystupenia', 'target' => '_self', 'sort_order' => 2],
-                    ['label_sk' => 'Školské workshopy', 'label_en' => 'School Workshops', 'label_cz' => 'Školní workshopy', 'link_type' => 'custom', 'link_url' => '/workshopy', 'target' => '_self', 'sort_order' => 3],
+                    $this->pageItem('Súťaže', 'Competitions', 'Soutěže', 'competitions', 0),
+                    $this->pageItem('Tréningy', 'Trainings', 'Tréninky', 'trainings', 1),
+                    $this->pageItem('Vystúpenia', 'Events', 'Vystoupení', 'events', 2),
+                    $this->pageItem('Školské workshopy', 'School Workshops', 'Školní workshopy', 'workshops', 3),
                 ],
             ],
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function pageItem(string $sk, string $en, string $cz, string $systemKey, int $sortOrder): array
+    {
+        return [
+            'label_sk' => $sk,
+            'label_en' => $en,
+            'label_cz' => $cz,
+            'link_type' => 'page',
+            'link_model_id' => $this->pageIds[$systemKey] ?? null,
+            'target' => '_self',
+            'sort_order' => $sortOrder,
+        ];
     }
 }

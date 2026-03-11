@@ -49,7 +49,12 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 Action::make('my-team')
                     ->label('Môj tím')
-                    ->url(fn (): string => TeamResource::getUrl('view', ['record' => \Filament\Facades\Filament::getTenant()]))
+                    ->url(function (): ?string {
+                        $tenant = \Filament\Facades\Filament::getTenant();
+
+                        return $tenant ? TeamResource::getUrl('view', ['record' => $tenant]) : null;
+                    })
+                    ->visible(fn (): bool => \Filament\Facades\Filament::getTenant() !== null)
                     ->icon(Heroicon::OutlinedUserGroup),
                 Action::make('settings')
                     ->label('Nastavenia')
@@ -65,12 +70,19 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): View => view('filament.topbar-role-badge'),
             )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                fn (): View => view('filament.topbar-homepage-link'),
+            )
             ->sidebarCollapsibleOnDesktop()
             ->collapsibleNavigationGroups()
             ->navigationGroups([
                 'Organizácia',
                 'Obsah',
             ])
+            ->brandLogo(asset('logo/logo-horizontal-short.svg'))
+            ->darkModeBrandLogo(asset('logo/logo-horizontal-short-white.svg'))
+            ->brandLogoHeight('2rem')
             ->font('DM Sans')
             ->colors([
                 'primary' => Color::Sky,

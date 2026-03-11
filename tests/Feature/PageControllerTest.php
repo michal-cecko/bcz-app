@@ -171,7 +171,7 @@ class PageControllerTest extends TestCase
 
     public function test_page_with_faq_brick_renders_accordion(): void
     {
-        \App\Models\Faq::factory()->create([
+        $faq = \App\Models\Faq::factory()->create([
             'question' => ['sk' => 'Test question?'],
             'answer' => ['sk' => '<p>Test answer.</p>'],
             'is_published' => true,
@@ -182,6 +182,7 @@ class PageControllerTest extends TestCase
             'content' => [
                 ['type' => 'masonBrick', 'attrs' => ['id' => 'faq', 'config' => [
                     'heading' => ['sk' => 'FAQ'],
+                    'faq_ids' => [$faq->id],
                 ]]],
             ],
         ]);

@@ -45,7 +45,7 @@
                                 <p class="text-bcz-dim text-xs">
                                     {{ collect($training->schedule_days)->pluck('day')->join(', ') }}
                                     @if($training->start_time)
-                                        &middot; {{ $training->start_time }}
+                                        &middot; {{ \Illuminate\Support\Str::substr($training->start_time, 0, 5) }}
                                     @endif
                                 </p>
                             </div>

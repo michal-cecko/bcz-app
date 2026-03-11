@@ -5,11 +5,14 @@ namespace App\Mason\Bricks;
 use App\Mason\Support\LinkPickerField;
 use App\Mason\Support\TranslatableBrickFields;
 use App\Models\Faq;
-use App\Models\FaqCategory;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -32,22 +35,26 @@ class FaqBrick extends Brick
 
     public static function toHtml(array $config, ?array $data = null): ?string
     {
-        $query = Faq::query()
-            ->where('is_published', true)
-            ->with('faqCategory')
-            ->orderBy('sort_order');
+        $showAll = (bool) ($config['show_all'] ?? false);
+        $faqIds = $config['faq_ids'] ?? [];
 
-        $categoryIds = $config['category_ids'] ?? [];
-        if (! empty($categoryIds)) {
-            $query->whereIn('faq_category_id', $categoryIds);
+        if ($showAll) {
+            $faqs = Faq::query()
+                ->where('is_published', true)
+                ->with('faqCategory')
+                ->orderBy('sort_order')
+                ->get();
+        } elseif (! empty($faqIds)) {
+            $faqs = Faq::query()
+                ->whereIn('id', $faqIds)
+                ->where('is_published', true)
+                ->with('faqCategory')
+                ->get()
+                ->sortBy(fn (Faq $faq) => array_search($faq->id, $faqIds))
+                ->values();
+        } else {
+            $faqs = collect();
         }
-
-        $limit = $config['limit'] ?? null;
-        if ($limit) {
-            $query->limit((int) $limit);
-        }
-
-        $faqs = $query->get();
 
         $config['faqs'] = $faqs;
 
@@ -64,17 +71,74 @@ class FaqBrick extends Brick
                         ->label(__('bricks.fields.title')),
                     LinkPickerField::make('link_', $locale, null, 'link_text', __('bricks.faq.show_all_link')),
                 ]),
-                Select::make('category_ids')
-                    ->label(__('bricks.faq.categories'))
-                    ->options(fn () => FaqCategory::query()->pluck('title', 'id')->map(fn ($t) => $t[app()->getLocale()] ?? $t['sk'] ?? ''))
+                Toggle::make('show_all')
+                    ->label(__('bricks.faq.show_all'))
+                    ->helperText(__('bricks.faq.show_all_help'))
+                    ->live()
+                    ->afterStateUpdated(fn (callable $set) => $set('faq_ids', [])),
+                Select::make('faq_ids')
+                    ->label(__('bricks.faq.questions'))
+                    ->options(fn () => Faq::query()
+                        ->where('is_published', true)
+                        ->orderBy('sort_order')
+                        ->get()
+                        ->mapWithKeys(fn (Faq $faq) => [$faq->id => $faq->getTranslation('question', app()->getLocale())]))
                     ->multiple()
                     ->searchable()
-                    ->helperText(__('bricks.faq.categories_help')),
-                TextInput::make('limit')
-                    ->label(__('bricks.faq.limit'))
-                    ->numeric()
-                    ->minValue(1)
-                    ->helperText(__('bricks.faq.limit_help')),
+                    ->disabled(fn (Get $get): bool => (bool) $get('show_all'))
+                    ->helperText(__('bricks.faq.questions_help'))
+                    ->createOptionForm([
+                        Tabs::make('Preklady')
+                            ->tabs([
+                                Tabs\Tab::make('SK')
+                                    ->schema([
+                                        TextInput::make('question.sk')
+                                            ->label('Otázka (SK)')
+                                            ->required(),
+                                        Textarea::make('answer.sk')
+                                            ->label('Odpoveď (SK)')
+                                            ->rows(4)
+                                            ->required(),
+                                    ]),
+                                Tabs\Tab::make('EN')
+                                    ->schema([
+                                        TextInput::make('question.en')
+                                            ->label('Otázka (EN)'),
+                                        Textarea::make('answer.en')
+                                            ->label('Odpoveď (EN)')
+                                            ->rows(4),
+                                    ]),
+                                Tabs\Tab::make('CZ')
+                                    ->schema([
+                                        TextInput::make('question.cz')
+                                            ->label('Otázka (CZ)'),
+                                        Textarea::make('answer.cz')
+                                            ->label('Odpoveď (CZ)')
+                                            ->rows(4),
+                                    ]),
+                            ])
+                            ->columnSpanFull(),
+                        Select::make('faq_category_id')
+                            ->label('Kategória')
+                            ->options(fn () => \App\Models\FaqCategory::query()
+                                ->get()
+                                ->mapWithKeys(fn ($c) => [$c->id => $c->getTranslation('title', app()->getLocale())]))
+                            ->searchable(),
+                        Toggle::make('is_published')
+                            ->label('Publikované')
+                            ->default(true),
+                    ])
+                    ->createOptionUsing(function (array $data): string {
+                        $faq = Faq::create([
+                            'question' => $data['question'],
+                            'answer' => $data['answer'],
+                            'faq_category_id' => $data['faq_category_id'] ?? null,
+                            'is_published' => $data['is_published'] ?? true,
+                            'sort_order' => Faq::query()->max('sort_order') + 1,
+                        ]);
+
+                        return $faq->id;
+                    }),
             ]);
     }
 }

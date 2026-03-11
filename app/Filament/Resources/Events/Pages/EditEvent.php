@@ -18,6 +18,11 @@ class EditEvent extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('viewOnSite')
+                ->label('Zobraziť na webe')
+                ->icon(Heroicon::OutlinedGlobeAlt)
+                ->color('gray')
+                ->url(fn () => $this->record->getLinkUrl(), shouldOpenInNewTab: true),
             $this->getSaveFormAction()
                 ->formId('form')
                 ->icon(Heroicon::OutlinedPencilSquare),

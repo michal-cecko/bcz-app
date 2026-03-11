@@ -93,6 +93,7 @@ class SubscriptionPlanForm
                     ->columnSpanFull(),
 
                 Section::make('Limity')
+                    ->description('Kľúče: max_members, max_trainings, max_competitions_yearly, max_events_yearly, storage_limit_mb')
                     ->schema([
                         KeyValue::make('limits')
                             ->label('')

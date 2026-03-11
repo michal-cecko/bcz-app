@@ -18,6 +18,7 @@ class MenuForm
         return $schema
             ->components([
                 Section::make('Menu')
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('location')
                             ->label('Umiestnenie')
@@ -62,11 +63,8 @@ class MenuForm
                                         '_blank' => 'Nové okno',
                                     ])
                                     ->default('_self'),
-                                TextInput::make('sort_order')
-                                    ->label('Poradie')
-                                    ->numeric()
-                                    ->default(0),
                             ])
+                            ->columns(2)
                             ->reorderable()
                             ->reorderableWithButtons()
                             ->cloneable()

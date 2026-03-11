@@ -1,6 +1,8 @@
 @if(isset($faqs) && $faqs->count())
     @php
-        $categories = $faqs->pluck('faqCategory')->filter()->unique('id');
+        $isShowAll = ! empty($show_all);
+        $categories = $isShowAll ? $faqs->pluck('faqCategory')->filter()->unique('id') : collect();
+        $showCategories = $categories->count() > 1;
         $faqLinkHref = brick_link(['link_type' => $link_link_type ?? '', 'link_model_id' => $link_link_model_id ?? '', 'link_url' => $link_link_url ?? '']);
         $count = $faqs->count();
         $countLabel = match (true) {
@@ -22,8 +24,8 @@
                 </div>
             @endif
 
-            {{-- Category filter + Accordion (hidden in preview mode when limit is set) --}}
-            @if($categories->count() > 1 && empty($limit))
+            {{-- Category filter + Accordion (only in "show all" mode with multiple categories) --}}
+            @if($showCategories)
                 <div x-data="{ filter: 'all', active: null }" class="flex flex-col gap-8">
                     <div class="flex flex-wrap gap-3">
                         <button @click="filter = 'all'; active = null" :class="filter === 'all' ? 'bg-bcz-red text-white' : 'bg-[#222222] text-[#888888] hover:text-white'" class="rounded-lg px-4 py-2 text-sm font-semibold transition">Všetky</button>
@@ -51,7 +53,7 @@
                     </div>
                 </div>
             @else
-                {{-- No categories or single category --}}
+                {{-- Simple accordion (selected FAQs or single/no category) --}}
                 <div x-data="{ active: null }" class="flex flex-col gap-4">
                     @foreach($faqs as $index => $faq)
                         <div class="rounded-xl bg-[#0A0A0A] border border-[#222222] overflow-hidden">

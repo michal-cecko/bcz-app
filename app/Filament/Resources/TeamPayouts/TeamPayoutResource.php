@@ -39,6 +39,7 @@ class TeamPayoutResource extends Resource
         return $schema
             ->components([
                 Grid::make(2)
+                    ->columnSpanFull()
                     ->schema([
                         Section::make('Detaily výplaty')
                             ->schema([
