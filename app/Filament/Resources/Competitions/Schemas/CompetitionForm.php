@@ -59,7 +59,7 @@ class CompetitionForm
                                             ]),
                                         Tabs\Tab::make('CZ')
                                             ->schema([
-                                                TextInput::make('name.cz')
+                                                TextInput::make('name.cs')
                                                     ->label('Názov (CZ)'),
                                             ]),
                                     ])
@@ -85,7 +85,7 @@ class CompetitionForm
                                             ]),
                                         Tabs\Tab::make('CZ')
                                             ->schema([
-                                                Mason::make('description.cz')
+                                                Mason::make('description.cs')
                                                     ->label('Popis (CZ)')
                                                     ->bricks(self::bricks())
                                                     ->columnSpanFull(),

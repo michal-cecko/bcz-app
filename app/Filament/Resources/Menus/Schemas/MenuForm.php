@@ -40,7 +40,7 @@ class MenuForm
                                     ]),
                                 Tabs\Tab::make('CZ')
                                     ->schema([
-                                        TextInput::make('label.cz')
+                                        TextInput::make('label.cs')
                                             ->label('Názov (CZ)'),
                                     ]),
                             ])
@@ -53,7 +53,7 @@ class MenuForm
                                     ->required(),
                                 TextInput::make('label_en')
                                     ->label('Názov (EN)'),
-                                TextInput::make('label_cz')
+                                TextInput::make('label_cs')
                                     ->label('Názov (CZ)'),
                                 LinkPickerField::make(),
                                 Select::make('target')

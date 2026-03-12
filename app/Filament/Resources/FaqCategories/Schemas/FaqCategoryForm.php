@@ -31,7 +31,7 @@ class FaqCategoryForm
                             ]),
                         Tabs\Tab::make('CZ')
                             ->schema([
-                                TextInput::make('title.cz')
+                                TextInput::make('title.cs')
                                     ->label('Názov (CZ)'),
                             ]),
                     ])

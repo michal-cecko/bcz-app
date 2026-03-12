@@ -41,9 +41,9 @@ class SubscriptionPlanForm
                             ]),
                         Tabs\Tab::make('CZ')
                             ->schema([
-                                TextInput::make('name.cz')
+                                TextInput::make('name.cs')
                                     ->label('Názov (CZ)'),
-                                Textarea::make('description.cz')
+                                Textarea::make('description.cs')
                                     ->label('Popis (CZ)')
                                     ->rows(3),
                             ]),

@@ -53,9 +53,9 @@ class TrainingForm
                                             ]),
                                         Tabs\Tab::make('CZ')
                                             ->schema([
-                                                TextInput::make('title.cz')
+                                                TextInput::make('title.cs')
                                                     ->label('Názov (CZ)'),
-                                                Textarea::make('description.cz')
+                                                Textarea::make('description.cs')
                                                     ->label('Popis (CZ)')
                                                     ->rows(3),
                                             ]),

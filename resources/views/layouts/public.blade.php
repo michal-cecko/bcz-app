@@ -6,6 +6,12 @@
     <title>@yield('title', config('app.name', 'BCZ Club'))</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
+    <link rel="alternate" hreflang="sk" href="{{ url(locale_switch_url('sk')) }}">
+    <link rel="alternate" hreflang="cs" href="{{ url(locale_switch_url('cs')) }}">
+    <link rel="alternate" hreflang="en" href="{{ url(locale_switch_url('en')) }}">
+    <link rel="alternate" hreflang="x-default" href="{{ url(locale_switch_url('sk')) }}">
+    <link rel="canonical" href="{{ url(request()->getPathInfo()) }}">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @filamentStyles
     @livewireStyles

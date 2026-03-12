@@ -10,7 +10,7 @@ use Filament\Support\Icons\Heroicon;
 class TranslatableBrickFields
 {
     /** @var list<string> */
-    private const array LOCALES = ['sk', 'en', 'cz'];
+    private const array LOCALES = ['sk', 'en', 'cs'];
 
     /**
      * Group multiple translatable fields into locale tabs.

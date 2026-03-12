@@ -87,6 +87,54 @@ if (! function_exists('isTwoPercentVisible')) {
     }
 }
 
+if (! function_exists('locale_url')) {
+    /**
+     * Prefix a path with the current locale segment (e.g. /en/treningy).
+     * Slovak (default) has no prefix.
+     */
+    function locale_url(string $path): string
+    {
+        $locale = app()->getLocale();
+        $prefix = \App\Http\Middleware\SetLocale::PREFIX_MAP[$locale] ?? null;
+
+        if (! $prefix) {
+            return $path;
+        }
+
+        $path = ltrim($path, '/');
+
+        return '/'.$prefix.($path ? '/'.$path : '');
+    }
+}
+
+if (! function_exists('locale_switch_url')) {
+    /**
+     * Generate a URL for switching to a different locale on the current page.
+     */
+    function locale_switch_url(string $targetLocale): string
+    {
+        $path = request()->getPathInfo();
+
+        // Strip existing locale prefix
+        foreach (\App\Http\Middleware\SetLocale::SUPPORTED_PREFIXES as $prefix) {
+            if (str_starts_with($path, '/'.$prefix.'/') || $path === '/'.$prefix) {
+                $path = substr($path, strlen('/'.$prefix)) ?: '/';
+                break;
+            }
+        }
+
+        $urlPrefix = \App\Http\Middleware\SetLocale::PREFIX_MAP[$targetLocale] ?? null;
+
+        if ($urlPrefix) {
+            $path = '/'.$urlPrefix.($path === '/' ? '' : $path);
+        }
+
+        $query = request()->getQueryString();
+
+        return $path.($query ? '?'.$query : '');
+    }
+}
+
 if (! function_exists('brick_link')) {
     /**
      * Resolve structured link data from a Mason brick config to a URL string.

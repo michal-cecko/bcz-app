@@ -30,7 +30,8 @@ class LinkResolver
         }
 
         $model = $modelClass::find($modelId);
+        $url = $model?->getLinkUrl();
 
-        return $model?->getLinkUrl();
+        return $url ? locale_url($url) : null;
     }
 }

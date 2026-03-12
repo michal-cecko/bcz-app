@@ -48,11 +48,11 @@ class EventCategoryForm
                                     ]),
                                 Tabs\Tab::make('CZ')
                                     ->schema([
-                                        TextInput::make('title.cz')
+                                        TextInput::make('title.cs')
                                             ->label('Názov (CZ)'),
-                                        TextInput::make('card_subtitle.cz')
+                                        TextInput::make('card_subtitle.cs')
                                             ->label('Podtitulok karty (CZ)'),
-                                        Textarea::make('card_description.cz')
+                                        Textarea::make('card_description.cs')
                                             ->label('Popis karty (CZ)')
                                             ->rows(2),
                                     ]),
@@ -141,20 +141,20 @@ class EventCategoryForm
                                     ]),
                                 Tabs\Tab::make('CZ')
                                     ->schema([
-                                        TextInput::make('detail_title.cz')
+                                        TextInput::make('detail_title.cs')
                                             ->label('Titulok detailu (CZ)'),
-                                        TextInput::make('about_title.cz')
+                                        TextInput::make('about_title.cs')
                                             ->label('Titulok O nás (CZ)'),
-                                        Textarea::make('about_description.cz')
+                                        Textarea::make('about_description.cs')
                                             ->label('Popis O nás (CZ)')
                                             ->rows(3),
-                                        TextInput::make('types_section_title.cz')
+                                        TextInput::make('types_section_title.cs')
                                             ->label('Titulok sekcie typov (CZ)'),
-                                        TextInput::make('types_section_subtitle.cz')
+                                        TextInput::make('types_section_subtitle.cs')
                                             ->label('Podtitulok sekcie typov (CZ)'),
-                                        TextInput::make('cta_title.cz')
+                                        TextInput::make('cta_title.cs')
                                             ->label('CTA titulok (CZ)'),
-                                        Textarea::make('cta_description.cz')
+                                        Textarea::make('cta_description.cs')
                                             ->label('CTA popis (CZ)')
                                             ->rows(2),
                                     ]),

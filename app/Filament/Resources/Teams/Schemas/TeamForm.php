@@ -47,12 +47,12 @@ class TeamForm
                             ]),
                         Tabs\Tab::make('CZ')
                             ->schema([
-                                TextInput::make('name.cz')
+                                TextInput::make('name.cs')
                                     ->label('Názov (CZ)'),
-                                Textarea::make('story.cz')
+                                Textarea::make('story.cs')
                                     ->label('Príbeh (CZ)')
                                     ->rows(4),
-                                Textarea::make('achievements.cz')
+                                Textarea::make('achievements.cs')
                                     ->label('Úspechy (CZ)')
                                     ->rows(3),
                             ]),

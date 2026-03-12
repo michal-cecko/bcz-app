@@ -59,9 +59,9 @@ class EventForm
                                             ]),
                                         Tabs\Tab::make('CZ')
                                             ->schema([
-                                                TextInput::make('title.cz')
+                                                TextInput::make('title.cs')
                                                     ->label('Názov (CZ)'),
-                                                Textarea::make('card_description.cz')
+                                                Textarea::make('card_description.cs')
                                                     ->label('Popis na karte (CZ)')
                                                     ->rows(2),
                                             ]),
@@ -88,7 +88,7 @@ class EventForm
                                             ]),
                                         Tabs\Tab::make('CZ')
                                             ->schema([
-                                                Mason::make('content.cz')
+                                                Mason::make('content.cs')
                                                     ->label('Obsah (CZ)')
                                                     ->bricks(self::bricks())
                                                     ->columnSpanFull(),

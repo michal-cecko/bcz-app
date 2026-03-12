@@ -66,7 +66,7 @@ class PageForm
                                             ]),
                                         Tabs\Tab::make('CZ')
                                             ->schema([
-                                                TextInput::make('title.cz')
+                                                TextInput::make('title.cs')
                                                     ->label('Názov (CZ)'),
                                             ]),
                                     ])
@@ -125,9 +125,9 @@ class PageForm
                                                     ]),
                                                 Tabs\Tab::make('CZ')
                                                     ->schema([
-                                                        TextInput::make('meta_title.cz')
+                                                        TextInput::make('meta_title.cs')
                                                             ->label('Meta titulok (CZ)'),
-                                                        Textarea::make('meta_description.cz')
+                                                        Textarea::make('meta_description.cs')
                                                             ->label('Meta popis (CZ)')
                                                             ->rows(2),
                                                     ]),

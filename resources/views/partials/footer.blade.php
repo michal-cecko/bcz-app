@@ -76,6 +76,7 @@
             <span class="w-1 h-1 rounded-full bg-bcz-faint"></span>
             <span class="text-bcz-subtle text-[11px] font-medium">BCZ we can</span>
         </div>
+        <x-footer-locale-switcher />
     </div>
     </div>
 </footer>

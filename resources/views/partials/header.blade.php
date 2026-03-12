@@ -14,7 +14,7 @@
 {{-- Header --}}
 <header x-data="{ mobileOpen: false }" class="w-full bg-bcz-dark sticky top-0 z-50 border-b border-bcz-border/30">
     <div class="max-w-[1440px] mx-auto h-16 lg:h-20 flex items-center justify-between px-5 md:px-10 lg:px-20">
-        <a href="/" class="flex items-center">
+        <a href="{{ locale_url('/') }}" class="flex items-center">
             <img src="/logo/logo-horizontal-short-white.svg" alt="BCZ Club" class="h-8 lg:h-11">
         </a>
 
@@ -28,6 +28,9 @@
         </nav>
 
         <div class="flex items-center gap-4">
+            <div class="hidden xl:block">
+                <x-locale-switcher />
+            </div>
             <a href="/admin" class="hidden md:block bg-bcz-red text-white text-xs font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors">
                 PRIDAJ SA
             </a>
@@ -62,6 +65,9 @@
             <a href="/admin" class="md:hidden bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center mt-2">
                 PRIDAJ SA
             </a>
+            <div class="xl:hidden pt-2">
+                <x-locale-switcher />
+            </div>
         </nav>
     </div>
 </header>

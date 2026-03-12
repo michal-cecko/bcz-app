@@ -22,7 +22,7 @@ class MenuSeeder extends Seeder
         Menu::query()->updateOrCreate(
             ['location' => MenuLocationEnum::Header],
             [
-                'label' => ['sk' => 'Hlavné menu', 'en' => 'Main Menu', 'cz' => 'Hlavní menu'],
+                'label' => ['sk' => 'Hlavné menu', 'en' => 'Main Menu', 'cs' => 'Hlavní menu'],
                 'items' => [
                     $this->pageItem('O nás', 'About Us', 'O nás', 'about', 0),
                     $this->pageItem('Súťaže', 'Competitions', 'Soutěže', 'competitions', 1),
@@ -36,10 +36,10 @@ class MenuSeeder extends Seeder
         Menu::query()->updateOrCreate(
             ['location' => MenuLocationEnum::FooterDiscover],
             [
-                'label' => ['sk' => 'Objavte', 'en' => 'Discover', 'cz' => 'Objevte'],
+                'label' => ['sk' => 'Objavte', 'en' => 'Discover', 'cs' => 'Objevte'],
                 'items' => [
                     $this->pageItem('O nás', 'About Us', 'O nás', 'about', 0),
-                    ['label_sk' => 'Náš tím', 'label_en' => 'Our Team', 'label_cz' => 'Náš tým', 'link_type' => 'custom', 'link_url' => '/o-nas#tim', 'target' => '_self', 'sort_order' => 1],
+                    ['label_sk' => 'Náš tím', 'label_en' => 'Our Team', 'label_cs' => 'Náš tým', 'link_type' => 'custom', 'link_url' => '/o-nas#tim', 'target' => '_self', 'sort_order' => 1],
                     $this->pageItem('Kontakt', 'Contact', 'Kontakt', 'contact', 2),
                 ],
             ],
@@ -48,7 +48,7 @@ class MenuSeeder extends Seeder
         Menu::query()->updateOrCreate(
             ['location' => MenuLocationEnum::FooterPrograms],
             [
-                'label' => ['sk' => 'Programy', 'en' => 'Programs', 'cz' => 'Programy'],
+                'label' => ['sk' => 'Programy', 'en' => 'Programs', 'cs' => 'Programy'],
                 'items' => [
                     $this->pageItem('Súťaže', 'Competitions', 'Soutěže', 'competitions', 0),
                     $this->pageItem('Tréningy', 'Trainings', 'Tréninky', 'trainings', 1),
@@ -67,7 +67,7 @@ class MenuSeeder extends Seeder
         return [
             'label_sk' => $sk,
             'label_en' => $en,
-            'label_cz' => $cz,
+            'label_cs' => $cz,
             'link_type' => 'page',
             'link_model_id' => $this->pageIds[$systemKey] ?? null,
             'target' => '_self',

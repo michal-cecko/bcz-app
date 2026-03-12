@@ -110,9 +110,9 @@ class FaqBrick extends Brick
                                     ]),
                                 Tabs\Tab::make('CZ')
                                     ->schema([
-                                        TextInput::make('question.cz')
+                                        TextInput::make('question.cs')
                                             ->label('Otázka (CZ)'),
-                                        Textarea::make('answer.cz')
+                                        Textarea::make('answer.cs')
                                             ->label('Odpoveď (CZ)')
                                             ->rows(4),
                                     ]),
