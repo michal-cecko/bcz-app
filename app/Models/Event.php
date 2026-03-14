@@ -59,7 +59,7 @@ class Event extends Model implements Linkable
 
     public function getLinkUrl(): string
     {
-        return '/vystupenie/'.$this->slug;
+        return '/eventy/'.$this->slug;
     }
 
     public function getLinkLabel(): string

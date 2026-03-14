@@ -7,6 +7,7 @@ use App\Filament\Resources\Teams\Pages\EditTeam;
 use App\Filament\Resources\Teams\Pages\ListTeams;
 use App\Filament\Resources\Teams\Pages\ViewTeam;
 use App\Filament\Resources\Teams\RelationManagers\InvitationsRelationManager;
+use App\Filament\Resources\Teams\RelationManagers\JoinRequestsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\MembersRelationManager;
 use App\Filament\Resources\Teams\Schemas\TeamForm;
 use App\Filament\Resources\Teams\Tables\TeamsTable;
@@ -63,6 +64,7 @@ class TeamResource extends Resource
         return $schema
             ->components([
                 Grid::make(3)
+                    ->columnSpanFull()
                     ->schema([
                         Section::make('Základné údaje')
                             ->schema([
@@ -159,6 +161,7 @@ class TeamResource extends Resource
         return [
             MembersRelationManager::class,
             InvitationsRelationManager::class,
+            JoinRequestsRelationManager::class,
         ];
     }
 

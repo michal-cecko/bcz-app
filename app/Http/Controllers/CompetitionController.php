@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Competition;
 use App\Models\Setting;
+use App\Models\Team;
 use Illuminate\View\View;
 
 class CompetitionController extends Controller
@@ -25,9 +26,10 @@ class CompetitionController extends Controller
         ]);
     }
 
-    public function show(Competition $competition): View
+    public function show(Team $team, Competition $competition): View
     {
         abort_unless($competition->is_published, 404);
+        abort_unless($competition->organizer_team_id === $team->id, 404);
 
         $competition->load([
             'organizerTeam',

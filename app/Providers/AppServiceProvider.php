@@ -53,13 +53,13 @@ class AppServiceProvider extends ServiceProvider
 
         Team::observe(TeamObserver::class);
 
-        View::composer('partials.header', function ($view) {
+        View::composer('components.header', function ($view) {
             $view->with('headerMenu', Cache::remember('menu_header', 3600, function () {
                 return Menu::query()->where('location', MenuLocationEnum::Header)->first();
             }));
         });
 
-        View::composer('partials.footer', function ($view) {
+        View::composer('components.footer', function ($view) {
             $view->with('footerDiscoverMenu', Cache::remember('menu_footer_discover', 3600, function () {
                 return Menu::query()->where('location', MenuLocationEnum::FooterDiscover)->first();
             }));

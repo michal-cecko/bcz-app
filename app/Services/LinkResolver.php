@@ -30,8 +30,24 @@ class LinkResolver
         }
 
         $model = $modelClass::find($modelId);
-        $url = $model?->getLinkUrl();
 
-        return $url ? locale_url($url) : null;
+        if (! $model) {
+            return null;
+        }
+
+        // Role-based link types use specific route prefixes
+        $routePrefix = $type->getRoutePrefix();
+        $url = $routePrefix ? $routePrefix.$model->slug : $model->getLinkUrl();
+
+        if (! $url) {
+            return null;
+        }
+
+        // Media URLs are absolute (storage URLs), no locale prefix needed
+        if ($type === LinkTypeEnum::Media) {
+            return $url;
+        }
+
+        return locale_url($url);
     }
 }

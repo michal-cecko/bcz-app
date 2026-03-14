@@ -11,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Support\Icons\Heroicon;
+use Guava\IconPicker\Forms\Components\IconPicker;
 use Illuminate\Contracts\Support\Htmlable;
 
 class CtaBrick extends Brick
@@ -48,20 +49,10 @@ class CtaBrick extends Brick
                         ->label(__('bricks.fields.description')),
                     LinkPickerField::make('button_', $locale, null, 'button_text', __('bricks.cta.button_text')),
                 ]),
-                Select::make('button_icon')
+                IconPicker::make('button_icon')
                     ->label('Ikona primárneho tlačidla')
-                    ->options([
-                        'heroicon-o-heart' => 'Srdce',
-                        'heroicon-o-arrow-right' => 'Šípka',
-                        'heroicon-o-rocket-launch' => 'Raketa',
-                        'heroicon-o-star' => 'Hviezda',
-                        'heroicon-o-bolt' => 'Blesk',
-                        'heroicon-o-gift' => 'Darček',
-                        'heroicon-o-hand-raised' => 'Ruka',
-                        'heroicon-o-phone' => 'Telefón',
-                    ])
-                    ->native(false)
-                    ->placeholder('Žiadna ikona'),
+                    ->sets(['heroicons'])
+                    ->columns(3),
                 Fieldset::make('Sekundárne tlačidlo')
                     ->schema([
                         TranslatableBrickFields::group(fn (string $locale) => [

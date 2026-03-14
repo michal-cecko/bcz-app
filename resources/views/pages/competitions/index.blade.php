@@ -72,7 +72,7 @@
 
                     <div class="flex flex-col gap-4">
                         @foreach($upcoming as $competition)
-                            <a href="{{ route('competition.show', $competition) }}" class="bg-[#111111] border border-[#222222] rounded-2xl overflow-hidden flex flex-col md:flex-row hover:border-[#333333] transition-colors group">
+                            <a href="{{ route('team.competition.show', [$competition->organizerTeam, $competition]) }}" class="bg-[#111111] border border-[#222222] rounded-2xl overflow-hidden flex flex-col md:flex-row hover:border-[#333333] transition-colors group">
                                 {{-- Date Column --}}
                                 <div class="w-full md:w-[140px] {{ $loop->first ? 'bg-bcz-red' : 'bg-[#1A1A1A]' }} flex flex-col items-center justify-center py-6 md:py-0 shrink-0">
                                     @if($competition->date_start)
@@ -130,7 +130,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @foreach($finished as $competition)
-                            <a href="{{ route('competition.show', $competition) }}" class="bg-[#1A1A1A] border border-[#222222] rounded-2xl overflow-hidden group hover:border-[#333333] transition-colors">
+                            <a href="{{ route('team.competition.show', [$competition->organizerTeam, $competition]) }}" class="bg-[#1A1A1A] border border-[#222222] rounded-2xl overflow-hidden group hover:border-[#333333] transition-colors">
                                 <div class="relative w-full h-[200px] bg-[#1A1A1A] overflow-hidden">
                                     @if($competition->featured_image)
                                         <img src="{{ $competition->featured_image }}" alt="{{ $competition->getTranslation('name', app()->getLocale()) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">

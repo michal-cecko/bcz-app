@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
 
         $bczTeam = Team::query()->where('slug', 'bcz-club')->first();
 
-        if ($bczTeam) {
+        if ($bczTeam && ! $superAdmin->teams()->where('teams.id', $bczTeam->id)->exists()) {
             $superAdmin->teams()->attach($bczTeam, [
                 'is_active' => true,
                 'joined_at' => now(),

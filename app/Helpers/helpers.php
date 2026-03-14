@@ -148,3 +148,22 @@ if (! function_exists('brick_link')) {
         return LinkResolver::resolve($data);
     }
 }
+
+if (! function_exists('sk_plural')) {
+    /**
+     * Slovak pluralization: 1 = singular, 2-4 = few, 5+ = many.
+     * Usage: sk_plural($count, 'člen', 'členovia', 'členov')
+     */
+    function sk_plural(int $count, string $one, string $few, string $many): string
+    {
+        if ($count === 1) {
+            return "{$count} {$one}";
+        }
+
+        if ($count >= 2 && $count <= 4) {
+            return "{$count} {$few}";
+        }
+
+        return "{$count} {$many}";
+    }
+}

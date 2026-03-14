@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\PageStatusEnum;
+use App\Models\Faq;
 use App\Models\MediaLibraryItem;
 use App\Models\Page;
 use App\Models\Sponsor;
@@ -106,7 +107,17 @@ class PageSeeder extends Seeder
                 'is_system' => true,
                 'published_at' => now(),
                 'sort_order' => 7,
-                'content' => [],
+                'content' => fn () => self::trainingsContent(),
+            ],
+            [
+                'system_key' => 'trainings_archive',
+                'title' => ['sk' => 'Zoznam tréningov', 'en' => 'Training List', 'cs' => 'Seznam tréninků'],
+                'slug' => 'zoznam-treningov',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 8,
+                'content' => fn () => self::trainingsArchiveContent(),
             ],
             [
                 'system_key' => 'competitions',
@@ -115,8 +126,8 @@ class PageSeeder extends Seeder
                 'status' => PageStatusEnum::Published,
                 'is_system' => true,
                 'published_at' => now(),
-                'sort_order' => 8,
-                'content' => [],
+                'sort_order' => 9,
+                'content' => fn () => self::competitionsArchiveContent(),
             ],
             [
                 'system_key' => 'events',
@@ -125,8 +136,48 @@ class PageSeeder extends Seeder
                 'status' => PageStatusEnum::Published,
                 'is_system' => true,
                 'published_at' => now(),
-                'sort_order' => 9,
-                'content' => [],
+                'sort_order' => 10,
+                'content' => fn () => self::eventsArchiveContent(),
+            ],
+            [
+                'system_key' => 'coaches_archive',
+                'title' => ['sk' => 'Tréneri', 'en' => 'Coaches', 'cs' => 'Trenéři'],
+                'slug' => 'treneri',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 11,
+                'content' => fn () => self::coachesArchiveContent(),
+            ],
+            [
+                'system_key' => 'athletes_archive',
+                'title' => ['sk' => 'Športovci', 'en' => 'Athletes', 'cs' => 'Sportovci'],
+                'slug' => 'atleti',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 12,
+                'content' => fn () => self::athletesArchiveContent(),
+            ],
+            [
+                'system_key' => 'judges_archive',
+                'title' => ['sk' => 'Rozhodcovia', 'en' => 'Judges', 'cs' => 'Rozhodčí'],
+                'slug' => 'rozhodcovia',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 13,
+                'content' => fn () => self::judgesArchiveContent(),
+            ],
+            [
+                'system_key' => 'teams_archive',
+                'title' => ['sk' => 'Tímy', 'en' => 'Teams', 'cs' => 'Týmy'],
+                'slug' => 'timy',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 14,
+                'content' => fn () => self::teamsArchiveContent(),
             ],
             [
                 'system_key' => 'services',
@@ -528,9 +579,16 @@ class PageSeeder extends Seeder
     private static function founderContent(): array
     {
         return [
-            self::brick('hero', [
+            self::brick('profile-hero', [
                 'title' => ['sk' => 'Dominik Klimek', 'en' => 'Dominik Klimek', 'cs' => 'Dominik Klimek'],
                 'subtitle' => ['sk' => 'Majster sveta v street workoute · Master tréner · Zakladateľ BCZ Club', 'en' => 'World Champion in street workout · Master coach · Founder of BCZ Club', 'cs' => 'Mistr světa ve street workoutu · Master trenér · Zakladatel BCZ Club'],
+                'badge' => ['sk' => 'ZAKLADATEĽ & CEO', 'en' => 'FOUNDER & CEO', 'cs' => 'ZAKLADATEL & CEO'],
+                'background_image' => self::media('hero-bg'),
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'Domov', 'en' => 'Home', 'cs' => 'Domů'], 'url' => '/'],
+                    ['text' => ['sk' => 'O nás', 'en' => 'About', 'cs' => 'O nás'], 'url' => '/o-nas'],
+                    ['text' => ['sk' => 'Dominik Klimek', 'en' => 'Dominik Klimek', 'cs' => 'Dominik Klimek']],
+                ],
             ]),
             self::brick('stats', [
                 'items' => [
@@ -541,20 +599,28 @@ class PageSeeder extends Seeder
                     ['number' => '30+', 'label' => ['sk' => 'Krajiny', 'en' => 'Countries', 'cs' => 'Země']],
                 ],
             ]),
-            self::brick('rich-text', [
-                'content' => ['sk' => '<h2>OD DETÍNSKYCH SNOV K TITULU MAJSTRA SVETA</h2><p>Od detstva som hľadal svoju cestu cez futbal, volejbal, parkour, klavír aj šachovú ligu. Nič ma však nenaplnilo tak ako street workout, ktorý som objavil, keď som uvidel chlapa robiť variace na hrázdach na ihrisku. Behom niekoľkých mesiacov som zvládol zadnú páku a vedel som — toto je to.</p><p>V roku 2019 som súťažil prvýkrát na majstrovstvách v Žiline a nepostúpil som ani z kvalifikácie. O tri roky neskôr som však stál na najvyššom stupienku na Majstrovstvách sveta v Rige ako majster sveta v strednej váhovej kategórii.</p>', 'en' => '<h2>FROM CHILDHOOD DREAMS TO WORLD CHAMPION TITLE</h2><p>Since childhood I searched for my path through football, volleyball, parkour, piano and chess league. Nothing fulfilled me like street workout, which I discovered when I saw a guy doing variations on bars at a playground. Within a few months I mastered the back lever and I knew — this is it.</p><p>In 2019 I competed for the first time at the championship in Žilina and didn\'t even advance from the qualifications. Three years later, however, I stood on the highest podium at the World Championship in Riga as the world champion in the middleweight category.</p>', 'cs' => '<h2>OD DĚTSKÝCH SNŮ K TITULU MISTRA SVĚTA</h2><p>Od dětství jsem hledal svou cestu přes fotbal, volejbal, parkour, klavír i šachovou ligu. Nic mě však nenaplnilo tak jako street workout, který jsem objevil, když jsem uviděl chlapa dělat variace na hrazdách na hřišti. Během několika měsíců jsem zvládl zadní páku a věděl jsem — tohle je to.</p><p>V roce 2019 jsem soutěžil poprvé na mistrovství v Žilině a nepostoupil jsem ani z kvalifikace. O tři roky později jsem však stál na nejvyšším stupínku na Mistrovství světa v Rize jako mistr světa ve střední váhové kategorii.</p>'],
+            self::brick('profile-bio', [
+                'label' => ['sk' => 'MÔJ PRÍBEH', 'en' => 'MY STORY', 'cs' => 'MŮJ PŘÍBĚH'],
+                'title' => ['sk' => "OD DETÍNSKYCH\nSNOV K TITULU\nMAJSTRA SVETA", 'en' => "FROM CHILDHOOD\nDREAMS TO WORLD\nCHAMPION TITLE", 'cs' => "OD DĚTSKÝCH\nSNŮ K TITULU\nMISTRA SVĚTA"],
+                'text' => ['sk' => '<p>Od detstva som hľadal svoju cestu cez futbal, volejbal, parkour, klavír aj šachovú ligu. Nič ma však nenaplnilo tak ako street workout, ktorý som objavil, keď som uvidel chlapa robiť variace na hrázdach na ihrisku. Behom niekoľkých mesiacov som zvládol zadnú páku a vedel som — toto je to.</p><p>V roku 2019 som súťažil prvýkrát na majstrovstvách v Žiline a nepostúpil som ani z kvalifikácie. O tri roky neskôr som však stál na najvyššom stupienku na Majstrovstvách sveta v Rige ako majster sveta v strednej váhovej kategórii.</p>', 'en' => '<p>Since childhood I searched for my path through football, volleyball, parkour, piano and chess league. Nothing fulfilled me like street workout, which I discovered when I saw a guy doing variations on bars at a playground. Within a few months I mastered the back lever and I knew — this is it.</p><p>In 2019 I competed for the first time at the championship in Žilina and didn\'t even advance from the qualifications. Three years later, however, I stood on the highest podium at the World Championship in Riga as the world champion in the middleweight category.</p>', 'cs' => '<p>Od dětství jsem hledal svou cestu přes fotbal, volejbal, parkour, klavír i šachovou ligu. Nic mě však nenaplnilo tak jako street workout, který jsem objevil, když jsem uviděl chlapa dělat variace na hrazdách na hřišti. Během několika měsíců jsem zvládl zadní páku a věděl jsem — tohle je to.</p><p>V roce 2019 jsem soutěžil poprvé na mistrovství v Žilině a nepostoupil jsem ani z kvalifikace. O tři roky později jsem však stál na nejvyšším stupínku na Mistrovství světa v Rize jako mistr světa ve střední váhové kategorii.</p>'],
+                'image' => self::media('founder-img'),
             ]),
-            self::brick('feature-cards', [
+            self::brick('achievement-cards', [
+                'label' => ['sk' => 'VÝSLEDKY', 'en' => 'RESULTS', 'cs' => 'VÝSLEDKY'],
+                'title' => ['sk' => 'ÚSPECHY NA SÚŤAŽIACH', 'en' => 'COMPETITION ACHIEVEMENTS', 'cs' => 'ÚSPĚCHY NA SOUTĚŽÍCH'],
+                'description' => ['sk' => 'Od prvého neúspechu na kvalifikácii až po titul majstra sveta — každá súťaž bola krokom vpred.', 'en' => 'From the first qualification failure to the world championship title — every competition was a step forward.', 'cs' => 'Od prvního neúspěchu na kvalifikaci až po titul mistra světa — každá soutěž byla krokem vpřed.'],
                 'cards' => [
-                    ['title' => ['sk' => '2022 — Majster sveta', 'en' => '2022 — World Champion', 'cs' => '2022 — Mistr světa'], 'description' => ['sk' => 'WSWCF World Championship, Riga, Lotyšsko. Stredná váha (68-80 kg) — 1. MIESTO', 'en' => 'WSWCF World Championship, Riga, Latvia. Middleweight (68-80 kg) — 1st PLACE', 'cs' => 'WSWCF World Championship, Riga, Lotyšsko. Střední váha (68-80 kg) — 1. MÍSTO']],
-                    ['title' => ['sk' => '2020–2022 — 3x Majster SR', 'en' => '2020–2022 — 3x Slovak Champion', 'cs' => '2020–2022 — 3x Mistr SR'], 'description' => ['sk' => 'Tri po sebe idúce tituly majstra Slovenska — ZLATO', 'en' => 'Three consecutive Slovak championship titles — GOLD', 'cs' => 'Tři po sobě jdoucí tituly mistra Slovenska — ZLATO']],
-                    ['title' => ['sk' => '2021 — MS Moskva', 'en' => '2021 — WC Moscow', 'cs' => '2021 — MS Moskva'], 'description' => ['sk' => 'Majstrovstvá sveta, Moskva, Rusko. Kvalifikácia 8. / Finále 7. — TOP 10', 'en' => 'World Championship, Moscow, Russia. Qualification 8th / Final 7th — TOP 10', 'cs' => 'Mistrovství světa, Moskva, Rusko. Kvalifikace 8. / Finále 7. — TOP 10']],
-                    ['title' => ['sk' => '2019 — Vicemajster SR', 'en' => '2019 — Slovak Vice-Champion', 'cs' => '2019 — Vicemistr SR'], 'description' => ['sk' => 'Majstrovstvá Slovenska, Trenčín. 2. miesto — STRIEBRO', 'en' => 'Slovak Championship, Trenčín. 2nd place — SILVER', 'cs' => 'Mistrovství Slovenska, Trenčín. 2. místo — STŘÍBRO']],
-                    ['title' => ['sk' => '2019 — SW Games Brno', 'en' => '2019 — SW Games Brno', 'cs' => '2019 — SW Games Brno'], 'description' => ['sk' => 'Street Workout Games, Brno, Česko. Víťaz — 1. MIESTO', 'en' => 'Street Workout Games, Brno, Czechia. Winner — 1st PLACE', 'cs' => 'Street Workout Games, Brno, Česko. Vítěz — 1. MÍSTO']],
-                    ['title' => ['sk' => '2022 — Svetový pohár', 'en' => '2022 — World Cup', 'cs' => '2022 — Světový pohár'], 'description' => ['sk' => 'WSWCF World Cup, Jurmala, Lotyšsko. Striebro — STRIEBRO', 'en' => 'WSWCF World Cup, Jurmala, Latvia. Silver — SILVER', 'cs' => 'WSWCF World Cup, Jurmala, Lotyšsko. Stříbro — STŘÍBRO']],
+                    ['year' => '2022', 'badge_type' => 'gold', 'title' => ['sk' => 'Majster sveta', 'en' => 'World Champion', 'cs' => 'Mistr světa'], 'description' => ['sk' => 'WSWCF World Championship<br>Riga, Lotyšsko<br>Stredná váha (68-80 kg)', 'en' => 'WSWCF World Championship<br>Riga, Latvia<br>Middleweight (68-80 kg)', 'cs' => 'WSWCF World Championship<br>Riga, Lotyšsko<br>Střední váha (68-80 kg)'], 'badge_text' => ['sk' => '1. MIESTO', 'en' => '1st PLACE', 'cs' => '1. MÍSTO']],
+                    ['year' => '2020–2022', 'badge_type' => 'gold', 'title' => ['sk' => '3x Majster SR', 'en' => '3x Slovak Champion', 'cs' => '3x Mistr SR'], 'description' => ['sk' => 'Majstrovstvá Slovenska<br>v street workoute<br>Tri po sebe idúce tituly', 'en' => 'Slovak Championship<br>in street workout<br>Three consecutive titles', 'cs' => 'Mistrovství Slovenska<br>ve street workoutu<br>Tři po sobě jdoucí tituly'], 'badge_text' => ['sk' => 'ZLATO', 'en' => 'GOLD', 'cs' => 'ZLATO']],
+                    ['year' => '2021', 'badge_type' => 'top10', 'title' => ['sk' => 'MS Moskva', 'en' => 'WC Moscow', 'cs' => 'MS Moskva'], 'description' => ['sk' => 'Majstrovstvá sveta<br>Moskva, Rusko<br>Kvalifikácia 8. / Finále 7.', 'en' => 'World Championship<br>Moscow, Russia<br>Qualification 8th / Final 7th', 'cs' => 'Mistrovství světa<br>Moskva, Rusko<br>Kvalifikace 8. / Finále 7.'], 'badge_text' => ['sk' => 'TOP 10', 'en' => 'TOP 10', 'cs' => 'TOP 10']],
+                    ['year' => '2019', 'badge_type' => 'silver', 'title' => ['sk' => 'Vicemajster SR', 'en' => 'Slovak Vice-Champion', 'cs' => 'Vicemistr SR'], 'description' => ['sk' => 'Majstrovstvá Slovenska<br>Trenčín<br>2. miesto', 'en' => 'Slovak Championship<br>Trenčín<br>2nd place', 'cs' => 'Mistrovství Slovenska<br>Trenčín<br>2. místo'], 'badge_text' => ['sk' => 'STRIEBRO', 'en' => 'SILVER', 'cs' => 'STŘÍBRO']],
+                    ['year' => '2019', 'badge_type' => 'gold', 'title' => ['sk' => 'SW Games Brno', 'en' => 'SW Games Brno', 'cs' => 'SW Games Brno'], 'description' => ['sk' => 'Street Workout Games<br>Brno, Česko<br>Víťaz', 'en' => 'Street Workout Games<br>Brno, Czechia<br>Winner', 'cs' => 'Street Workout Games<br>Brno, Česko<br>Vítěz'], 'badge_text' => ['sk' => '1. MIESTO', 'en' => '1st PLACE', 'cs' => '1. MÍSTO']],
+                    ['year' => '2022', 'badge_type' => 'silver', 'title' => ['sk' => 'Svetový pohár', 'en' => 'World Cup', 'cs' => 'Světový pohár'], 'description' => ['sk' => 'WSWCF World Cup<br>Jurmala, Lotyšsko<br>Striebro', 'en' => 'WSWCF World Cup<br>Jurmala, Latvia<br>Silver', 'cs' => 'WSWCF World Cup<br>Jurmala, Lotyšsko<br>Stříbro'], 'badge_text' => ['sk' => 'STRIEBRO', 'en' => 'SILVER', 'cs' => 'STŘÍBRO']],
                 ],
             ]),
-            self::brick('timeline', [
+            self::brick('vertical-timeline', [
+                'label' => ['sk' => 'CESTA', 'en' => 'JOURNEY', 'cs' => 'CESTA'],
+                'title' => ['sk' => 'MOJA CESTA', 'en' => 'MY JOURNEY', 'cs' => 'MOJE CESTA'],
                 'items' => [
                     ['year' => '2017', 'title' => ['sk' => 'Objav street workoute', 'en' => 'Discovering Street Workout', 'cs' => 'Objev street workoutu'], 'description' => ['sk' => 'Prvý kontakt s kalistenikou na ihrisku. Začiatok samoukého tréningu a nekončiace sa hodiny na hrázdach.', 'en' => 'First contact with calisthenics at a playground. Beginning of self-taught training and endless hours on bars.', 'cs' => 'První kontakt s kalistenikou na hřišti. Začátek samoukého tréninku a nekončící hodiny na hrazdách.']],
                     ['year' => '2019', 'title' => ['sk' => 'Prvé súťaže a vicemajster SR', 'en' => 'First Competitions and Slovak Vice-Champion', 'cs' => 'První soutěže a vicemistr SR'], 'description' => ['sk' => 'Prvá účasť na majstrovstvách SR v Žiline, nepostúpil z kvalifikácie. O niekoľko mesiacov neskôr už 2. miesto na SR v Trenčíne. Víťazstvo na SW Games Brno.', 'en' => 'First participation at the Slovak championship in Žilina, didn\'t advance from qualification. A few months later already 2nd place at the Slovak championship in Trenčín. Victory at SW Games Brno.', 'cs' => 'První účast na mistrovství SR v Žilině, nepostoupil z kvalifikace. O několik měsíců později již 2. místo na SR v Trenčíně. Vítězství na SW Games Brno.']],
@@ -563,17 +629,30 @@ class PageSeeder extends Seeder
                     ['year' => '2024', 'title' => ['sk' => 'Medzinárodný tréner a porotca', 'en' => 'International Coach and Judge', 'cs' => 'Mezinárodní trenér a porotce'], 'description' => ['sk' => 'Prestávka od súťaženia. Zameranie na koučšing, medzinárodné workshopy (Hong Kong, Uzbekistan, Švajčiarsko) a porotcovanie na MS v Hong Kongu.', 'en' => 'Break from competing. Focus on coaching, international workshops (Hong Kong, Uzbekistan, Switzerland) and judging at the WC in Hong Kong.', 'cs' => 'Přestávka od soutěžení. Zaměření na koučink, mezinárodní workshopy (Hong Kong, Uzbekistán, Švýcarsko) a porotcování na MS v Hong Kongu.']],
                 ],
             ]),
-            self::brick('quote', [
+            self::brick('profile-section', [
+                'label' => ['sk' => 'MENTOR & TRÉNER', 'en' => 'MENTOR & COACH', 'cs' => 'MENTOR & TRENÉR'],
+                'title' => ['sk' => "INŠPIRÁCIA\nPRE MLADÚ\nGENERÁCIU", 'en' => "INSPIRATION\nFOR THE YOUNG\nGENERATION", 'cs' => "INSPIRACE\nPRO MLADOU\nGENERACI"],
+                'text' => ['sk' => 'Viac než súťažením sa Dominik venuje práci s mládežou. Spolu s kolegami chodí po školách, kde učí deti o stanovení cieľov, vytrvalosti a dôležitosti pohybu. Jeho cieľom je ukázať mladým ľuďom, že disciplína a tvrdá práca dokážu zmeniť životy.', 'en' => 'More than competing, Dominik dedicates his time to working with youth. Together with colleagues, he visits schools where he teaches children about goal setting, perseverance and the importance of movement. His goal is to show young people that discipline and hard work can change lives.', 'cs' => 'Více než soutěžením se Dominik věnuje práci s mládeží. Spolu s kolegy chodí po školách, kde učí děti o stanovení cílů, vytrvalosti a důležitosti pohybu. Jeho cílem je ukázat mladým lidem, že disciplína a tvrdá práce dokážou změnit životy.'],
+                'text2' => ['sk' => 'Ako jediný certifikovaný master tréner kalisteniky na Slovensku viedol medzinárodné workshopy po celom svete — od Hong Kongu cez Uzbekistan až po Švajčiarsko.', 'en' => 'As the only certified master calisthenics coach in Slovakia, he has led international workshops around the world — from Hong Kong through Uzbekistan to Switzerland.', 'cs' => 'Jako jediný certifikovaný master trenér kalisteniky na Slovensku vedl mezinárodní workshopy po celém světě — od Hong Kongu přes Uzbekistán až po Švýcarsko.'],
+                'image' => self::media('founder-img'),
+            ]),
+            self::brick('styled-quote', [
                 'quote' => ['sk' => 'Chcem pomáhať rozvíjať street workout na Slovensku aj vo svete a zároveň inšpirovať ostatných, aby nasledovali svoje sny.', 'en' => 'I want to help develop street workout in Slovakia and around the world while inspiring others to follow their dreams.', 'cs' => 'Chci pomáhat rozvíjet street workout na Slovensku i ve světě a zároveň inspirovat ostatní, aby následovali své sny.'],
                 'attribution' => ['sk' => 'Dominik Klimek', 'en' => 'Dominik Klimek', 'cs' => 'Dominik Klimek'],
             ]),
-            self::brick('cta', [
-                'title' => ['sk' => 'Sledujte Dominika', 'en' => 'Follow Dominik', 'cs' => 'Sledujte Dominika'],
-                'description' => ['sk' => '@dodoworkout na Instagrame, YouTube a TikToku', 'en' => '@dodoworkout on Instagram, YouTube and TikTok', 'cs' => '@dodoworkout na Instagramu, YouTube a TikToku'],
-                'button_text' => ['sk' => 'Kontaktovať', 'en' => 'Contact', 'cs' => 'Kontaktovat'],
-                'button_link_type' => 'page',
-                'button_link_model_id' => self::pageId('contact'),
-                'background_color' => '#1f2937',
+            self::brick('social-links', [
+                'label' => ['sk' => 'KONTAKT & SOCIÁLNE SIETE', 'en' => 'CONTACT & SOCIAL MEDIA', 'cs' => 'KONTAKT & SOCIÁLNÍ SÍTĚ'],
+                'title' => ['sk' => 'SPOJ SA S DOMINIKOM', 'en' => 'CONNECT WITH DOMINIK', 'cs' => 'SPOJ SE S DOMINIKEM'],
+                'description' => ['sk' => 'Sleduj Dominika na sociálnych sieťach, navštív jeho osobnú stránku alebo ho kontaktuj priamo.', 'en' => 'Follow Dominik on social media, visit his personal website or contact him directly.', 'cs' => 'Sleduj Dominika na sociálních sítích, navštiv jeho osobní stránku nebo ho kontaktuj přímo.'],
+                'socials' => [
+                    ['platform' => 'website', 'url' => 'https://dodoworkout.com', 'name' => ['sk' => 'Osobná stránka', 'en' => 'Personal Website', 'cs' => 'Osobní stránka'], 'handle' => ['sk' => 'dodoworkout.com', 'en' => 'dodoworkout.com', 'cs' => 'dodoworkout.com']],
+                    ['platform' => 'instagram', 'url' => 'https://instagram.com/dodoworkout', 'name' => ['sk' => 'Instagram', 'en' => 'Instagram', 'cs' => 'Instagram'], 'handle' => ['sk' => '@dodoworkout', 'en' => '@dodoworkout', 'cs' => '@dodoworkout']],
+                    ['platform' => 'youtube', 'url' => 'https://youtube.com/@dodoworkout', 'name' => ['sk' => 'YouTube', 'en' => 'YouTube', 'cs' => 'YouTube'], 'handle' => ['sk' => '@dodoworkout', 'en' => '@dodoworkout', 'cs' => '@dodoworkout']],
+                    ['platform' => 'tiktok', 'url' => 'https://tiktok.com/@dodoworkout_sk', 'name' => ['sk' => 'TikTok', 'en' => 'TikTok', 'cs' => 'TikTok'], 'handle' => ['sk' => '@dodoworkout_sk', 'en' => '@dodoworkout_sk', 'cs' => '@dodoworkout_sk']],
+                    ['platform' => 'facebook', 'url' => 'https://facebook.com/dominikklimek', 'name' => ['sk' => 'Facebook', 'en' => 'Facebook', 'cs' => 'Facebook'], 'handle' => ['sk' => 'Dominik Klimek', 'en' => 'Dominik Klimek', 'cs' => 'Dominik Klimek']],
+                ],
+                'email' => ['sk' => 'info@dodoworkout.com', 'en' => 'info@dodoworkout.com', 'cs' => 'info@dodoworkout.com'],
+                'phone' => ['sk' => '+421 950 451 310', 'en' => '+421 950 451 310', 'cs' => '+421 950 451 310'],
             ]),
         ];
     }
@@ -581,43 +660,149 @@ class PageSeeder extends Seeder
     private static function taxDonationContent(): array
     {
         return [
-            self::brick('hero', [
+            self::brick('centered-hero', [
+                'badge' => ['sk' => '2% Z DANE', 'en' => '2% TAX', 'cs' => '2% Z DANÍ'],
                 'title' => ['sk' => 'Darujte nám 2% z dane', 'en' => 'Donate 2% of Your Tax to Us', 'cs' => 'Darujte nám 2% z daní'],
-                'subtitle' => ['sk' => 'Ak sa vám páči naša činnosť a ciele, môžete nás podporiť darovaním 2% z vašej dane. Nestojí vás to nič navyše — tieto peniaze by inak išli štátu.', 'en' => 'If you like our activities and goals, you can support us by donating 2% of your tax. It costs you nothing extra — this money would otherwise go to the state.', 'cs' => 'Pokud se vám líbí naše činnost a cíle, můžete nás podpořit darováním 2% z vaší daně. Nestojí vás to nic navíc — tyto peníze by jinak šly státu.'],
+                'subtitle' => ['sk' => 'Ak sa vám páči naša činnosť a ciele, môžete nás podporiť darovaním 2% z vašej dane. Nestojí vás to nič navyše - tieto peniaze by inak išli štátu.', 'en' => 'If you like our activities and goals, you can support us by donating 2% of your tax. It costs you nothing extra — this money would otherwise go to the state.', 'cs' => 'Pokud se vám líbí naše činnost a cíle, můžete nás podpořit darováním 2% z vaší daně. Nestojí vás to nic navíc — tyto peníze by jinak šly státu.'],
+                'highlight' => ['sk' => 'Vaše 2% pomáhajú rozvíjať parkour, street workout a calisthenics komunitu na Slovensku', 'en' => 'Your 2% helps develop the parkour, street workout and calisthenics community in Slovakia', 'cs' => 'Vaše 2% pomáhají rozvíjet parkour, street workout a calisthenics komunitu na Slovensku'],
             ]),
-            self::brick('table', [
-                'headers' => [
-                    ['label' => ['sk' => 'Údaj', 'en' => 'Detail', 'cs' => 'Údaj']],
-                    ['label' => ['sk' => 'Hodnota', 'en' => 'Value', 'cs' => 'Hodnota']],
+            self::brick('video-section', [
+                'title' => ['sk' => 'Spoznajte našu komunitu', 'en' => 'Meet Our Community', 'cs' => 'Poznejte naši komunitu'],
+                'subtitle' => ['sk' => 'Pozrite si krátke video o tom, čo robíme a ako pomáhame mladým ľuďom rozvíjať sa cez pohyb', 'en' => 'Watch a short video about what we do and how we help young people develop through movement', 'cs' => 'Podívejte se na krátké video o tom, co děláme a jak pomáháme mladým lidem rozvíjet se přes pohyb'],
+                'checkpoints' => [
+                    ['text' => ['sk' => 'Trénujeme deti, mládež aj dospelých', 'en' => 'We train children, youth and adults', 'cs' => 'Trénujeme děti, mládež i dospělé']],
+                    ['text' => ['sk' => 'Organizujeme súťaže a workshopy', 'en' => 'We organize competitions and workshops', 'cs' => 'Organizujeme soutěže a workshopy']],
+                    ['text' => ['sk' => 'Budujeme silnú komunitu pohybu', 'en' => 'We build a strong movement community', 'cs' => 'Budujeme silnou komunitu pohybu']],
                 ],
+            ]),
+            self::brick('details-card', [
+                'title' => ['sk' => 'Údaje organizácie', 'en' => 'Organization Details', 'cs' => 'Údaje organizace'],
+                'subtitle' => ['sk' => 'Tieto údaje potrebujete vyplniť do formulára alebo daňového priznania', 'en' => 'You need these details for the form or tax return', 'cs' => 'Tyto údaje potřebujete vyplnit do formuláře nebo daňového přiznání'],
                 'rows' => [
-                    ['cells' => [['value' => ['sk' => 'Obchodné meno', 'en' => 'Organization Name', 'cs' => 'Obchodní jméno']], ['value' => ['sk' => 'BCZ Club, občianske združenie', 'en' => 'BCZ Club, civic association', 'cs' => 'BCZ Club, občanské sdružení']]]],
-                    ['cells' => [['value' => ['sk' => 'Sídlo', 'en' => 'Registered Office', 'cs' => 'Sídlo']], ['value' => ['sk' => 'Palárikova 123, 022 01 Čadca', 'en' => 'Palárikova 123, 022 01 Čadca', 'cs' => 'Palárikova 123, 022 01 Čadca']]]],
-                    ['cells' => [['value' => ['sk' => 'IČO', 'en' => 'ID Number', 'cs' => 'IČO']], ['value' => ['sk' => '52 841 235', 'en' => '52 841 235', 'cs' => '52 841 235']]]],
-                    ['cells' => [['value' => ['sk' => 'Právna forma', 'en' => 'Legal Form', 'cs' => 'Právní forma']], ['value' => ['sk' => 'Občianske združenie', 'en' => 'Civic Association', 'cs' => 'Občanské sdružení']]]],
+                    ['label' => ['sk' => 'Obchodné meno (názov)', 'en' => 'Organization Name', 'cs' => 'Obchodní jméno (název)'], 'value' => ['sk' => 'BCZ Club, občianske združenie', 'en' => 'BCZ Club, civic association', 'cs' => 'BCZ Club, občanské sdružení']],
+                    ['label' => ['sk' => 'Sídlo', 'en' => 'Registered Office', 'cs' => 'Sídlo'], 'value' => ['sk' => 'Palárikova 123, 022 01 Čadca', 'en' => 'Palárikova 123, 022 01 Čadca', 'cs' => 'Palárikova 123, 022 01 Čadca']],
+                    ['label' => ['sk' => 'IČO', 'en' => 'ID Number', 'cs' => 'IČO'], 'value' => ['sk' => '52 841 235', 'en' => '52 841 235', 'cs' => '52 841 235'], 'highlight' => true],
+                    ['label' => ['sk' => 'Právna forma', 'en' => 'Legal Form', 'cs' => 'Právní forma'], 'value' => ['sk' => 'Občianske združenie', 'en' => 'Civic Association', 'cs' => 'Občanské sdružení']],
+                    ['label' => ['sk' => 'Rok', 'en' => 'Year', 'cs' => 'Rok'], 'value' => ['sk' => '2025', 'en' => '2025', 'cs' => '2025']],
                 ],
+                'show_copy_button' => true,
             ]),
-            self::brick('feature-cards', [
+            self::brick('guide-cards', [
+                'title' => ['sk' => 'Ako darovať 2% z dane?', 'en' => 'How to Donate 2% of Your Tax?', 'cs' => 'Jak darovat 2% z daní?'],
+                'subtitle' => ['sk' => 'Vyberte si postup podľa toho, či ste zamestnanec, SZČO alebo právnická osoba', 'en' => 'Choose the procedure based on whether you are an employee, self-employed or a legal entity', 'cs' => 'Vyberte si postup podle toho, zda jste zaměstnanec, OSVČ nebo právnická osoba'],
                 'cards' => [
-                    ['icon' => 'heroicon-o-briefcase', 'title' => ['sk' => 'Zamestnanci', 'en' => 'Employees', 'cs' => 'Zaměstnanci'], 'description' => ['sk' => '1. Požiadajte zamestnávateľa o Potvrdenie o zaplatení dane. 2. Vyplňte Vyhlásenie o poukázaní 2% dane. 3. Obe tlačivá doručte na daňový úrad do 30. apríla.', 'en' => '1. Ask your employer for a Tax Payment Confirmation. 2. Fill out the Declaration for 2% tax allocation. 3. Submit both forms to the tax office by April 30.', 'cs' => '1. Požádejte zaměstnavatele o Potvrzení o zaplacení daně. 2. Vyplňte Prohlášení o poukázání 2% daně. 3. Oba formuláře doručte na finanční úřad do 30. dubna.']],
-                    ['icon' => 'heroicon-o-user', 'title' => ['sk' => 'Fyzické osoby / SZČO', 'en' => 'Individuals / Self-employed', 'cs' => 'Fyzické osoby / OSVČ'], 'description' => ['sk' => '1. V daňovom priznaní vyplňte oddiel na 2%. 2. Uveďte naše IČO a názov. 3. Podajte do 31. marca.', 'en' => '1. Fill in the 2% section in your tax return. 2. Enter our ID number and name. 3. Submit by March 31.', 'cs' => '1. V daňovém přiznání vyplňte oddíl na 2%. 2. Uveďte naše IČO a název. 3. Podejte do 31. března.']],
-                    ['icon' => 'heroicon-o-building-office-2', 'title' => ['sk' => 'Právnické osoby', 'en' => 'Legal Entities', 'cs' => 'Právnické osoby'], 'description' => ['sk' => '1. V priznaní PO vyplňte príslušnú časť. 2. Môžete uviesť aj viacerých prijímateľov. 3. Termín: 31. marca (resp. v predĺženej lehote).', 'en' => '1. Fill in the relevant section in your corporate tax return. 2. You can list multiple recipients. 3. Deadline: March 31 (or extended deadline).', 'cs' => '1. V přiznání PO vyplňte příslušnou část. 2. Můžete uvést i více příjemců. 3. Termín: 31. března (resp. v prodloužené lhůtě).']],
+                    [
+                        'color' => '#3B82F6',
+                        'icon' => 'heroicon-o-briefcase',
+                        'title' => ['sk' => 'Zamestnanci', 'en' => 'Employees', 'cs' => 'Zaměstnanci'],
+                        'subtitle' => ['sk' => 'Ak vám zamestnávateľ robí ročné zúčtovanie dane', 'en' => 'If your employer does your annual tax settlement', 'cs' => 'Pokud vám zaměstnavatel dělá roční zúčtování daně'],
+                        'steps' => [
+                            ['text' => ['sk' => 'Požiadajte zamestnávateľa o Potvrdenie o zaplatení dane', 'en' => 'Ask your employer for a Tax Payment Confirmation', 'cs' => 'Požádejte zaměstnavatele o Potvrzení o zaplacení daně']],
+                            ['text' => ['sk' => 'Vyplňte Vyhlásenie o poukázaní 2% dane', 'en' => 'Fill out the Declaration for 2% tax allocation', 'cs' => 'Vyplňte Prohlášení o poukázání 2% daně']],
+                            ['text' => ['sk' => 'Obe tlačivá doručte na daňový úrad do 30. apríla', 'en' => 'Submit both forms to the tax office by April 30', 'cs' => 'Oba formuláře doručte na finanční úřad do 30. dubna']],
+                        ],
+                        'button_text' => ['sk' => 'Stiahnuť Vyhlásenie', 'en' => 'Download Declaration', 'cs' => 'Stáhnout Prohlášení'],
+                        'button_link_type' => 'custom',
+                        'button_link_url' => ['sk' => '#', 'en' => '#', 'cs' => '#'],
+                    ],
+                    [
+                        'color' => '#22C55E',
+                        'icon' => 'heroicon-o-clipboard-document-list',
+                        'title' => ['sk' => 'Fyzické osoby (SZČO)', 'en' => 'Individuals (Self-employed)', 'cs' => 'Fyzické osoby (OSVČ)'],
+                        'subtitle' => ['sk' => 'Ak si podávate daňové priznanie sami', 'en' => 'If you file your tax return yourself', 'cs' => 'Pokud si podáváte daňové přiznání sami'],
+                        'steps' => [
+                            ['text' => ['sk' => 'V daňovom priznaní (typ A alebo B) vyplňte oddiel na poukázanie 2%', 'en' => 'In your tax return (type A or B) fill in the 2% allocation section', 'cs' => 'V daňovém přiznání (typ A nebo B) vyplňte oddíl na poukázání 2%']],
+                            ['text' => ['sk' => 'Uveďte naše IČO a názov organizácie', 'en' => 'Enter our ID number and organization name', 'cs' => 'Uveďte naše IČO a název organizace']],
+                            ['text' => ['sk' => 'Podajte daňové priznanie do 31. marca', 'en' => 'Submit your tax return by March 31', 'cs' => 'Podejte daňové přiznání do 31. března']],
+                        ],
+                        'button_text' => ['sk' => 'Daňové priznanie typ A / B', 'en' => 'Tax Return Type A / B', 'cs' => 'Daňové přiznání typ A / B'],
+                        'button_link_type' => 'custom',
+                        'button_link_url' => ['sk' => '#', 'en' => '#', 'cs' => '#'],
+                    ],
+                    [
+                        'color' => '#8B5CF6',
+                        'icon' => 'heroicon-o-building-office-2',
+                        'title' => ['sk' => 'Právnické osoby', 'en' => 'Legal Entities', 'cs' => 'Právnické osoby'],
+                        'subtitle' => ['sk' => 'Firmy a spoločnosti môžu darovať 1-2%', 'en' => 'Companies can donate 1-2%', 'cs' => 'Firmy a společnosti mohou darovat 1-2%'],
+                        'steps' => [
+                            ['text' => ['sk' => 'V daňovom priznaní právnickej osoby vyplňte príslušnú časť', 'en' => 'Fill in the relevant section in your corporate tax return', 'cs' => 'V daňovém přiznání právnické osoby vyplňte příslušnou část']],
+                            ['text' => ['sk' => 'Môžete uviesť aj viacerých prijímateľov', 'en' => 'You can list multiple recipients', 'cs' => 'Můžete uvést i více příjemců']],
+                            ['text' => ['sk' => 'Termín podania: 31. marca (resp. v predĺženej lehote)', 'en' => 'Deadline: March 31 (or extended deadline)', 'cs' => 'Termín podání: 31. března (resp. v prodloužené lhůtě)']],
+                        ],
+                        'button_text' => ['sk' => 'Daňové priznanie PO', 'en' => 'Corporate Tax Return', 'cs' => 'Daňové přiznání PO'],
+                        'button_link_type' => 'custom',
+                        'button_link_url' => ['sk' => '#', 'en' => '#', 'cs' => '#'],
+                    ],
                 ],
             ]),
             self::brick('faq', [
                 'heading' => ['sk' => 'Často kladené otázky', 'en' => 'Frequently Asked Questions', 'cs' => 'Často kladené otázky'],
-                'show_all' => true,
-                'faq_ids' => [],
+                'faq_ids' => self::ensureTaxFaqs(),
             ]),
-            self::brick('cta', [
-                'title' => ['sk' => 'Vaše 2% pomáhajú', 'en' => 'Your 2% Makes a Difference', 'cs' => 'Vaše 2% pomáhají'],
-                'description' => ['sk' => 'Pomáhajú rozvíjať parkour, street workout a calisthenics komunitu na Slovensku.', 'en' => 'They help develop the parkour, street workout and calisthenics community in Slovakia.', 'cs' => 'Pomáhají rozvíjet parkour, street workout a calisthenics komunitu na Slovensku.'],
-                'button_text' => ['sk' => 'Podporte nás priamo', 'en' => 'Support Us Directly', 'cs' => 'Podpořte nás přímo'],
-                'button_link_type' => 'page',
-                'button_link_model_id' => self::pageId('support'),
-                'background_color' => '#dc2626',
+            self::brick('icon-cta', [
+                'icon_text' => ['sk' => '2%', 'en' => '2%', 'cs' => '2%'],
+                'title' => ['sk' => 'Ďakujeme za vašu podporu!', 'en' => 'Thank You for Your Support!', 'cs' => 'Děkujeme za vaši podporu!'],
+                'description' => ['sk' => 'Každé 2% pomáhajú. Vďaka vám môžeme ďalej rozvíjať parkour, street workout a calisthenics komunitu na Slovensku.', 'en' => 'Every 2% helps. Thanks to you, we can continue to develop the parkour, street workout and calisthenics community in Slovakia.', 'cs' => 'Každé 2% pomáhají. Díky vám můžeme dál rozvíjet parkour, street workout a calisthenics komunitu na Slovensku.'],
+                'primary_button_text' => ['sk' => 'Stiahnuť tlačivo', 'en' => 'Download Form', 'cs' => 'Stáhnout formulář'],
+                'primary_button_link_type' => 'custom',
+                'primary_button_link_url' => ['sk' => '#', 'en' => '#', 'cs' => '#'],
+                'secondary_button_text' => ['sk' => 'Podporte nás', 'en' => 'Support Us', 'cs' => 'Podpořte nás'],
+                'secondary_button_link_type' => 'page',
+                'secondary_button_link_model_id' => self::pageId('support'),
             ]),
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function ensureTaxFaqs(): array
+    {
+        $maxSort = Faq::query()->max('sort_order') ?? 0;
+        $generalCategoryId = \App\Models\FaqCategory::query()
+            ->whereRaw("title->>'sk' = ?", ['Všeobecné'])
+            ->value('id')
+            ?? \App\Models\FaqCategory::query()->first()?->id
+            ?? \App\Models\FaqCategory::query()->create([
+                'title' => ['sk' => 'Všeobecné', 'en' => 'General', 'cs' => 'Obecné'],
+                'sort_order' => 1,
+            ])->id;
+
+        $questions = [
+            [
+                'question' => ['sk' => 'Koľko ma to bude stáť?', 'en' => 'How much will it cost me?', 'cs' => 'Kolik mě to bude stát?'],
+                'answer' => ['sk' => 'Nič. Tieto 2% by ste aj tak zaplatili štátu ako daň. Rozhodujete len o tom, kam pôjdu.', 'en' => 'Nothing. You would pay these 2% to the state as tax anyway. You only decide where they go.', 'cs' => 'Nic. Těchto 2% byste stejně zaplatili státu jako daň. Rozhodujete jen o tom, kam půjdou.'],
+            ],
+            [
+                'question' => ['sk' => 'Do kedy musím podať vyhlásenie?', 'en' => 'By when do I need to submit the declaration?', 'cs' => 'Do kdy musím podat prohlášení?'],
+                'answer' => ['sk' => 'Zamestnanci do 30. apríla, SZČO a firmy do 31. marca (alebo v predĺženej lehote).', 'en' => 'Employees by April 30, self-employed and companies by March 31 (or extended deadline).', 'cs' => 'Zaměstnanci do 30. dubna, OSVČ a firmy do 31. března (nebo v prodloužené lhůtě).'],
+            ],
+            [
+                'question' => ['sk' => 'Ako zistím, či boli moje 2% poukázané?', 'en' => 'How do I know if my 2% was allocated?', 'cs' => 'Jak zjistím, zda byly moje 2% poukázány?'],
+                'answer' => ['sk' => 'Daňový úrad vás informuje, ak o to požiadate v tlačive. My informácie o darcoch nedostávame.', 'en' => 'The tax office will inform you if you request it in the form. We do not receive information about donors.', 'cs' => 'Finanční úřad vás informuje, pokud o to požádáte ve formuláři. My informace o dárcích nedostáváme.'],
+            ],
+            [
+                'question' => ['sk' => 'Môžem darovať aj viac ako 2%?', 'en' => 'Can I donate more than 2%?', 'cs' => 'Mohu darovat i více než 2%?'],
+                'answer' => ['sk' => 'Áno, môžete nás podporiť aj priamym finančným darom na náš účet. Navštívte stránku Podporte nás.', 'en' => 'Yes, you can also support us with a direct financial donation to our account. Visit the Support Us page.', 'cs' => 'Ano, můžete nás podpořit i přímým finančním darem na náš účet. Navštivte stránku Podpořte nás.'],
+            ],
+        ];
+
+        $ids = [];
+        foreach ($questions as $index => $q) {
+            $faq = Faq::query()->firstOrCreate(
+                ['question->sk' => $q['question']['sk']],
+                [
+                    'question' => $q['question'],
+                    'answer' => $q['answer'],
+                    'faq_category_id' => $generalCategoryId,
+                    'is_published' => true,
+                    'sort_order' => $maxSort + $index + 1,
+                ],
+            );
+            $ids[] = $faq->id;
+        }
+
+        return $ids;
     }
 
     private static function servicesContent(): array
@@ -939,6 +1124,199 @@ class PageSeeder extends Seeder
         ];
     }
 
+    private static function trainingsContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'background_image' => self::media('trainings-hero-bg'),
+                'badge' => ['sk' => 'BEYOND COMFORT ZONE', 'en' => 'BEYOND COMFORT ZONE', 'cs' => 'BEYOND COMFORT ZONE'],
+                'title' => ['sk' => 'TRÉNUJ', 'en' => 'TRAIN', 'cs' => 'TRÉNUJ'],
+                'title_accent' => ['sk' => 'S NAMI', 'en' => 'WITH US', 'cs' => 'S NÁMI'],
+                'subtitle' => ['sk' => 'Profesionálne tréningy parkouru, kalisteniky a street workoutu pre všetky vekové kategórie.', 'en' => 'Professional parkour, calisthenics and street workout training for all age groups.', 'cs' => 'Profesionální tréninky parkouru, kalisteniky a street workoutu pro všechny věkové kategorie.'],
+                'scroll_text' => ['sk' => 'SCROLLUJ PRE VIAC', 'en' => 'SCROLL FOR MORE', 'cs' => 'SCROLLUJ PRO VÍCE'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'TRÉNINGY', 'en' => 'TRAININGS', 'cs' => 'TRÉNINKY'], 'url' => ''],
+                ],
+            ]),
+            self::brick('training-categories', [
+                'label' => ['sk' => 'ČO PONÚKAME', 'en' => 'WHAT WE OFFER', 'cs' => 'CO NABÍZÍME'],
+                'title' => ['sk' => 'TRÉNINGOVÉ KATEGÓRIE', 'en' => 'TRAINING CATEGORIES', 'cs' => 'TRÉNINKOVÉ KATEGORIE'],
+                'subtitle' => ['sk' => 'Vyber si disciplínu, ktorá ťa baví najviac', 'en' => 'Choose the discipline you enjoy the most', 'cs' => 'Vyber si disciplínu, která tě baví nejvíc'],
+                'show_all' => true,
+            ]),
+            self::brick('latest-trainings', [
+                'label' => ['sk' => 'AKTUÁLNE SKUPINY', 'en' => 'CURRENT GROUPS', 'cs' => 'AKTUÁLNÍ SKUPINY'],
+                'title' => ['sk' => 'VYBER SI SVOJU SKUPINU', 'en' => 'CHOOSE YOUR GROUP', 'cs' => 'VYBER SI SVOU SKUPINU'],
+                'subtitle' => ['sk' => 'Skupinové tréningy pre deti aj dospelých s obmedzenou kapacitou', 'en' => 'Group trainings for kids and adults with limited capacity', 'cs' => 'Skupinové tréninky pro děti i dospělé s omezenou kapacitou'],
+                'show_all' => true,
+                'cta_text' => ['sk' => 'ZOBRAZIŤ VŠETKY TRÉNINGY', 'en' => 'VIEW ALL TRAININGS', 'cs' => 'ZOBRAZIT VŠECHNY TRÉNINKY'],
+                'cta_link_type' => 'custom',
+                'cta_link_url' => ['sk' => '/zoznam-treningov', 'en' => '/en/zoznam-treningov', 'cs' => '/cs/zoznam-treningov'],
+            ]),
+            self::brick('person-cards', [
+                'label' => ['sk' => 'UČ SA OD NAJLEPŠÍCH', 'en' => 'LEARN FROM THE BEST', 'cs' => 'UČ SE OD NEJLEPŠÍCH'],
+                'title' => ['sk' => 'NAŠI TRÉNERI', 'en' => 'OUR COACHES', 'cs' => 'NAŠI TRENÉŘI'],
+                'subtitle' => ['sk' => 'Certifikovaní profesionáli s rokmi skúseností', 'en' => 'Certified professionals with years of experience', 'cs' => 'Certifikovaní profesionálové s lety zkušeností'],
+                'people' => [
+                    [
+                        'image' => self::media('trainings-coach1'),
+                        'name' => ['sk' => 'DOMINIK KLIMEK', 'en' => 'DOMINIK KLIMEK', 'cs' => 'DOMINIK KLIMEK'],
+                        'role' => ['sk' => 'Hlavný tréner Parkour & Kalistenika', 'en' => 'Head Coach Parkour & Calisthenics', 'cs' => 'Hlavní trenér Parkour & Kalistenika'],
+                        'description' => ['sk' => '10+ rokov skúseností v parkour a kalistenike. Certifikovaný tréner s medzinárodnými úspechmi na súťažiach.', 'en' => '10+ years of experience in parkour and calisthenics. Certified coach with international competition achievements.', 'cs' => '10+ let zkušeností v parkouru a kalistenice. Certifikovaný trenér s mezinárodními úspěchy na soutěžích.'],
+                        'tags' => ['Parkour Pro', 'Kalistenika L3'],
+                    ],
+                    [
+                        'image' => self::media('trainings-coach2'),
+                        'name' => ['sk' => 'MICHAL ČEČKO', 'en' => 'MICHAL ČEČKO', 'cs' => 'MICHAL ČEČKO'],
+                        'role' => ['sk' => 'Tréner Parkour & Street Workout', 'en' => 'Coach Parkour & Street Workout', 'cs' => 'Trenér Parkour & Street Workout'],
+                        'description' => ['sk' => '8 rokov aktívneho tréningu a 5 rokov skúseností s vedením skupín. Špecializácia na techniku a bezpečný progres.', 'en' => '8 years of active training and 5 years of group coaching experience. Specialization in technique and safe progression.', 'cs' => '8 let aktivního tréninku a 5 let zkušeností s vedením skupin. Specializace na techniku a bezpečný progres.'],
+                        'tags' => ['Freerunning', 'Street Workout'],
+                    ],
+                ],
+                'cta_text' => ['sk' => 'ZOBRAZIŤ VŠETKÝCH TRÉNEROV', 'en' => 'VIEW ALL COACHES', 'cs' => 'ZOBRAZIT VŠECHNY TRENÉRY'],
+                'cta_link_type' => 'page',
+                'cta_link_model_id' => self::pageId('about'),
+            ]),
+            self::brick('cta', [
+                'title' => ['sk' => 'PRIDAJ SA K NÁM', 'en' => 'JOIN US', 'cs' => 'PŘIDEJ SE K NÁM'],
+                'description' => ['sk' => 'Prvá tréningová hodina je zadarmo. Príď si vyskúšať, či je to niečo pre teba.', 'en' => 'The first training session is free. Come try if it is something for you.', 'cs' => 'První tréninková hodina je zdarma. Přijď si vyzkoušet, jestli je to něco pro tebe.'],
+                'button_text' => ['sk' => 'REZERVOVAŤ TRÉNING', 'en' => 'BOOK TRAINING', 'cs' => 'REZERVOVAT TRÉNINK'],
+                'button_link_type' => 'custom',
+                'button_link_url' => ['sk' => '/pridaj-sa', 'en' => '/en/pridaj-sa', 'cs' => '/cs/pridaj-sa'],
+                'secondary_text' => ['sk' => 'KONTAKTUJ NÁS', 'en' => 'CONTACT US', 'cs' => 'KONTAKTUJTE NÁS'],
+                'secondary_link_type' => 'page',
+                'secondary_link_model_id' => self::pageId('contact'),
+                'background_color' => '#0A0A0A',
+            ]),
+        ];
+    }
+
+    private static function trainingsArchiveContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'BEYOND COMFORT ZONE', 'en' => 'BEYOND COMFORT ZONE', 'cs' => 'BEYOND COMFORT ZONE'],
+                'title' => ['sk' => 'ZOZNAM', 'en' => 'TRAINING', 'cs' => 'SEZNAM'],
+                'title_accent' => ['sk' => 'TRÉNINGOV', 'en' => 'LIST', 'cs' => 'TRÉNINKŮ'],
+                'subtitle' => ['sk' => 'Nájdi si tréning, ktorý ti vyhovuje', 'en' => 'Find a training that suits you', 'cs' => 'Najdi si trénink, který ti vyhovuje'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'TRÉNINGY', 'en' => 'TRAININGS', 'cs' => 'TRÉNINKY'], 'url' => ''],
+                ],
+            ]),
+            self::brick('trainings-archive', []),
+        ];
+    }
+
+    private static function competitionsArchiveContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'BEYOND COMFORT ZONE', 'en' => 'BEYOND COMFORT ZONE', 'cs' => 'BEYOND COMFORT ZONE'],
+                'title' => ['sk' => 'SÚŤAŽE', 'en' => 'COMPETITIONS', 'cs' => 'SOUTĚŽE'],
+                'subtitle' => ['sk' => 'Prehľad všetkých súťaží na platforme BCZ', 'en' => 'Overview of all competitions on the BCZ platform', 'cs' => 'Přehled všech soutěží na platformě BCZ'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'SÚŤAŽE', 'en' => 'COMPETITIONS', 'cs' => 'SOUTĚŽE'], 'url' => ''],
+                ],
+            ]),
+            self::brick('competitions-archive', []),
+        ];
+    }
+
+    private static function eventsArchiveContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'PORTFÓLIO', 'en' => 'PORTFOLIO', 'cs' => 'PORTFOLIO'],
+                'title' => ['sk' => 'PODUJATIA', 'en' => 'EVENTS', 'cs' => 'UDÁLOSTI'],
+                'subtitle' => ['sk' => 'Prehľad všetkých našich vystúpení, prednášok a workshopov', 'en' => 'Overview of all our performances, lectures and workshops', 'cs' => 'Přehled všech našich vystoupení, přednášek a workshopů'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'PODUJATIA', 'en' => 'EVENTS', 'cs' => 'UDÁLOSTI'], 'url' => ''],
+                ],
+            ]),
+            self::brick('events-archive', []),
+        ];
+    }
+
+    private static function coachesArchiveContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'NÁŠ TÍM', 'en' => 'OUR TEAM', 'cs' => 'NÁŠ TÝM'],
+                'title' => ['sk' => 'NAŠI', 'en' => 'OUR', 'cs' => 'NAŠI'],
+                'title_accent' => ['sk' => 'TRÉNERI', 'en' => 'COACHES', 'cs' => 'TRENÉŘI'],
+                'subtitle' => ['sk' => 'Zoznámte sa s našimi skúsenými trénermi', 'en' => 'Meet our experienced coaches', 'cs' => 'Seznamte se s našimi zkušenými trenéry'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'TRÉNERI', 'en' => 'COACHES', 'cs' => 'TRENÉŘI'], 'url' => ''],
+                ],
+            ]),
+            self::brick('coaches-archive', []),
+        ];
+    }
+
+    private static function athletesArchiveContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'NAŠI ŠPORTOVCI', 'en' => 'OUR ATHLETES', 'cs' => 'NAŠI SPORTOVCI'],
+                'title' => ['sk' => 'NAŠI', 'en' => 'OUR', 'cs' => 'NAŠI'],
+                'title_accent' => ['sk' => 'ŠPORTOVCI', 'en' => 'ATHLETES', 'cs' => 'SPORTOVCI'],
+                'subtitle' => ['sk' => 'Spoznajte talentovaných atlétov BCZ Club', 'en' => 'Meet the talented athletes of BCZ Club', 'cs' => 'Poznejte talentované atlety BCZ Club'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'ŠPORTOVCI', 'en' => 'ATHLETES', 'cs' => 'SPORTOVCI'], 'url' => ''],
+                ],
+            ]),
+            self::brick('athletes-archive', []),
+        ];
+    }
+
+    private static function judgesArchiveContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'ROZHODCOVIA', 'en' => 'JUDGES', 'cs' => 'ROZHODČÍ'],
+                'title' => ['sk' => 'NAŠI', 'en' => 'OUR', 'cs' => 'NAŠI'],
+                'title_accent' => ['sk' => 'ROZHODCOVIA', 'en' => 'JUDGES', 'cs' => 'ROZHODČÍ'],
+                'subtitle' => ['sk' => 'Certifikovaní rozhodcovia zabezpečujúci férovosť na súťažiach', 'en' => 'Certified judges ensuring fairness at competitions', 'cs' => 'Certifikovaní rozhodčí zajišťující férovost na soutěžích'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'ROZHODCOVIA', 'en' => 'JUDGES', 'cs' => 'ROZHODČÍ'], 'url' => ''],
+                ],
+            ]),
+            self::brick('judges-archive', []),
+        ];
+    }
+
+    private static function teamsArchiveContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'NAŠE TÍMY', 'en' => 'OUR TEAMS', 'cs' => 'NAŠE TÝMY'],
+                'title' => ['sk' => 'NAŠE', 'en' => 'OUR', 'cs' => 'NAŠE'],
+                'title_accent' => ['sk' => 'TÍMY', 'en' => 'TEAMS', 'cs' => 'TÝMY'],
+                'subtitle' => ['sk' => 'Spoznajte tímy BCZ Club pôsobiace v rôznych mestách', 'en' => 'Meet BCZ Club teams operating in various cities', 'cs' => 'Poznejte týmy BCZ Club působící v různých městech'],
+                'breadcrumb' => [
+                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
+                    ['text' => ['sk' => 'TÍMY', 'en' => 'TEAMS', 'cs' => 'TÝMY'], 'url' => ''],
+                ],
+            ]),
+            self::brick('teams-archive', []),
+        ];
+    }
+
     /**
      * Pre-upload all placeholder images needed for brick configs.
      */
@@ -965,6 +1343,14 @@ class PageSeeder extends Seeder
             'person-member2' => ['url' => 'https://picsum.photos/seed/mem2/400/500', 'name' => 'person-member2.jpg'],
             'trainer-1' => ['url' => 'https://picsum.photos/seed/tr1/400/500', 'name' => 'trainer-1.jpg'],
             'trainer-2' => ['url' => 'https://picsum.photos/seed/tr2/400/500', 'name' => 'trainer-2.jpg'],
+
+            // Trainings page
+            'trainings-hero-bg' => ['url' => 'https://picsum.photos/seed/trainings-hero/1920/1080', 'name' => 'trainings-hero-bg.jpg'],
+            'trainings-cat-parkour' => ['url' => 'https://picsum.photos/seed/trainings-pk/800/600', 'name' => 'trainings-cat-parkour.jpg'],
+            'trainings-cat-sw' => ['url' => 'https://picsum.photos/seed/trainings-sw/800/600', 'name' => 'trainings-cat-sw.jpg'],
+            'trainings-private' => ['url' => 'https://picsum.photos/seed/trainings-priv/800/600', 'name' => 'trainings-private.jpg'],
+            'trainings-coach1' => ['url' => 'https://picsum.photos/seed/trainings-c1/600/800', 'name' => 'trainings-coach1.jpg'],
+            'trainings-coach2' => ['url' => 'https://picsum.photos/seed/trainings-c2/600/800', 'name' => 'trainings-coach2.jpg'],
         ];
 
         // Gallery images (about, parkour, street workout)

@@ -15,7 +15,6 @@ class SubscriptionPlanPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
         ]);
@@ -25,7 +24,6 @@ class SubscriptionPlanPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
         ]);

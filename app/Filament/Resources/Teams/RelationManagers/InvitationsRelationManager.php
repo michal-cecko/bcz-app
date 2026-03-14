@@ -4,14 +4,18 @@ namespace App\Filament\Resources\Teams\RelationManagers;
 
 use App\Enums\InvitationStatusEnum;
 use App\Mail\TeamInvitationMail;
+use App\Models\TeamInvitation;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class InvitationsRelationManager extends RelationManager
 {
@@ -32,6 +36,10 @@ class InvitationsRelationManager extends RelationManager
                 TextColumn::make('email')
                     ->label('E-mail')
                     ->searchable(),
+                TextColumn::make('code')
+                    ->label('Kód')
+                    ->copyable()
+                    ->placeholder('-'),
                 TextColumn::make('status')
                     ->label('Stav')
                     ->badge(),
@@ -46,6 +54,62 @@ class InvitationsRelationManager extends RelationManager
                     ->placeholder('-'),
             ])
             ->defaultSort('created_at', 'desc')
+            ->headerActions([
+                Action::make('create')
+                    ->label('Vytvoriť pozvánku')
+                    ->schema([
+                        TextInput::make('email')
+                            ->label('E-mail')
+                            ->email()
+                            ->required(),
+                    ])
+                    ->action(function (array $data): void {
+                        $team = $this->getOwnerRecord();
+                        $email = $data['email'];
+
+                        if ($team->members()->where('email', $email)->exists()) {
+                            Notification::make()
+                                ->title('Tento používateľ je už členom tímu.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $existingInvitation = TeamInvitation::where('team_id', $team->id)
+                            ->where('email', $email)
+                            ->where('status', InvitationStatusEnum::Pending)
+                            ->exists();
+
+                        if ($existingInvitation) {
+                            Notification::make()
+                                ->title('Pozvánka pre tento e-mail už existuje.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $code = strtoupper(Str::random(8));
+
+                        $invitation = TeamInvitation::create([
+                            'team_id' => $team->id,
+                            'email' => $email,
+                            'code' => $code,
+                            'status' => InvitationStatusEnum::Pending,
+                            'invited_by' => Auth::id(),
+                            'expires_at' => now()->addDays(7),
+                        ]);
+
+                        Mail::to($email)->send(new TeamInvitationMail($invitation));
+
+                        Notification::make()
+                            ->title('Pozvánka bola vytvorená a odoslaná.')
+                            ->body("Kód: {$code}")
+                            ->success()
+                            ->send();
+                    }),
+            ])
             ->recordActions([
                 Action::make('resend')
                     ->label('Znovu odoslať')

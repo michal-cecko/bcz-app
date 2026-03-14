@@ -23,11 +23,28 @@ return [
         'skill-cards' => 'Karty zručností',
         'trainers' => 'Tréneri',
         'sport-categories' => 'Športové kategórie',
+        'training-categories' => 'Tréningové kategórie (automatické)',
+        'latest-trainings' => 'Aktuálne tréningy',
         'about-preview' => 'O nás náhľad',
         'founder-spotlight' => 'Zakladateľ',
         'social-cta' => 'Sociálne siete CTA',
         'sponsors' => 'Sponzori',
         'donation-info' => 'Informácie o darovaní',
+        'profile-hero' => 'Profilové Hero',
+        'profile-bio' => 'Profilová biografia',
+        'achievement-cards' => 'Karty úspechov',
+        'vertical-timeline' => 'Vertikálna časová os',
+        'profile-section' => 'Profilová sekcia',
+        'styled-quote' => 'Štýlový citát',
+        'social-links' => 'Sociálne odkazy',
+        'centered-hero' => 'Centrované Hero',
+        'video-section' => 'Video sekcia',
+        'details-card' => 'Karta detailov',
+        'guide-cards' => 'Karty sprievodcu',
+        'icon-cta' => 'CTA s ikonou',
+        'trainings-archive' => 'Archív tréningov',
+        'competitions-archive' => 'Archív súťaží',
+        'events-archive' => 'Archív podujatí',
     ],
 
     // Link picker
@@ -60,6 +77,8 @@ return [
         'category' => 'Kategória',
         'number' => 'Číslo',
         'value' => 'Hodnota',
+        'content' => 'Obsah',
+        'button_text' => 'Text tlačidla',
     ],
 
     // Hero brick
@@ -173,6 +192,38 @@ return [
         'categories' => 'Kategórie',
         'link_text' => 'Text odkazu',
         'link_url' => 'URL odkazu',
+    ],
+
+    // Training categories brick (auto-loaded from DB)
+    'training_categories' => [
+        'show_all' => 'Zobraziť všetky kategórie',
+        'show_all_help' => 'Zobrazí všetky aktívne tréningové kategórie',
+        'categories' => 'Kategórie',
+        'categories_help' => 'Vyberte konkrétne kategórie na zobrazenie',
+        'view_trainings' => 'ZOBRAZIŤ TRÉNINGY',
+    ],
+
+    // Latest trainings brick (auto-loaded from DB)
+    'latest_trainings' => [
+        'show_all' => 'Zobraziť všetky tréningy',
+        'show_all_help' => 'Zobrazí všetky aktívne tréningy tímu',
+        'trainings' => 'Tréningy',
+        'trainings_help' => 'Vyberte konkrétne tréningy na zobrazenie',
+        'day' => 'Deň',
+        'time' => 'Čas',
+        'coach' => 'Tréner',
+        'capacity' => 'Kapacita',
+        'spots' => 'miest',
+        'sign_up' => 'PRIHLÁSIŤ SA',
+        'days' => [
+            'monday' => 'Pondelok',
+            'tuesday' => 'Utorok',
+            'wednesday' => 'Streda',
+            'thursday' => 'Štvrtok',
+            'friday' => 'Piatok',
+            'saturday' => 'Sobota',
+            'sunday' => 'Nedeľa',
+        ],
     ],
 
     // Founder spotlight brick

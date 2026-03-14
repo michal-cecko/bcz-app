@@ -29,7 +29,7 @@ class InquiryReceivedMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'mail.inquiry-received',
+            view: 'emails.inquiry-received',
         );
     }
 }

@@ -65,36 +65,138 @@ class DemoDataSeeder extends Seeder
             'name' => ['sk' => 'Gravity Crew', 'en' => 'Gravity Crew', 'cz' => 'Gravity Crew'],
         ]);
 
+        $folderService = app(MediaLibraryFolderService::class);
+
         $sportCategories = SportCategory::all();
         $sportCategories->each(fn (SportCategory $cat) => $cat->update(['team_id' => $bczTeam->id]));
         $parkour = $sportCategories->firstWhere('slug', 'parkour-freerunning');
         $streetWorkout = $sportCategories->firstWhere('slug', 'street-workout');
 
         // --- Users with roles ---
-        $coaches = User::factory(3)->create()->each(function (User $user) use ($bczTeam) {
+        $coachData = [
+            [
+                'name' => 'Michal Čečko',
+                'email' => 'michal@bczclub.com',
+                'biography' => [
+                    'sk' => '8 rokov aktívneho tréningu a 5 rokov skúseností s vedením skupín. Michal sa špecializuje na výuku techniky a bezpečný progres. Jeho tréningy sú známe skvelou atmosférou a individuálnym prístupom ku každému účastníkovi.',
+                    'en' => '8 years of active training and 5 years of experience leading groups. Michal specializes in technique instruction and safe progression. His trainings are known for their great atmosphere and individual approach to each participant.',
+                ],
+            ],
+            [
+                'name' => 'Dominik Klimek',
+                'email' => 'dominik@bczclub.com',
+                'biography' => [
+                    'sk' => 'Spoluzakladateľ BCZ Club a profesionálny parkour atléta s 10 rokmi skúseností. Dominik vedie pokročilé tréningy a pripravuje atlétov na súťaže. Je držiteľom certifikátu A.D.A.P.T. a pravidelne sa zúčastňuje medzinárodných workshopov.',
+                    'en' => 'Co-founder of BCZ Club and professional parkour athlete with 10 years of experience. Dominik leads advanced trainings and prepares athletes for competitions. He holds the A.D.A.P.T. certificate and regularly participates in international workshops.',
+                ],
+            ],
+            [
+                'name' => 'Tomáš Bartek',
+                'email' => 'tomas@bczclub.com',
+                'biography' => [
+                    'sk' => 'Certifikovaný tréner kalisteniky a street workoutu. Tomáš má za sebou 6 rokov súťažného street workoutu a viacero umiestnení na slovenských a českých súťažiach. Zameriava sa na silový tréning s vlastnou váhou a progresiu k náročným prvkom.',
+                    'en' => 'Certified calisthenics and street workout coach. Tomáš has 6 years of competitive street workout experience and multiple placements at Slovak and Czech competitions. He focuses on bodyweight strength training and progression to advanced elements.',
+                ],
+            ],
+        ];
+
+        $coaches = collect($coachData)->map(function ($data, $index) use ($bczTeam, $folderService) {
+            $user = User::factory()->create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+            ]);
             $user->assignRole(RoleEnum::COACH);
             $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(6, 36))]);
-            CoachProfile::factory()->create(['user_id' => $user->id]);
+
+            $coachFolder = $folderService->ensureUserFolder($user, $bczTeam);
+            $photoItem = MediaLibraryItem::create(['folder_id' => $coachFolder->id]);
+            $photoItem->addMediaFromUrl("https://picsum.photos/seed/coach-{$index}/400/500")
+                ->usingFileName("coach-{$index}.jpg")
+                ->toMediaCollection('library');
+
+            CoachProfile::factory()->create([
+                'user_id' => $user->id,
+                'biography' => $data['biography'],
+                'biography_image' => $photoItem->id,
+            ]);
+
+            return $user;
         });
 
-        $athletes = User::factory(8)->create()->each(function (User $user) use ($bczTeam) {
+        $athletes = User::factory(8)->create()->each(function (User $user, int $index) use ($bczTeam) {
             $user->assignRole(RoleEnum::ATHLETE);
             $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 24))]);
             AthleteProfile::factory()->create(['user_id' => $user->id]);
+
+            // Give first 5 athletes a public profile (approved)
+            if ($index < 5) {
+                $user->update([
+                    'has_public_profile' => true,
+                    'public_profile_approved_at' => now()->subDays(rand(1, 60)),
+                ]);
+            }
         });
 
-        $judges = User::factory(2)->create()->each(function (User $user) use ($bczTeam) {
+        $judgeData = [
+            [
+                'name' => 'Peter Novák',
+                'country_code' => 'SK',
+                'certifications' => [
+                    ['name' => ['sk' => 'WSWCF Level A', 'en' => 'WSWCF Level A'], 'description' => ['sk' => 'Medzinárodná rozhodcovská licencia World Street Workout & Calisthenics Federation', 'en' => 'International judge license from World Street Workout & Calisthenics Federation'], 'year_of_issue' => 2021],
+                    ['name' => ['sk' => 'Hlavný porotca SR', 'en' => 'Head Judge SK'], 'description' => ['sk' => 'Oprávnenie hlavného porotcu pre súťaže na Slovensku', 'en' => 'Head judge authorization for competitions in Slovakia'], 'year_of_issue' => 2023],
+                ],
+            ],
+            [
+                'name' => 'Tomáš Horváth',
+                'country_code' => 'SK',
+                'certifications' => [
+                    ['name' => ['sk' => 'FIG Parkour Judge', 'en' => 'FIG Parkour Judge'], 'description' => ['sk' => 'Medzinárodná rozhodcovská licencia Fédération Internationale de Gymnastique', 'en' => 'International judge license from Fédération Internationale de Gymnastique'], 'year_of_issue' => 2022],
+                ],
+            ],
+            [
+                'name' => 'Marek Kováč',
+                'country_code' => 'CZ',
+                'certifications' => [
+                    ['name' => ['sk' => 'WSWCF Level B', 'en' => 'WSWCF Level B'], 'description' => ['sk' => 'Rozhodcovská licencia World Street Workout & Calisthenics Federation', 'en' => 'Judge license from World Street Workout & Calisthenics Federation'], 'year_of_issue' => 2023],
+                    ['name' => ['sk' => 'Porotca Freestyle', 'en' => 'Freestyle Judge'], 'description' => ['sk' => 'Špecializácia na hodnotenie freestyle disciplín', 'en' => 'Specialization in freestyle discipline judging'], 'year_of_issue' => 2024],
+                ],
+            ],
+            [
+                'name' => 'Jakub Vlček',
+                'country_code' => 'SK',
+                'certifications' => [
+                    ['name' => ['sk' => 'BCZ Certified Judge', 'en' => 'BCZ Certified Judge'], 'description' => ['sk' => 'Interná rozhodcovská certifikácia BCZ Club', 'en' => 'Internal BCZ Club judge certification'], 'year_of_issue' => 2025],
+                ],
+            ],
+        ];
+
+        $judges = collect($judgeData)->map(function ($data) use ($bczTeam) {
+            $user = User::factory()->create([
+                'name' => $data['name'],
+                'country_code' => $data['country_code'],
+            ]);
             $user->assignRole(RoleEnum::JUDGE);
             $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(3, 12))]);
+
+            foreach ($data['certifications'] as $index => $cert) {
+                Certification::factory()->create([
+                    'user_id' => $user->id,
+                    'name' => $cert['name'],
+                    'description' => $cert['description'],
+                    'year_of_issue' => $cert['year_of_issue'],
+                    'sort_order' => $index,
+                ]);
+            }
+
+            return $user;
         });
 
-        $customers = User::factory(5)->create()->each(function (User $user) use ($bczTeam) {
-            $user->assignRole(RoleEnum::CUSTOMER);
+        $members = User::factory(5)->create()->each(function (User $user) use ($bczTeam) {
+            $user->assignRole(RoleEnum::ATHLETE);
             $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
         });
 
         // --- Media Library Folder Structure ---
-        $folderService = app(MediaLibraryFolderService::class);
         $teamFolder = $folderService->ensureTeamFolder($bczTeam);
 
         // Athlete folders inside "Atléti" subfolder
@@ -106,11 +208,6 @@ class DemoDataSeeder extends Seeder
             $item->addMediaFromUrl("https://picsum.photos/seed/athlete-{$index}/400/500")
                 ->usingFileName("profile-{$index}.jpg")
                 ->toMediaCollection('library');
-        });
-
-        // Coach folders
-        $coaches->each(function (User $user) use ($folderService, $bczTeam) {
-            $folderService->ensureUserFolder($user, $bczTeam);
         });
 
         // Upload team logo placeholder
@@ -166,30 +263,232 @@ class DemoDataSeeder extends Seeder
             Certification::factory(rand(0, 2))->create(['user_id' => $athlete->id]);
         });
 
+        // --- Registration form schemas for trainings ---
+        $mandatoryFields = [
+            ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'name' => 'priezvisko', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'full', 'required' => true, 'placeholder' => ['sk' => 'tvoj@email.sk', 'en' => 'your@email.com', 'cs' => 'tvuj@email.cz'], 'has_condition' => false],
+        ];
+
+        $parentFields = [
+            ['label' => ['sk' => 'Meno rodiča', 'en' => 'Parent name', 'cs' => 'Jméno rodiče'], 'name' => 'meno_rodica', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Priezvisko rodiča', 'en' => 'Parent last name', 'cs' => 'Příjmení rodiče'], 'name' => 'priezvisko_rodica', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Email rodiča', 'en' => 'Parent email', 'cs' => 'Email rodiče'], 'name' => 'email_rodica', 'type' => 'email', 'width' => 'full', 'required' => true, 'placeholder' => ['sk' => 'rodic@email.sk', 'en' => 'parent@email.com', 'cs' => 'rodic@email.cz'], 'has_condition' => false],
+            ['label' => ['sk' => 'Meno dieťaťa', 'en' => 'Child name', 'cs' => 'Jméno dítěte'], 'name' => 'meno_dietata', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Priezvisko dieťaťa', 'en' => 'Child last name', 'cs' => 'Příjmení dítěte'], 'name' => 'priezvisko_dietata', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+        ];
+
+        $extraPhone = ['label' => ['sk' => 'Telefón', 'en' => 'Phone', 'cs' => 'Telefon'], 'name' => 'telefon', 'type' => 'phone', 'width' => 'full', 'required' => false, 'placeholder' => ['sk' => '+421 XXX XXX XXX', 'en' => '+421 XXX XXX XXX', 'cs' => '+420 XXX XXX XXX'], 'has_condition' => false];
+        $extraAge = ['label' => ['sk' => 'Vek', 'en' => 'Age', 'cs' => 'Věk'], 'name' => 'vek', 'type' => 'number_input', 'width' => 'half', 'required' => true, 'has_condition' => false];
+        $extraYear = ['label' => ['sk' => 'Rok narodenia', 'en' => 'Year of birth', 'cs' => 'Rok narození'], 'name' => 'rok_narodenia', 'type' => 'year_picker', 'width' => 'half', 'required' => true, 'has_condition' => false];
+        $extraExperience = ['label' => ['sk' => 'Úroveň skúseností', 'en' => 'Experience level', 'cs' => 'Úroveň zkušeností'], 'name' => 'uroven_skusenosti', 'type' => 'select', 'width' => 'half', 'required' => true, 'options' => 'Začiatočník,Mierne pokročilý,Pokročilý', 'has_condition' => false];
+        $extraNote = ['label' => ['sk' => 'Poznámka', 'en' => 'Note', 'cs' => 'Poznámka'], 'name' => 'poznamka', 'type' => 'textarea', 'width' => 'full', 'required' => false, 'placeholder' => ['sk' => 'Zdravotné obmedzenia, alergie...', 'en' => 'Health restrictions, allergies...', 'cs' => 'Zdravotní omezení, alergie...'], 'has_condition' => false];
+        $extraTshirt = ['label' => ['sk' => 'Veľkosť trička', 'en' => 'T-shirt size', 'cs' => 'Velikost trička'], 'name' => 'velkost_tricka', 'type' => 'select', 'width' => 'half', 'required' => false, 'options' => 'XS,S,M,L,XL,XXL', 'has_condition' => false];
+        $extraInsurance = ['label' => ['sk' => 'Máš poistenie?', 'en' => 'Do you have insurance?', 'cs' => 'Máš pojištění?'], 'name' => 'poistenie', 'type' => 'select', 'width' => 'half', 'required' => true, 'options' => 'Áno,Nie', 'has_condition' => false];
+        $extraInsuranceDetail = ['label' => ['sk' => 'Číslo poistky', 'en' => 'Insurance number', 'cs' => 'Číslo pojistky'], 'name' => 'cislo_poistky', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => true, 'condition_field' => 'poistenie', 'condition_value' => 'Áno'];
+
+        $registrationSchemas = [
+            // 0: Parkour Teens (kids → parent fields + age + phone + note)
+            array_merge($parentFields, [$extraAge, $extraPhone, $extraNote]),
+            // 1: Street Workout Advanced (standard + experience + note)
+            array_merge($mandatoryFields, [$extraPhone, $extraExperience, $extraNote]),
+            // 2: Parkour pre pokročilých (standard + experience + year + insurance)
+            array_merge($mandatoryFields, [$extraPhone, $extraExperience, $extraYear, $extraInsurance, $extraInsuranceDetail]),
+            // 3: Kalistenické základy (kids → parent fields + age)
+            array_merge($parentFields, [$extraAge, $extraPhone]),
+            // 4: Street Workout pre deti (kids → parent fields + age + tshirt + note)
+            array_merge($parentFields, [$extraAge, $extraTshirt, $extraPhone, $extraNote]),
+            // 5: Parkour & Freerunning Mix (standard + experience)
+            array_merge($mandatoryFields, [$extraPhone, $extraExperience]),
+            // 6: Open Gym (standard only, minimal)
+            array_merge($mandatoryFields, [$extraPhone]),
+            // 7: Tricking Workshop (standard + experience + year + tshirt + note)
+            array_merge($mandatoryFields, [$extraPhone, $extraYear, $extraExperience, $extraTshirt, $extraNote]),
+            // 8: (if more trainings exist, fallback)
+            array_merge($mandatoryFields, [$extraPhone, $extraNote]),
+        ];
+
         // --- Trainings ---
         $trainings = collect([
             [
-                'title' => ['sk' => 'Parkour pre začiatočníkov', 'en' => 'Parkour for Beginners'],
+                'title' => ['sk' => 'Parkour Teens', 'en' => 'Parkour Teens'],
+                'description' => [
+                    'sk' => "Parkour Teens je skupinový tréning určený pre mladých vo veku 13-17 rokov. Naučíš sa základy parkouru a freerunningU - od bezpečných pádov, cez preskoky a výstupy, až po dynamické pohyby a salto.\n\nTréningy sú zamerané na postupný progres, správnu techniku a hlavne zábavu v skvelej komunite.",
+                    'en' => "Parkour Teens is a group training designed for youth aged 13-17. You will learn the basics of parkour and freerunning - from safe falls, to jumps and climbs, to dynamic movements and flips.\n\nTrainings focus on gradual progression, proper technique, and most importantly having fun in a great community.",
+                ],
                 'sport_category_id' => $parkour->id,
-                'pricing_type' => TrainingPricingTypeEnum::FREE,
-                'age_group' => '10-16',
+                'pricing_type' => TrainingPricingTypeEnum::PAID,
+                'price_amount' => 8.00,
+                'age_group' => '13-17',
+                'max_capacity' => 12,
+                'schedule_days' => ['monday', 'wednesday'],
+                'start_time' => '17:00',
+                'duration_minutes' => 90,
+                'place_name' => ['sk' => 'Športová hala Čadca', 'en' => 'Sports Hall Čadca'],
+                'place_address' => 'Športovcov 1, 022 01 Čadca',
+                'gathering_place' => ['sk' => 'Stretávame sa 10 minút pred začiatkom tréningu pri hlavnom vchode do športovej haly.', 'en' => 'We meet 10 minutes before the training at the main entrance of the sports hall.'],
+                'latitude' => 49.4384,
+                'longitude' => 18.7878,
             ],
             [
                 'title' => ['sk' => 'Street Workout Advanced', 'en' => 'Street Workout Advanced'],
+                'description' => [
+                    'sk' => "Pokročilý tréning street workoutu pre skúsených atlétov. Zameriame sa na statické prvky ako planche, front lever a human flag, ale aj na dynamické kombinácie na hrazde.\n\nTréning vyžaduje zvládnutie základov kalisteniky - min. 10 čistých zhybov a 20 klikov.",
+                    'en' => "Advanced street workout training for experienced athletes. We focus on static elements like planche, front lever and human flag, as well as dynamic combinations on the bar.\n\nTraining requires mastery of calisthenics basics - min. 10 clean pull-ups and 20 push-ups.",
+                ],
                 'sport_category_id' => $streetWorkout->id,
                 'pricing_type' => TrainingPricingTypeEnum::PAID,
-                'price_amount' => 15.00,
+                'price_amount' => 12.00,
                 'age_group' => '16+',
+                'max_capacity' => 15,
+                'schedule_days' => ['tuesday', 'thursday'],
+                'start_time' => '18:00',
+                'duration_minutes' => 90,
+                'place_name' => ['sk' => 'Workout Park Bratislava', 'en' => 'Workout Park Bratislava'],
+                'place_address' => 'Tyršovo nábrežie, 851 01 Bratislava',
+                'gathering_place' => ['sk' => 'Zraz pri hlavnej workout zóne na Tyršovom nábreží.', 'en' => 'Meeting at the main workout zone at Tyršovo nábrežie.'],
+                'latitude' => 48.1389,
+                'longitude' => 17.1051,
             ],
             [
-                'title' => ['sk' => 'Freerunning trénink', 'en' => 'Freerunning Training'],
+                'title' => ['sk' => 'Freerunning Kreativita', 'en' => 'Freerunning Creativity'],
+                'description' => [
+                    'sk' => "Tréning zameraný na kreatívny pohyb a flow. Kombinujeme parkour, freerunning a tricking do plynulých zostáv. Dôraz kladieme na osobný štýl a originalitu.\n\nVhodné pre stredne pokročilých - požadujeme bezpečné zvládnutie základných preskokov a kotúľov.",
+                    'en' => "Training focused on creative movement and flow. We combine parkour, freerunning and tricking into fluid routines. Emphasis on personal style and originality.\n\nSuitable for intermediate level - we require safe mastery of basic vaults and rolls.",
+                ],
                 'sport_category_id' => $parkour->id,
                 'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
                 'age_group' => '14-25',
+                'max_capacity' => 20,
+                'schedule_days' => ['wednesday', 'friday'],
+                'start_time' => '17:30',
+                'duration_minutes' => 90,
+                'place_name' => ['sk' => 'BCZ Gym Košice', 'en' => 'BCZ Gym Košice'],
+                'place_address' => 'Hlavná 1, 040 01 Košice',
+                'gathering_place' => ['sk' => 'Vstup cez zadný vchod zo strany parkoviska. Zvonček BCZ Gym.', 'en' => 'Entry through the back entrance from the parking side. BCZ Gym buzzer.'],
+                'latitude' => 48.7164,
+                'longitude' => 21.2611,
             ],
-        ])->map(function ($data) use ($bczTeam) {
+            [
+                'title' => ['sk' => 'Parkour pre pokročilých', 'en' => 'Advanced Parkour'],
+                'description' => [
+                    'sk' => "Intenzívny tréning pre pokročilých parkouristov. Pracujeme na výškovej technike, presných doskokoch a efektívnom pohybe cez náročné prekážky v reálnom prostredí.\n\nPožadovaná úroveň: min. 2 roky pravidelného tréningu parkouru.",
+                    'en' => "Intensive training for advanced traceurs. We work on height technique, precision landings and efficient movement through challenging obstacles in real environments.\n\nRequired level: min. 2 years of regular parkour training.",
+                ],
+                'sport_category_id' => $parkour->id,
+                'pricing_type' => TrainingPricingTypeEnum::PAID,
+                'price_amount' => 15.00,
+                'age_group' => '16+',
+                'max_capacity' => 10,
+                'schedule_days' => ['saturday'],
+                'start_time' => '10:00',
+                'duration_minutes' => 120,
+                'place_name' => ['sk' => 'Outdoor spot Petržalka', 'en' => 'Outdoor spot Petržalka'],
+                'place_address' => 'Námestie hraničiarov, 851 03 Bratislava',
+                'gathering_place' => ['sk' => 'Zraz pri fontáne na Námestí hraničiarov. V prípade dažďa sa presúvame do krytej haly.', 'en' => 'Meeting at the fountain at Námestie hraničiarov. In case of rain we move to an indoor hall.'],
+                'latitude' => 48.1228,
+                'longitude' => 17.1100,
+            ],
+            [
+                'title' => ['sk' => 'Kalistenické základy', 'en' => 'Calisthenics Basics'],
+                'description' => [
+                    'sk' => "Ideálny tréning pre úplných začiatočníkov. Naučíme ťa správnu techniku základných cvikov - zhyby, kliky, drepy, výdrže. Postupne budujeme silu a koordináciu pre náročnejšie prvky.\n\nŽiadne predchádzajúce skúsenosti nie sú potrebné!",
+                    'en' => "Ideal training for complete beginners. We will teach you proper technique for basic exercises - pull-ups, push-ups, squats, holds. Gradually building strength and coordination for more advanced elements.\n\nNo prior experience needed!",
+                ],
+                'sport_category_id' => $streetWorkout->id,
+                'pricing_type' => TrainingPricingTypeEnum::FREE,
+                'age_group' => '10-16',
+                'max_capacity' => 20,
+                'schedule_days' => ['monday', 'thursday'],
+                'start_time' => '16:00',
+                'duration_minutes' => 60,
+                'place_name' => ['sk' => 'Workout Park Čadca', 'en' => 'Workout Park Čadca'],
+                'place_address' => 'Mestský park, 022 01 Čadca',
+                'latitude' => 49.4405,
+                'longitude' => 18.7863,
+            ],
+            [
+                'title' => ['sk' => 'Street Workout pre deti', 'en' => 'Street Workout for Kids'],
+                'description' => [
+                    'sk' => "Zábavný tréning pre deti od 8 do 14 rokov. Formou hier a výziev sa naučia základy cvičenia s vlastnou váhou tela. Rozvíjame silu, ohybnosť a koordináciu v bezpečnom prostredí.\n\nKaždý tréning končí malou súťažou s odmenami!",
+                    'en' => "Fun training for kids aged 8-14. Through games and challenges, they learn the basics of bodyweight exercises. We develop strength, flexibility and coordination in a safe environment.\n\nEvery training ends with a small competition with prizes!",
+                ],
+                'sport_category_id' => $streetWorkout->id,
+                'pricing_type' => TrainingPricingTypeEnum::PAID,
+                'price_amount' => 6.00,
+                'age_group' => '8-14',
+                'max_capacity' => 18,
+                'schedule_days' => ['tuesday', 'friday'],
+                'start_time' => '15:30',
+                'duration_minutes' => 60,
+                'place_name' => ['sk' => 'Telocvičňa ZŠ Komenského', 'en' => 'Komenského Elementary School Gym'],
+                'place_address' => 'Komenského 12, 022 01 Čadca',
+                'gathering_place' => ['sk' => 'Vstup cez bočný vchod telocvične. Rodičia môžu počkať vo vestibule školy.', 'en' => 'Entry through the side entrance of the gym. Parents can wait in the school vestibule.'],
+                'latitude' => 49.4362,
+                'longitude' => 18.7921,
+            ],
+            [
+                'title' => ['sk' => 'Parkour & Freerunning Mix', 'en' => 'Parkour & Freerunning Mix'],
+                'description' => [
+                    'sk' => "Kombinácia parkouru a freerunningU v jednom tréningu. Prvá polovica sa venuje efektívnemu pohybu a prekonávaniu prekážok, druhá akrobatickým prvkom a saltu.\n\nPre stredne pokročilých a pokročilých. Bezpečné zvládnutie kotúľov a preskokov je podmienkou.",
+                    'en' => "Combination of parkour and freerunning in one training. First half focuses on efficient movement and obstacle negotiation, second half on acrobatic elements and flips.\n\nFor intermediate and advanced. Safe mastery of rolls and vaults is required.",
+                ],
+                'sport_category_id' => $parkour->id,
+                'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+                'age_group' => '14-25',
+                'max_capacity' => 16,
+                'schedule_days' => ['monday', 'wednesday', 'friday'],
+                'start_time' => '19:00',
+                'duration_minutes' => 90,
+                'place_name' => ['sk' => 'BCZ Gym Bratislava', 'en' => 'BCZ Gym Bratislava'],
+                'place_address' => 'Stará Vajnorská 37, 831 04 Bratislava',
+                'gathering_place' => ['sk' => 'Zraz pri recepcii BCZ Gym. Šatne sú k dispozícii.', 'en' => 'Meeting at BCZ Gym reception. Changing rooms are available.'],
+                'latitude' => 48.1698,
+                'longitude' => 17.1436,
+            ],
+            [
+                'title' => ['sk' => 'Open Gym', 'en' => 'Open Gym'],
+                'description' => [
+                    'sk' => "Otvorený tréning pre všetkých členov BCZ Club. Voľný prístup k celému vybaveniu - hrazdy, bradlá, trampolíny, mäkké dopadové plochy. Trénuj si čo chceš, tréner je k dispozícii pre radu.\n\nIdeálne na individuálny tréning a prácu na vlastných cieľoch.",
+                    'en' => "Open training for all BCZ Club members. Free access to all equipment - bars, parallel bars, trampolines, soft landing areas. Train whatever you want, coach is available for advice.\n\nIdeal for individual training and working on personal goals.",
+                ],
+                'sport_category_id' => $streetWorkout->id,
+                'pricing_type' => TrainingPricingTypeEnum::FREE,
+                'age_group' => '16+',
+                'max_capacity' => 30,
+                'schedule_days' => ['saturday', 'sunday'],
+                'start_time' => '09:00',
+                'duration_minutes' => 180,
+                'place_name' => ['sk' => 'BCZ Gym Bratislava', 'en' => 'BCZ Gym Bratislava'],
+                'place_address' => 'Stará Vajnorská 37, 831 04 Bratislava',
+                'latitude' => 48.1698,
+                'longitude' => 17.1436,
+            ],
+            [
+                'title' => ['sk' => 'Tricking Workshop', 'en' => 'Tricking Workshop'],
+                'description' => [
+                    'sk' => "Intenzívny workshop zameraný na tricking - kombinácia akrobatických sált, kopov a tanečných pohybov. Pracujeme na technike, výške a rotáciách. Workshop je vedený hosťujúcim trénerom z Česka.\n\nLimitovaný počet miest - len 10 účastníkov pre maximálnu pozornosť trénera.",
+                    'en' => "Intensive workshop focused on tricking - a combination of acrobatic flips, kicks and dance moves. We work on technique, height and rotations. Workshop is led by a guest coach from Czech Republic.\n\nLimited spots - only 10 participants for maximum coach attention.",
+                ],
+                'sport_category_id' => $parkour->id,
+                'pricing_type' => TrainingPricingTypeEnum::PAID,
+                'price_amount' => 25.00,
+                'age_group' => '14-25',
+                'max_capacity' => 10,
+                'schedule_days' => ['sunday'],
+                'start_time' => '14:00',
+                'duration_minutes' => 120,
+                'place_name' => ['sk' => 'BCZ Gym Bratislava', 'en' => 'BCZ Gym Bratislava'],
+                'place_address' => 'Stará Vajnorská 37, 831 04 Bratislava',
+                'gathering_place' => ['sk' => 'Zraz pri recepcii BCZ Gym. Prineste si vlastné chrániče (voliteľné).', 'en' => 'Meeting at BCZ Gym reception. Bring your own protection gear (optional).'],
+                'latitude' => 48.1698,
+                'longitude' => 17.1436,
+            ],
+        ])->map(function ($data, $index) use ($bczTeam, $registrationSchemas) {
             return Training::factory()->create(array_merge($data, [
                 'team_id' => $bczTeam->id,
+                'sort_order' => $index,
+                'registration_form_schema' => $registrationSchemas[$index] ?? $registrationSchemas[count($registrationSchemas) - 1],
             ]));
         });
 
@@ -205,12 +504,17 @@ class DemoDataSeeder extends Seeder
             }
         });
 
-        // Training registrations
-        $customers->each(function (User $customer) use ($trainings) {
-            TrainingRegistration::factory()->create([
-                'training_id' => $trainings->random()->id,
-                'user_id' => $customer->id,
-            ]);
+        // Training registrations — varied capacity to show green/orange/red states
+        $fillRatios = [0.0, 0.2, 0.5, 0.7, 0.75, 0.85, 0.92, 0.95, 1.0];
+        $trainings->each(function (Training $training, int $index) use ($fillRatios) {
+            $ratio = $fillRatios[$index % count($fillRatios)];
+            $registrationCount = (int) round($training->max_capacity * $ratio);
+
+            for ($i = 0; $i < $registrationCount; $i++) {
+                TrainingRegistration::factory()->forTraining($training)->create([
+                    'user_id' => User::factory()->create()->id,
+                ]);
+            }
         });
 
         // --- Event Categories ---
@@ -730,7 +1034,7 @@ class DemoDataSeeder extends Seeder
         // Refunded payment
         Payment::create([
             'team_id' => $bczTeam->id,
-            'user_id' => $customers->first()->id,
+            'user_id' => $members->first()->id,
             'payable_type' => 'training_registration',
             'payable_id' => $trainingRegistrations->first()->id,
             'amount' => 15.00,

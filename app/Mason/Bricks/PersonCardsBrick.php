@@ -3,6 +3,7 @@
 namespace App\Mason\Bricks;
 
 use App\Mason\Support\BrickRichEditor;
+use App\Mason\Support\LinkPickerField;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
@@ -47,6 +48,7 @@ class PersonCardsBrick extends Brick
                         ->label(__('bricks.fields.title')),
                     TextInput::make("subtitle.{$locale}")
                         ->label(__('bricks.fields.subtitle')),
+                    LinkPickerField::make('cta_', $locale, null, 'cta_text', __('bricks.fields.button_text')),
                 ]),
                 Repeater::make('people')
                     ->label(__('bricks.person_cards.people'))

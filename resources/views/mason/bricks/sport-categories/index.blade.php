@@ -16,9 +16,18 @@
         </div>
 
         @if(! empty($categories))
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @php
+                $catCount = count($categories);
+                $widthClass = match(true) {
+                    $catCount === 1 => 'md:w-[50%]',
+                    $catCount === 2 => 'md:w-[calc(50%-12px)]',
+                    $catCount === 3 => 'md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]',
+                    default => 'md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]',
+                };
+            @endphp
+            <div class="flex flex-wrap justify-center gap-6">
                 @foreach($categories as $i => $category)
-                    <div class="bg-bcz-card border border-bcz-border flex flex-col overflow-hidden">
+                    <div class="bg-bcz-card border border-bcz-border flex flex-col overflow-hidden w-full {{ $widthClass }}">
                         @php $catImgUrl = brick_media_url($category['image'] ?? null); @endphp
                         @if($catImgUrl)
                             <div class="w-full h-[280px] bg-cover bg-center" style="background-image: url('{{ $catImgUrl }}')"></div>

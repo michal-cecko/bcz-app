@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CoachController;
 use App\Http\Controllers\CompetitionController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\PageController;
@@ -20,22 +21,39 @@ $frontendRoutes = function () {
     Route::get('/', [PageController::class, 'show'])
         ->defaults('slug', '/');
 
-    Route::get('/treningy', [TrainingController::class, 'index']);
-    Route::get('/trening/{training:slug}', [TrainingController::class, 'show']);
+    // CMS landing page for trainings
+    Route::get('/trenuj-s-nami', [PageController::class, 'show'])->defaults('slug', 'treningy');
 
-    Route::get('/sutaze', [CompetitionController::class, 'index']);
-    Route::get('/sutaz/{competition:slug}', [CompetitionController::class, 'show']);
+    // Archives (flat, global)
+    Route::get('/treningy', [PageController::class, 'show'])->defaults('slug', 'zoznam-treningov');
+    Route::get('/sutaze', [PageController::class, 'show'])->defaults('slug', 'sutaze');
+    Route::get('/eventy', [PageController::class, 'show'])->defaults('slug', 'vystupenia');
 
-    Route::get('/vystupenia', [EventController::class, 'index']);
-    Route::get('/vystupenie/{event:slug}', [EventController::class, 'show']);
+    // Flat people archives (CMS pages with Mason bricks)
+    Route::get('/treneri', [PageController::class, 'show'])->defaults('slug', 'treneri');
+    Route::get('/treneri/{user:slug}', [CoachController::class, 'show']);
+    Route::get('/atleti', [PageController::class, 'show'])->defaults('slug', 'atleti');
+    Route::get('/atleti/{user:slug}', [CoachController::class, 'showAthlete']);
+    Route::get('/rozhodcovia', [PageController::class, 'show'])->defaults('slug', 'rozhodcovia');
+    Route::get('/rozhodcovia/{user:slug}', [CoachController::class, 'showJudge']);
 
-    Route::prefix('tim/{team:slug}')->group(function () {
+    // Teams archive (CMS page with Mason brick)
+    Route::get('/timy', [PageController::class, 'show'])->defaults('slug', 'timy');
+
+    // Flat event detail
+    Route::get('/eventy/{event:slug}', [EventController::class, 'show']);
+
+    // Team-nested routes
+    Route::prefix('timy/{team:slug}')->group(function () {
         Route::get('/', [TeamController::class, 'show']);
         Route::get('/treningy', [TeamController::class, 'trainings']);
+        Route::get('/treningy/{training:slug}', [TrainingController::class, 'show']);
         Route::get('/sutaze', [TeamController::class, 'competitions']);
+        Route::get('/sutaze/{competition:slug}', [CompetitionController::class, 'show']);
         Route::get('/clenovia', [TeamController::class, 'members']);
     });
 
+    // CMS pages
     Route::get('/o-nas', [PageController::class, 'show'])->defaults('slug', 'o-nas');
     Route::get('/kontakt', [PageController::class, 'show'])->defaults('slug', 'kontakt');
     Route::get('/faq', [PageController::class, 'show'])->defaults('slug', 'faq');
@@ -49,12 +67,22 @@ $frontendRoutes = function () {
     Route::get('/kategoria/street-workout', [PageController::class, 'show'])->defaults('slug', 'kategoria/street-workout');
     Route::get('/cennik', [PricingController::class, 'index']);
 
+    Route::get('/pridaj-sa', fn () => view('pages.join-team'));
+    Route::get('/registracia', fn () => view('pages.register-team'));
+
+    // Legacy redirects
     Route::redirect('/archiv-treningov', '/treningy', 301);
-    Route::redirect('/archiv-podujati', '/vystupenia', 301);
+    Route::redirect('/archiv-podujati', '/eventy', 301);
     Route::redirect('/archiv-trenerov', '/treningy', 301);
+    Route::redirect('/zoznam-treningov', '/treningy', 301);
+    Route::redirect('/vystupenia', '/eventy', 301);
+    Route::redirect('/trening/{any}', '/treningy', 301)->where('any', '.+');
+    Route::redirect('/sutaz/{any}', '/sutaze', 301)->where('any', '.+');
+    Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
+    Route::redirect('/tim/{any}', '/timy', 301)->where('any', '.+');
 
     Route::get('/{slug}', [PageController::class, 'show'])
-        ->where('slug', '^(?!admin|stripe|team-invitations|en|cs).*$');
+        ->where('slug', '^(?!admin|stripe|team-invitations|en|cs|timy).*$');
 };
 
 // Localized: /en/..., /cs/...
@@ -62,20 +90,46 @@ Route::prefix('{locale}')
     ->where(['locale' => 'en|cs'])
     ->group($frontendRoutes);
 
+// Temporary route for comparing static page
+Route::get('/temp-dominik-klimek-static', fn () => view('pages.dominik-klimek'))->name('temp-dominik-static');
+Route::get('/temp-dva-percenta-static', fn () => view('pages.dva-percenta'))->name('temp-dva-percenta-static');
+
 // Default Slovak (no prefix) — named routes live here
 Route::get('/', [PageController::class, 'show'])->defaults('slug', '/')->name('home');
-Route::get('/treningy', [TrainingController::class, 'index'])->name('treningy');
-Route::get('/trening/{training:slug}', [TrainingController::class, 'show'])->name('training.show');
-Route::get('/sutaze', [CompetitionController::class, 'index'])->name('sutaze');
-Route::get('/sutaz/{competition:slug}', [CompetitionController::class, 'show'])->name('competition.show');
-Route::get('/vystupenia', [EventController::class, 'index'])->name('vystupenia');
-Route::get('/vystupenie/{event:slug}', [EventController::class, 'show'])->name('event.show');
-Route::prefix('tim/{team:slug}')->name('team.')->group(function () {
+
+// CMS landing page for trainings
+Route::get('/trenuj-s-nami', [PageController::class, 'show'])->defaults('slug', 'treningy')->name('trenuj-s-nami');
+
+// Global archives
+Route::get('/treningy', [PageController::class, 'show'])->defaults('slug', 'zoznam-treningov')->name('treningy');
+Route::get('/sutaze', [PageController::class, 'show'])->defaults('slug', 'sutaze')->name('sutaze');
+Route::get('/eventy', [PageController::class, 'show'])->defaults('slug', 'vystupenia')->name('eventy');
+
+// Flat people
+Route::get('/treneri', [PageController::class, 'show'])->defaults('slug', 'treneri')->name('coaches.index');
+Route::get('/treneri/{user:slug}', [CoachController::class, 'show'])->name('coach.show');
+Route::get('/atleti', [PageController::class, 'show'])->defaults('slug', 'atleti')->name('athletes.index');
+Route::get('/atleti/{user:slug}', [CoachController::class, 'showAthlete'])->name('athlete.show');
+Route::get('/rozhodcovia', [PageController::class, 'show'])->defaults('slug', 'rozhodcovia')->name('judges.index');
+Route::get('/rozhodcovia/{user:slug}', [CoachController::class, 'showJudge'])->name('judge.show');
+
+// Teams
+Route::get('/timy', [PageController::class, 'show'])->defaults('slug', 'timy')->name('teams.index');
+
+// Flat event detail
+Route::get('/eventy/{event:slug}', [EventController::class, 'show'])->name('event.show');
+
+// Team-nested routes
+Route::prefix('timy/{team:slug}')->name('team.')->group(function () {
     Route::get('/', [TeamController::class, 'show'])->name('show');
     Route::get('/treningy', [TeamController::class, 'trainings'])->name('trainings');
+    Route::get('/treningy/{training:slug}', [TrainingController::class, 'show'])->name('training.show');
     Route::get('/sutaze', [TeamController::class, 'competitions'])->name('competitions');
+    Route::get('/sutaze/{competition:slug}', [CompetitionController::class, 'show'])->name('competition.show');
     Route::get('/clenovia', [TeamController::class, 'members'])->name('members');
 });
+
+// CMS pages
 Route::get('/o-nas', [PageController::class, 'show'])->defaults('slug', 'o-nas')->name('about');
 Route::get('/kontakt', [PageController::class, 'show'])->defaults('slug', 'kontakt')->name('kontakt');
 Route::get('/faq', [PageController::class, 'show'])->defaults('slug', 'faq')->name('faq');
@@ -88,11 +142,22 @@ Route::get('/workshopy', [PageController::class, 'show'])->defaults('slug', 'wor
 Route::get('/kategoria/parkour-freerunning', [PageController::class, 'show'])->defaults('slug', 'kategoria/parkour-freerunning')->name('parkour-freerunning');
 Route::get('/kategoria/street-workout', [PageController::class, 'show'])->defaults('slug', 'kategoria/street-workout')->name('street-workout');
 Route::get('/cennik', [PricingController::class, 'index'])->name('cennik');
+Route::get('/pridaj-sa', fn () => view('pages.join-team'))->name('pridaj-sa');
+Route::get('/registracia', fn () => view('pages.register-team'))->name('register');
+
+// Legacy redirects
 Route::redirect('/archiv-treningov', '/treningy', 301);
-Route::redirect('/archiv-podujati', '/vystupenia', 301)->name('archiv-podujati');
-Route::redirect('/archiv-trenerov', '/treningy', 301);
+Route::redirect('/archiv-podujati', '/eventy', 301)->name('archiv-podujati');
+Route::redirect('/archiv-trenerov', '/treningy', 301)->name('archiv-trenerov');
+Route::redirect('/zoznam-treningov', '/treningy', 301)->name('zoznam-treningov');
+Route::redirect('/vystupenia', '/eventy', 301)->name('vystupenia');
+Route::redirect('/trening/{any}', '/treningy', 301)->where('any', '.+');
+Route::redirect('/sutaz/{any}', '/sutaze', 301)->where('any', '.+');
+Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
+
+// Catch-all CMS page
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', '^(?!admin|stripe|team-invitations|en|cs).*$')
+    ->where('slug', '^(?!admin|stripe|team-invitations|en|cs|timy).*$')
     ->name('page.show');
 
 /*

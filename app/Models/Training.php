@@ -45,6 +45,7 @@ class Training extends Model implements Linkable
         'pricing_type',
         'price_amount',
         'registration_form_schema',
+        'gallery_images',
         'is_active',
         'sort_order',
     ];
@@ -56,6 +57,7 @@ class Training extends Model implements Linkable
             'pricing_type' => TrainingPricingTypeEnum::class,
             'schedule_days' => 'json',
             'registration_form_schema' => 'json',
+            'gallery_images' => 'json',
             'is_active' => 'boolean',
             'notify_on_available' => 'boolean',
             'duration_minutes' => 'integer',
@@ -76,7 +78,7 @@ class Training extends Model implements Linkable
 
     public function getLinkUrl(): string
     {
-        return '/trening/'.$this->slug;
+        return '/timy/'.$this->team->slug.'/treningy/'.$this->slug;
     }
 
     public function getLinkLabel(): string

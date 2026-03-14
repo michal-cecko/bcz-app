@@ -126,7 +126,7 @@ class Competition extends Model implements Linkable
 
     public function getLinkUrl(): string
     {
-        return '/sutaz/'.$this->slug;
+        return '/timy/'.$this->organizerTeam->slug.'/sutaze/'.$this->slug;
     }
 
     public function getLinkLabel(): string

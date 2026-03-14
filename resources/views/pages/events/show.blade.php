@@ -10,7 +10,7 @@
             <div class="flex items-center gap-3">
                 <a href="{{ route('home') }}" class="text-[#666666] text-[11px] font-medium tracking-[2px] hover:text-white transition-colors">DOMOV</a>
                 <span class="text-[#444444] text-[11px]">/</span>
-                <a href="{{ route('vystupenia') }}" class="text-[#666666] text-[11px] font-medium tracking-[2px] hover:text-white transition-colors">PODUJATIA</a>
+                <a href="{{ route('eventy') }}" class="text-[#666666] text-[11px] font-medium tracking-[2px] hover:text-white transition-colors">PODUJATIA</a>
                 <span class="text-[#444444] text-[11px]">/</span>
                 <span class="text-bcz-red text-[11px] font-medium tracking-[2px]">{{ mb_strtoupper($event->getTranslation('title', app()->getLocale())) }}</span>
             </div>

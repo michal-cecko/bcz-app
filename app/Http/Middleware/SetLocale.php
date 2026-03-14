@@ -27,16 +27,22 @@ class SetLocale
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip locale switching for admin panel — always use default
+        if ($request->is('admin', 'admin/*', 'livewire/*')) {
+            app()->setLocale(self::DEFAULT_LOCALE);
+
+            return $next($request);
+        }
+
         $prefix = $request->route('locale');
 
         if ($prefix && isset(self::LOCALE_MAP[$prefix])) {
             $locale = self::LOCALE_MAP[$prefix];
         } else {
-            $locale = session('locale', self::DEFAULT_LOCALE);
+            $locale = self::DEFAULT_LOCALE;
         }
 
         app()->setLocale($locale);
-        session(['locale' => $locale]);
 
         // Remove {locale} so controllers never receive it
         if ($prefix) {

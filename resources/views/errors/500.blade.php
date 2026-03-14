@@ -20,7 +20,7 @@
                 <a href="/o-nas" class="text-[#888888] text-xs font-medium tracking-[1px] hover:text-white transition-colors">O NÁS</a>
                 <a href="/sutaze" class="text-[#888888] text-xs font-medium tracking-[1px] hover:text-white transition-colors">SÚŤAŽE</a>
                 <a href="/treningy" class="text-[#888888] text-xs font-medium tracking-[1px] hover:text-white transition-colors">TRÉNINGY</a>
-                <a href="/vystupenia" class="text-[#888888] text-xs font-medium tracking-[1px] hover:text-white transition-colors">VYSTÚPENIA</a>
+                <a href="/eventy" class="text-[#888888] text-xs font-medium tracking-[1px] hover:text-white transition-colors">PODUJATIA</a>
                 <a href="/kontakt" class="text-[#888888] text-xs font-medium tracking-[1px] hover:text-white transition-colors">KONTAKT</a>
             </nav>
 

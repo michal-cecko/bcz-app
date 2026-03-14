@@ -7,6 +7,13 @@ use Illuminate\Contracts\View\View;
 
 class TeamController extends Controller
 {
+    public function index(): View
+    {
+        $teamCount = Team::where('is_active', true)->count();
+
+        return view('pages.teams.index', compact('teamCount'));
+    }
+
     public function show(Team $team): View
     {
         $team->load([
@@ -25,7 +32,7 @@ class TeamController extends Controller
     {
         $trainings = $team->trainings()
             ->where('is_active', true)
-            ->with(['sportCategory', 'coaches'])
+            ->with(['sportCategory', 'coaches', 'team'])
             ->orderBy('sort_order')
             ->get();
 
@@ -36,7 +43,7 @@ class TeamController extends Controller
     {
         $competitions = $team->organizedCompetitions()
             ->where('is_published', true)
-            ->with(['disciplines'])
+            ->with(['disciplines', 'organizerTeam'])
             ->latest('date_start')
             ->paginate(12);
 

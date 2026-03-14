@@ -54,7 +54,7 @@
                     {{-- Training Cards Grid --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @foreach($trainings as $training)
-                            <a href="{{ route('training.show', $training) }}" class="bg-[#111111] border border-[#222222] rounded-xl overflow-hidden group hover:border-[#333333] transition-colors">
+                            <a href="{{ route('team.training.show', [$training->team, $training]) }}" class="bg-[#111111] border border-[#222222] rounded-xl overflow-hidden group hover:border-[#333333] transition-colors">
                                 <div class="h-[180px] bg-[#1A1A1A] overflow-hidden">
                                     @if($training->sportCategory?->hero_image)
                                         <img src="{{ $training->sportCategory->hero_image }}" alt="{{ $training->getTranslation('title', app()->getLocale()) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">

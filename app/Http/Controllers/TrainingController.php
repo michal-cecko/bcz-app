@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\Team;
 use App\Models\Training;
 use Illuminate\View\View;
 
@@ -25,9 +26,12 @@ class TrainingController extends Controller
         ]);
     }
 
-    public function show(Training $training): View
+    public function show(Team $team, Training $training): View
     {
-        $training->load(['sportCategory', 'coaches.coachProfile', 'team']);
+        abort_unless($training->team_id === $team->id, 404);
+
+        $training->load(['sportCategory', 'coaches.coachProfile', 'coaches.certifications', 'team'])
+            ->loadCount('registrations');
 
         return view('pages.trainings.show', compact('training'));
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\Linkable;
 use App\Models\Concerns\HasUuidV7;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
@@ -19,7 +20,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser, HasTenants, Linkable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasPanelShield, HasRoles, HasSlug, HasUuidV7, Notifiable;
@@ -38,6 +39,8 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         'contact_phone',
         'profile_image',
         'password',
+        'has_public_profile',
+        'public_profile_approved_at',
     ];
 
     protected $hidden = [
@@ -51,6 +54,8 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'socials' => 'json',
+            'has_public_profile' => 'boolean',
+            'public_profile_approved_at' => 'datetime',
         ];
     }
 
@@ -144,5 +149,34 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function getLinkUrl(): string
+    {
+        return '/treneri/'.$this->slug;
+    }
+
+    public function getLinkLabel(): string
+    {
+        return $this->name;
+    }
+
+    public static function linkableOptions(): Collection
+    {
+        return static::query()
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (User $u) => [$u->id => $u->getLinkLabel()]);
+    }
+
+    /**
+     * @return Collection<string, string>
+     */
+    public static function linkableOptionsForRole(string $role): Collection
+    {
+        return static::role($role)
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (User $u) => [$u->id => $u->getLinkLabel()]);
     }
 }

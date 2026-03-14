@@ -15,6 +15,7 @@ class TeamInvitation extends Model
     protected $fillable = [
         'team_id',
         'email',
+        'code',
         'status',
         'invited_by',
         'accepted_at',

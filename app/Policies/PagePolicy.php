@@ -15,7 +15,6 @@ class PagePolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::EDITOR,
         ]);
@@ -25,7 +24,6 @@ class PagePolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::EDITOR,
         ]);
@@ -35,7 +33,6 @@ class PagePolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::EDITOR,
         ]);
@@ -45,7 +42,6 @@ class PagePolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::EDITOR,
         ]);
@@ -59,7 +55,7 @@ class PagePolicy
 
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
+            RoleEnum::ADMIN,
         ]);
     }
 
@@ -78,7 +74,7 @@ class PagePolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
+            RoleEnum::ADMIN,
         ]);
     }
 }

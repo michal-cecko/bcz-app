@@ -35,6 +35,11 @@ class TrainingFactory extends Factory
             'price_amount' => fake()->randomFloat(2, 5, 50),
             'is_active' => true,
             'sort_order' => fake()->numberBetween(0, 10),
+            'registration_form_schema' => [
+                ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'name' => 'priezvisko', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'full', 'required' => true, 'has_condition' => false],
+            ],
         ];
     }
 

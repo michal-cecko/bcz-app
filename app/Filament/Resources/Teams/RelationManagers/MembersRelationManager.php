@@ -22,6 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class MembersRelationManager extends RelationManager
 {
@@ -117,6 +118,7 @@ class MembersRelationManager extends RelationManager
                         $invitation = TeamInvitation::create([
                             'team_id' => $team->id,
                             'email' => $email,
+                            'code' => strtoupper(Str::random(8)),
                             'status' => InvitationStatusEnum::Pending,
                             'invited_by' => Auth::id(),
                             'expires_at' => now()->addDays(7),

@@ -71,7 +71,7 @@ class Team extends Model implements HasAvatar, Linkable
 
     public function getLinkUrl(): string
     {
-        return '/tim/'.$this->slug;
+        return '/timy/'.$this->slug;
     }
 
     public function getLinkLabel(): string
@@ -132,6 +132,14 @@ class Team extends Model implements HasAvatar, Linkable
         return $this->hasMany(Competition::class, 'organizer_team_id');
     }
 
+    /**
+     * Alias for organizedCompetitions — used by implicit route model binding scoping.
+     */
+    public function competitions(): HasMany
+    {
+        return $this->organizedCompetitions();
+    }
+
     public function invitations(): HasMany
     {
         return $this->hasMany(TeamInvitation::class);
@@ -162,5 +170,10 @@ class Team extends Model implements HasAvatar, Linkable
     public function payouts(): HasMany
     {
         return $this->hasMany(TeamPayout::class);
+    }
+
+    public function joinRequests(): HasMany
+    {
+        return $this->hasMany(TeamJoinRequest::class);
     }
 }

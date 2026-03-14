@@ -15,7 +15,6 @@ class TeamPayoutPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
         ]);
@@ -25,7 +24,6 @@ class TeamPayoutPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
         ]);
@@ -35,7 +33,7 @@ class TeamPayoutPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
+            RoleEnum::ADMIN,
         ]);
     }
 
@@ -43,7 +41,7 @@ class TeamPayoutPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
+            RoleEnum::ADMIN,
         ]);
     }
 

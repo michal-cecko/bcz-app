@@ -15,7 +15,6 @@ class MembershipPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
         ]);
@@ -25,7 +24,6 @@ class MembershipPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
         ]);
@@ -35,7 +33,6 @@ class MembershipPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
         ]);
@@ -45,7 +42,6 @@ class MembershipPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
         ]);
     }
@@ -54,7 +50,7 @@ class MembershipPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
+            RoleEnum::ADMIN,
         ]);
     }
 }

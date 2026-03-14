@@ -15,7 +15,6 @@ class MenuPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::EDITOR,
         ]);
@@ -25,7 +24,6 @@ class MenuPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::EDITOR,
         ]);
@@ -35,7 +33,6 @@ class MenuPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
         ]);
     }
@@ -44,7 +41,6 @@ class MenuPolicy
     {
         return $user->hasRole([
             RoleEnum::SUPER_ADMIN,
-            RoleEnum::OWNER,
             RoleEnum::ADMIN,
             RoleEnum::EDITOR,
         ]);

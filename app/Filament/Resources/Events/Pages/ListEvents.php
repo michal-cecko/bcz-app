@@ -19,7 +19,7 @@ class ListEvents extends ListRecords
                 ->label('Archív na webe')
                 ->icon(Heroicon::OutlinedGlobeAlt)
                 ->color('gray')
-                ->url('/vystupenia', shouldOpenInNewTab: true),
+                ->url('/eventy', shouldOpenInNewTab: true),
             CreateAction::make(),
         ];
     }

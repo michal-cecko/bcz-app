@@ -129,14 +129,12 @@ return [
     ],
     RoleEnum::class => [
         RoleEnum::SUPER_ADMIN->value => 'Super Admin',
-        RoleEnum::OWNER->value => 'Vlastník',
         RoleEnum::ADMIN->value => 'Admin',
         RoleEnum::TEAM_ADMIN->value => 'Tímový Admin',
         RoleEnum::COACH->value => 'Tréner',
         RoleEnum::ATHLETE->value => 'Športovec',
         RoleEnum::EDITOR->value => 'Editor',
         RoleEnum::JUDGE->value => 'Porotca',
-        RoleEnum::CUSTOMER->value => 'Zákazník',
     ],
     PaymentMethodEnum::class => [
         PaymentMethodEnum::MANUAL->value => 'Manuálne',

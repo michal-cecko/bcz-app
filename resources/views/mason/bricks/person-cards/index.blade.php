@@ -54,6 +54,18 @@
                 @endforeach
             </div>
         @endif
+
+        @php
+            $ctaHref = brick_link(['link_type' => $cta_link_type ?? '', 'link_model_id' => $cta_link_model_id ?? '', 'link_url' => $cta_link_url ?? '']);
+            $ctaText = brick_trans($cta_text ?? []);
+        @endphp
+        @if($ctaText && $ctaHref)
+            <div class="flex justify-center">
+                <a href="{{ $ctaHref }}" class="inline-flex items-center gap-2 rounded-lg bg-bcz-red text-white font-semibold text-[15px] px-8 py-4 hover:bg-red-700 transition">
+                    {{ $ctaText }}
+                </a>
+            </div>
+        @endif
     </div>
     </div>
 </section>
