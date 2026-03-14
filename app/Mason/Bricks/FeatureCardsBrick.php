@@ -3,6 +3,7 @@
 namespace App\Mason\Bricks;
 
 use App\Mason\Support\BrickRichEditor;
+use App\Mason\Support\LinkPickerField;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
@@ -78,6 +79,7 @@ class FeatureCardsBrick extends Brick
                                 'heroicon-o-flag' => 'Flag',
                             ])
                             ->searchable(),
+                        LinkPickerField::make('card_', label: __('bricks.fields.link')),
                         TranslatableBrickFields::group(fn (string $locale) => [
                             TextInput::make("title.{$locale}")
                                 ->label(__('bricks.fields.title'))

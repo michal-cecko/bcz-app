@@ -24,7 +24,7 @@
                     $colImages[$i % 3][] = $item;
                 }
                 $ratios = [[7, 5], [5, 7], [6, 6]];
-                $jsData = $mediaItems->filter(fn ($m) => $m->url)->values()->map(fn ($m) => ['url' => $m->url, 'alt' => $m->alt ?? '', 'caption' => $m->caption ?? '']);
+                $jsData = $mediaItems->map(fn ($m) => $m->url ? ['url' => $m->url, 'alt' => $m->alt ?? '', 'caption' => $m->caption ?? ''] : null)->values();
             @endphp
             <div
                 x-data="{ lightbox: false, current: 0, items: {{ Js::from($jsData) }} }"

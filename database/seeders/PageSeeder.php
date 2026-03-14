@@ -101,8 +101,8 @@ class PageSeeder extends Seeder
             ],
             [
                 'system_key' => 'trainings',
-                'title' => ['sk' => 'Tréningy', 'en' => 'Trainings', 'cs' => 'Tréninky'],
-                'slug' => 'treningy',
+                'title' => ['sk' => 'Trénuj s nami', 'en' => 'Train With Us', 'cs' => 'Trénuj s námi'],
+                'slug' => 'trenuj-s-nami',
                 'status' => PageStatusEnum::Published,
                 'is_system' => true,
                 'published_at' => now(),
@@ -180,9 +180,19 @@ class PageSeeder extends Seeder
                 'content' => fn () => self::teamsArchiveContent(),
             ],
             [
+                'system_key' => 'performances',
+                'title' => ['sk' => 'Akrobatické Vystúpenia', 'en' => 'Acrobatic Performances', 'cs' => 'Akrobatická Vystoupení'],
+                'slug' => 'akrobaticke-vystupenia',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 10,
+                'content' => fn () => self::performancesContent(),
+            ],
+            [
                 'system_key' => 'services',
-                'title' => ['sk' => 'Vystúpenia & Workshopy', 'en' => 'Performances & Workshops', 'cs' => 'Vystoupení & Workshopy'],
-                'slug' => 'vystupenia-workshopy',
+                'title' => ['sk' => 'Vystúpenia, prednášky & workshopy', 'en' => 'Performances, Lectures & Workshops', 'cs' => 'Vystoupení, přednášky & workshopy'],
+                'slug' => 'vystupenia-prednasky-workshopy',
                 'status' => PageStatusEnum::Published,
                 'is_system' => true,
                 'published_at' => now(),
@@ -433,6 +443,24 @@ class PageSeeder extends Seeder
                     ['icon' => 'heroicon-o-shield-check', 'title' => ['sk' => 'BEZPEČNOSŤ', 'en' => 'SAFETY', 'cs' => 'BEZPEČNOST'], 'description' => ['sk' => 'Progres cez správnu techniku a kalkulované riziko. Veríme v inteligentný tréning, ktorý minimalizuje zranenia a maximalizuje rast.', 'en' => 'Progress through proper technique and calculated risk. We believe in intelligent training that minimizes injuries and maximizes growth.', 'cs' => 'Progres přes správnou techniku a kalkulované riziko. Věříme v inteligentní trénink, který minimalizuje zranění a maximalizuje růst.']],
                     ['icon' => 'heroicon-o-arrow-trending-up', 'title' => ['sk' => 'RAST', 'en' => 'GROWTH', 'cs' => 'RŮST'], 'description' => ['sk' => 'Každý deň je príležitosťou na zlepšenie. Prijímame výzvy a vnímame zlyhania ako odrazové mostíky k úspechu.', 'en' => 'Every day is an opportunity for improvement. We embrace challenges and see failures as stepping stones to success.', 'cs' => 'Každý den je příležitostí ke zlepšení. Přijímáme výzvy a vnímáme selhání jako odrazové můstky k úspěchu.']],
                 ],
+            ]),
+            self::brick('founder-spotlight', [
+                'label' => ['sk' => 'ZAKLADATEĽ & CEO', 'en' => 'FOUNDER & CEO', 'cs' => 'ZAKLADATEL & CEO'],
+                'name_line1' => ['sk' => 'DOMINIK', 'en' => 'DOMINIK', 'cs' => 'DOMINIK'],
+                'name_line2' => ['sk' => 'KLIMEK', 'en' => 'KLIMEK', 'cs' => 'KLIMEK'],
+                'subtitle' => ['sk' => 'Majster sveta v street workoute &middot; Tréner &middot; Mentor', 'en' => 'World Champion in street workout &middot; Coach &middot; Mentor', 'cs' => 'Mistr světa ve street workoutu &middot; Trenér &middot; Mentor'],
+                'bio' => ['sk' => 'Dominik <a href="https://dodoworkout.com" target="_blank" class="text-bcz-red font-semibold hover:underline">DODOWORKOUT</a> Klimek je zakladateľ BCZ Club a jediný certifikovaný master tréner kalisteniky a street workoute na Slovensku. V roku 2022 sa stal majstrom sveta v street workoute v Rige a trikrát po sebe vyhral majstrovstvá Slovenska.', 'en' => 'Dominik <a href="https://dodoworkout.com" target="_blank" class="text-bcz-red font-semibold hover:underline">DODOWORKOUT</a> Klimek is the founder of BCZ Club and the only certified master calisthenics and street workout coach in Slovakia. In 2022 he became the world champion in street workout in Riga and won the Slovak championship three times in a row.', 'cs' => 'Dominik <a href="https://dodoworkout.com" target="_blank" class="text-bcz-red font-semibold hover:underline">DODOWORKOUT</a> Klimek je zakladatel BCZ Club a jediný certifikovaný master trenér kalisteniky a street workoutu na Slovensku. V roce 2022 se stal mistrem světa ve street workoutu v Rize a třikrát po sobě vyhrál mistrovství Slovenska.'],
+                'bio2' => ['sk' => 'Dnes vedie komunitu mladých ľudí, organizuje workshopy po školách a inšpiruje novú generáciu k pohybu a zdravému životnému štýlu. Jeho víziou je ukázať, že disciplína a tvrdá práca dokážu zmeniť životy.', 'en' => 'Today he leads a community of young people, organizes workshops at schools and inspires the new generation towards movement and a healthy lifestyle. His vision is to show that discipline and hard work can change lives.', 'cs' => 'Dnes vede komunitu mladých lidí, organizuje workshopy po školách a inspiruje novou generaci k pohybu a zdravému životnímu stylu. Jeho vizí je ukázat, že disciplína a tvrdá práce dokážou změnit životy.'],
+                'image' => self::media('founder-img'),
+                'stats' => [
+                    ['number' => '1x', 'label' => ['sk' => 'Majster sveta', 'en' => 'World Champion', 'cs' => 'Mistr světa']],
+                    ['number' => '3x', 'label' => ['sk' => 'Majster SR', 'en' => 'Slovak Champion', 'cs' => 'Mistr SR']],
+                    ['number' => 'L4', 'label' => ['sk' => 'Conditioning Coach', 'en' => 'Conditioning Coach', 'cs' => 'Conditioning Coach']],
+                    ['number' => '500+', 'label' => ['sk' => 'Mentorovaných detí', 'en' => 'Mentored Children', 'cs' => 'Mentorovaných dětí']],
+                ],
+                'cta_text' => ['sk' => 'SPOZNAJ DOMINIKA', 'en' => 'MEET DOMINIK', 'cs' => 'POZNEJ DOMINIKA'],
+                'cta_link_type' => 'page',
+                'cta_link_model_id' => self::pageId('founder'),
             ]),
             self::brick('gallery', [
                 'label' => ['sk' => 'MOMENTY', 'en' => 'MOMENTS', 'cs' => 'MOMENTY'],
@@ -809,35 +837,142 @@ class PageSeeder extends Seeder
     {
         return [
             self::brick('hero', [
+                'layout' => 'centered',
                 'title' => ['sk' => 'Vystúpenia, Workshopy & Prednášky', 'en' => 'Performances, Workshops & Lectures', 'cs' => 'Vystoupení, Workshopy & Přednášky'],
                 'subtitle' => ['sk' => 'Prinášame akrobatické umenie, inšpiratívne prednášky a praktické workshopy pre vaše podujatia, školy a fitness centrá.', 'en' => 'We bring acrobatic artistry, inspirational lectures and practical workshops to your events, schools and fitness centers.', 'cs' => 'Přinášíme akrobatické umění, inspirativní přednášky a praktické workshopy pro vaše akce, školy a fitness centra.'],
+                'badge' => ['sk' => 'SLUŽBY PRE FIRMY & EVENTY', 'en' => 'SERVICES FOR COMPANIES & EVENTS', 'cs' => 'SLUŽBY PRO FIRMY & EVENTY'],
             ]),
             self::brick('feature-cards', [
+                'label' => ['sk' => 'ČO PONÚKAME', 'en' => 'WHAT WE OFFER', 'cs' => 'CO NABÍZÍME'],
+                'title' => ['sk' => 'Naše služby', 'en' => 'Our Services', 'cs' => 'Naše služby'],
+                'subtitle' => ['sk' => 'Vyberajte z troch hlavných kategórií služieb, ktoré prispôsobíme vašim potrebám.', 'en' => 'Choose from three main categories of services that we customize to your needs.', 'cs' => 'Vybírejte ze tří hlavních kategorií služeb, které přizpůsobíme vašim potřebám.'],
                 'cards' => [
-                    ['icon' => 'heroicon-o-sparkles', 'title' => ['sk' => 'Vystúpenia', 'en' => 'Performances', 'cs' => 'Vystoupení'], 'description' => ['sk' => 'Dynamické akrobatické show pre firemné eventy, festivaly, otvorenia a špeciálne príležitosti. Kombinujeme parkour, freerunning a akrobaciu do nezabudnuteľného vizuálneho zážitku.', 'en' => 'Dynamic acrobatic shows for corporate events, festivals, openings and special occasions. We combine parkour, freerunning and acrobatics into an unforgettable visual experience.', 'cs' => 'Dynamické akrobatické show pro firemní akce, festivaly, otevření a speciální příležitosti. Kombinujeme parkour, freerunning a akrobacii do nezapomenutelného vizuálního zážitku.']],
-                    ['icon' => 'heroicon-o-microphone', 'title' => ['sk' => 'Prednášky', 'en' => 'Lectures', 'cs' => 'Přednášky'], 'description' => ['sk' => 'Motivačné prednášky o správnom nastavení mysle, hodnotových rebríčkoch a výhodách cvičenia. Učíme mladých ľudí trpezlivosti, tvrdej drine a vytrvalosti cez náš príbeh.', 'en' => 'Motivational lectures about the right mindset, values and benefits of exercise. We teach young people patience, hard work and perseverance through our story.', 'cs' => 'Motivační přednášky o správném nastavení mysli, hodnotových žebříčcích a výhodách cvičení. Učíme mladé lidi trpělivosti, tvrdé dřině a vytrvalosti přes náš příběh.']],
-                    ['icon' => 'heroicon-o-academic-cap', 'title' => ['sk' => 'Workshopy', 'en' => 'Workshops', 'cs' => 'Workshopy'], 'description' => ['sk' => 'Workshopy pre fitness centrá, trénerov a podujatia. Učíme základné aj pokročilé prvky — od bezpečného pádu až po kurz stojky.', 'en' => 'Workshops for fitness centers, coaches and events. We teach basic and advanced elements — from safe falling to handstand courses.', 'cs' => 'Workshopy pro fitness centra, trenéry a akce. Učíme základní i pokročilé prvky — od bezpečného pádu až po kurz stojky.']],
+                    [
+                        'image' => self::media('services-performance'),
+                        'icon' => 'heroicon-o-sparkles',
+                        'border_color' => '#FF2D2D40',
+                        'accent_color' => '#FF2D2D',
+                        'card_link_type' => 'page',
+                        'card_link_model_id' => self::pageId('performances'),
+                        'title' => ['sk' => 'Vystúpenia', 'en' => 'Performances', 'cs' => 'Vystoupení'],
+                        'card_subtitle' => ['sk' => 'Akrobatické umenie pre divákov', 'en' => 'Acrobatic art for audiences', 'cs' => 'Akrobatické umění pro diváky'],
+                        'description' => ['sk' => 'Dynamické akrobatické show pre firemné eventy, festivaly, otvorenia a špeciálne príležitosti. Kombinujeme parkour, freerunning a akrobaciu do nezabudnuteľného vizuálneho zážitku.', 'en' => 'Dynamic acrobatic shows for corporate events, festivals, openings and special occasions. We combine parkour, freerunning and acrobatics into an unforgettable visual experience.', 'cs' => 'Dynamické akrobatické show pro firemní akce, festivaly, otevření a speciální příležitosti. Kombinujeme parkour, freerunning a akrobacii do nezapomenutelného vizuálního zážitku.'],
+                        'features' => [
+                            ['sk' => 'Firemné eventy a galavečery', 'en' => 'Corporate events and galas', 'cs' => 'Firemní akce a galavečery'],
+                            ['sk' => 'Festivaly a open-air podujatia', 'en' => 'Festivals and open-air events', 'cs' => 'Festivaly a open-air akce'],
+                            ['sk' => 'TV show a videoklipy', 'en' => 'TV shows and music videos', 'cs' => 'TV show a videoklipy'],
+                            ['sk' => 'Otvorenia obchodov a promo akcie', 'en' => 'Store openings and promo events', 'cs' => 'Otevření obchodů a promo akce'],
+                        ],
+                    ],
+                    [
+                        'image' => self::media('services-lecture'),
+                        'icon' => 'heroicon-o-academic-cap',
+                        'border_color' => '#3B82F640',
+                        'accent_color' => '#3B82F6',
+                        'card_link_type' => 'page',
+                        'card_link_model_id' => self::pageId('lectures'),
+                        'title' => ['sk' => 'Prednášky', 'en' => 'Lectures', 'cs' => 'Přednášky'],
+                        'card_subtitle' => ['sk' => 'Inšpirácia pre školy a organizácie', 'en' => 'Inspiration for schools and organizations', 'cs' => 'Inspirace pro školy a organizace'],
+                        'description' => ['sk' => 'Motivačné prednášky o správnom nastavení mysle, hodnotových rebríčkoch a výhodách cvičenia. Učíme mladých ľudí trpezlivosti, tvrdej drine a vytrvalosti cez náš príbeh.', 'en' => 'Motivational lectures about the right mindset, values and benefits of exercise. We teach young people patience, hard work and perseverance through our story.', 'cs' => 'Motivační přednášky o správném nastavení mysli, hodnotových žebříčcích a výhodách cvičení. Učíme mladé lidi trpělivosti, tvrdé dřině a vytrvalosti přes náš příběh.'],
+                        'features' => [
+                            ['sk' => 'Základné a stredné školy', 'en' => 'Primary and secondary schools', 'cs' => 'Základní a střední školy'],
+                            ['sk' => 'Firemné tímové akcie', 'en' => 'Corporate team events', 'cs' => 'Firemní týmové akce'],
+                            ['sk' => 'Konferencie a semináre', 'en' => 'Conferences and seminars', 'cs' => 'Konference a semináře'],
+                            ['sk' => 'Motivačné programy', 'en' => 'Motivational programs', 'cs' => 'Motivační programy'],
+                        ],
+                    ],
+                    [
+                        'image' => self::media('services-workshop'),
+                        'icon' => 'heroicon-o-fire',
+                        'border_color' => '#22C55E40',
+                        'accent_color' => '#22C55E',
+                        'card_link_type' => 'page',
+                        'card_link_model_id' => self::pageId('workshops'),
+                        'title' => ['sk' => 'Workshopy', 'en' => 'Workshops', 'cs' => 'Workshopy'],
+                        'card_subtitle' => ['sk' => 'Praktické kurzy pre všetkých', 'en' => 'Practical courses for everyone', 'cs' => 'Praktické kurzy pro všechny'],
+                        'description' => ['sk' => 'Workshopy pre fitness centrá, trénerov a podujatia. Učíme základné aj pokročilé prvky — od bezpečného pádu až po kurz stojky.', 'en' => 'Workshops for fitness centers, coaches and events. We teach basic and advanced elements — from safe falling to handstand courses.', 'cs' => 'Workshopy pro fitness centra, trenéry a akce. Učíme základní i pokročilé prvky — od bezpečného pádu až po kurz stojky.'],
+                        'features' => [
+                            ['sk' => 'Fitness centrá a gymy', 'en' => 'Fitness centers and gyms', 'cs' => 'Fitness centra a gymy'],
+                            ['sk' => 'Školské telocvične', 'en' => 'School gymnasiums', 'cs' => 'Školní tělocvičny'],
+                            ['sk' => 'Outdoorové podujatia', 'en' => 'Outdoor events', 'cs' => 'Outdoorové akce'],
+                            ['sk' => 'Individuálne kurzy', 'en' => 'Individual courses', 'cs' => 'Individuální kurzy'],
+                        ],
+                    ],
                 ],
             ]),
             self::brick('numbered-steps', [
+                'label' => ['sk' => 'PROCES', 'en' => 'PROCESS', 'cs' => 'PROCES'],
+                'title' => ['sk' => 'Ako spolupracujeme', 'en' => 'How We Collaborate', 'cs' => 'Jak spolupracujeme'],
+                'subtitle' => ['sk' => 'Od prvého kontaktu po úspešnú realizáciu — jednoduchý a transparentný proces.', 'en' => 'From first contact to successful execution — a simple and transparent process.', 'cs' => 'Od prvního kontaktu po úspěšnou realizaci — jednoduchý a transparentní proces.'],
                 'steps' => [
-                    ['title' => ['sk' => 'Kontakt', 'en' => 'Contact', 'cs' => 'Kontakt'], 'description' => ['sk' => 'Napíšte nám o vašej akcii a predstavách.', 'en' => 'Write to us about your event and ideas.', 'cs' => 'Napište nám o vaší akci a představách.']],
-                    ['title' => ['sk' => 'Konzultácia', 'en' => 'Consultation', 'cs' => 'Konzultace'], 'description' => ['sk' => 'Spoločne navrhneme najlepší formát pre vás.', 'en' => 'Together we will design the best format for you.', 'cs' => 'Společně navrhneme nejlepší formát pro vás.']],
-                    ['title' => ['sk' => 'Príprava', 'en' => 'Preparation', 'cs' => 'Příprava'], 'description' => ['sk' => 'Pripravíme choreografiu a program na mieru.', 'en' => 'We will prepare a custom choreography and program.', 'cs' => 'Připravíme choreografii a program na míru.']],
-                    ['title' => ['sk' => 'Realizácia', 'en' => 'Execution', 'cs' => 'Realizace'], 'description' => ['sk' => 'Profesionálne vystúpenie na vašej akcii.', 'en' => 'Professional performance at your event.', 'cs' => 'Profesionální vystoupení na vaší akci.']],
+                    ['title' => ['sk' => 'Kontakt', 'en' => 'Contact', 'cs' => 'Kontakt'], 'description' => ['sk' => 'Napíšte nám cez kontaktný formulár alebo email. Popíšte typ podujatia, dátum a vaše predstavy.', 'en' => 'Write to us via the contact form or email. Describe the type of event, date and your ideas.', 'cs' => 'Napište nám přes kontaktní formulář nebo email. Popište typ akce, datum a vaše představy.']],
+                    ['title' => ['sk' => 'Konzultácia', 'en' => 'Consultation', 'cs' => 'Konzultace'], 'description' => ['sk' => 'Preberieme detaily, vaše požiadavky a navrhneme riešenie šité na mieru vášmu eventu.', 'en' => 'We will discuss details, your requirements and propose a tailor-made solution for your event.', 'cs' => 'Probereme detaily, vaše požadavky a navrhneme řešení šité na míru vašemu eventu.']],
+                    ['title' => ['sk' => 'Príprava', 'en' => 'Preparation', 'cs' => 'Příprava'], 'description' => ['sk' => 'Pripravíme program, nacvičíme choreografiu a doladíme všetky detaily pred vaším podujatím.', 'en' => 'We will prepare the program, rehearse the choreography and finalize all details before your event.', 'cs' => 'Připravíme program, nacvičíme choreografii a doladíme všechny detaily před vaší akcí.']],
+                    ['title' => ['sk' => 'Realizácia', 'en' => 'Execution', 'cs' => 'Realizace'], 'description' => ['sk' => 'Dodáme nezabudnuteľný zážitok pre vás a vašich hostí. Profesionálne, spoľahlivo a s energiou.', 'en' => 'We deliver an unforgettable experience for you and your guests. Professionally, reliably and with energy.', 'cs' => 'Dodáme nezapomenutelný zážitek pro vás a vaše hosty. Profesionálně, spolehlivě a s energií.']],
                 ],
             ]),
-            self::brick('cta', [
-                'title' => ['sk' => 'Zaujali sme vás?', 'en' => 'Interested?', 'cs' => 'Zaujali jsme vás?'],
-                'description' => ['sk' => 'Kontaktujte nás a dohodneme si podrobnosti vašej akcie.', 'en' => 'Contact us and we will arrange the details of your event.', 'cs' => 'Kontaktujte nás a dohodneme si podrobnosti vaší akce.'],
-                'button_text' => ['sk' => 'Kontaktovať nás', 'en' => 'Contact Us', 'cs' => 'Kontaktovat nás'],
-                'button_link_type' => 'page',
-                'button_link_model_id' => self::pageId('contact'),
-                'background_color' => '#dc2626',
+            self::brick('events-showcase', [
+                'label' => ['sk' => 'PORTFÓLIO', 'en' => 'PORTFOLIO', 'cs' => 'PORTFOLIO'],
+                'title' => ['sk' => 'Kde sme vystupovali', 'en' => 'Where We Performed', 'cs' => 'Kde jsme vystupovali'],
+                'view_all_text' => ['sk' => 'Všetky podujatia', 'en' => 'All Events', 'cs' => 'Všechny akce'],
+                'view_all_url' => '/eventy',
+                'mode' => 'random',
+                'count' => 3,
             ]),
-            self::brick('contact-form', [
-                'show_reason' => true,
-                'show_phone' => true,
+            self::brick('contact-inquiry', [
+                'label' => ['sk' => 'KONTAKT', 'en' => 'CONTACT', 'cs' => 'KONTAKT'],
+                'title' => ['sk' => "Máte záujem\no spoluprácu?", 'en' => "Interested in\na collaboration?", 'cs' => "Máte zájem\no spolupráci?"],
+                'description' => ['sk' => 'Vyplňte formulár a my sa vám ozveme do 24 hodín. Radi vám pripravíme ponuku na mieru.', 'en' => 'Fill out the form and we will get back to you within 24 hours. We will be happy to prepare a custom offer.', 'cs' => 'Vyplňte formulář a my se vám ozveme do 24 hodin. Rádi vám připravíme nabídku na míru.'],
+                'contact_email' => 'info@bczclub.sk',
+                'contact_phone' => '+421 900 123 456',
+            ]),
+        ];
+    }
+
+    private static function performancesContent(): array
+    {
+        return [
+            self::brick('hero', [
+                'layout' => 'centered',
+                'badge' => ['sk' => 'AKROBATICKÉ SHOW', 'en' => 'ACROBATIC SHOW', 'cs' => 'AKROBATICKÁ SHOW'],
+                'title' => ['sk' => 'Akrobatické vystúpenia', 'en' => 'Acrobatic Performances', 'cs' => 'Akrobatická vystoupení'],
+                'subtitle' => ['sk' => 'Prinášame spektakulárne akrobatické show na vaše eventy, festivaly a firemné podujatia. Dynamické vystúpenia, ktoré zanechajú nezabudnuteľný dojem.', 'en' => 'We bring spectacular acrobatic shows to your events, festivals and corporate events. Dynamic performances that leave an unforgettable impression.', 'cs' => 'Přinášíme spektakulární akrobatické show na vaše eventy, festivaly a firemní akce. Dynamická vystoupení, která zanechají nezapomenutelný dojem.'],
+            ]),
+            self::brick('feature-cards', [
+                'label' => ['sk' => 'PONUKA', 'en' => 'OFFER', 'cs' => 'NABÍDKA'],
+                'title' => ['sk' => 'Typy vystúpení', 'en' => 'Types of Performances', 'cs' => 'Typy vystoupení'],
+                'subtitle' => ['sk' => 'Prispôsobíme vystúpenie presne podľa vašich potrieb a typu podujatia.', 'en' => 'We tailor the performance exactly to your needs and type of event.', 'cs' => 'Přizpůsobíme vystoupení přesně podle vašich potřeb a typu akce.'],
+                'cards' => [
+                    ['icon' => 'heroicon-o-sparkles', 'border_color' => '#FF2D2D40', 'accent_color' => '#FF2D2D', 'title' => ['sk' => 'Festival Show', 'en' => 'Festival Show', 'cs' => 'Festival Show'], 'description' => ['sk' => 'Veľké pódiové vystúpenia pre festivaly a open-air eventy. Energické show s hudbou a svetlami pre tisícky divákov.', 'en' => 'Large stage performances for festivals and open-air events. Energetic shows with music and lights for thousands of spectators.', 'cs' => 'Velká pódiová vystoupení pro festivaly a open-air eventy. Energické show s hudbou a světly pro tisíce diváků.']],
+                    ['icon' => 'heroicon-o-building-office-2', 'border_color' => '#FF2D2D40', 'accent_color' => '#FF2D2D', 'title' => ['sk' => 'Firemné Eventy', 'en' => 'Corporate Events', 'cs' => 'Firemní Eventy'], 'description' => ['sk' => 'Profesionálne corporate show pre firemné akcie, teambuildingy a konferencie. Elegantné a prispôsobené vašej značke.', 'en' => 'Professional corporate shows for company events, team buildings and conferences. Elegant and customized to your brand.', 'cs' => 'Profesionální corporate show pro firemní akce, teambuildingy a konference. Elegantní a přizpůsobené vaší značce.']],
+                    ['icon' => 'heroicon-o-scissors', 'border_color' => '#FF2D2D40', 'accent_color' => '#FF2D2D', 'title' => ['sk' => 'Otvorenia & Promá', 'en' => 'Openings & Promos', 'cs' => 'Otevření & Promo'], 'description' => ['sk' => 'Efektné slávnostné otvorenia obchodov, nákupných centier a eventov. Nezabudnuteľný prvý dojem pre vašich zákazníkov.', 'en' => 'Impressive grand openings of stores, shopping centers and events. An unforgettable first impression for your customers.', 'cs' => 'Efektní slavnostní otevření obchodů, nákupních center a eventů. Nezapomenutelný první dojem pro vaše zákazníky.']],
+                    ['icon' => 'heroicon-o-gift', 'border_color' => '#FF2D2D40', 'accent_color' => '#FF2D2D', 'title' => ['sk' => 'Súkromné Podujatia', 'en' => 'Private Events', 'cs' => 'Soukromé Akce'], 'description' => ['sk' => 'Unikátne vystúpenia pre narodeniny, svadby, rozlúčky a ďalšie súkromné oslavy. Osobný prístup a show na mieru.', 'en' => 'Unique performances for birthdays, weddings, farewells and other private celebrations. Personal approach and custom shows.', 'cs' => 'Unikátní vystoupení pro narozeniny, svatby, rozloučky a další soukromé oslavy. Osobní přístup a show na míru.']],
+                ],
+            ]),
+            self::brick('numbered-steps', [
+                'label' => ['sk' => 'PROCES', 'en' => 'PROCESS', 'cs' => 'PROCES'],
+                'title' => ['sk' => 'Ako to funguje', 'en' => 'How It Works', 'cs' => 'Jak to funguje'],
+                'steps' => [
+                    ['title' => ['sk' => 'Kontakt & Konzultácia', 'en' => 'Contact & Consultation', 'cs' => 'Kontakt & Konzultace'], 'description' => ['sk' => 'Napíšte nám. Popíšte typ podujatia, dátum a vaše predstavy. Preberieme detaily a navrhneme riešenie.', 'en' => 'Write to us. Describe the type of event, date and your ideas. We will discuss details and propose a solution.', 'cs' => 'Napište nám. Popište typ akce, datum a vaše představy. Probereme detaily a navrhneme řešení.']],
+                    ['title' => ['sk' => 'Príprava & Choreografia', 'en' => 'Preparation & Choreography', 'cs' => 'Příprava & Choreografie'], 'description' => ['sk' => 'Pripravíme program prispôsobený vášmu eventu — od 5-minútových showtime aktov po 30-minútové programy s hudbou a svetlami.', 'en' => 'We prepare a program tailored to your event — from 5-minute showtime acts to 30-minute programs with music and lights.', 'cs' => 'Připravíme program přizpůsobený vaší akci — od 5minutových showtime aktů po 30minutové programy s hudbou a světly.']],
+                    ['title' => ['sk' => 'Realizácia', 'en' => 'Execution', 'cs' => 'Realizace'], 'description' => ['sk' => 'Dodáme nezabudnuteľný zážitok. Profesionálne, spoľahlivo a s energiou, ktorá strhne každé publikum.', 'en' => 'We deliver an unforgettable experience. Professionally, reliably and with energy that captivates every audience.', 'cs' => 'Dodáme nezapomenutelný zážitek. Profesionálně, spolehlivě a s energií, která strhne každé publikum.']],
+                    ['title' => ['sk' => 'Spätná väzba', 'en' => 'Feedback', 'cs' => 'Zpětná vazba'], 'description' => ['sk' => 'Po akcii vám zašleme fotky a video z vystúpenia. Radi sa vrátime aj na ďalšie podujatie.', 'en' => 'After the event we will send you photos and video from the performance. We are happy to return for the next event.', 'cs' => 'Po akci vám zašleme fotky a video z vystoupení. Rádi se vrátíme i na další akci.']],
+                ],
+            ]),
+            self::brick('events-showcase', [
+                'label' => ['sk' => 'PORTFÓLIO', 'en' => 'PORTFOLIO', 'cs' => 'PORTFOLIO'],
+                'title' => ['sk' => 'Kde sme vystupovali', 'en' => 'Where We Performed', 'cs' => 'Kde jsme vystupovali'],
+                'view_all_text' => ['sk' => 'Všetky podujatia', 'en' => 'All Events', 'cs' => 'Všechny akce'],
+                'view_all_url' => '/eventy',
+                'mode' => 'random',
+                'count' => 3,
+            ]),
+            self::brick('contact-inquiry', [
+                'label' => ['sk' => 'BOOKING', 'en' => 'BOOKING', 'cs' => 'BOOKING'],
+                'title' => ['sk' => "Zarezervujte si\nvystúpenie", 'en' => "Book a\nperformance", 'cs' => "Zarezervujte si\nvystoupení"],
+                'description' => ['sk' => 'Chcete oživiť váš event akrobatickou show? Vyplňte formulár a my sa vám ozveme do 24 hodín.', 'en' => 'Want to liven up your event with an acrobatic show? Fill out the form and we will get back to you within 24 hours.', 'cs' => 'Chcete oživit váš event akrobatickou show? Vyplňte formulář a my se vám ozveme do 24 hodin.'],
+                'contact_email' => 'info@bczclub.sk',
+                'contact_phone' => '+421 900 123 456',
             ]),
         ];
     }
@@ -846,27 +981,46 @@ class PageSeeder extends Seeder
     {
         return [
             self::brick('hero', [
-                'title' => ['sk' => 'INŠPIRATÍVNE PREDNÁŠKY', 'en' => 'INSPIRATIONAL LECTURES', 'cs' => 'INSPIRATIVNÍ PŘEDNÁŠKY'],
+                'layout' => 'centered',
+                'badge' => ['sk' => 'PREDNÁŠKY', 'en' => 'LECTURES', 'cs' => 'PŘEDNÁŠKY'],
+                'title' => ['sk' => 'Inšpiratívne prednášky', 'en' => 'Inspirational Lectures', 'cs' => 'Inspirativní přednášky'],
                 'subtitle' => ['sk' => 'Motivačné prednášky pre školy, firmy a organizácie. Inšpirujeme mladých ľudí príbehom o disciplíne, vytrvalosti a sile pohybu.', 'en' => 'Motivational lectures for schools, companies and organizations. We inspire young people through a story about discipline, perseverance and the power of movement.', 'cs' => 'Motivační přednášky pro školy, firmy a organizace. Inspirujeme mladé lidi příběhem o disciplíně, vytrvalosti a síle pohybu.'],
             ]),
-            self::brick('rich-text', [
-                'content' => ['sk' => '<p>Naše prednášky sú viac než len slová. Sú to skutočné príbehy členov BCZ Clubu, ktorí prostredníctvom street workoutu a kalisteniky objavili silu disciplíny, trpezlivosti a vytrvalosti.</p><p>Prednášame na školách, v firmách aj na konferenciách. Učíme mladých ľudí, že cesta k úspechu vedie cez tvrdú prácu, správne nastavenie mysle a zdravý životný štýl.</p>', 'en' => '<p>Our lectures are more than just words. They are real stories of BCZ Club members who discovered the power of discipline, patience and perseverance through street workout and calisthenics.</p><p>We give lectures at schools, companies and conferences. We teach young people that the path to success leads through hard work, the right mindset and a healthy lifestyle.</p>', 'cs' => '<p>Naše přednášky jsou více než jen slova. Jsou to skutečné příběhy členů BCZ Clubu, kteří prostřednictvím street workoutu a kalisteniky objevili sílu disciplíny, trpělivosti a vytrvalosti.</p><p>Přednášíme na školách, ve firmách i na konferencích. Učíme mladé lidi, že cesta k úspěchu vede přes tvrdou práci, správné nastavení mysli a zdravý životní styl.</p>'],
-            ]),
             self::brick('feature-cards', [
+                'label' => ['sk' => 'O ČOM HOVORÍME', 'en' => 'WHAT WE TALK ABOUT', 'cs' => 'O ČEM MLUVÍME'],
+                'title' => ['sk' => 'Témy prednášok', 'en' => 'Lecture Topics', 'cs' => 'Témata přednášek'],
+                'subtitle' => ['sk' => 'Každá prednáška je príbeh o disciplíne, vytrvalosti a sile pohybu.', 'en' => 'Every lecture is a story about discipline, perseverance and the power of movement.', 'cs' => 'Každá přednáška je příběh o disciplíně, vytrvalosti a síle pohybu.'],
                 'cards' => [
-                    ['icon' => 'heroicon-o-light-bulb', 'title' => ['sk' => 'Správne Nastavenie Mysle', 'en' => 'The Right Mindset', 'cs' => 'Správné Nastavení Mysli'], 'description' => ['sk' => 'Growth mindset a pozitívne myslenie. Ako zmeniť pohľad na prekážky a premeniť ich na príležitosti.', 'en' => 'Growth mindset and positive thinking. How to change your view of obstacles and turn them into opportunities.', 'cs' => 'Growth mindset a pozitivní myšlení. Jak změnit pohled na překážky a proměnit je v příležitosti.']],
-                    ['icon' => 'heroicon-o-bolt', 'title' => ['sk' => 'Hodnota Disciplíny', 'en' => 'The Value of Discipline', 'cs' => 'Hodnota Disciplíny'], 'description' => ['sk' => 'Prečo je disciplína základom úspechu. Denné návyky a rutiny, ktoré formujú charakter a budujú odolnosť.', 'en' => 'Why discipline is the foundation of success. Daily habits and routines that shape character and build resilience.', 'cs' => 'Proč je disciplína základem úspěchu. Denní návyky a rutiny, které formují charakter a budují odolnost.']],
-                    ['icon' => 'heroicon-o-heart', 'title' => ['sk' => 'Sila Pohybu', 'en' => 'The Power of Movement', 'cs' => 'Síla Pohybu'], 'description' => ['sk' => 'Fyzická aktivita ako nástroj osobného rastu. Benefity cvičenia pre telo aj myseľ.', 'en' => 'Physical activity as a tool for personal growth. Benefits of exercise for body and mind.', 'cs' => 'Fyzická aktivita jako nástroj osobního růstu. Benefity cvičení pro tělo i mysl.']],
-                    ['icon' => 'heroicon-o-star', 'title' => ['sk' => 'Od Sna k Realite', 'en' => 'From Dream to Reality', 'cs' => 'Od Snu k Realitě'], 'description' => ['sk' => 'Ako premeniť víziu na skutočnosť. Príbeh BCZ Clubu od garážových tréningov po celoslovenské vystúpenia a medzinárodné súťaže.', 'en' => 'How to turn a vision into reality. The story of BCZ Club from garage training to nationwide performances and international competitions.', 'cs' => 'Jak proměnit vizi ve skutečnost. Příběh BCZ Clubu od garážových tréninků po celoslovenská vystoupení a mezinárodní soutěže.']],
+                    ['icon' => 'heroicon-o-light-bulb', 'border_color' => '#3B82F640', 'accent_color' => '#3B82F6', 'title' => ['sk' => 'Správne Nastavenie Mysle', 'en' => 'The Right Mindset', 'cs' => 'Správné Nastavení Mysli'], 'description' => ['sk' => 'Growth mindset a pozitívne myslenie. Ako zmeniť pohľad na prekážky a premeniť ich na príležitosti.', 'en' => 'Growth mindset and positive thinking. How to change your view of obstacles and turn them into opportunities.', 'cs' => 'Growth mindset a pozitivní myšlení. Jak změnit pohled na překážky a proměnit je v příležitosti.']],
+                    ['icon' => 'heroicon-o-bolt', 'border_color' => '#3B82F640', 'accent_color' => '#3B82F6', 'title' => ['sk' => 'Hodnota Disciplíny', 'en' => 'The Value of Discipline', 'cs' => 'Hodnota Disciplíny'], 'description' => ['sk' => 'Prečo je disciplína základom úspechu. Denné návyky a rutiny, ktoré formujú charakter a budujú odolnosť.', 'en' => 'Why discipline is the foundation of success. Daily habits and routines that shape character and build resilience.', 'cs' => 'Proč je disciplína základem úspěchu. Denní návyky a rutiny, které formují charakter a budují odolnost.']],
+                    ['icon' => 'heroicon-o-heart', 'border_color' => '#3B82F640', 'accent_color' => '#3B82F6', 'title' => ['sk' => 'Sila Pohybu', 'en' => 'The Power of Movement', 'cs' => 'Síla Pohybu'], 'description' => ['sk' => 'Fyzická aktivita ako nástroj osobného rastu. Benefity cvičenia pre telo aj myseľ.', 'en' => 'Physical activity as a tool for personal growth. Benefits of exercise for body and mind.', 'cs' => 'Fyzická aktivita jako nástroj osobního růstu. Benefity cvičení pro tělo i mysl.']],
+                    ['icon' => 'heroicon-o-star', 'border_color' => '#3B82F640', 'accent_color' => '#3B82F6', 'title' => ['sk' => 'Od Sna k Realite', 'en' => 'From Dream to Reality', 'cs' => 'Od Snu k Realitě'], 'description' => ['sk' => 'Ako premeniť víziu na skutočnosť. Príbeh BCZ Clubu od garážových tréningov po celoslovenské vystúpenia.', 'en' => 'How to turn a vision into reality. The story of BCZ Club from garage training to nationwide performances.', 'cs' => 'Jak proměnit vizi ve skutečnost. Příběh BCZ Clubu od garážových tréninků po celoslovenská vystoupení.']],
                 ],
             ]),
-            self::brick('cta', [
-                'title' => ['sk' => 'Prineste Inšpiráciu Do Vašej Školy', 'en' => 'Bring Inspiration to Your School', 'cs' => 'Přineste Inspiraci Do Vaší Školy'],
-                'description' => ['sk' => 'Kontaktujte nás pre nezáväznú konzultáciu o prednáške na vašej škole alebo podujatí.', 'en' => 'Contact us for a no-obligation consultation about a lecture at your school or event.', 'cs' => 'Kontaktujte nás pro nezávaznou konzultaci o přednášce na vaší škole nebo akci.'],
-                'button_text' => ['sk' => 'Kontaktovať nás', 'en' => 'Contact Us', 'cs' => 'Kontaktovat nás'],
-                'button_link_type' => 'page',
-                'button_link_model_id' => self::pageId('contact'),
-                'background_color' => '#dc2626',
+            self::brick('numbered-steps', [
+                'label' => ['sk' => 'PRIEBEH', 'en' => 'PROCESS', 'cs' => 'PRŮBĚH'],
+                'title' => ['sk' => 'Ako prednáška prebieha', 'en' => 'How the Lecture Works', 'cs' => 'Jak přednáška probíhá'],
+                'steps' => [
+                    ['title' => ['sk' => 'Dohodnutie témy', 'en' => 'Topic Agreement', 'cs' => 'Dohodnutí tématu'], 'description' => ['sk' => 'Spoločne vyberieme tému a formát prednášky podľa vašej cieľovej skupiny.', 'en' => 'Together we select the topic and format based on your target audience.', 'cs' => 'Společně vybereme téma a formát přednášky podle vaší cílové skupiny.']],
+                    ['title' => ['sk' => 'Prednáška', 'en' => 'The Lecture', 'cs' => 'Přednáška'], 'description' => ['sk' => '45-90 minút inšpiratívneho obsahu s interaktívnymi prvkami a praktickými ukážkami.', 'en' => '45-90 minutes of inspirational content with interactive elements and practical demonstrations.', 'cs' => '45-90 minut inspirativního obsahu s interaktivními prvky a praktickými ukázkami.']],
+                    ['title' => ['sk' => 'Q&A a diskusia', 'en' => 'Q&A & Discussion', 'cs' => 'Q&A a diskuse'], 'description' => ['sk' => 'Otvorený priestor pre otázky, zdieľanie a osobný kontakt s prednášajúcim.', 'en' => 'Open space for questions, sharing and personal contact with the speaker.', 'cs' => 'Otevřený prostor pro otázky, sdílení a osobní kontakt s přednášejícím.']],
+                    ['title' => ['sk' => 'Ukážka', 'en' => 'Demonstration', 'cs' => 'Ukázka'], 'description' => ['sk' => 'Na záver živá akrobatická ukážka, ktorá inšpiruje a motivuje k pohybu.', 'en' => 'At the end, a live acrobatic demonstration that inspires and motivates movement.', 'cs' => 'Na závěr živá akrobatická ukázka, která inspiruje a motivuje k pohybu.']],
+                ],
+            ]),
+            self::brick('events-showcase', [
+                'label' => ['sk' => 'REFERENCIE', 'en' => 'REFERENCES', 'cs' => 'REFERENCE'],
+                'title' => ['sk' => 'Kde sme prednášali', 'en' => 'Where We Lectured', 'cs' => 'Kde jsme přednášeli'],
+                'view_all_text' => ['sk' => 'Všetky podujatia', 'en' => 'All Events', 'cs' => 'Všechny akce'],
+                'view_all_url' => '/eventy',
+                'mode' => 'random',
+                'count' => 3,
+            ]),
+            self::brick('contact-inquiry', [
+                'label' => ['sk' => 'KONTAKT', 'en' => 'CONTACT', 'cs' => 'KONTAKT'],
+                'title' => ['sk' => "Máte záujem\no prednášku?", 'en' => "Interested in\na lecture?", 'cs' => "Máte zájem\no přednášku?"],
+                'description' => ['sk' => 'Vyplňte formulár a my sa vám ozveme do 24 hodín.', 'en' => 'Fill out the form and we will get back to you within 24 hours.', 'cs' => 'Vyplňte formulář a my se vám ozveme do 24 hodin.'],
+                'contact_email' => 'info@bczclub.sk',
+                'contact_phone' => '+421 900 123 456',
             ]),
         ];
     }
@@ -875,43 +1029,46 @@ class PageSeeder extends Seeder
     {
         return [
             self::brick('hero', [
-                'title' => ['sk' => 'PRAKTICKÉ WORKSHOPY', 'en' => 'PRACTICAL WORKSHOPS', 'cs' => 'PRAKTICKÉ WORKSHOPY'],
+                'layout' => 'centered',
+                'badge' => ['sk' => 'WORKSHOPY', 'en' => 'WORKSHOPS', 'cs' => 'WORKSHOPY'],
+                'title' => ['sk' => 'Praktické workshopy', 'en' => 'Practical Workshops', 'cs' => 'Praktické workshopy'],
                 'subtitle' => ['sk' => 'Učíme základné aj pokročilé prvky kalisteniky — od bezpečného pádu až po kurz stojky. Prispôsobíme sa vašej úrovni.', 'en' => 'We teach basic and advanced calisthenics elements — from safe falling to handstand courses. We adapt to your level.', 'cs' => 'Učíme základní i pokročilé prvky kalisteniky — od bezpečného pádu až po kurz stojky. Přizpůsobíme se vaší úrovni.'],
             ]),
-            self::brick('rich-text', [
-                'content' => ['sk' => '<p>Naše workshopy sú určené pre fitness centrá, trénerov, školy a podujatia. Každý workshop je vedený certifikovaným trénerom s medzinárodnými skúsenosťami.</p>', 'en' => '<p>Our workshops are designed for fitness centers, coaches, schools and events. Every workshop is led by a certified coach with international experience.</p>', 'cs' => '<p>Naše workshopy jsou určeny pro fitness centra, trenéry, školy a akce. Každý workshop je veden certifikovaným trenérem s mezinárodními zkušenostmi.</p>'],
-            ]),
             self::brick('feature-cards', [
+                'label' => ['sk' => 'PONUKA', 'en' => 'OFFER', 'cs' => 'NABÍDKA'],
+                'title' => ['sk' => 'Typy workshopov', 'en' => 'Workshop Types', 'cs' => 'Typy workshopů'],
+                'subtitle' => ['sk' => 'Každý workshop prispôsobíme úrovni a potrebám účastníkov.', 'en' => 'Every workshop is adapted to the level and needs of participants.', 'cs' => 'Každý workshop přizpůsobíme úrovni a potřebám účastníků.'],
                 'cards' => [
-                    ['icon' => 'heroicon-o-hand-raised', 'title' => ['sk' => 'Kurz Stojky', 'en' => 'Handstand Course', 'cs' => 'Kurz Stojky'], 'description' => ['sk' => 'Od základnej prípravy až po voľnú stojku. Naučíme vás správnu techniku, posilnenie jadra a progresiu krok za krokom.', 'en' => 'From basic preparation to freestanding handstand. We teach you proper technique, core strengthening and step-by-step progression.', 'cs' => 'Od základní přípravy až po volnou stojku. Naučíme vás správnou techniku, posílení jádra a progresi krok za krokem.']],
-                    ['icon' => 'heroicon-o-fire', 'title' => ['sk' => 'Základy Kalisteniky', 'en' => 'Calisthenics Basics', 'cs' => 'Základy Kalisteniky'], 'description' => ['sk' => 'Zhyby, kliky, dipy a ich variácie. Správna forma, progresie a zostava tréningového plánu.', 'en' => 'Pull-ups, push-ups, dips and their variations. Proper form, progressions and training plan structure.', 'cs' => 'Shyby, kliky, dipy a jejich variace. Správná forma, progrese a sestava tréninkového plánu.']],
-                    ['icon' => 'heroicon-o-shield-check', 'title' => ['sk' => 'Bezpečný Pád', 'en' => 'Safe Falling', 'cs' => 'Bezpečný Pád'], 'description' => ['sk' => 'Techniky bezpečného pádu a základov parkour rolľov. Nevyhnutné pre každého, kto chce začať.', 'en' => 'Safe falling techniques and parkour roll basics. Essential for anyone who wants to start.', 'cs' => 'Techniky bezpečného pádu a základů parkour rollů. Nezbytné pro každého, kdo chce začít.']],
-                    ['icon' => 'heroicon-o-arrow-trending-up', 'title' => ['sk' => 'Pokročilé Prvky', 'en' => 'Advanced Elements', 'cs' => 'Pokročilé Prvky'], 'description' => ['sk' => 'Muscle-up, front lever, planche a ďalšie. Pre tých, čo už ovládajú základy.', 'en' => 'Muscle-up, front lever, planche and more. For those who already master the basics.', 'cs' => 'Muscle-up, front lever, planche a další. Pro ty, co už ovládají základy.']],
+                    ['icon' => 'heroicon-o-hand-raised', 'border_color' => '#22C55E40', 'accent_color' => '#22C55E', 'title' => ['sk' => 'Kurz Stojky', 'en' => 'Handstand Course', 'cs' => 'Kurz Stojky'], 'description' => ['sk' => 'Od základnej prípravy až po voľnú stojku. Správna technika, posilnenie jadra a progresie.', 'en' => 'From basic preparation to freestanding handstand. Proper technique, core strengthening and progressions.', 'cs' => 'Od základní přípravy až po volnou stojku. Správná technika, posílení jádra a progrese.']],
+                    ['icon' => 'heroicon-o-fire', 'border_color' => '#22C55E40', 'accent_color' => '#22C55E', 'title' => ['sk' => 'Základy Kalisteniky', 'en' => 'Calisthenics Basics', 'cs' => 'Základy Kalisteniky'], 'description' => ['sk' => 'Zhyby, kliky, dipy a ich variácie. Správna forma a zostava tréningového plánu.', 'en' => 'Pull-ups, push-ups, dips and their variations. Proper form and training plan structure.', 'cs' => 'Shyby, kliky, dipy a jejich variace. Správná forma a sestava tréninkového plánu.']],
+                    ['icon' => 'heroicon-o-shield-check', 'border_color' => '#22C55E40', 'accent_color' => '#22C55E', 'title' => ['sk' => 'Bezpečný Pád', 'en' => 'Safe Falling', 'cs' => 'Bezpečný Pád'], 'description' => ['sk' => 'Techniky bezpečného pádu a základov parkour rolľov. Nevyhnutné pre každého.', 'en' => 'Safe falling techniques and parkour roll basics. Essential for everyone.', 'cs' => 'Techniky bezpečného pádu a základů parkour rollů. Nezbytné pro každého.']],
+                    ['icon' => 'heroicon-o-arrow-trending-up', 'border_color' => '#22C55E40', 'accent_color' => '#22C55E', 'title' => ['sk' => 'Pokročilé Prvky', 'en' => 'Advanced Elements', 'cs' => 'Pokročilé Prvky'], 'description' => ['sk' => 'Muscle-up, front lever, planche a ďalšie. Pre tých, čo už ovládajú základy.', 'en' => 'Muscle-up, front lever, planche and more. For those who already master the basics.', 'cs' => 'Muscle-up, front lever, planche a další. Pro ty, co už ovládají základy.']],
                 ],
             ]),
             self::brick('numbered-steps', [
+                'label' => ['sk' => 'PRIEBEH', 'en' => 'PROCESS', 'cs' => 'PRŮBĚH'],
+                'title' => ['sk' => 'Ako workshop prebieha', 'en' => 'How the Workshop Works', 'cs' => 'Jak workshop probíhá'],
                 'steps' => [
                     ['title' => ['sk' => 'Úvod & Rozohriatie', 'en' => 'Introduction & Warm-up', 'cs' => 'Úvod & Rozcvičení'], 'description' => ['sk' => 'Zoznámenie s účastníkmi, stanovenie cieľov a dôkladné rozohriatie tela.', 'en' => 'Getting to know participants, setting goals and thorough body warm-up.', 'cs' => 'Seznámení s účastníky, stanovení cílů a důkladné rozcvičení těla.']],
                     ['title' => ['sk' => 'Technika & Progresie', 'en' => 'Technique & Progressions', 'cs' => 'Technika & Progrese'], 'description' => ['sk' => 'Detailný rozklad cvikov, správna forma a individuálne progresie.', 'en' => 'Detailed exercise breakdown, proper form and individual progressions.', 'cs' => 'Detailní rozklad cviků, správná forma a individuální progrese.']],
                     ['title' => ['sk' => 'Prax & Feedback', 'en' => 'Practice & Feedback', 'cs' => 'Praxe & Feedback'], 'description' => ['sk' => 'Praktické precvičovanie s osobným feedbackom trénera.', 'en' => 'Practical practice with personal feedback from the coach.', 'cs' => 'Praktické procvičování s osobním feedbackem trenéra.']],
-                    ['title' => ['sk' => 'Plán & Materiály', 'en' => 'Plan & Materials', 'cs' => 'Plán & Materiály'], 'description' => ['sk' => 'Na záver dostanete tréningový plán a materiály na ďalšie samostatné cvičenie.', 'en' => 'At the end you will receive a training plan and materials for further independent practice.', 'cs' => 'Na závěr dostanete tréninkový plán a materiály na další samostatné cvičení.']],
+                    ['title' => ['sk' => 'Plán & Materiály', 'en' => 'Plan & Materials', 'cs' => 'Plán & Materiály'], 'description' => ['sk' => 'Na záver dostanete tréningový plán a materiály na ďalšie cvičenie.', 'en' => 'At the end you will receive a training plan and materials for further practice.', 'cs' => 'Na závěr dostanete tréninkový plán a materiály na další cvičení.']],
                 ],
             ]),
-            self::brick('stats', [
-                'items' => [
-                    ['number' => '80+', 'label' => ['sk' => 'Workshopov', 'en' => 'Workshops', 'cs' => 'Workshopů']],
-                    ['number' => '2000+', 'label' => ['sk' => 'Účastníkov', 'en' => 'Participants', 'cs' => 'Účastníků']],
-                    ['number' => '15+', 'label' => ['sk' => 'Krajín', 'en' => 'Countries', 'cs' => 'Zemí']],
-                    ['number' => '5', 'label' => ['sk' => 'Typov workshopov', 'en' => 'Workshop Types', 'cs' => 'Typů workshopů']],
-                ],
+            self::brick('events-showcase', [
+                'label' => ['sk' => 'REFERENCIE', 'en' => 'REFERENCES', 'cs' => 'REFERENCE'],
+                'title' => ['sk' => 'Kde sme workshopovali', 'en' => 'Where We Workshopped', 'cs' => 'Kde jsme workshopovali'],
+                'view_all_text' => ['sk' => 'Všetky podujatia', 'en' => 'All Events', 'cs' => 'Všechny akce'],
+                'view_all_url' => '/eventy',
+                'mode' => 'random',
+                'count' => 3,
             ]),
-            self::brick('cta', [
-                'title' => ['sk' => 'OBJEDNAJTE SI WORKSHOP', 'en' => 'BOOK A WORKSHOP', 'cs' => 'OBJEDNEJTE SI WORKSHOP'],
-                'description' => ['sk' => 'Kontaktujte nás a dohodneme si termín a obsah workshopu na mieru.', 'en' => 'Contact us and we will arrange a date and custom workshop content.', 'cs' => 'Kontaktujte nás a dohodneme si termín a obsah workshopu na míru.'],
-                'button_text' => ['sk' => 'Kontaktovať nás', 'en' => 'Contact Us', 'cs' => 'Kontaktovat nás'],
-                'button_link_type' => 'page',
-                'button_link_model_id' => self::pageId('contact'),
-                'background_color' => '#dc2626',
+            self::brick('contact-inquiry', [
+                'label' => ['sk' => 'KONTAKT', 'en' => 'CONTACT', 'cs' => 'KONTAKT'],
+                'title' => ['sk' => "Máte záujem\no workshop?", 'en' => "Interested in\na workshop?", 'cs' => "Máte zájem\no workshop?"],
+                'description' => ['sk' => 'Vyplňte formulár a my sa vám ozveme do 24 hodín.', 'en' => 'Fill out the form and we will get back to you within 24 hours.', 'cs' => 'Vyplňte formulář a my se vám ozveme do 24 hodin.'],
+                'contact_email' => 'info@bczclub.sk',
+                'contact_phone' => '+421 900 123 456',
             ]),
         ];
     }
@@ -1198,7 +1355,6 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'centered',
-                'badge' => ['sk' => 'BEYOND COMFORT ZONE', 'en' => 'BEYOND COMFORT ZONE', 'cs' => 'BEYOND COMFORT ZONE'],
                 'title' => ['sk' => 'ZOZNAM', 'en' => 'TRAINING', 'cs' => 'SEZNAM'],
                 'title_accent' => ['sk' => 'TRÉNINGOV', 'en' => 'LIST', 'cs' => 'TRÉNINKŮ'],
                 'subtitle' => ['sk' => 'Nájdi si tréning, ktorý ti vyhovuje', 'en' => 'Find a training that suits you', 'cs' => 'Najdi si trénink, který ti vyhovuje'],
@@ -1216,7 +1372,6 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'centered',
-                'badge' => ['sk' => 'BEYOND COMFORT ZONE', 'en' => 'BEYOND COMFORT ZONE', 'cs' => 'BEYOND COMFORT ZONE'],
                 'title' => ['sk' => 'SÚŤAŽE', 'en' => 'COMPETITIONS', 'cs' => 'SOUTĚŽE'],
                 'subtitle' => ['sk' => 'Prehľad všetkých súťaží na platforme BCZ', 'en' => 'Overview of all competitions on the BCZ platform', 'cs' => 'Přehled všech soutěží na platformě BCZ'],
                 'breadcrumb' => [
@@ -1233,7 +1388,6 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'centered',
-                'badge' => ['sk' => 'PORTFÓLIO', 'en' => 'PORTFOLIO', 'cs' => 'PORTFOLIO'],
                 'title' => ['sk' => 'PODUJATIA', 'en' => 'EVENTS', 'cs' => 'UDÁLOSTI'],
                 'subtitle' => ['sk' => 'Prehľad všetkých našich vystúpení, prednášok a workshopov', 'en' => 'Overview of all our performances, lectures and workshops', 'cs' => 'Přehled všech našich vystoupení, přednášek a workshopů'],
                 'breadcrumb' => [
@@ -1250,7 +1404,6 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'centered',
-                'badge' => ['sk' => 'NÁŠ TÍM', 'en' => 'OUR TEAM', 'cs' => 'NÁŠ TÝM'],
                 'title' => ['sk' => 'NAŠI', 'en' => 'OUR', 'cs' => 'NAŠI'],
                 'title_accent' => ['sk' => 'TRÉNERI', 'en' => 'COACHES', 'cs' => 'TRENÉŘI'],
                 'subtitle' => ['sk' => 'Zoznámte sa s našimi skúsenými trénermi', 'en' => 'Meet our experienced coaches', 'cs' => 'Seznamte se s našimi zkušenými trenéry'],
@@ -1268,7 +1421,6 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'centered',
-                'badge' => ['sk' => 'NAŠI ŠPORTOVCI', 'en' => 'OUR ATHLETES', 'cs' => 'NAŠI SPORTOVCI'],
                 'title' => ['sk' => 'NAŠI', 'en' => 'OUR', 'cs' => 'NAŠI'],
                 'title_accent' => ['sk' => 'ŠPORTOVCI', 'en' => 'ATHLETES', 'cs' => 'SPORTOVCI'],
                 'subtitle' => ['sk' => 'Spoznajte talentovaných atlétov BCZ Club', 'en' => 'Meet the talented athletes of BCZ Club', 'cs' => 'Poznejte talentované atlety BCZ Club'],
@@ -1286,7 +1438,6 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'centered',
-                'badge' => ['sk' => 'ROZHODCOVIA', 'en' => 'JUDGES', 'cs' => 'ROZHODČÍ'],
                 'title' => ['sk' => 'NAŠI', 'en' => 'OUR', 'cs' => 'NAŠI'],
                 'title_accent' => ['sk' => 'ROZHODCOVIA', 'en' => 'JUDGES', 'cs' => 'ROZHODČÍ'],
                 'subtitle' => ['sk' => 'Certifikovaní rozhodcovia zabezpečujúci férovosť na súťažiach', 'en' => 'Certified judges ensuring fairness at competitions', 'cs' => 'Certifikovaní rozhodčí zajišťující férovost na soutěžích'],
@@ -1304,7 +1455,6 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'centered',
-                'badge' => ['sk' => 'NAŠE TÍMY', 'en' => 'OUR TEAMS', 'cs' => 'NAŠE TÝMY'],
                 'title' => ['sk' => 'NAŠE', 'en' => 'OUR', 'cs' => 'NAŠE'],
                 'title_accent' => ['sk' => 'TÍMY', 'en' => 'TEAMS', 'cs' => 'TÝMY'],
                 'subtitle' => ['sk' => 'Spoznajte tímy BCZ Club pôsobiace v rôznych mestách', 'en' => 'Meet BCZ Club teams operating in various cities', 'cs' => 'Poznejte týmy BCZ Club působící v různých městech'],
@@ -1351,6 +1501,11 @@ class PageSeeder extends Seeder
             'trainings-private' => ['url' => 'https://picsum.photos/seed/trainings-priv/800/600', 'name' => 'trainings-private.jpg'],
             'trainings-coach1' => ['url' => 'https://picsum.photos/seed/trainings-c1/600/800', 'name' => 'trainings-coach1.jpg'],
             'trainings-coach2' => ['url' => 'https://picsum.photos/seed/trainings-c2/600/800', 'name' => 'trainings-coach2.jpg'],
+
+            // Services page
+            'services-performance' => ['url' => 'https://picsum.photos/seed/svc-perf/800/600', 'name' => 'services-performance.jpg'],
+            'services-lecture' => ['url' => 'https://picsum.photos/seed/svc-lect/800/600', 'name' => 'services-lecture.jpg'],
+            'services-workshop' => ['url' => 'https://picsum.photos/seed/svc-work/800/600', 'name' => 'services-workshop.jpg'],
         ];
 
         // Gallery images (about, parkour, street workout)

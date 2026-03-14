@@ -10,11 +10,13 @@ use App\Mason\Bricks\CenteredHeroBrick;
 use App\Mason\Bricks\CoachesArchiveBrick;
 use App\Mason\Bricks\CompetitionsArchiveBrick;
 use App\Mason\Bricks\ContactFormBrick;
+use App\Mason\Bricks\ContactInquiryBrick;
 use App\Mason\Bricks\CtaBrick;
 use App\Mason\Bricks\DetailsCardBrick;
 use App\Mason\Bricks\DividerBrick;
 use App\Mason\Bricks\DonationInfoBrick;
 use App\Mason\Bricks\EventsArchiveBrick;
+use App\Mason\Bricks\EventsShowcaseBrick;
 use App\Mason\Bricks\FaqBrick;
 use App\Mason\Bricks\FeatureCardsBrick;
 use App\Mason\Bricks\FounderSpotlightBrick;
@@ -209,10 +211,12 @@ class PageForm
             TrainingsArchiveBrick::class,
             CompetitionsArchiveBrick::class,
             EventsArchiveBrick::class,
+            EventsShowcaseBrick::class,
             CoachesArchiveBrick::class,
             AthletesArchiveBrick::class,
             JudgesArchiveBrick::class,
             TeamsArchiveBrick::class,
+            ContactInquiryBrick::class,
         ];
     }
 }

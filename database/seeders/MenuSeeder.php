@@ -26,7 +26,7 @@ class MenuSeeder extends Seeder
                 'items' => [
                     $this->pageItem('O nás', 'About Us', 'O nás', 'about', 0),
                     $this->pageItem('Súťaže', 'Competitions', 'Soutěže', 'competitions', 1),
-                    $this->pageItem('Tréningy', 'Trainings', 'Tréninky', 'trainings', 2),
+                    $this->pageItem('Trénuj s nami', 'Train With Us', 'Trénuj s námi', 'trainings', 2),
                     $this->pageItem('Vystúpenia', 'Events', 'Vystoupení', 'events', 3),
                     $this->pageItem('Kontakt', 'Contact', 'Kontakt', 'contact', 4),
                 ],
@@ -51,7 +51,7 @@ class MenuSeeder extends Seeder
                 'label' => ['sk' => 'Programy', 'en' => 'Programs', 'cs' => 'Programy'],
                 'items' => [
                     $this->pageItem('Súťaže', 'Competitions', 'Soutěže', 'competitions', 0),
-                    $this->pageItem('Tréningy', 'Trainings', 'Tréninky', 'trainings', 1),
+                    $this->pageItem('Trénuj s nami', 'Train With Us', 'Trénuj s námi', 'trainings', 1),
                     $this->pageItem('Vystúpenia', 'Events', 'Vystoupení', 'events', 2),
                     $this->pageItem('Školské workshopy', 'School Workshops', 'Školní workshopy', 'workshops', 3),
                 ],

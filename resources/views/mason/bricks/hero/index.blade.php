@@ -3,14 +3,14 @@
     $hasImage = ! empty($background_image);
 @endphp
 
-<section class="relative w-full {{ $hasImage ? ($centered ? 'h-[400px] md:h-[500px] lg:h-[600px]' : 'h-[500px] md:h-[650px] lg:h-[800px]') : '' }} overflow-hidden">
+<section class="relative w-full {{ $hasImage ? ($centered ? 'h-[400px] md:h-[500px] lg:h-[600px]' : 'h-[500px] md:h-[650px] lg:h-[800px]') : ($centered ? 'py-[80px] md:py-[100px]' : '') }} overflow-hidden">
     @if($hasImage)
         <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ brick_media_url($background_image) }}')"></div>
         <div class="absolute inset-0 bg-gradient-to-{{ $centered ? 'b' : 't' }} from-bcz-dark {{ $centered ? 'via-transparent' : '' }} to-{{ $centered ? 'bcz-dark' : 'transparent' }}"></div>
     @endif
 
-    <div class="relative w-full {{ $hasImage ? 'h-full' : '' }} flex flex-col {{ $centered ? 'items-center justify-center gap-6' : ($hasImage ? 'justify-end pb-20' : '') }} {{ $hasImage ? 'pt-[120px]' : 'pt-[120px] pb-[60px]' }}">
-        <div class="{{ $centered ? 'flex flex-col items-center' : '' }} max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 w-full">
+    <div class="relative w-full {{ $hasImage ? 'h-full' : '' }} flex flex-col {{ $centered ? 'items-center justify-center gap-8' : ($hasImage ? 'justify-end pb-20' : '') }} {{ $hasImage ? 'pt-[120px]' : 'pt-[140px] pb-[80px]' }}">
+        <div class="{{ $centered ? 'flex flex-col items-center gap-8' : '' }} max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 w-full">
 
         @if(! empty($breadcrumb))
             <div class="flex items-center gap-3 {{ $centered ? 'mb-6' : 'mb-8' }}">
@@ -27,8 +27,8 @@
             </div>
         @endif
 
-        @if(! empty($badge) && ! $centered)
-            <div class="flex items-center gap-3 px-5 py-2.5 border border-bcz-red bg-bcz-red/10 w-fit mb-8">
+        @if(! empty($badge))
+            <div class="flex items-center gap-3 px-5 py-2.5 border border-bcz-red bg-bcz-red/10 w-fit {{ $centered ? '' : 'mb-8' }}">
                 <span class="w-2 h-2 rounded-full bg-bcz-red"></span>
                 <span class="text-bcz-red text-xs font-bold tracking-widest">{{ brick_trans($badge) }}</span>
             </div>

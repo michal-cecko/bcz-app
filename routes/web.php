@@ -22,7 +22,7 @@ $frontendRoutes = function () {
         ->defaults('slug', '/');
 
     // CMS landing page for trainings
-    Route::get('/trenuj-s-nami', [PageController::class, 'show'])->defaults('slug', 'treningy');
+    Route::get('/trenuj-s-nami', [PageController::class, 'show'])->defaults('slug', 'trenuj-s-nami');
 
     // Archives (flat, global)
     Route::get('/treningy', [PageController::class, 'show'])->defaults('slug', 'zoznam-treningov');
@@ -60,7 +60,8 @@ $frontendRoutes = function () {
     Route::get('/podporte-nas', [PageController::class, 'show'])->defaults('slug', 'podporte-nas');
     Route::get('/zakladatel-ceo-dominik-klimek', [PageController::class, 'show'])->defaults('slug', 'zakladatel-ceo-dominik-klimek');
     Route::get('/dva-percenta-z-dane', [PageController::class, 'show'])->defaults('slug', 'dva-percenta-z-dane');
-    Route::get('/vystupenia-workshopy', [PageController::class, 'show'])->defaults('slug', 'vystupenia-workshopy');
+    Route::get('/vystupenia-prednasky-workshopy', [PageController::class, 'show'])->defaults('slug', 'vystupenia-prednasky-workshopy');
+    Route::get('/akrobaticke-vystupenia', [PageController::class, 'show'])->defaults('slug', 'akrobaticke-vystupenia');
     Route::get('/prednasky', [PageController::class, 'show'])->defaults('slug', 'prednasky');
     Route::get('/workshopy', [PageController::class, 'show'])->defaults('slug', 'workshopy');
     Route::get('/kategoria/parkour-freerunning', [PageController::class, 'show'])->defaults('slug', 'kategoria/parkour-freerunning');
@@ -98,7 +99,7 @@ Route::get('/temp-dva-percenta-static', fn () => view('pages.dva-percenta'))->na
 Route::get('/', [PageController::class, 'show'])->defaults('slug', '/')->name('home');
 
 // CMS landing page for trainings
-Route::get('/trenuj-s-nami', [PageController::class, 'show'])->defaults('slug', 'treningy')->name('trenuj-s-nami');
+Route::get('/trenuj-s-nami', [PageController::class, 'show'])->defaults('slug', 'trenuj-s-nami')->name('trenuj-s-nami');
 
 // Global archives
 Route::get('/treningy', [PageController::class, 'show'])->defaults('slug', 'zoznam-treningov')->name('treningy');
@@ -136,7 +137,8 @@ Route::get('/faq', [PageController::class, 'show'])->defaults('slug', 'faq')->na
 Route::get('/podporte-nas', [PageController::class, 'show'])->defaults('slug', 'podporte-nas')->name('podporte-nas');
 Route::get('/zakladatel-ceo-dominik-klimek', [PageController::class, 'show'])->defaults('slug', 'zakladatel-ceo-dominik-klimek')->name('dominik-klimek');
 Route::get('/dva-percenta-z-dane', [PageController::class, 'show'])->defaults('slug', 'dva-percenta-z-dane')->name('dva-percenta');
-Route::get('/vystupenia-workshopy', [PageController::class, 'show'])->defaults('slug', 'vystupenia-workshopy')->name('vystupenia-workshopy');
+Route::get('/vystupenia-prednasky-workshopy', [PageController::class, 'show'])->defaults('slug', 'vystupenia-prednasky-workshopy')->name('vystupenia-prednasky-workshopy');
+Route::get('/akrobaticke-vystupenia', [PageController::class, 'show'])->defaults('slug', 'akrobaticke-vystupenia')->name('akrobaticke-vystupenia');
 Route::get('/prednasky', [PageController::class, 'show'])->defaults('slug', 'prednasky')->name('prednasky');
 Route::get('/workshopy', [PageController::class, 'show'])->defaults('slug', 'workshopy')->name('workshopy');
 Route::get('/kategoria/parkour-freerunning', [PageController::class, 'show'])->defaults('slug', 'kategoria/parkour-freerunning')->name('parkour-freerunning');
@@ -151,6 +153,7 @@ Route::redirect('/archiv-podujati', '/eventy', 301)->name('archiv-podujati');
 Route::redirect('/archiv-trenerov', '/treningy', 301)->name('archiv-trenerov');
 Route::redirect('/zoznam-treningov', '/treningy', 301)->name('zoznam-treningov');
 Route::redirect('/vystupenia', '/eventy', 301)->name('vystupenia');
+Route::redirect('/vystupenia-workshopy', '/vystupenia-prednasky-workshopy', 301);
 Route::redirect('/trening/{any}', '/treningy', 301)->where('any', '.+');
 Route::redirect('/sutaz/{any}', '/sutaze', 301)->where('any', '.+');
 Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');

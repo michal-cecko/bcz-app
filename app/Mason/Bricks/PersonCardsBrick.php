@@ -66,6 +66,7 @@ class PersonCardsBrick extends Brick
                         ]),
                         TagsInput::make('tags')
                             ->label(__('bricks.fields.tags')),
+                        LinkPickerField::make('person_', label: __('bricks.fields.link')),
                     ])
                     ->reorderable()
                     ->reorderableWithButtons()

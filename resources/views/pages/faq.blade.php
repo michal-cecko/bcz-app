@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'FAQ - BCZ Club')
+@section('title', 'FAQ | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

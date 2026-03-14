@@ -23,9 +23,13 @@
         @if(! empty($people))
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-{{ min(count($people), 4) }} gap-6">
                 @foreach($people as $person)
-                    @php $personImageUrl = brick_media_url($person['image'] ?? null); @endphp
-                    <div class="bg-bcz-dark flex flex-col overflow-hidden">
-                        <div class="w-full h-[320px] bg-cover bg-center" @if($personImageUrl) style="background-image: url('{{ $personImageUrl }}')" @endif>
+                    @php
+                        $personImageUrl = brick_media_url($person['image'] ?? null);
+                        $personUrl = brick_link(['link_type' => $person['person_link_type'] ?? '', 'link_model_id' => $person['person_link_model_id'] ?? '', 'link_url' => $person['person_link_url'] ?? '']);
+                        $personTag = $personUrl ? 'a' : 'div';
+                    @endphp
+                    <{{ $personTag }} @if($personUrl) href="{{ $personUrl }}" @endif class="bg-bcz-dark flex flex-col overflow-hidden group transition-all duration-300 {{ $personUrl ? 'hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20' : '' }}">
+                        <div class="w-full h-[320px] bg-cover bg-center overflow-hidden" @if($personImageUrl) style="background-image: url('{{ $personImageUrl }}')" @endif>
                             @if(! $personImageUrl)
                                 <div class="w-full h-full bg-[#1A1A1A] flex items-center justify-center">
                                     <svg class="w-20 h-20 text-[#333333]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
@@ -50,7 +54,7 @@
                                 </div>
                             @endif
                         </div>
-                    </div>
+                    </{{ $personTag }}>
                 @endforeach
             </div>
         @endif

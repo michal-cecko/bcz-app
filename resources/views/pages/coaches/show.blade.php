@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $user->name . ' - BCZ Club')
+@section('title', $user->name . ' | BCZ Club')
 
 @php
     $locale = app()->getLocale();

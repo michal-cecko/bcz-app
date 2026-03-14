@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Archív podujatí - BCZ Club')
+@section('title', 'Archív podujatí | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

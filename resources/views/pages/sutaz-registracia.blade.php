@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'BCZ Open 2026 — Registrácia - BCZ Club')
+@section('title', 'BCZ Open 2026 — Registrácia | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

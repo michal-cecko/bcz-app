@@ -1,5 +1,5 @@
 @extends('layouts.public')
-@section('title', $page?->getTranslation('title', app()->getLocale()) ?? 'Cenník')
+@section('title', ($page?->getTranslation('title', app()->getLocale()) ?? 'Cenník') . ' | BCZ Club')
 
 @section('content')
 @php

@@ -1,7 +1,7 @@
 {{-- Tailwind safelist: text-red-500 text-orange-400 text-emerald-500 bg-red-500 bg-orange-400 bg-emerald-500 --}}
 @extends('layouts.public')
 
-@section('title', $training->getTranslation('title', app()->getLocale()) . ' - BCZ Club')
+@section('title', $training->getTranslation('title', app()->getLocale()) . ' | BCZ Club')
 
 @php
     $locale = app()->getLocale();

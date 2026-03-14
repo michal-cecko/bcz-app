@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Kurz Stojky - Fitness Factory Žilina - BCZ Club')
+@section('title', 'Kurz Stojky - Fitness Factory Žilina | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

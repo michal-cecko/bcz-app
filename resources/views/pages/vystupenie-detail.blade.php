@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Grape Festival 2024 - BCZ Club')
+@section('title', 'Grape Festival 2024 | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

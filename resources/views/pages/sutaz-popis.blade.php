@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'World Freerunning Championship 2026 - BCZ Club')
+@section('title', 'World Freerunning Championship 2026 | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

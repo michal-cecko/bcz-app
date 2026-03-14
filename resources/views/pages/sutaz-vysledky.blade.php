@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'BCZ Street Workout Cup 2026 - Vysledky - BCZ Club')
+@section('title', 'BCZ Street Workout Cup 2026 - Vysledky | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

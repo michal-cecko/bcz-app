@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', ($team ? $team->getTranslation('name', app()->getLocale()) . ' — ' : '') . 'Súťaže - BCZ Club')
+@section('title', ($team ? $team->getTranslation('name', app()->getLocale()) . ' — ' : '') . 'Súťaže | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}

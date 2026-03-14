@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Registrácia čoskoro - World Freerunning Championship 2026')
+@section('title', 'Registrácia čoskoro - World Freerunning Championship 2026 | BCZ Club')
 
 @section('content')
     {{-- Hero Section --}}
