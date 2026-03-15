@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\MenuLocationEnum;
-use App\Models\CompetitionRegistration;
+use App\Models\EventRegistration;
 use App\Models\MediaLibraryFolder;
 use App\Models\MediaLibraryItem;
 use App\Models\Membership;
@@ -37,7 +37,8 @@ class AppServiceProvider extends ServiceProvider
             'filament_media_library_item' => MediaLibraryItem::class,
             'membership' => Membership::class,
             'training_registration' => TrainingRegistration::class,
-            'competition_registration' => CompetitionRegistration::class,
+            'competition_registration' => EventRegistration::class,
+            'event_registration' => EventRegistration::class,
             'team_subscription' => TeamSubscription::class,
         ]);
 

@@ -18,7 +18,7 @@ class TeamController extends Controller
     {
         $team->load([
             'members',
-            'organizedCompetitions',
+            'competitions',
             'trainings',
             'events',
         ]);
@@ -41,10 +41,10 @@ class TeamController extends Controller
 
     public function competitions(Team $team): View
     {
-        $competitions = $team->organizedCompetitions()
+        $competitions = $team->competitions()
             ->where('is_published', true)
-            ->with(['disciplines', 'organizerTeam'])
-            ->latest('date_start')
+            ->with(['eventCategory', 'team', 'competitionDetail.disciplines'])
+            ->latest('date')
             ->paginate(12);
 
         return view('pages.competitions.index', compact('competitions', 'team'));

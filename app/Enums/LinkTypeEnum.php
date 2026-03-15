@@ -2,7 +2,6 @@
 
 namespace App\Enums;
 
-use App\Models\Competition;
 use App\Models\Event;
 use App\Models\MediaLibraryItem;
 use App\Models\Page;
@@ -47,7 +46,7 @@ enum LinkTypeEnum: string
         return match ($this) {
             self::Page => Page::class,
             self::Training => Training::class,
-            self::Competition => Competition::class,
+            self::Competition => Event::class,
             self::Event => Event::class,
             self::Team => Team::class,
             self::Coach, self::Athlete, self::Judge => User::class,

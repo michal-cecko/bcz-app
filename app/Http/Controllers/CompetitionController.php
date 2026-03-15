@@ -2,45 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Competition;
-use App\Models\Setting;
+use App\Enums\EventTypeEnum;
+use App\Models\Event;
 use App\Models\Team;
 use Illuminate\View\View;
 
 class CompetitionController extends Controller
 {
-    public function index(): View
+    public function show(Team $team, Event $event): View
     {
-        $defaultTeamId = Setting::get('default_team_id');
+        abort_unless($event->is_published, 404);
+        abort_unless($event->event_type === EventTypeEnum::Competition, 404);
+        abort_unless($event->team_id === $team->id, 404);
 
-        $competitions = Competition::query()
-            ->where('is_published', true)
-            ->with(['organizerTeam', 'disciplines'])
-            ->orderByRaw('organizer_team_id = ? DESC', [$defaultTeamId])
-            ->latest('date_start')
-            ->paginate(12);
-
-        return view('pages.competitions.index', [
-            'competitions' => $competitions,
-            'team' => null,
-        ]);
-    }
-
-    public function show(Team $team, Competition $competition): View
-    {
-        abort_unless($competition->is_published, 404);
-        abort_unless($competition->organizer_team_id === $team->id, 404);
-
-        $competition->load([
-            'organizerTeam',
-            'disciplines',
-            'athleteCategories',
-            'timetableEntries',
-            'registrationFees.athleteCategory',
-            'rounds.parts',
-            'rounds.athleteCategory',
+        $event->load([
+            'team',
+            'eventCategory',
+            'organization',
+            'competitionDetail.disciplines',
+            'competitionDetail.athleteCategories',
+            'competitionDetail.timetableEntries',
+            'competitionDetail.registrationFees.athleteCategory',
+            'competitionDetail.rounds.parts',
+            'competitionDetail.rounds.athleteCategory',
         ]);
 
-        return view('pages.competitions.show', compact('competition'));
+        return view('pages.competitions.show', ['competition' => $event]);
     }
 }

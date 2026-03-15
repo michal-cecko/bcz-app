@@ -30,8 +30,8 @@ class Discipline extends Model
         ];
     }
 
-    public function competitions(): BelongsToMany
+    public function competitionDetails(): BelongsToMany
     {
-        return $this->belongsToMany(Competition::class, 'competition_discipline');
+        return $this->belongsToMany(CompetitionDetail::class, 'competition_discipline');
     }
 }

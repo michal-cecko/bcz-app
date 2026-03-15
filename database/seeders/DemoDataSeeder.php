@@ -25,14 +25,14 @@ use App\Models\AthleteProfile;
 use App\Models\Battle;
 use App\Models\Certification;
 use App\Models\CoachProfile;
-use App\Models\Competition;
-use App\Models\CompetitionRegistration;
-use App\Models\CompetitionReport;
+use App\Models\CompetitionDetail;
 use App\Models\CompetitionResult;
 use App\Models\CompetitionRound;
 use App\Models\Discipline;
 use App\Models\Event;
 use App\Models\EventCategory;
+use App\Models\EventOrganization;
+use App\Models\EventRegistration;
 use App\Models\Exercise;
 use App\Models\ExerciseCategory;
 use App\Models\Faq;
@@ -558,13 +558,231 @@ class DemoDataSeeder extends Seeder
             return EventCategory::factory()->create(array_merge($data, ['is_active' => true]));
         });
 
-        // --- Events ---
-        $eventCategories->each(function (EventCategory $category) use ($bczTeam) {
-            Event::factory(rand(2, 4))->create([
-                'event_category_id' => $category->id,
-                'team_id' => $bczTeam->id,
+        // --- Events (diverse scenarios) ---
+
+        // === REPORT events — "Where we were" portfolio items ===
+
+        // 1. Past exhibition at corporate event
+        Event::factory()->create([
+            'event_type' => 'report',
+            'event_category_id' => $eventCategories[0]->id, // Vystupenia
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Parkour Show na TEDx Bratislava', 'en' => 'Parkour Show at TEDx Bratislava', 'cs' => 'Parkour Show na TEDx Bratislava'],
+            'card_description' => ['sk' => 'Dynamicke vystupenie nasich atletov na TEDx Bratislava 2025. Prepojenie parkouru s pribehovym vystupenim o prekonavani prekazok.', 'en' => 'Dynamic performance by our athletes at TEDx Bratislava 2025. Combining parkour with a narrative performance about overcoming obstacles.'],
+            'date' => now()->subMonths(6),
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+            'attendee_count' => 800,
+            'client' => 'TEDx Bratislava',
+            'is_published' => true,
+            'published_at' => now()->subMonths(6)->addDays(3),
+        ]);
+
+        // 2. Past corporate show
+        Event::factory()->create([
+            'event_type' => 'report',
+            'event_category_id' => $eventCategories[0]->id, // Vystupenia
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Red Bull Firemny Teambuilding', 'en' => 'Red Bull Corporate Teambuilding', 'cs' => 'Red Bull Firemni Teambuilding'],
+            'card_description' => ['sk' => 'Privatne vystupenie a workshop pre zamestnancov Red Bull. 3-hodinovy program s interaktivnou castou.', 'en' => 'Private performance and workshop for Red Bull employees. 3-hour program with an interactive section.'],
+            'date' => now()->subMonths(4),
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+            'attendee_count' => 120,
+            'client' => 'Red Bull Slovakia',
+            'is_published' => true,
+            'published_at' => now()->subMonths(4)->addDays(5),
+        ]);
+
+        // 3. Past lecture
+        Event::factory()->create([
+            'event_type' => 'report',
+            'event_category_id' => $eventCategories[1]->id, // Prednasky
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Motivacna prednaska na Gymnazium Grösslingova', 'en' => 'Motivational Talk at Grösslingova High School', 'cs' => 'Motivacni prednaska na Gymnazium Grösslingova'],
+            'card_description' => ['sk' => 'Prednaska o discipline, cielevedomosti a zdravom zivotnom style pre stredoskolakov.', 'en' => 'Talk about discipline, determination and healthy lifestyle for high school students.'],
+            'date' => now()->subMonths(2),
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+            'attendee_count' => 250,
+            'client' => 'Gymnazium Grösslingova',
+            'is_published' => true,
+            'published_at' => now()->subMonths(2)->addDay(),
+        ]);
+
+        // 4. Past international workshop report
+        Event::factory()->create([
+            'event_type' => 'report',
+            'event_category_id' => $eventCategories[2]->id, // Workshopy
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Medzinarodny Parkour Workshop Praha', 'en' => 'International Parkour Workshop Prague', 'cs' => 'Mezinarodni Parkour Workshop Praha'],
+            'card_description' => ['sk' => 'Spolocny workshop s ceskou komunitou. 2-dnovka plna treningov, prednasok a networkingu.', 'en' => '2-day workshop with the Czech parkour community. Training, talks, and networking.'],
+            'date' => now()->subMonths(8),
+            'date_end' => now()->subMonths(8)->addDay(),
+            'country' => 'Cesko',
+            'city' => 'Praha',
+            'attendee_count' => 60,
+            'is_published' => true,
+            'published_at' => now()->subMonths(8)->addDays(5),
+        ]);
+
+        // 5. Recent report — outdoor showcase
+        Event::factory()->create([
+            'event_type' => 'report',
+            'event_category_id' => $eventCategories[0]->id,
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Street Show Kosice - Den Mesta', 'en' => 'Street Show Kosice - City Day', 'cs' => 'Street Show Kosice - Den Mesta'],
+            'card_description' => ['sk' => 'Velke outdoor vystupenie na Hlavnej ulici pocas Dna mesta Kosice. Parkour, kalistenika, tricking.', 'en' => 'Large outdoor performance on Main Street during Kosice City Day. Parkour, calisthenics, tricking.'],
+            'date' => now()->subWeeks(3),
+            'country' => 'Slovensko',
+            'city' => 'Kosice',
+            'attendee_count' => 2000,
+            'client' => 'Mesto Kosice',
+            'is_published' => true,
+            'published_at' => now()->subWeeks(2),
+        ]);
+
+        // === ORGANIZED events — camps, workshops, public trainings with registration ===
+
+        // 6. Past organized — free community workshop (finished, full capacity)
+        $pastWorkshop = Event::factory()->organized()->create([
+            'event_category_id' => $eventCategories[2]->id, // Workshopy
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Zakladny Parkour Workshop pre Deti', 'en' => 'Basic Parkour Workshop for Kids', 'cs' => 'Zakladni Parkour Workshop pro Deti'],
+            'card_description' => ['sk' => 'Bezplatny workshop pre deti 8-14 rokov. Zaklady bezpecneho pohybu, padov a preskokov.', 'en' => 'Free workshop for kids aged 8-14. Basics of safe movement, falls and vaults.'],
+            'date' => now()->subMonth(),
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+            'place_name' => 'Sportova hala Pasienky',
+            'place_address' => 'Junacka 6, 831 04 Bratislava',
+            'is_published' => true,
+            'published_at' => now()->subMonths(3),
+        ]);
+        EventOrganization::factory()->create([
+            'event_id' => $pastWorkshop->id,
+            'max_capacity' => 30,
+            'pricing_type' => 'free',
+            'registration_opens_at' => now()->subMonths(3),
+            'registration_closes_at' => now()->subMonth()->subWeek(),
+            'is_public_registration' => true,
+        ]);
+        // Fill with 30 registrations (full)
+        for ($i = 0; $i < 30; $i++) {
+            EventRegistration::factory()->create([
+                'event_id' => $pastWorkshop->id,
+                'user_id' => User::factory()->create()->id,
+                'status' => 'confirmed',
+                'registered_at' => now()->subMonths(2)->addDays($i),
             ]);
-        });
+        }
+
+        // 7. Upcoming organized — paid summer camp (registration open, half full)
+        $summerCamp = Event::factory()->organized()->create([
+            'event_category_id' => $eventCategories[2]->id,
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'BCZ Letny Tabor 2026', 'en' => 'BCZ Summer Camp 2026', 'cs' => 'BCZ Letni Tabor 2026'],
+            'card_description' => ['sk' => '5-dnovy letny tabor plny parkouru, kalisteniky, her a zabavy. Pre vsetky urovne od 12 rokov.', 'en' => '5-day summer camp full of parkour, calisthenics, games and fun. All levels from age 12.'],
+            'date' => now()->addMonths(3),
+            'date_end' => now()->addMonths(3)->addDays(5),
+            'country' => 'Slovensko',
+            'city' => 'Cadca',
+            'place_name' => 'Sportovy areal Cadca',
+            'place_address' => 'Sportova 15, 022 01 Cadca',
+            'latitude' => 49.4384,
+            'longitude' => 18.7878,
+            'is_published' => true,
+            'published_at' => now()->subWeeks(2),
+        ]);
+        EventOrganization::factory()->paid(89.00)->create([
+            'event_id' => $summerCamp->id,
+            'max_capacity' => 40,
+            'registration_opens_at' => now()->subWeeks(2),
+            'registration_closes_at' => now()->addMonths(2),
+            'is_public_registration' => true,
+            'show_countdown' => true,
+        ]);
+        // 18 of 40 registered
+        for ($i = 0; $i < 18; $i++) {
+            EventRegistration::factory()->create([
+                'event_id' => $summerCamp->id,
+                'user_id' => User::factory()->create()->id,
+                'status' => $i < 15 ? 'confirmed' : 'pending',
+                'registered_at' => now()->subDays(14 - $i),
+            ]);
+        }
+
+        // 8. Upcoming organized — free public training (registration opens soon)
+        $publicTraining = Event::factory()->organized()->create([
+            'event_category_id' => $eventCategories[2]->id,
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Verejny Trening v Parku - Bratislava', 'en' => 'Public Training in the Park - Bratislava', 'cs' => 'Verejny Trenink v Parku - Bratislava'],
+            'card_description' => ['sk' => 'Bezplatny otvoreny trening pre verejnost. Pride ktokolavek, naucime ta zaklady!', 'en' => 'Free open training for the public. Anyone can come, we will teach you the basics!'],
+            'date' => now()->addWeeks(2),
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+            'place_name' => 'Sad Janko Krala',
+            'place_address' => 'Sad Janka Krala, 851 01 Bratislava',
+            'latitude' => 48.1355,
+            'longitude' => 17.1070,
+            'is_published' => true,
+            'published_at' => now()->subDays(3),
+        ]);
+        EventOrganization::factory()->create([
+            'event_id' => $publicTraining->id,
+            'max_capacity' => 50,
+            'pricing_type' => 'free',
+            'registration_opens_at' => now()->addDays(3),
+            'registration_closes_at' => now()->addWeeks(2)->subDay(),
+            'is_public_registration' => true,
+            'show_countdown' => true,
+        ]);
+
+        // 9. Past organized — paid workshop with external link (finished)
+        $pastPaidWorkshop = Event::factory()->organized()->create([
+            'event_category_id' => $eventCategories[2]->id,
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'Tricking Masterclass s Loic Landre', 'en' => 'Tricking Masterclass with Loic Landre', 'cs' => 'Tricking Masterclass s Loic Landre'],
+            'card_description' => ['sk' => 'Exkluzivny workshop s medzinarodnym tricking atletom Loic Landre. 4 hodiny intenzivneho treningu.', 'en' => 'Exclusive workshop with international tricking athlete Loic Landre. 4 hours of intensive training.'],
+            'date' => now()->subMonths(2),
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+            'place_name' => 'BCZ Gym Bratislava',
+            'place_address' => 'Stara Vajnorska 37, 831 04 Bratislava',
+            'is_published' => true,
+            'published_at' => now()->subMonths(4),
+        ]);
+        EventOrganization::factory()->paid(45.00)->create([
+            'event_id' => $pastPaidWorkshop->id,
+            'max_capacity' => 20,
+            'registration_opens_at' => now()->subMonths(4),
+            'registration_closes_at' => now()->subMonths(2)->subWeek(),
+            'is_public_registration' => true,
+            'external_link' => 'https://forms.google.com/example-tricking-masterclass',
+        ]);
+        for ($i = 0; $i < 20; $i++) {
+            EventRegistration::factory()->create([
+                'event_id' => $pastPaidWorkshop->id,
+                'user_id' => User::factory()->create()->id,
+                'status' => 'confirmed',
+                'registered_at' => now()->subMonths(3)->addDays($i),
+            ]);
+        }
+
+        // 10. Draft organized — not published yet
+        $draftEvent = Event::factory()->organized()->draft()->create([
+            'event_category_id' => $eventCategories[2]->id,
+            'team_id' => $bczTeam->id,
+            'title' => ['sk' => 'BCZ Open Day 2026 (Pripravujeme)', 'en' => 'BCZ Open Day 2026 (Coming Soon)', 'cs' => 'BCZ Open Day 2026 (Pripravujeme)'],
+            'card_description' => ['sk' => 'Den otvorenych dveri v BCZ Gym. Ukazy, treningy, sutaze.', 'en' => 'Open house at BCZ Gym. Demos, trainings, competitions.'],
+            'date' => now()->addMonths(4),
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+        ]);
+        EventOrganization::factory()->create([
+            'event_id' => $draftEvent->id,
+            'max_capacity' => 100,
+            'pricing_type' => 'free',
+        ]);
 
         // --- Disciplines ---
         $disciplines = collect([
@@ -625,203 +843,629 @@ class DemoDataSeeder extends Seeder
 
         $allCategories = collect([$menCategory, $womenCategory, $youthCategory]);
 
-        // --- Competitions ---
-        $pastCompetition = Competition::factory()->create([
-            'name' => ['sk' => 'BCZ Championship 2025', 'en' => 'BCZ Championship 2025'],
-            'description' => ['sk' => 'Hlavná súťaž sezóny 2025.'],
-            'organizer_team_id' => $bczTeam->id,
-            'date_start' => now()->subMonths(3),
+        // =============================================
+        // --- COMPETITIONS (unified event system) ---
+        // =============================================
+
+        // ===== COMPETITION 1: Past — BCZ Championship 2025 (POINTS-based, fully finished) =====
+        $pastCompetition = Event::factory()->competition()->create([
+            'title' => ['sk' => 'BCZ Championship 2025', 'en' => 'BCZ Championship 2025', 'cs' => 'BCZ Championship 2025'],
+            'card_description' => ['sk' => 'Hlavna sutaz sezony 2025. Statika, dynamika a kombinacie v troch vekovych kategoriach.', 'en' => 'Main competition of the 2025 season. Statics, dynamics and combos in three age categories.'],
+            'team_id' => $bczTeam->id,
+            'event_category_id' => $eventCategories[0]->id,
+            'date' => now()->subMonths(3),
             'date_end' => now()->subMonths(3)->addDay(),
-            'place_name' => 'Športová hala Bratislava',
-            'place_address' => 'Junácka 6, 831 04 Bratislava',
+            'place_name' => 'Sportova hala Pasienky',
+            'place_address' => 'Junacka 6, 831 04 Bratislava',
             'country' => 'Slovensko',
             'city' => 'Bratislava',
+            'latitude' => 48.1660,
+            'longitude' => 17.1350,
             'is_published' => true,
             'published_at' => now()->subMonths(5),
+        ]);
+        EventOrganization::factory()->paid(25.00)->create([
+            'event_id' => $pastCompetition->id,
+            'max_capacity' => 80,
             'registration_opens_at' => now()->subMonths(5),
             'registration_closes_at' => now()->subMonths(3)->subWeek(),
             'is_public_registration' => true,
         ]);
+        $pastCompDetail = CompetitionDetail::factory()->create(['event_id' => $pastCompetition->id]);
 
-        $upcomingCompetition = Competition::factory()->create([
-            'name' => ['sk' => 'BCZ Spring Cup 2026', 'en' => 'BCZ Spring Cup 2026'],
-            'description' => ['sk' => 'Jarná súťaž v parkour a street workout disciplínach.'],
-            'organizer_team_id' => $bczTeam->id,
-            'date_start' => now()->addMonths(2),
-            'date_end' => now()->addMonths(2)->addDay(),
-            'place_name' => 'Outdoor Park Košice',
-            'place_address' => 'Hlavná 1, 040 01 Košice',
+        // ===== COMPETITION 2: Past — Street Workout Battle Kosice (BATTLE-based, brackets) =====
+        $battleCompetition = Event::factory()->competition()->create([
+            'title' => ['sk' => 'Street Workout Battle Kosice', 'en' => 'Street Workout Battle Kosice', 'cs' => 'Street Workout Battle Kosice'],
+            'card_description' => ['sk' => '1v1 battle format. 16 atletov, eliminacne kola az po finale. Cisty street workout.', 'en' => '1v1 battle format. 16 athletes, elimination rounds to the finals. Pure street workout.'],
+            'team_id' => $bczTeam->id,
+            'event_category_id' => $eventCategories[0]->id,
+            'date' => now()->subMonths(1),
             'country' => 'Slovensko',
-            'city' => 'Košice',
+            'city' => 'Kosice',
+            'place_name' => 'Workout Park Kosice',
+            'place_address' => 'Hlavna 1, 040 01 Kosice',
+            'latitude' => 48.7164,
+            'longitude' => 21.2611,
+            'is_published' => true,
+            'published_at' => now()->subMonths(3),
+        ]);
+        EventOrganization::factory()->paid(15.00)->create([
+            'event_id' => $battleCompetition->id,
+            'max_capacity' => 32,
+            'registration_opens_at' => now()->subMonths(3),
+            'registration_closes_at' => now()->subMonths(1)->subWeek(),
+            'is_public_registration' => true,
+        ]);
+        $battleCompDetail = CompetitionDetail::factory()->create(['event_id' => $battleCompetition->id]);
+
+        // ===== COMPETITION 3: Upcoming — BCZ Spring Cup 2026 (registration open) =====
+        $upcomingCompetition = Event::factory()->competition()->create([
+            'title' => ['sk' => 'BCZ Spring Cup 2026', 'en' => 'BCZ Spring Cup 2026', 'cs' => 'BCZ Spring Cup 2026'],
+            'card_description' => ['sk' => 'Jarna sutaz pre vsetky vekove kategorie. Bodovaci system + battle finale.', 'en' => 'Spring competition for all age categories. Points system + battle finals.'],
+            'team_id' => $bczTeam->id,
+            'event_category_id' => $eventCategories[0]->id,
+            'date' => now()->addMonths(2),
+            'date_end' => now()->addMonths(2)->addDay(),
+            'place_name' => 'Outdoor Park Kosice',
+            'place_address' => 'Hlavna 1, 040 01 Kosice',
+            'country' => 'Slovensko',
+            'city' => 'Kosice',
+            'latitude' => 48.7164,
+            'longitude' => 21.2611,
             'is_published' => true,
             'published_at' => now()->subWeek(),
+        ]);
+        EventOrganization::factory()->paid(25.00)->create([
+            'event_id' => $upcomingCompetition->id,
+            'max_capacity' => 60,
             'registration_opens_at' => now()->subWeek(),
             'registration_closes_at' => now()->addMonth(),
             'is_public_registration' => true,
             'show_countdown' => true,
         ]);
+        $upcomingCompDetail = CompetitionDetail::factory()->create(['event_id' => $upcomingCompetition->id]);
 
-        $competitions = collect([$pastCompetition, $upcomingCompetition]);
+        // ===== COMPETITION 4: Past — Free community comp (free entry, points only, no battles) =====
+        $freeCompetition = Event::factory()->competition()->create([
+            'title' => ['sk' => 'BCZ Community Jam 2025', 'en' => 'BCZ Community Jam 2025', 'cs' => 'BCZ Community Jam 2025'],
+            'card_description' => ['sk' => 'Neformalna sutaz pre komunitu. Zadarmo, len pre zabavu a rozvoj. Vsetky urovne vitane.', 'en' => 'Informal community competition. Free, just for fun and development. All levels welcome.'],
+            'team_id' => $bczTeam->id,
+            'event_category_id' => $eventCategories[2]->id,
+            'date' => now()->subMonths(5),
+            'country' => 'Slovensko',
+            'city' => 'Cadca',
+            'place_name' => 'Mestsky park Cadca',
+            'place_address' => 'Mestsky park, 022 01 Cadca',
+            'latitude' => 49.4405,
+            'longitude' => 18.7863,
+            'is_published' => true,
+            'published_at' => now()->subMonths(7),
+        ]);
+        EventOrganization::factory()->create([
+            'event_id' => $freeCompetition->id,
+            'max_capacity' => 20,
+            'pricing_type' => 'free',
+            'registration_opens_at' => now()->subMonths(7),
+            'registration_closes_at' => now()->subMonths(5)->subWeek(),
+            'is_public_registration' => true,
+        ]);
+        $freeCompDetail = CompetitionDetail::factory()->create(['event_id' => $freeCompetition->id]);
 
-        // Attach disciplines, categories, judges
-        $competitions->each(function (Competition $competition) use ($disciplines, $allCategories, $judges) {
-            $competition->disciplines()->attach($disciplines->pluck('id'));
-            $competition->athleteCategories()->attach($allCategories->pluck('id'));
+        // ===== COMPETITION 5: Upcoming — International event (registration not yet open) =====
+        $futureCompetition = Event::factory()->competition()->create([
+            'title' => ['sk' => 'Central European Calisthenics Open', 'en' => 'Central European Calisthenics Open', 'cs' => 'Central European Calisthenics Open'],
+            'card_description' => ['sk' => 'Medzinarodna sutaz pre krajiny strednej Europy. SK, CZ, PL, HU, AT. Bodovy system + battle finale.', 'en' => 'International competition for Central European countries. SK, CZ, PL, HU, AT. Points system + battle finals.'],
+            'team_id' => $bczTeam->id,
+            'event_category_id' => $eventCategories[0]->id,
+            'date' => now()->addMonths(5),
+            'date_end' => now()->addMonths(5)->addDays(2),
+            'place_name' => 'X-Bionic Sphere',
+            'place_address' => 'Dubova 33/A, 931 01 Samorin',
+            'country' => 'Slovensko',
+            'city' => 'Samorin',
+            'latitude' => 47.8614,
+            'longitude' => 17.3089,
+            'is_published' => true,
+            'published_at' => now()->subDays(5),
+        ]);
+        EventOrganization::factory()->paid(40.00)->create([
+            'event_id' => $futureCompetition->id,
+            'max_capacity' => 120,
+            'registration_opens_at' => now()->addMonth(),
+            'registration_closes_at' => now()->addMonths(4),
+            'is_public_registration' => true,
+            'show_countdown' => true,
+        ]);
+        $futureCompDetail = CompetitionDetail::factory()->create(['event_id' => $futureCompetition->id]);
 
-            $judges->each(function (User $judge) use ($competition, $disciplines) {
-                $competition->judges()->attach($judge->id, [
+        $allCompDetails = collect([$pastCompDetail, $battleCompDetail, $upcomingCompDetail, $freeCompDetail, $futureCompDetail]);
+
+        // Attach disciplines, categories, judges to all competitions
+        $allCompDetails->each(function (CompetitionDetail $detail) use ($disciplines, $allCategories, $judges) {
+            $detail->disciplines()->attach($disciplines->random(rand(3, 5))->pluck('id'));
+            $detail->athleteCategories()->attach($allCategories->pluck('id'));
+
+            $judges->each(function (User $judge) use ($detail, $disciplines) {
+                $detail->judges()->attach($judge->id, [
                     'discipline_id' => $disciplines->random()->id,
                 ]);
             });
         });
 
-        // Registration fees
-        $competitions->each(function (Competition $competition) use ($allCategories) {
+        // Registration fees — different pricing per competition
+        $allCompDetails->each(function (CompetitionDetail $detail, $i) use ($allCategories) {
+            $basePrice = [25.00, 15.00, 25.00, 0.00, 40.00][$i] ?? 20.00;
+
             RegistrationFee::factory()->create([
-                'competition_id' => $competition->id,
-                'amount' => 25.00,
+                'competition_detail_id' => $detail->id,
+                'amount' => $basePrice,
                 'currency' => 'EUR',
-                'description' => 'Standard registration fee',
+                'description' => 'Standardny poplatok',
             ]);
             RegistrationFee::factory()->create([
-                'competition_id' => $competition->id,
-                'athlete_category_id' => $allCategories->last()->id,
-                'amount' => 15.00,
+                'competition_detail_id' => $detail->id,
+                'athlete_category_id' => $allCategories->last()->id, // Juniori
+                'amount' => max(0, $basePrice * 0.6),
                 'currency' => 'EUR',
-                'description' => 'Junior discount fee',
+                'description' => 'Juniorsky zlavneny poplatok',
             ]);
         });
 
-        // Timetable entries for past competition
-        $timetableEntries = [
-            ['title' => ['sk' => 'Registrácia', 'en' => 'Registration'], 'scheduled_time' => $pastCompetition->date_start->setTime(8, 0), 'status' => TimetableEntryStatusEnum::FINISHED],
-            ['title' => ['sk' => 'Otvorenie', 'en' => 'Opening Ceremony'], 'scheduled_time' => $pastCompetition->date_start->setTime(9, 0), 'status' => TimetableEntryStatusEnum::FINISHED],
-            ['title' => ['sk' => 'Speed Run - Kvalifikácia', 'en' => 'Speed Run - Qualification'], 'scheduled_time' => $pastCompetition->date_start->setTime(9, 30), 'status' => TimetableEntryStatusEnum::FINISHED],
-            ['title' => ['sk' => 'Freestyle - Finále', 'en' => 'Freestyle - Finals'], 'scheduled_time' => $pastCompetition->date_start->setTime(14, 0), 'status' => TimetableEntryStatusEnum::FINISHED],
-            ['title' => ['sk' => 'Vyhlásenie výsledkov', 'en' => 'Award Ceremony'], 'scheduled_time' => $pastCompetition->date_start->setTime(17, 0), 'status' => TimetableEntryStatusEnum::FINISHED],
-        ];
+        // ===== TIMETABLES =====
 
-        foreach ($timetableEntries as $i => $entry) {
-            TimetableEntry::factory()->create(array_merge($entry, [
-                'competition_id' => $pastCompetition->id,
+        // Past competition (BCZ Championship) — all finished
+        $pastTimetable = [
+            ['title' => ['sk' => 'Registracia a vazenieí', 'en' => 'Registration & Weigh-in'], 'time' => [8, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Otvorenie sutaze', 'en' => 'Opening Ceremony'], 'time' => [9, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Statika - Kvalifikacia (Muzi)', 'en' => 'Statics - Qualification (Men)'], 'time' => [9, 30], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Statika - Kvalifikacia (Zeny)', 'en' => 'Statics - Qualification (Women)'], 'time' => [10, 30], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Dynamika - Kvalifikacia (Muzi)', 'en' => 'Dynamics - Qualification (Men)'], 'time' => [11, 30], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Obedova prestavka', 'en' => 'Lunch Break'], 'time' => [12, 30], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Kombinacie - Finale (Muzi)', 'en' => 'Combos - Finals (Men)'], 'time' => [14, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Freestyle - Finale (Zeny)', 'en' => 'Freestyle - Finals (Women)'], 'time' => [15, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Juniori - Finale', 'en' => 'Juniors - Finals'], 'time' => [16, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Vyhlasenie vysledkov', 'en' => 'Award Ceremony'], 'time' => [17, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+        ];
+        foreach ($pastTimetable as $i => $entry) {
+            TimetableEntry::factory()->create([
+                'competition_detail_id' => $pastCompDetail->id,
+                'title' => $entry['title'],
+                'scheduled_time' => $pastCompetition->date->copy()->setTime(...$entry['time']),
+                'actual_start_time' => $pastCompetition->date->copy()->setTime($entry['time'][0], $entry['time'][1] + rand(0, 5)),
+                'actual_end_time' => $pastCompetition->date->copy()->setTime($entry['time'][0] + 1, rand(0, 30)),
+                'status' => $entry['status'],
                 'sort_order' => $i,
-            ]));
+            ]);
         }
 
-        // Upcoming competition timetable
-        $upcomingEntries = [
-            ['title' => ['sk' => 'Registrácia', 'en' => 'Registration'], 'scheduled_time' => $upcomingCompetition->date_start->setTime(8, 0), 'status' => TimetableEntryStatusEnum::PENDING],
-            ['title' => ['sk' => 'Otvorenie', 'en' => 'Opening Ceremony'], 'scheduled_time' => $upcomingCompetition->date_start->setTime(9, 0), 'status' => TimetableEntryStatusEnum::PENDING],
-            ['title' => ['sk' => 'Speed Run', 'en' => 'Speed Run'], 'scheduled_time' => $upcomingCompetition->date_start->setTime(10, 0), 'status' => TimetableEntryStatusEnum::PENDING],
-            ['title' => ['sk' => 'Battle', 'en' => 'Battle'], 'scheduled_time' => $upcomingCompetition->date_start->setTime(14, 0), 'status' => TimetableEntryStatusEnum::PENDING],
+        // Battle competition (Street Workout Battle) — all finished
+        $battleTimetable = [
+            ['title' => ['sk' => 'Registracia', 'en' => 'Registration'], 'time' => [9, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Rozohriatie', 'en' => 'Warm-up'], 'time' => [10, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Osminove kolo', 'en' => 'Round of 16'], 'time' => [10, 30], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Stvrfinale', 'en' => 'Quarter-finals'], 'time' => [12, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Semifinale', 'en' => 'Semi-finals'], 'time' => [14, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Battle o 3. miesto', 'en' => '3rd Place Battle'], 'time' => [15, 30], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Finale', 'en' => 'Finals'], 'time' => [16, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Vyhlasenie a afterparty', 'en' => 'Awards & Afterparty'], 'time' => [17, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
         ];
-
-        foreach ($upcomingEntries as $i => $entry) {
-            TimetableEntry::factory()->create(array_merge($entry, [
-                'competition_id' => $upcomingCompetition->id,
+        foreach ($battleTimetable as $i => $entry) {
+            TimetableEntry::factory()->create([
+                'competition_detail_id' => $battleCompDetail->id,
+                'title' => $entry['title'],
+                'scheduled_time' => $battleCompetition->date->copy()->setTime(...$entry['time']),
+                'status' => $entry['status'],
                 'sort_order' => $i,
-            ]));
+            ]);
         }
 
-        // Competition registrations
-        $athletes->each(function (User $athlete, $index) use ($pastCompetition, $upcomingCompetition, $allCategories) {
+        // Upcoming competition — all pending
+        $upcomingTimetable = [
+            ['title' => ['sk' => 'Registracia a vazenie', 'en' => 'Registration & Weigh-in'], 'time' => [8, 0]],
+            ['title' => ['sk' => 'Otvorenie', 'en' => 'Opening Ceremony'], 'time' => [9, 0]],
+            ['title' => ['sk' => 'Kvalifikacia - Statika', 'en' => 'Qualification - Statics'], 'time' => [9, 30]],
+            ['title' => ['sk' => 'Kvalifikacia - Dynamika', 'en' => 'Qualification - Dynamics'], 'time' => [11, 0]],
+            ['title' => ['sk' => 'Obedova prestavka', 'en' => 'Lunch Break'], 'time' => [12, 30]],
+            ['title' => ['sk' => 'Finale - Kombinacie', 'en' => 'Finals - Combos'], 'time' => [14, 0]],
+            ['title' => ['sk' => 'Battle Finale', 'en' => 'Battle Finals'], 'time' => [15, 30]],
+            ['title' => ['sk' => 'Vyhlasenie vysledkov', 'en' => 'Award Ceremony'], 'time' => [17, 0]],
+        ];
+        foreach ($upcomingTimetable as $i => $entry) {
+            TimetableEntry::factory()->create([
+                'competition_detail_id' => $upcomingCompDetail->id,
+                'title' => $entry['title'],
+                'scheduled_time' => $upcomingCompetition->date->copy()->setTime(...$entry['time']),
+                'status' => TimetableEntryStatusEnum::PENDING,
+                'sort_order' => $i,
+            ]);
+        }
+
+        // Community Jam — simple timetable, all finished
+        $jamTimetable = [
+            ['title' => ['sk' => 'Zraz', 'en' => 'Gathering'], 'time' => [10, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Spolocne rozohriatie', 'en' => 'Group Warm-up'], 'time' => [10, 30], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Freestyle kola', 'en' => 'Freestyle Rounds'], 'time' => [11, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+            ['title' => ['sk' => 'Vyhlasenie a grilovacka', 'en' => 'Awards & BBQ'], 'time' => [14, 0], 'status' => TimetableEntryStatusEnum::FINISHED],
+        ];
+        foreach ($jamTimetable as $i => $entry) {
+            TimetableEntry::factory()->create([
+                'competition_detail_id' => $freeCompDetail->id,
+                'title' => $entry['title'],
+                'scheduled_time' => $freeCompetition->date->copy()->setTime(...$entry['time']),
+                'status' => $entry['status'],
+                'sort_order' => $i,
+            ]);
+        }
+
+        // ===== COMPETITION REGISTRATIONS =====
+
+        // Create extra athletes for competitions to have realistic numbers
+        $compAthletes = User::factory(12)->create()->each(function (User $user) use ($bczTeam) {
+            $user->assignRole(RoleEnum::ATHLETE);
+            $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 12))]);
+        });
+        $allCompetitors = $athletes->merge($compAthletes);
+
+        // Past championship — all confirmed, 20 athletes across categories
+        $allCompetitors->take(20)->each(function (User $athlete, $index) use ($pastCompetition, $allCategories) {
             $category = $allCategories[$index % 3];
-            CompetitionRegistration::factory()->create([
-                'competition_id' => $pastCompetition->id,
+            EventRegistration::factory()->create([
+                'event_id' => $pastCompetition->id,
                 'user_id' => $athlete->id,
                 'athlete_category_id' => $category->id,
                 'status' => 'confirmed',
-                'weight_in' => rand(55, 90) + (rand(0, 9) / 10),
+                'weight_in' => rand(55, 95) + (rand(0, 9) / 10),
+                'registered_at' => now()->subMonths(4)->addDays($index),
             ]);
-
-            if ($index < 5) {
-                CompetitionRegistration::factory()->create([
-                    'competition_id' => $upcomingCompetition->id,
-                    'user_id' => $athlete->id,
-                    'athlete_category_id' => $category->id,
-                    'status' => 'pending',
-                ]);
-            }
         });
 
-        // Competition rounds & results for past competition
-        $qualRound = CompetitionRound::factory()->create([
-            'competition_id' => $pastCompetition->id,
+        // Battle competition — 16 athletes, men only
+        $allCompetitors->take(16)->each(function (User $athlete, $index) use ($battleCompetition, $menCategory) {
+            EventRegistration::factory()->create([
+                'event_id' => $battleCompetition->id,
+                'user_id' => $athlete->id,
+                'athlete_category_id' => $menCategory->id,
+                'status' => 'confirmed',
+                'weight_in' => rand(60, 90) + (rand(0, 9) / 10),
+                'registered_at' => now()->subMonths(2)->addDays($index),
+            ]);
+        });
+
+        // Upcoming — mixed confirmed/pending
+        $allCompetitors->take(12)->each(function (User $athlete, $index) use ($upcomingCompetition, $allCategories) {
+            $category = $allCategories[$index % 3];
+            EventRegistration::factory()->create([
+                'event_id' => $upcomingCompetition->id,
+                'user_id' => $athlete->id,
+                'athlete_category_id' => $category->id,
+                'status' => $index < 8 ? 'confirmed' : 'pending',
+                'registered_at' => now()->subDays(7 - ($index % 7)),
+            ]);
+        });
+
+        // Community jam — small group
+        $allCompetitors->take(12)->each(function (User $athlete, $index) use ($freeCompetition, $allCategories) {
+            EventRegistration::factory()->create([
+                'event_id' => $freeCompetition->id,
+                'user_id' => $athlete->id,
+                'athlete_category_id' => $allCategories[$index % 3]->id,
+                'status' => 'confirmed',
+                'registered_at' => now()->subMonths(6)->addDays($index),
+            ]);
+        });
+
+        // ===== COMPETITION 1: BCZ Championship — POINTS-BASED ROUNDS =====
+        // Men: Qualification (Statics + Dynamics) → Final (Combos)
+        $menQual = CompetitionRound::factory()->create([
+            'competition_detail_id' => $pastCompDetail->id,
             'athlete_category_id' => $menCategory->id,
             'round_number' => 1,
-            'name' => 'Qualification',
+            'name' => 'Kvalifikacia - Muzi',
+            'scoring_format' => 'points',
             'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
-            'advance_count' => 4,
+            'advance_count' => 6,
             'sort_order' => 1,
         ]);
-
-        $finalRound = CompetitionRound::factory()->create([
-            'competition_id' => $pastCompetition->id,
+        $menFinal = CompetitionRound::factory()->create([
+            'competition_detail_id' => $pastCompDetail->id,
             'athlete_category_id' => $menCategory->id,
             'round_number' => 2,
-            'name' => 'Final',
-            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
-            'battle_size' => 1,
+            'name' => 'Finale - Muzi',
+            'scoring_format' => 'points',
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'advance_count' => 3,
             'sort_order' => 2,
         ]);
 
-        // Round parts and results
-        $part1 = RoundPart::factory()->create([
-            'competition_round_id' => $qualRound->id,
-            'name' => ['sk' => 'Statics', 'en' => 'Statics'],
+        // Women: Qualification → Final
+        $womenQual = CompetitionRound::factory()->create([
+            'competition_detail_id' => $pastCompDetail->id,
+            'athlete_category_id' => $womenCategory->id,
+            'round_number' => 1,
+            'name' => 'Kvalifikacia - Zeny',
+            'scoring_format' => 'points',
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'advance_count' => 4,
+            'sort_order' => 3,
+        ]);
+        $womenFinal = CompetitionRound::factory()->create([
+            'competition_detail_id' => $pastCompDetail->id,
+            'athlete_category_id' => $womenCategory->id,
+            'round_number' => 2,
+            'name' => 'Finale - Zeny',
+            'scoring_format' => 'points',
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'advance_count' => 3,
+            'sort_order' => 4,
+        ]);
+
+        // Juniors: Single round
+        $juniorsRound = CompetitionRound::factory()->create([
+            'competition_detail_id' => $pastCompDetail->id,
+            'athlete_category_id' => $youthCategory->id,
+            'round_number' => 1,
+            'name' => 'Juniori - Finale',
+            'scoring_format' => 'points',
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'advance_count' => 3,
+            'sort_order' => 5,
+        ]);
+
+        // Round parts and results for Men Qualification
+        $menQualStatics = RoundPart::factory()->create([
+            'competition_round_id' => $menQual->id,
+            'name' => ['sk' => 'Statika', 'en' => 'Statics'],
             'duration_seconds' => 30,
             'sort_order' => 1,
         ]);
-
-        $part2 = RoundPart::factory()->create([
-            'competition_round_id' => $qualRound->id,
-            'name' => ['sk' => 'Dynamics', 'en' => 'Dynamics'],
+        $menQualDynamics = RoundPart::factory()->create([
+            'competition_round_id' => $menQual->id,
+            'name' => ['sk' => 'Dynamika', 'en' => 'Dynamics'],
             'duration_seconds' => 45,
             'sort_order' => 2,
         ]);
 
-        $athletes->take(6)->each(function (User $athlete, $index) use ($part1, $part2) {
+        // Men Qual results — 8 competitors, scored and ranked
+        $menCompetitors = $allCompetitors->take(8);
+        $menScores = collect(range(0, 7))->map(fn ($i) => [
+            'statics' => round(95 - ($i * 4.5) + (rand(-15, 15) / 10), 2),
+            'dynamics' => round(92 - ($i * 3.8) + (rand(-20, 20) / 10), 2),
+        ])->sortByDesc(fn ($s) => $s['statics'] + $s['dynamics'])->values();
+
+        $menCompetitors->each(function (User $athlete, $index) use ($menQualStatics, $menQualDynamics, $menScores) {
             CompetitionResult::factory()->create([
-                'round_part_id' => $part1->id,
+                'round_part_id' => $menQualStatics->id,
                 'user_id' => $athlete->id,
-                'score' => round(rand(60, 95) + (rand(0, 9) / 10), 1),
+                'score' => $menScores[$index]['statics'],
                 'place' => $index + 1,
             ]);
             CompetitionResult::factory()->create([
-                'round_part_id' => $part2->id,
+                'round_part_id' => $menQualDynamics->id,
                 'user_id' => $athlete->id,
-                'score' => round(rand(55, 98) + (rand(0, 9) / 10), 1),
+                'score' => $menScores[$index]['dynamics'],
                 'place' => $index + 1,
             ]);
         });
 
-        // Battles in final round
-        $topAthletes = $athletes->take(4);
+        // Men Final — top 6 compete in combos
+        $menFinalCombos = RoundPart::factory()->create([
+            'competition_round_id' => $menFinal->id,
+            'name' => ['sk' => 'Kombinacie', 'en' => 'Combos'],
+            'duration_seconds' => 60,
+            'sort_order' => 1,
+        ]);
+        $menCompetitors->take(6)->each(function (User $athlete, $index) use ($menFinalCombos) {
+            CompetitionResult::factory()->create([
+                'round_part_id' => $menFinalCombos->id,
+                'user_id' => $athlete->id,
+                'score' => round(97 - ($index * 5.2) + (rand(-10, 10) / 10), 2),
+                'place' => $index + 1,
+            ]);
+        });
+
+        // Women Qualification results — 6 competitors
+        $womenQualFreestyle = RoundPart::factory()->create([
+            'competition_round_id' => $womenQual->id,
+            'name' => ['sk' => 'Freestyle', 'en' => 'Freestyle'],
+            'duration_seconds' => 45,
+            'sort_order' => 1,
+        ]);
+        $womenCompetitors = $allCompetitors->slice(8, 6)->values();
+        $womenCompetitors->each(function (User $athlete, $index) use ($womenQualFreestyle) {
+            CompetitionResult::factory()->create([
+                'round_part_id' => $womenQualFreestyle->id,
+                'user_id' => $athlete->id,
+                'score' => round(90 - ($index * 5) + (rand(-15, 15) / 10), 2),
+                'place' => $index + 1,
+            ]);
+        });
+
+        // Women Final — top 4
+        $womenFinalFreestyle = RoundPart::factory()->create([
+            'competition_round_id' => $womenFinal->id,
+            'name' => ['sk' => 'Freestyle Finale', 'en' => 'Freestyle Finals'],
+            'duration_seconds' => 60,
+            'sort_order' => 1,
+        ]);
+        $womenCompetitors->take(4)->each(function (User $athlete, $index) use ($womenFinalFreestyle) {
+            CompetitionResult::factory()->create([
+                'round_part_id' => $womenFinalFreestyle->id,
+                'user_id' => $athlete->id,
+                'score' => round(94 - ($index * 6) + (rand(-10, 10) / 10), 2),
+                'place' => $index + 1,
+            ]);
+        });
+
+        // Juniors — single round, 6 competitors
+        $juniorsFreestyle = RoundPart::factory()->create([
+            'competition_round_id' => $juniorsRound->id,
+            'name' => ['sk' => 'Freestyle Juniori', 'en' => 'Juniors Freestyle'],
+            'duration_seconds' => 40,
+            'sort_order' => 1,
+        ]);
+        $juniorCompetitors = $allCompetitors->slice(14, 6)->values();
+        $juniorCompetitors->each(function (User $athlete, $index) use ($juniorsFreestyle) {
+            CompetitionResult::factory()->create([
+                'round_part_id' => $juniorsFreestyle->id,
+                'user_id' => $athlete->id,
+                'score' => round(85 - ($index * 4) + (rand(-10, 10) / 10), 2),
+                'place' => $index + 1,
+            ]);
+        });
+
+        // ===== COMPETITION 2: Street Workout Battle — FULL BRACKET SYSTEM =====
+        $battleAthletes = $allCompetitors->take(16);
+
+        // Round of 16 (8 battles)
+        $roundOf16 = CompetitionRound::factory()->create([
+            'competition_detail_id' => $battleCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 1,
+            'name' => 'Osminove kolo',
+            'scoring_format' => 'coach_decision',
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'battle_size' => 1,
+            'sort_order' => 1,
+        ]);
+        $r16Winners = collect();
+        for ($b = 0; $b < 8; $b++) {
+            $a = $battleAthletes[$b * 2];
+            $bComp = $battleAthletes[$b * 2 + 1];
+            $winner = rand(0, 1) === 0 ? $a : $bComp;
+            $r16Winners->push($winner);
+            Battle::factory()->create([
+                'competition_round_id' => $roundOf16->id,
+                'athlete_category_id' => $menCategory->id,
+                'bracket_position' => $b + 1,
+                'competitor_a_id' => [$a->id, $a->name],
+                'competitor_b_id' => [$bComp->id, $bComp->name],
+                'winner_id' => [$winner->id, $winner->name],
+            ]);
+        }
+
+        // Quarter-finals (4 battles)
+        $quarterFinals = CompetitionRound::factory()->create([
+            'competition_detail_id' => $battleCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 2,
+            'name' => 'Stvrfinale',
+            'scoring_format' => 'coach_decision',
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'battle_size' => 1,
+            'sort_order' => 2,
+        ]);
+        $qfWinners = collect();
+        for ($b = 0; $b < 4; $b++) {
+            $a = $r16Winners[$b * 2];
+            $bComp = $r16Winners[$b * 2 + 1];
+            $winner = rand(0, 1) === 0 ? $a : $bComp;
+            $qfWinners->push($winner);
+            Battle::factory()->create([
+                'competition_round_id' => $quarterFinals->id,
+                'athlete_category_id' => $menCategory->id,
+                'bracket_position' => $b + 1,
+                'competitor_a_id' => [$a->id, $a->name],
+                'competitor_b_id' => [$bComp->id, $bComp->name],
+                'winner_id' => [$winner->id, $winner->name],
+            ]);
+        }
+
+        // Semi-finals (2 battles)
+        $semiFinals = CompetitionRound::factory()->create([
+            'competition_detail_id' => $battleCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 3,
+            'name' => 'Semifinale',
+            'scoring_format' => 'coach_decision',
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'battle_size' => 1,
+            'sort_order' => 3,
+        ]);
+        $sfWinners = collect();
+        $sfLosers = collect();
+        for ($b = 0; $b < 2; $b++) {
+            $a = $qfWinners[$b * 2];
+            $bComp = $qfWinners[$b * 2 + 1];
+            $winner = rand(0, 1) === 0 ? $a : $bComp;
+            $loser = $winner->id === $a->id ? $bComp : $a;
+            $sfWinners->push($winner);
+            $sfLosers->push($loser);
+            Battle::factory()->create([
+                'competition_round_id' => $semiFinals->id,
+                'athlete_category_id' => $menCategory->id,
+                'bracket_position' => $b + 1,
+                'competitor_a_id' => [$a->id, $a->name],
+                'competitor_b_id' => [$bComp->id, $bComp->name],
+                'winner_id' => [$winner->id, $winner->name],
+            ]);
+        }
+
+        // 3rd place battle
+        $thirdPlaceRound = CompetitionRound::factory()->create([
+            'competition_detail_id' => $battleCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 4,
+            'name' => 'Battle o 3. miesto',
+            'scoring_format' => 'coach_decision',
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'battle_size' => 1,
+            'sort_order' => 4,
+        ]);
+        $thirdPlaceWinner = $sfLosers->random();
         Battle::factory()->create([
-            'competition_round_id' => $finalRound->id,
+            'competition_round_id' => $thirdPlaceRound->id,
             'athlete_category_id' => $menCategory->id,
             'bracket_position' => 1,
-            'competitor_a_id' => [$topAthletes[0]->id],
-            'competitor_b_id' => [$topAthletes[3]->id],
-            'winner_id' => [$topAthletes[0]->id],
-        ]);
-        Battle::factory()->create([
-            'competition_round_id' => $finalRound->id,
-            'athlete_category_id' => $menCategory->id,
-            'bracket_position' => 2,
-            'competitor_a_id' => [$topAthletes[1]->id],
-            'competitor_b_id' => [$topAthletes[2]->id],
-            'winner_id' => [$topAthletes[1]->id],
+            'competitor_a_id' => [$sfLosers[0]->id, $sfLosers[0]->name],
+            'competitor_b_id' => [$sfLosers[1]->id, $sfLosers[1]->name],
+            'winner_id' => [$thirdPlaceWinner->id, $thirdPlaceWinner->name],
         ]);
 
-        // Competition report
-        CompetitionReport::factory()->create([
-            'competition_id' => $pastCompetition->id,
-            'user_id' => $athletes->first()->id,
-            'title' => ['sk' => 'Moje BCZ Championship 2025', 'en' => 'My BCZ Championship 2025'],
-            'is_published' => true,
-            'published_at' => now()->subMonths(2),
+        // Grand Final
+        $grandFinal = CompetitionRound::factory()->create([
+            'competition_detail_id' => $battleCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 5,
+            'name' => 'Finale',
+            'scoring_format' => 'coach_decision',
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'battle_size' => 1,
+            'sort_order' => 5,
         ]);
+        $champion = $sfWinners->random();
+        Battle::factory()->create([
+            'competition_round_id' => $grandFinal->id,
+            'athlete_category_id' => $menCategory->id,
+            'bracket_position' => 1,
+            'competitor_a_id' => [$sfWinners[0]->id, $sfWinners[0]->name],
+            'competitor_b_id' => [$sfWinners[1]->id, $sfWinners[1]->name],
+            'winner_id' => [$champion->id, $champion->name],
+        ]);
+
+        // ===== COMPETITION 4: Community Jam — simple points, no battles =====
+        $jamRound = CompetitionRound::factory()->create([
+            'competition_detail_id' => $freeCompDetail->id,
+            'round_number' => 1,
+            'name' => 'Freestyle Jam',
+            'scoring_format' => 'points',
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'advance_count' => 3,
+            'sort_order' => 1,
+        ]);
+        $jamPart = RoundPart::factory()->create([
+            'competition_round_id' => $jamRound->id,
+            'name' => ['sk' => 'Freestyle', 'en' => 'Freestyle'],
+            'duration_seconds' => 60,
+            'sort_order' => 1,
+        ]);
+        $allCompetitors->take(12)->each(function (User $athlete, $index) use ($jamPart) {
+            CompetitionResult::factory()->create([
+                'round_part_id' => $jamPart->id,
+                'user_id' => $athlete->id,
+                'score' => round(80 - ($index * 3.5) + (rand(-20, 20) / 10), 2),
+                'place' => $index + 1,
+            ]);
+        });
 
         // --- Phase 5: Inquiries ---
         Inquiry::factory()->create([
@@ -1002,8 +1646,10 @@ class DemoDataSeeder extends Seeder
         });
 
         // Payments for competition registrations
-        $compRegistrations = CompetitionRegistration::where('status', 'confirmed')->get();
-        $compRegistrations->take(4)->each(function (CompetitionRegistration $registration) use ($bczTeam) {
+        $compRegistrations = EventRegistration::where('status', 'confirmed')
+            ->whereHas('event', fn ($q) => $q->where('event_type', 'competition'))
+            ->get();
+        $compRegistrations->take(4)->each(function (EventRegistration $registration) use ($bczTeam) {
             Payment::create([
                 'team_id' => $bczTeam->id,
                 'user_id' => $registration->user_id,

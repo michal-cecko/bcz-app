@@ -12,7 +12,7 @@ class RegistrationFee extends Model
     use HasFactory, HasUuidV7;
 
     protected $fillable = [
-        'competition_id',
+        'competition_detail_id',
         'athlete_category_id',
         'amount',
         'currency',
@@ -26,9 +26,9 @@ class RegistrationFee extends Model
         ];
     }
 
-    public function competition(): BelongsTo
+    public function competitionDetail(): BelongsTo
     {
-        return $this->belongsTo(Competition::class);
+        return $this->belongsTo(CompetitionDetail::class);
     }
 
     public function athleteCategory(): BelongsTo

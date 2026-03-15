@@ -15,7 +15,7 @@ class EventController extends Controller
         $events = Event::query()
             ->where('team_id', $defaultTeamId)
             ->where('is_published', true)
-            ->with(['eventCategory', 'team'])
+            ->with(['eventCategory', 'team', 'organization'])
             ->latest('date')
             ->paginate(12);
 
@@ -26,7 +26,18 @@ class EventController extends Controller
     {
         abort_unless($event->is_published, 404);
 
-        $event->load('eventCategory', 'team');
+        $event->load([
+            'eventCategory',
+            'team',
+            'organization',
+            'competitionDetail.disciplines',
+            'competitionDetail.athleteCategories',
+            'competitionDetail.timetableEntries',
+            'competitionDetail.registrationFees.athleteCategory',
+            'competitionDetail.rounds.parts',
+            'competitionDetail.rounds.athleteCategory',
+            'registrations',
+        ]);
 
         return view('pages.events.show', compact('event'));
     }

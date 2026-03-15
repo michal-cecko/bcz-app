@@ -127,17 +127,12 @@ class Team extends Model implements HasAvatar, Linkable
         return $this->hasMany(Event::class);
     }
 
-    public function organizedCompetitions(): HasMany
-    {
-        return $this->hasMany(Competition::class, 'organizer_team_id');
-    }
-
     /**
-     * Alias for organizedCompetitions — used by implicit route model binding scoping.
+     * Events with event_type=competition belonging to this team.
      */
     public function competitions(): HasMany
     {
-        return $this->organizedCompetitions();
+        return $this->hasMany(Event::class)->where('event_type', 'competition');
     }
 
     public function invitations(): HasMany

@@ -65,11 +65,11 @@ class ListPayments extends ListRecords
                                     ->get()
                                     ->mapWithKeys(fn ($r) => [$r->id => $r->training->getTranslation('title', 'sk').' ('.$r->registered_at?->format('d.m.Y').')'])
                                     ->toArray(),
-                                'competition_registration' => \App\Models\CompetitionRegistration::where('user_id', $userId)
-                                    ->whereHas('competition', fn ($q) => $q->where('organizer_team_id', Filament::getTenant()->id))
-                                    ->with('competition')
+                                'competition_registration', 'event_registration' => \App\Models\EventRegistration::where('user_id', $userId)
+                                    ->whereHas('event', fn ($q) => $q->where('team_id', Filament::getTenant()->id))
+                                    ->with('event')
                                     ->get()
-                                    ->mapWithKeys(fn ($r) => [$r->id => $r->competition->getTranslation('name', 'sk').' ('.$r->registered_at?->format('d.m.Y').')'])
+                                    ->mapWithKeys(fn ($r) => [$r->id => $r->event->getTranslation('title', 'sk').' ('.$r->registered_at?->format('d.m.Y').')'])
                                     ->toArray(),
                                 default => [],
                             };
@@ -106,7 +106,7 @@ class ListPayments extends ListRecords
                     $payableClass = match ($data['payable_type']) {
                         'membership' => Membership::class,
                         'training_registration' => \App\Models\TrainingRegistration::class,
-                        'competition_registration' => \App\Models\CompetitionRegistration::class,
+                        'competition_registration' => \App\Models\EventRegistration::class,
                     };
 
                     $payable = $payableClass::findOrFail($data['payable_id']);

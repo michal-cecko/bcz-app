@@ -17,7 +17,15 @@ class EventsArchive extends Component
     #[Url(as: 'kategoria')]
     public string $categoryFilter = '';
 
+    #[Url(as: 'typ')]
+    public string $typeFilter = '';
+
     public function updatedCategoryFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedTypeFilter(): void
     {
         $this->resetPage();
     }
@@ -29,11 +37,15 @@ class EventsArchive extends Component
         $query = Event::query()
             ->where('is_published', true)
             ->where('team_id', $teamId)
-            ->with(['eventCategory', 'team'])
+            ->with(['eventCategory', 'team', 'organization'])
             ->latest('date');
 
         if ($this->categoryFilter) {
             $query->where('event_category_id', $this->categoryFilter);
+        }
+
+        if ($this->typeFilter) {
+            $query->where('event_type', $this->typeFilter);
         }
 
         $events = $query->paginate(12);

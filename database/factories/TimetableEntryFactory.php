@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\TimetableEntryStatusEnum;
-use App\Models\Competition;
+use App\Models\CompetitionDetail;
 use App\Models\TimetableEntry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -15,7 +15,7 @@ class TimetableEntryFactory extends Factory
     public function definition(): array
     {
         return [
-            'competition_id' => Competition::factory(),
+            'competition_detail_id' => CompetitionDetail::factory(),
             'title' => ['sk' => fake()->sentence(3), 'en' => fake()->sentence(3)],
             'scheduled_time' => fake()->dateTimeBetween('+1 month', '+6 months'),
             'status' => TimetableEntryStatusEnum::PENDING,

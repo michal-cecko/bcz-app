@@ -17,7 +17,7 @@ class TimetableEntry extends Model
     public array $translatable = ['title'];
 
     protected $fillable = [
-        'competition_id',
+        'competition_detail_id',
         'title',
         'scheduled_time',
         'actual_start_time',
@@ -37,8 +37,8 @@ class TimetableEntry extends Model
         ];
     }
 
-    public function competition(): BelongsTo
+    public function competitionDetail(): BelongsTo
     {
-        return $this->belongsTo(Competition::class);
+        return $this->belongsTo(CompetitionDetail::class);
     }
 }

@@ -24,8 +24,8 @@ class DisciplinesTable
                     ->label('Názov')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('competitions_count')
-                    ->counts('competitions')
+                TextColumn::make('competition_details_count')
+                    ->counts('competitionDetails')
                     ->label('Súťaže')
                     ->sortable(),
                 TextColumn::make('sort_order')

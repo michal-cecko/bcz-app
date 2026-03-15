@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\Competition;
-use App\Models\Setting;
+use App\Enums\EventTypeEnum;
+use App\Models\Event;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -23,43 +23,36 @@ class CompetitionsArchive extends Component
 
     public function render(): View
     {
-        $teamId = Setting::get('default_team_id');
-
-        $query = Competition::query()
+        $query = Event::query()
+            ->where('event_type', EventTypeEnum::Competition)
             ->where('is_published', true)
-            ->with(['disciplines', 'organizerTeam'])
-            ->latest('date_start');
+            ->with(['eventCategory', 'team', 'competitionDetail.disciplines'])
+            ->latest('date');
 
         $all = $query->get();
-        $upcoming = $all->filter(fn (Competition $c) => $c->status !== 'finished');
-        $finished = $all->filter(fn (Competition $c) => $c->status === 'finished');
+        $upcoming = $all->filter(fn (Event $e) => $e->status !== 'finished');
 
         if ($this->statusFilter === 'upcoming') {
-            $competitions = Competition::query()
-                ->where('is_published', true)
-                ->with(['disciplines', 'organizerTeam'])
-                ->latest('date_start')
-                ->get()
-                ->filter(fn (Competition $c) => $c->status !== 'finished')
-                ->values();
-
+            $competitions = $upcoming->values();
             $paginatedCompetitions = null;
         } elseif ($this->statusFilter === 'finished') {
-            $paginatedCompetitions = Competition::query()
+            $paginatedCompetitions = Event::query()
+                ->where('event_type', EventTypeEnum::Competition)
                 ->where('is_published', true)
-                ->where('date_start', '<', now())
-                ->with(['disciplines', 'organizerTeam'])
-                ->latest('date_start')
+                ->where('date', '<', now())
+                ->with(['eventCategory', 'team', 'competitionDetail.disciplines'])
+                ->latest('date')
                 ->paginate(12);
 
             $competitions = collect();
         } else {
             $competitions = $upcoming;
-            $paginatedCompetitions = Competition::query()
+            $paginatedCompetitions = Event::query()
+                ->where('event_type', EventTypeEnum::Competition)
                 ->where('is_published', true)
-                ->where('date_start', '<', now())
-                ->with(['disciplines', 'organizerTeam'])
-                ->latest('date_start')
+                ->where('date', '<', now())
+                ->with(['eventCategory', 'team', 'competitionDetail.disciplines'])
+                ->latest('date')
                 ->paginate(12);
         }
 

@@ -45,6 +45,9 @@ return [
         'trainings-archive' => 'Archív tréningov',
         'competitions-archive' => 'Archív súťaží',
         'events-archive' => 'Archív podujatí',
+        'competition-results' => 'Výsledky súťaže',
+        'competition-brackets' => 'Pavúk súťaže',
+        'competition-timetable' => 'Harmonogram súťaže',
     ],
 
     // Link picker
@@ -259,6 +262,19 @@ return [
     // Gallery brick
     'gallery' => [
         'images' => 'Obrázky',
+    ],
+
+    // Competition bricks
+    'competition' => [
+        'event' => 'Súťaž',
+        'results_label' => 'VÝSLEDKY',
+        'brackets_label' => 'PAVÚK',
+        'timetable_label' => 'HARMONOGRAM',
+        'unknown_athlete' => 'Neznámy súťažiaci',
+        'battle' => 'Zápas',
+        'tbd' => 'TBD',
+        'status_finished' => 'Dokončené',
+        'status_in_progress' => 'Prebieha',
     ],
 
     // Sponsors brick

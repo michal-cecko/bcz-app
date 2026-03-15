@@ -41,8 +41,8 @@ class AthleteCategoriesTable
                 TextColumn::make('max_age')
                     ->label('Max. vek')
                     ->placeholder('-'),
-                TextColumn::make('competitions_count')
-                    ->counts('competitions')
+                TextColumn::make('competition_details_count')
+                    ->counts('competitionDetails')
                     ->label('Súťaže')
                     ->sortable(),
                 TextColumn::make('created_at')

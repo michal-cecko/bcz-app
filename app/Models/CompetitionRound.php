@@ -15,7 +15,7 @@ class CompetitionRound extends Model
     use HasFactory, HasUuidV7;
 
     protected $fillable = [
-        'competition_id',
+        'competition_detail_id',
         'athlete_category_id',
         'round_number',
         'name',
@@ -38,9 +38,9 @@ class CompetitionRound extends Model
         ];
     }
 
-    public function competition(): BelongsTo
+    public function competitionDetail(): BelongsTo
     {
-        return $this->belongsTo(Competition::class);
+        return $this->belongsTo(CompetitionDetail::class);
     }
 
     public function athleteCategory(): BelongsTo

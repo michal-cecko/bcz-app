@@ -120,9 +120,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Linkable
         return $this->hasMany(TrainingRegistration::class);
     }
 
-    public function competitionRegistrations(): HasMany
+    public function eventRegistrations(): HasMany
     {
-        return $this->hasMany(CompetitionRegistration::class);
+        return $this->hasMany(EventRegistration::class);
     }
 
     public function competitionResults(): HasMany
@@ -130,14 +130,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Linkable
         return $this->hasMany(CompetitionResult::class);
     }
 
-    public function competitionReports(): HasMany
+    public function judgedCompetitionDetails(): BelongsToMany
     {
-        return $this->hasMany(CompetitionReport::class);
-    }
-
-    public function judgedCompetitions(): BelongsToMany
-    {
-        return $this->belongsToMany(Competition::class, 'competition_judges')
+        return $this->belongsToMany(CompetitionDetail::class, 'competition_judges')
             ->withPivot('discipline_id');
     }
 

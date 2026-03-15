@@ -52,8 +52,8 @@ class AthleteCategory extends Model
         return $this->hasMany(self::class, 'parent_id');
     }
 
-    public function competitions(): BelongsToMany
+    public function competitionDetails(): BelongsToMany
     {
-        return $this->belongsToMany(Competition::class, 'competition_athlete_category');
+        return $this->belongsToMany(CompetitionDetail::class, 'competition_athlete_category');
     }
 }

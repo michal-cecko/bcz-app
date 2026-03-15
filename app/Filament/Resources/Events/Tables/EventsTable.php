@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Events\Tables;
 
+use App\Enums\EventTypeEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -24,6 +25,10 @@ class EventsTable
                     ->label('Obrázok')
                     ->circular()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('event_type')
+                    ->label('Typ')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('title')
                     ->label('Názov')
                     ->searchable()
@@ -63,6 +68,9 @@ class EventsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('event_type')
+                    ->label('Typ')
+                    ->options(EventTypeEnum::class),
                 SelectFilter::make('event_category_id')
                     ->relationship('eventCategory', 'id')
                     ->getOptionLabelFromRecordUsing(fn (Model $record): string => $record->getTranslation('title', 'sk'))

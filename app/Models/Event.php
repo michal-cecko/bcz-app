@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Contracts\Linkable;
+use App\Enums\EventTypeEnum;
 use App\Models\Concerns\HasUuidV7;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Spatie\Sluggable\HasSlug;
@@ -21,6 +25,7 @@ class Event extends Model implements Linkable
     public array $translatable = ['title', 'card_description', 'content'];
 
     protected $fillable = [
+        'event_type',
         'event_category_id',
         'team_id',
         'title',
@@ -31,6 +36,10 @@ class Event extends Model implements Linkable
         'date_end',
         'country',
         'city',
+        'place_name',
+        'place_address',
+        'latitude',
+        'longitude',
         'detail_image',
         'content',
         'attendee_count',
@@ -42,8 +51,11 @@ class Event extends Model implements Linkable
     protected function casts(): array
     {
         return [
+            'event_type' => EventTypeEnum::class,
             'date' => 'date',
             'date_end' => 'date',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
             'attendee_count' => 'integer',
             'is_published' => 'boolean',
             'published_at' => 'datetime',
@@ -55,6 +67,44 @@ class Event extends Model implements Linkable
         return SlugOptions::create()
             ->generateSlugsFrom(fn (Event $model) => $model->getTranslation('title', 'sk'))
             ->saveSlugsTo('slug');
+    }
+
+    /**
+     * Computed status: hidden, countdown, registering, in_progress, upcoming, finished.
+     */
+    protected function status(): Attribute
+    {
+        return Attribute::get(function (): string {
+            if (! $this->is_published) {
+                return 'hidden';
+            }
+
+            $now = now();
+
+            if ($this->date_end && $now->greaterThan($this->date_end)) {
+                return 'finished';
+            }
+
+            if ($this->date && $now->greaterThanOrEqualTo($this->date)) {
+                return 'in_progress';
+            }
+
+            $org = $this->organization;
+
+            if ($org) {
+                if ($org->registration_opens_at && $now->greaterThanOrEqualTo($org->registration_opens_at)) {
+                    if (! $org->registration_closes_at || $now->lessThanOrEqualTo($org->registration_closes_at)) {
+                        return 'registering';
+                    }
+                }
+
+                if ($org->show_countdown) {
+                    return 'countdown';
+                }
+            }
+
+            return 'upcoming';
+        });
     }
 
     public function getLinkUrl(): string
@@ -85,5 +135,20 @@ class Event extends Model implements Linkable
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function organization(): HasOne
+    {
+        return $this->hasOne(EventOrganization::class);
+    }
+
+    public function competitionDetail(): HasOne
+    {
+        return $this->hasOne(CompetitionDetail::class);
+    }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(EventRegistration::class);
     }
 }

@@ -12,4 +12,5 @@ enum PayableTypeEnum: string implements HasLabel
     case MEMBERSHIP = 'membership';
     case TRAINING_REGISTRATION = 'training_registration';
     case COMPETITION_REGISTRATION = 'competition_registration';
+    case EVENT_REGISTRATION = 'event_registration';
 }

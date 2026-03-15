@@ -8,7 +8,10 @@ use App\Mason\Bricks\AchievementCardsBrick;
 use App\Mason\Bricks\AthletesArchiveBrick;
 use App\Mason\Bricks\CenteredHeroBrick;
 use App\Mason\Bricks\CoachesArchiveBrick;
+use App\Mason\Bricks\CompetitionBracketsBrick;
+use App\Mason\Bricks\CompetitionResultsBrick;
 use App\Mason\Bricks\CompetitionsArchiveBrick;
+use App\Mason\Bricks\CompetitionTimetableBrick;
 use App\Mason\Bricks\ContactFormBrick;
 use App\Mason\Bricks\ContactInquiryBrick;
 use App\Mason\Bricks\CtaBrick;
@@ -217,6 +220,9 @@ class PageForm
             JudgesArchiveBrick::class,
             TeamsArchiveBrick::class,
             ContactInquiryBrick::class,
+            CompetitionResultsBrick::class,
+            CompetitionBracketsBrick::class,
+            CompetitionTimetableBrick::class,
         ];
     }
 }

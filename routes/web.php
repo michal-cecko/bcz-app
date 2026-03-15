@@ -49,7 +49,7 @@ $frontendRoutes = function () {
         Route::get('/treningy', [TeamController::class, 'trainings']);
         Route::get('/treningy/{training:slug}', [TrainingController::class, 'show']);
         Route::get('/sutaze', [TeamController::class, 'competitions']);
-        Route::get('/sutaze/{competition:slug}', [CompetitionController::class, 'show']);
+        Route::get('/sutaze/{event:slug}', [CompetitionController::class, 'show']);
         Route::get('/clenovia', [TeamController::class, 'members']);
     });
 
@@ -126,7 +126,7 @@ Route::prefix('timy/{team:slug}')->name('team.')->group(function () {
     Route::get('/treningy', [TeamController::class, 'trainings'])->name('trainings');
     Route::get('/treningy/{training:slug}', [TrainingController::class, 'show'])->name('training.show');
     Route::get('/sutaze', [TeamController::class, 'competitions'])->name('competitions');
-    Route::get('/sutaze/{competition:slug}', [CompetitionController::class, 'show'])->name('competition.show');
+    Route::get('/sutaze/{event:slug}', [CompetitionController::class, 'show'])->name('competition.show');
     Route::get('/clenovia', [TeamController::class, 'members'])->name('members');
 });
 
