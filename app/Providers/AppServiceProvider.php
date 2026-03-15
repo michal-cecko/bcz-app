@@ -7,7 +7,9 @@ use App\Models\EventRegistration;
 use App\Models\Membership;
 use App\Models\Menu;
 use App\Models\TeamSubscription;
+use App\Models\Training;
 use App\Models\TrainingRegistration;
+use App\Observers\TrainingObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
@@ -17,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        Training::observe(TrainingObserver::class);
+
         Relation::morphMap([
             'membership' => Membership::class,
             'training_registration' => TrainingRegistration::class,

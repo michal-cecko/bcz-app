@@ -18,6 +18,7 @@ class TrainingRegistration extends Model
         'user_id',
         'form_data',
         'status',
+        'cancellation_reason',
         'registered_at',
     ];
 

@@ -10,6 +10,7 @@ use App\Filament\Resources\Trainings\Pages\ViewTraining;
 use App\Filament\Resources\Trainings\RelationManagers\CoachesRelationManager;
 use App\Filament\Resources\Trainings\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Trainings\RelationManagers\RegistrationsRelationManager;
+use App\Filament\Resources\Trainings\RelationManagers\WaitlistRelationManager;
 use App\Filament\Resources\Trainings\Schemas\TrainingForm;
 use App\Filament\Resources\Trainings\Schemas\TrainingInfolist;
 use App\Filament\Resources\Trainings\Tables\TrainingsTable;
@@ -70,6 +71,7 @@ class TrainingResource extends Resource
             CoachesRelationManager::class,
             RegistrationsRelationManager::class,
             PaymentsRelationManager::class,
+            WaitlistRelationManager::class,
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Trainings\Schemas;
 
 use App\Enums\GenderEnum;
 use App\Enums\RegistrationFieldTypeEnum;
+use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
 use Filament\Forms\Components\CheckboxList;
@@ -160,7 +161,26 @@ class TrainingForm
                                     ->schema([
                                         TextInput::make('max_capacity')
                                             ->label('Max. kapacita')
-                                            ->numeric(),
+                                            ->numeric()
+                                            ->rule(function (?Model $record): ?\Closure {
+                                                if (! $record) {
+                                                    return null;
+                                                }
+
+                                                return function (string $attribute, mixed $value, \Closure $fail) use ($record): void {
+                                                    if ($value === null) {
+                                                        return;
+                                                    }
+
+                                                    $activeCount = $record->registrations()
+                                                        ->where('status', RegistrationStatusEnum::Approved->value)
+                                                        ->count();
+
+                                                    if ((int) $value < $activeCount) {
+                                                        $fail("Kapacita nemôže byť nižšia ako počet aktuálnych registrácií ({$activeCount}).");
+                                                    }
+                                                };
+                                            }),
                                         Toggle::make('notify_on_available')
                                             ->label('Upozorniť pri voľnom mieste'),
                                         Select::make('pricing_type')

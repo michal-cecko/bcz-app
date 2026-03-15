@@ -11,11 +11,13 @@ use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Training;
+use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Notifications\TrainingRegistrationCancelled;
 use App\Services\RegistrationService;
+use App\Services\TrainingCapacityService;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -280,9 +282,46 @@ class RegistrationsRelationManager extends RelationManager
                         $data['form_data'] = $this->extractFormData($data);
 
                         return $data;
+                    })
+                    ->after(function (TrainingRegistration $record, array $data): void {
+                        if ($record->status !== RegistrationStatusEnum::Rejected) {
+                            return;
+                        }
+
+                        $this->sendCancellationNotification($record);
+                        TrainingCapacityService::handleSpotFreed($this->getOwnerRecord());
                     }),
-                DeleteAction::make()
-                    ->modalHeading('Odstrániť registráciu'),
+                Action::make('delete')
+                    ->label('Odstrániť')
+                    ->icon(Heroicon::Trash)
+                    ->color('danger')
+                    ->modalHeading('Odstrániť registráciu')
+                    ->requiresConfirmation()
+                    ->schema([
+                        Textarea::make('cancellation_reason')
+                            ->label('Dôvod zrušenia')
+                            ->placeholder('Voliteľné — bude odoslané používateľovi')
+                            ->rows(2),
+                    ])
+                    ->action(function (array $data, TrainingRegistration $record): void {
+                        $reason = $data['cancellation_reason'] ?? null;
+
+                        if ($reason) {
+                            $record->update(['cancellation_reason' => $reason]);
+                        }
+
+                        $this->sendCancellationNotification($record, $reason);
+
+                        $training = $this->getOwnerRecord();
+                        $record->delete();
+
+                        TrainingCapacityService::handleSpotFreed($training);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Registrácia bola odstránená.')
+                            ->send();
+                    }),
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),
@@ -389,6 +428,23 @@ class RegistrationsRelationManager extends RelationManager
         $items = array_map('trim', explode(',', $options));
 
         return array_combine($items, $items);
+    }
+
+    protected function sendCancellationNotification(TrainingRegistration $record, ?string $reason = null): void
+    {
+        if (! $record->user_id) {
+            return;
+        }
+
+        $user = User::find($record->user_id);
+        if (! $user) {
+            return;
+        }
+
+        /** @var Training $training */
+        $training = $this->getOwnerRecord();
+
+        $user->notify(new TrainingRegistrationCancelled($training, $reason));
     }
 
     /**

@@ -52,6 +52,7 @@ use App\Models\TeamSubscription;
 use App\Models\TimetableEntry;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
+use App\Models\TrainingWaitlist;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -444,6 +445,7 @@ class DemoDataSeeder extends Seeder
                 'pricing_type' => TrainingPricingTypeEnum::FREE,
                 'age_group' => '16+',
                 'max_capacity' => 30,
+                'notify_on_available' => true,
                 'schedule_days' => ['saturday', 'sunday'],
                 'start_time' => '09:00',
                 'duration_minutes' => 180,
@@ -463,6 +465,7 @@ class DemoDataSeeder extends Seeder
                 'price_amount' => 25.00,
                 'age_group' => '14-25',
                 'max_capacity' => 10,
+                'notify_on_available' => true,
                 'schedule_days' => ['sunday'],
                 'start_time' => '14:00',
                 'duration_minutes' => 120,
@@ -508,13 +511,29 @@ class DemoDataSeeder extends Seeder
 
             for ($i = 0; $i < $registrationCount; $i++) {
                 $status = $registrationStatuses[$i % count($registrationStatuses)];
+                $cancellationReason = $status === RegistrationStatusEnum::Cancelled
+                    ? fake()->randomElement([null, 'Zmena termínu', 'Osobné dôvody', 'Zdravotné problémy'])
+                    : null;
                 TrainingRegistration::factory()->forTraining($training)->create([
                     'user_id' => User::factory()->create()->id,
                     'status' => $status,
+                    'cancellation_reason' => $cancellationReason,
                     'registered_at' => now()->subDays(rand(1, 60)),
                 ]);
             }
         });
+
+        // Waitlist entries — add users to trainings with notify_on_available enabled
+        $trainings->filter(fn (Training $t) => $t->notify_on_available)
+            ->each(function (Training $training) {
+                $waitlistCount = rand(2, 5);
+                for ($i = 0; $i < $waitlistCount; $i++) {
+                    TrainingWaitlist::create([
+                        'training_id' => $training->id,
+                        'user_id' => User::factory()->create()->id,
+                    ]);
+                }
+            });
 
         // --- Event Categories ---
         $eventCategories = collect([

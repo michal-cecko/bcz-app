@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Contracts\Linkable;
 use App\Enums\GenderEnum;
+use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -116,5 +117,27 @@ class Training extends Model implements Linkable
     public function registrations(): HasMany
     {
         return $this->hasMany(TrainingRegistration::class);
+    }
+
+    public function waitlistEntries(): HasMany
+    {
+        return $this->hasMany(TrainingWaitlist::class);
+    }
+
+    public function waitlistUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'training_waitlist')
+            ->withPivot('created_at');
+    }
+
+    public function isFull(): bool
+    {
+        if ($this->max_capacity === null) {
+            return false;
+        }
+
+        return $this->registrations()
+            ->where('status', RegistrationStatusEnum::Approved->value)
+            ->count() >= $this->max_capacity;
     }
 }
