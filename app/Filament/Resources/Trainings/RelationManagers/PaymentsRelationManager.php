@@ -114,9 +114,13 @@ class PaymentsRelationManager extends RelationManager
                         $registration = TrainingRegistration::find($data['registration_id']);
                         $training = $this->getOwnerRecord();
 
+                        $user = $registration->user;
+
                         Payment::create([
                             'team_id' => $training->team_id,
                             'user_id' => $registration->user_id,
+                            'payer_name' => $user?->name,
+                            'payer_email' => $user?->email,
                             'payable_type' => TrainingRegistration::class,
                             'payable_id' => $registration->id,
                             'amount' => $data['amount'],

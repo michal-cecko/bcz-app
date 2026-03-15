@@ -70,9 +70,13 @@ class StripeWebhookController extends Controller
         $subscription = TeamSubscription::where('stripe_subscription_id', $subscriptionId)->first();
 
         if ($subscription) {
+            $user = $subscription->team->members()->first();
+
             Payment::create([
                 'team_id' => $subscription->team_id,
-                'user_id' => $subscription->team->members()->first()?->id,
+                'user_id' => $user?->id,
+                'payer_name' => $user?->name,
+                'payer_email' => $user?->email,
                 'payable_type' => 'team_subscription',
                 'payable_id' => $subscription->id,
                 'amount' => $invoice->amount_paid / 100,

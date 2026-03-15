@@ -34,10 +34,6 @@ class MembersRelationManager extends RelationManager
 
     protected static ?string $pluralModelLabel = 'Členovia';
 
-    protected static ?string $modelLabel = 'člena';
-
-    protected static ?string $pluralModelLabel = 'členovia';
-
     public function form(Schema $schema): Schema
     {
         return $schema

@@ -250,9 +250,13 @@ class RegistrationsRelationManager extends RelationManager
                     ->action(function (array $data, $record): void {
                         $training = $this->getOwnerRecord();
 
+                        $user = $record->user;
+
                         Payment::create([
                             'team_id' => $training->team_id,
                             'user_id' => $record->user_id,
+                            'payer_name' => $user?->name,
+                            'payer_email' => $user?->email,
                             'payable_type' => \App\Models\TrainingRegistration::class,
                             'payable_id' => $record->id,
                             'amount' => $data['amount'],

@@ -15,10 +15,14 @@ class PaymentsTable
     {
         return $table
             ->columns([
-                TextColumn::make('user.name')
+                TextColumn::make('display_name')
                     ->label('Používateľ')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(query: function ($query, string $search): void {
+                        $query->where(function ($q) use ($search): void {
+                            $q->whereHas('user', fn ($q) => $q->where('name', 'ilike', "%{$search}%"))
+                                ->orWhere('payer_name', 'ilike', "%{$search}%");
+                        });
+                    }),
                 TextColumn::make('payable_type')
                     ->label('Typ')
                     ->formatStateUsing(fn (string $state): string => match ($state) {

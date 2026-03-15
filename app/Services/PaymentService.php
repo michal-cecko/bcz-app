@@ -33,6 +33,8 @@ class PaymentService
         return Payment::create([
             'team_id' => $team->id,
             'user_id' => $user->id,
+            'payer_name' => $user->name,
+            'payer_email' => $user->email,
             'payable_type' => $payable->getMorphClass(),
             'payable_id' => $payable->getKey(),
             'amount' => $amount,
@@ -96,6 +98,8 @@ class PaymentService
         $payment = Payment::create([
             'team_id' => $team->id,
             'user_id' => $user->id,
+            'payer_name' => $user->name,
+            'payer_email' => $user->email,
             'payable_type' => $payable->getMorphClass(),
             'payable_id' => $payable->getKey(),
             'amount' => $amount,

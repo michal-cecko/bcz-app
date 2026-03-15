@@ -17,6 +17,8 @@ class Payment extends Model
     protected $fillable = [
         'team_id',
         'user_id',
+        'payer_name',
+        'payer_email',
         'payable_type',
         'payable_id',
         'amount',
@@ -56,5 +58,15 @@ class Payment extends Model
     public function payable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->user?->name ?? $this->payer_name ?? '-';
+    }
+
+    public function getDisplayEmailAttribute(): string
+    {
+        return $this->user?->email ?? $this->payer_email ?? '-';
     }
 }
