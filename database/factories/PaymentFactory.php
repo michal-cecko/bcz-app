@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Team;
+use App\Models\TrainingRegistration;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -25,7 +26,7 @@ class PaymentFactory extends Factory
             'amount' => fake()->randomFloat(2, 5, 200),
             'currency' => 'EUR',
             'status' => PaymentStatusEnum::COMPLETED,
-            'payment_method' => PaymentMethodEnum::MANUAL,
+            'payment_method' => PaymentMethodEnum::CASH,
             'paid_at' => now(),
         ];
     }
@@ -67,6 +68,16 @@ class PaymentFactory extends Factory
         return $this->state(fn () => [
             'status' => PaymentStatusEnum::PENDING,
             'paid_at' => null,
+        ]);
+    }
+
+    public function forTrainingRegistration(TrainingRegistration $registration): static
+    {
+        return $this->state(fn () => [
+            'team_id' => $registration->training?->team_id,
+            'user_id' => $registration->user_id,
+            'payable_type' => 'training_registration',
+            'payable_id' => $registration->id,
         ]);
     }
 }

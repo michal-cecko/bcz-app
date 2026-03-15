@@ -43,11 +43,6 @@ class LinkResolver
             return null;
         }
 
-        // Media URLs are absolute (storage URLs), no locale prefix needed
-        if ($type === LinkTypeEnum::Media) {
-            return $url;
-        }
-
         return locale_url($url);
     }
 }

@@ -7,7 +7,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class LinkPickerField
 {
@@ -49,7 +48,7 @@ class LinkPickerField
             ->options(function (Get $get) use ($prefix): array {
                 $type = LinkTypeEnum::tryFrom($get("{$prefix}link_type") ?? '');
 
-                if (! $type || $type === LinkTypeEnum::Custom || $type === LinkTypeEnum::Media) {
+                if (! $type || $type === LinkTypeEnum::Custom) {
                     return [];
                 }
 
@@ -70,15 +69,7 @@ class LinkPickerField
             ->visible(function (Get $get) use ($prefix): bool {
                 $type = LinkTypeEnum::tryFrom($get("{$prefix}link_type") ?? '');
 
-                return $type !== null && $type !== LinkTypeEnum::Custom && $type !== LinkTypeEnum::Media;
-            });
-
-        $fields[] = MediaPicker::make("{$prefix}link_model_id")
-            ->label(__('bricks.link_picker.record'))
-            ->visible(function (Get $get) use ($prefix): bool {
-                $type = LinkTypeEnum::tryFrom($get("{$prefix}link_type") ?? '');
-
-                return $type === LinkTypeEnum::Media;
+                return $type !== null && $type !== LinkTypeEnum::Custom;
             });
 
         $fields[] = TextInput::make($urlName)

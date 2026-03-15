@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\RegistrationStatusEnum;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
@@ -20,9 +21,24 @@ class TrainingRegistrationFactory extends Factory
             'training_id' => Training::factory(),
             'user_id' => User::factory(),
             'form_data' => [],
-            'status' => 'pending',
+            'status' => RegistrationStatusEnum::Approved,
             'registered_at' => now(),
         ];
+    }
+
+    public function approved(): static
+    {
+        return $this->state(fn () => ['status' => RegistrationStatusEnum::Approved]);
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn () => ['status' => RegistrationStatusEnum::Pending]);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state(fn () => ['status' => RegistrationStatusEnum::Cancelled]);
     }
 
     public function forTraining(Training $training): static

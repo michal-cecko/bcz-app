@@ -7,10 +7,10 @@ use App\Mason\Support\LinkPickerField;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class AboutPreviewBrick extends Brick
 {
@@ -39,11 +39,23 @@ class AboutPreviewBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                MediaPicker::make('image_main')
+                FileUpload::make('image_main')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label(__('bricks.about_preview.image_main')),
-                MediaPicker::make('image_left')
+                FileUpload::make('image_left')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label(__('bricks.about_preview.image_left')),
-                MediaPicker::make('image_right')
+                FileUpload::make('image_right')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label(__('bricks.about_preview.image_right')),
                 TranslatableBrickFields::group(fn (string $locale) => [
                     TextInput::make("label.{$locale}")

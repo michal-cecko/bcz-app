@@ -5,10 +5,10 @@ namespace App\Filament\Resources\Users\Schemas;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class UserForm
 {
@@ -35,7 +35,10 @@ class UserForm
                     ->multiple()
                     ->preload()
                     ->required(),
-                MediaPicker::make('profile_image')
+                SpatieMediaLibraryFileUpload::make('profile_image')
+                    ->collection('profile_image')
+                    ->disk('public')
+                    ->visibility('public')
                     ->label('Profilový obrázok'),
                 Section::make('Verejný profil')
                     ->description('Nastavenia verejného profilu atléta')

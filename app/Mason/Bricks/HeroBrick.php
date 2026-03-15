@@ -6,12 +6,12 @@ use App\Mason\Support\LinkPickerField;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class HeroBrick extends Brick
 {
@@ -47,7 +47,11 @@ class HeroBrick extends Brick
                         'centered' => __('bricks.hero.layout_centered'),
                     ])
                     ->default('left'),
-                MediaPicker::make('background_image')
+                FileUpload::make('background_image')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label(__('bricks.hero.background_image')),
                 TranslatableBrickFields::group(fn (string $locale) => [
                     TextInput::make("badge.{$locale}")

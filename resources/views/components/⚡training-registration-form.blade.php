@@ -3,6 +3,7 @@
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
+use App\Services\RegistrationService;
 use Livewire\Component;
 
 new class extends Component
@@ -48,12 +49,35 @@ new class extends Component
 
         $this->validate($rules);
 
+        $schema = $this->training->registration_form_schema ?? [];
+        $email = RegistrationService::extractEmailFromFormData($this->fields, $schema);
+        $name = RegistrationService::extractNameFromFormData($this->fields, $schema);
+
+        $userId = null;
+        $isNewUser = false;
+
+        if ($email) {
+            $result = RegistrationService::resolveOrCreateUser($email, $name);
+            $userId = $result['user']->id;
+            $isNewUser = $result['created'];
+        }
+
         TrainingRegistration::create([
             'training_id' => $this->training->id,
+            'user_id' => $userId,
             'form_data' => $this->fields,
             'status' => 'pending',
             'registered_at' => now(),
         ]);
+
+        if ($email && $userId) {
+            RegistrationService::sendConfirmation(
+                user: \App\Models\User::find($userId),
+                registrationType: 'tréning',
+                registrationTitle: $this->training->getTranslation('title', app()->getLocale()),
+                isNewUser: $isNewUser,
+            );
+        }
 
         $this->submitted = true;
     }

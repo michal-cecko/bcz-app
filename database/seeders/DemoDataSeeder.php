@@ -12,6 +12,7 @@ use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PayoutStatusEnum;
+use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\RoundAdvancementTypeEnum;
 use App\Enums\SponsorTagEnum;
@@ -38,7 +39,6 @@ use App\Models\ExerciseCategory;
 use App\Models\Faq;
 use App\Models\FaqCategory;
 use App\Models\Inquiry;
-use App\Models\MediaLibraryItem;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\RegistrationFee;
@@ -53,7 +53,6 @@ use App\Models\TimetableEntry;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
-use App\Services\MediaLibraryFolderService;
 use Illuminate\Database\Seeder;
 
 class DemoDataSeeder extends Seeder
@@ -64,8 +63,6 @@ class DemoDataSeeder extends Seeder
         $secondTeam = Team::factory()->create([
             'name' => ['sk' => 'Gravity Crew', 'en' => 'Gravity Crew', 'cz' => 'Gravity Crew'],
         ]);
-
-        $folderService = app(MediaLibraryFolderService::class);
 
         $sportCategories = SportCategory::all();
         $sportCategories->each(fn (SportCategory $cat) => $cat->update(['team_id' => $bczTeam->id]));
@@ -100,7 +97,7 @@ class DemoDataSeeder extends Seeder
             ],
         ];
 
-        $coaches = collect($coachData)->map(function ($data, $index) use ($bczTeam, $folderService) {
+        $coaches = collect($coachData)->map(function ($data, $index) use ($bczTeam) {
             $user = User::factory()->create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -108,17 +105,14 @@ class DemoDataSeeder extends Seeder
             $user->assignRole(RoleEnum::COACH);
             $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(6, 36))]);
 
-            $coachFolder = $folderService->ensureUserFolder($user, $bczTeam);
-            $photoItem = MediaLibraryItem::create(['folder_id' => $coachFolder->id]);
-            $photoItem->addMediaFromUrl("https://picsum.photos/seed/coach-{$index}/400/500")
-                ->usingFileName("coach-{$index}.jpg")
-                ->toMediaCollection('library');
-
-            CoachProfile::factory()->create([
+            $coachProfile = CoachProfile::factory()->create([
                 'user_id' => $user->id,
                 'biography' => $data['biography'],
-                'biography_image' => $photoItem->id,
             ]);
+
+            $coachProfile->addMediaFromUrl("https://picsum.photos/seed/coach-{$index}/400/500")
+                ->usingFileName("coach-{$index}.jpg")
+                ->toMediaCollection('biography_image');
 
             return $user;
         });
@@ -196,26 +190,20 @@ class DemoDataSeeder extends Seeder
             $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
         });
 
-        // --- Media Library Folder Structure ---
-        $teamFolder = $folderService->ensureTeamFolder($bczTeam);
-
-        // Athlete folders inside "Atléti" subfolder
-        $athletes->each(function (User $user, int $index) use ($folderService, $bczTeam) {
-            $athleteFolder = $folderService->ensureAthleteFolder($user, $bczTeam);
-
-            // Upload placeholder profile picture
-            $item = MediaLibraryItem::create(['folder_id' => $athleteFolder->id]);
-            $item->addMediaFromUrl("https://picsum.photos/seed/athlete-{$index}/400/500")
-                ->usingFileName("profile-{$index}.jpg")
-                ->toMediaCollection('library');
+        // --- Athlete profile images ---
+        $athletes->each(function (User $user, int $index) {
+            $profile = $user->athleteProfile;
+            if ($profile) {
+                $profile->addMediaFromUrl("https://picsum.photos/seed/athlete-{$index}/400/500")
+                    ->usingFileName("profile-{$index}.jpg")
+                    ->toMediaCollection('main_image');
+            }
         });
 
         // Upload team logo placeholder
-        $logoItem = MediaLibraryItem::create(['folder_id' => $teamFolder->id]);
-        $logoItem->addMediaFromUrl('https://picsum.photos/seed/bcz-logo/200/200')
+        $bczTeam->addMediaFromUrl('https://picsum.photos/seed/bcz-logo/200/200')
             ->usingFileName('bcz-club-logo.png')
-            ->toMediaCollection('library');
-        $bczTeam->update(['logo' => $logoItem->id]);
+            ->toMediaCollection('logo');
 
         // --- Exercise Categories & Exercises ---
         $exerciseCategories = collect([
@@ -504,15 +492,26 @@ class DemoDataSeeder extends Seeder
             }
         });
 
-        // Training registrations — varied capacity to show green/orange/red states
+        // Training registrations — varied capacity and statuses
         $fillRatios = [0.0, 0.2, 0.5, 0.7, 0.75, 0.85, 0.92, 0.95, 1.0];
-        $trainings->each(function (Training $training, int $index) use ($fillRatios) {
+        $registrationStatuses = [
+            RegistrationStatusEnum::Approved,
+            RegistrationStatusEnum::Approved,
+            RegistrationStatusEnum::Approved,
+            RegistrationStatusEnum::Approved,
+            RegistrationStatusEnum::Pending,
+            RegistrationStatusEnum::Cancelled,
+        ];
+        $trainings->each(function (Training $training, int $index) use ($fillRatios, $registrationStatuses) {
             $ratio = $fillRatios[$index % count($fillRatios)];
             $registrationCount = (int) round($training->max_capacity * $ratio);
 
             for ($i = 0; $i < $registrationCount; $i++) {
+                $status = $registrationStatuses[$i % count($registrationStatuses)];
                 TrainingRegistration::factory()->forTraining($training)->create([
                     'user_id' => User::factory()->create()->id,
+                    'status' => $status,
+                    'registered_at' => now()->subDays(rand(1, 60)),
                 ]);
             }
         });
@@ -1553,8 +1552,6 @@ class DemoDataSeeder extends Seeder
         ]);
 
         // --- Phase 5: Sponsors ---
-        $webContentFolder = $folderService->ensureWebContentFolder();
-
         $sponsorData = [
             ['name' => 'Red Bull', 'tag' => SponsorTagEnum::MAIN_SPONSOR, 'link' => 'https://www.redbull.com/sk-sk', 'is_visible' => true, 'sort_order' => 1],
             ['name' => 'Nike', 'tag' => SponsorTagEnum::MAIN_SPONSOR, 'link' => 'https://www.nike.com', 'is_visible' => true, 'sort_order' => 2],
@@ -1565,14 +1562,11 @@ class DemoDataSeeder extends Seeder
         ];
 
         foreach ($sponsorData as $index => $data) {
-            $logoItem = MediaLibraryItem::create(['folder_id' => $webContentFolder->id]);
-            $logoItem->addMediaFromUrl("https://picsum.photos/seed/sponsor-{$index}/200/100")
-                ->usingFileName('sponsor-'.\Illuminate\Support\Str::slug($data['name']).'.png')
-                ->toMediaCollection('library');
+            $sponsor = Sponsor::factory()->create($data);
 
-            Sponsor::factory()->create(array_merge($data, [
-                'logo' => $logoItem->id,
-            ]));
+            $sponsor->addMediaFromUrl("https://picsum.photos/seed/sponsor-{$index}/200/100")
+                ->usingFileName('sponsor-'.\Illuminate\Support\Str::slug($data['name']).'.png')
+                ->toMediaCollection('logo');
         }
 
         // --- Phase 5-6: Memberships, Payments, Subscriptions, Payouts ---
@@ -1611,7 +1605,7 @@ class DemoDataSeeder extends Seeder
 
         // Payments for memberships (completed)
         $memberships->where('status', MembershipStatusEnum::ACTIVE)->each(function (Membership $membership) use ($bczTeam) {
-            $method = collect([PaymentMethodEnum::MANUAL, PaymentMethodEnum::BANK_TRANSFER, PaymentMethodEnum::CASH, PaymentMethodEnum::STRIPE])->random();
+            $method = collect([PaymentMethodEnum::CASH, PaymentMethodEnum::BANK_TRANSFER, PaymentMethodEnum::CASH, PaymentMethodEnum::STRIPE])->random();
 
             Payment::create([
                 'team_id' => $bczTeam->id,
@@ -1628,22 +1622,60 @@ class DemoDataSeeder extends Seeder
             ]);
         });
 
-        // Payments for training registrations
-        $trainingRegistrations = TrainingRegistration::where('user_id', '!=', null)->get();
-        $trainingRegistrations->take(3)->each(function (TrainingRegistration $registration) use ($bczTeam) {
-            Payment::create([
-                'team_id' => $bczTeam->id,
-                'user_id' => $registration->user_id,
-                'payable_type' => 'training_registration',
-                'payable_id' => $registration->id,
-                'amount' => 15.00,
-                'currency' => 'EUR',
-                'status' => PaymentStatusEnum::COMPLETED,
-                'payment_method' => PaymentMethodEnum::STRIPE,
-                'stripe_payment_id' => 'pi_demo_'.fake()->regexify('[a-zA-Z0-9]{16}'),
-                'paid_at' => now()->subDays(rand(1, 30)),
-            ]);
-        });
+        // Payments for training registrations — varied methods and statuses
+        $trainingRegistrations = TrainingRegistration::whereNotNull('user_id')
+            ->whereHas('training', fn ($q) => $q->where('pricing_type', TrainingPricingTypeEnum::PAID))
+            ->with('training')
+            ->get();
+
+        $paymentMethods = [
+            PaymentMethodEnum::STRIPE,
+            PaymentMethodEnum::BANK_TRANSFER,
+            PaymentMethodEnum::CASH,
+            PaymentMethodEnum::CASH,
+        ];
+
+        // Most approved registrations get a completed payment
+        $trainingRegistrations
+            ->where('status', RegistrationStatusEnum::Approved)
+            ->each(function (TrainingRegistration $registration, int $i) use ($bczTeam, $paymentMethods) {
+                $method = $paymentMethods[$i % count($paymentMethods)];
+                $amount = $registration->training->price_amount ?? 10.00;
+
+                Payment::create([
+                    'team_id' => $bczTeam->id,
+                    'user_id' => $registration->user_id,
+                    'payable_type' => 'training_registration',
+                    'payable_id' => $registration->id,
+                    'amount' => $amount,
+                    'currency' => 'EUR',
+                    'status' => PaymentStatusEnum::COMPLETED,
+                    'payment_method' => $method,
+                    'variable_symbol' => $method === PaymentMethodEnum::BANK_TRANSFER ? (string) rand(1000000000, 9999999999) : null,
+                    'stripe_payment_id' => $method === PaymentMethodEnum::STRIPE ? 'pi_demo_'.fake()->regexify('[a-zA-Z0-9]{16}') : null,
+                    'paid_at' => $registration->registered_at?->addHours(rand(1, 72)) ?? now()->subDays(rand(1, 30)),
+                ]);
+            });
+
+        // A few pending registrations get a pending payment
+        $trainingRegistrations
+            ->where('status', RegistrationStatusEnum::Pending)
+            ->take(3)
+            ->each(function (TrainingRegistration $registration) use ($bczTeam) {
+                $amount = $registration->training->price_amount ?? 10.00;
+
+                Payment::create([
+                    'team_id' => $bczTeam->id,
+                    'user_id' => $registration->user_id,
+                    'payable_type' => 'training_registration',
+                    'payable_id' => $registration->id,
+                    'amount' => $amount,
+                    'currency' => 'EUR',
+                    'status' => PaymentStatusEnum::PENDING,
+                    'payment_method' => PaymentMethodEnum::BANK_TRANSFER,
+                    'variable_symbol' => (string) rand(1000000000, 9999999999),
+                ]);
+            });
 
         // Payments for competition registrations
         $compRegistrations = EventRegistration::where('status', 'confirmed')
@@ -1677,21 +1709,24 @@ class DemoDataSeeder extends Seeder
             'variable_symbol' => (string) rand(1000000000, 9999999999),
         ]);
 
-        // Refunded payment
-        Payment::create([
-            'team_id' => $bczTeam->id,
-            'user_id' => $members->first()->id,
-            'payable_type' => 'training_registration',
-            'payable_id' => $trainingRegistrations->first()->id,
-            'amount' => 15.00,
-            'currency' => 'EUR',
-            'status' => PaymentStatusEnum::REFUNDED,
-            'payment_method' => PaymentMethodEnum::STRIPE,
-            'stripe_payment_id' => 'pi_demo_refunded_'.fake()->regexify('[a-zA-Z0-9]{12}'),
-            'paid_at' => now()->subDays(45),
-            'refunded_at' => now()->subDays(30),
-            'notes' => 'Zrušená registrácia na tréning.',
-        ]);
+        // Refunded payment for a cancelled training registration
+        $cancelledRegistration = TrainingRegistration::where('status', RegistrationStatusEnum::Cancelled)->first();
+        if ($cancelledRegistration) {
+            Payment::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $cancelledRegistration->user_id,
+                'payable_type' => 'training_registration',
+                'payable_id' => $cancelledRegistration->id,
+                'amount' => $cancelledRegistration->training?->price_amount ?? 15.00,
+                'currency' => 'EUR',
+                'status' => PaymentStatusEnum::REFUNDED,
+                'payment_method' => PaymentMethodEnum::STRIPE,
+                'stripe_payment_id' => 'pi_demo_refunded_'.fake()->regexify('[a-zA-Z0-9]{12}'),
+                'paid_at' => now()->subDays(45),
+                'refunded_at' => now()->subDays(30),
+                'notes' => 'Zrušená registrácia na tréning.',
+            ]);
+        }
 
         // --- Team Subscriptions ---
         $freePlan = SubscriptionPlan::where('tier', 'free')->first();

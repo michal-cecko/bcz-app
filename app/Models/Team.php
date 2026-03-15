@@ -13,13 +13,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class Team extends Model implements HasAvatar, Linkable
+class Team extends Model implements HasAvatar, HasMedia, Linkable
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
+    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['name', 'story', 'achievements'];
@@ -54,19 +56,14 @@ class Team extends Model implements HasAvatar, Linkable
         ];
     }
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('logo')->singleFile();
+    }
+
     public function getFilamentAvatarUrl(): ?string
     {
-        if (! $this->logo) {
-            return null;
-        }
-
-        $mediaLibraryItem = MediaLibraryItem::find($this->logo);
-
-        if (! $mediaLibraryItem) {
-            return null;
-        }
-
-        return rescue(fn () => $mediaLibraryItem->getItem()?->getUrl(), null, false);
+        return $this->getFirstMediaUrl('logo') ?: null;
     }
 
     public function getLinkUrl(): string
@@ -133,6 +130,14 @@ class Team extends Model implements HasAvatar, Linkable
     public function competitions(): HasMany
     {
         return $this->hasMany(Event::class)->where('event_type', 'competition');
+    }
+
+    /**
+     * Alias for competitions() — used by subscription limits and team detail views.
+     */
+    public function organizedCompetitions(): HasMany
+    {
+        return $this->competitions();
     }
 
     public function invitations(): HasMany

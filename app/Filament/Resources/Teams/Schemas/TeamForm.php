@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Teams\Schemas;
 use App\Enums\MembershipPeriodEnum;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -12,7 +13,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class TeamForm
 {
@@ -61,7 +61,10 @@ class TeamForm
                 TextInput::make('slug')
                     ->disabled()
                     ->dehydrated(),
-                MediaPicker::make('logo')
+                SpatieMediaLibraryFileUpload::make('logo')
+                    ->collection('logo')
+                    ->disk('public')
+                    ->visibility('public')
                     ->label('Logo'),
                 KeyValue::make('socials')
                     ->label('Sociálne siete')

@@ -3,21 +3,36 @@
 namespace App\Filament\Resources\Trainings\RelationManagers;
 
 use App\Enums\CoachRoleEnum;
-use Filament\Actions\AttachAction;
+use App\Models\User;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class CoachesRelationManager extends RelationManager
 {
     protected static string $relationship = 'coaches';
 
     protected static ?string $title = 'Tréneri';
+
+    protected static ?string $modelLabel = 'tréner';
+
+    protected static ?string $pluralModelLabel = 'Tréneri';
+
+    protected function getMainCoachCount(): int
+    {
+        return DB::table('coach_training')
+            ->where('training_id', $this->getOwnerRecord()->getKey())
+            ->where('role', CoachRoleEnum::MAIN->value)
+            ->count();
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -43,27 +58,66 @@ class CoachesRelationManager extends RelationManager
                 TextColumn::make('pivot.role')
                     ->label('Rola')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'main' => 'primary',
-                        'secondary' => 'gray',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (string $state): string => CoachRoleEnum::from($state)->getLabel())
+                    ->color(fn (string $state): string => CoachRoleEnum::tryFrom($state)?->getColor() ?? 'gray'),
             ])
             ->headerActions([
-                AttachAction::make()
-                    ->preloadRecordSelect()
-                    ->form(fn (AttachAction $action): array => [
-                        $action->getRecordSelect(),
+                \Filament\Actions\Action::make('attach')
+                    ->label('Priradiť trénera')
+                    ->modalHeading('Priradiť trénera k tréningu')
+                    ->schema([
+                        Select::make('user_id')
+                            ->label('Tréner')
+                            ->options(fn () => User::orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required(),
                         Select::make('role')
                             ->label('Rola')
                             ->options(CoachRoleEnum::class)
                             ->required()
                             ->default(CoachRoleEnum::MAIN),
-                    ]),
+                    ])
+                    ->action(function (array $data): void {
+                        $this->getOwnerRecord()->coaches()->attach($data['user_id'], [
+                            'role' => $data['role'],
+                        ]);
+
+                        Notification::make()
+                            ->success()
+                            ->title('Tréner bol priradený.')
+                            ->send();
+                    }),
             ])
             ->recordActions([
-                EditAction::make(),
-                DetachAction::make(),
+                EditAction::make()
+                    ->modalHeading('Upraviť trénera')
+                    ->before(function (Model $record, array $data, EditAction $action): void {
+                        if (($data['role'] ?? null) !== CoachRoleEnum::MAIN->value
+                            && $record->pivot->role === CoachRoleEnum::MAIN->value
+                            && $this->getMainCoachCount() <= 1
+                        ) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Tréning musí mať aspoň jedného hlavného trénera.')
+                                ->send();
+
+                            $action->halt();
+                        }
+                    }),
+                DetachAction::make()
+                    ->successNotificationTitle('Tréner bol odobraný z tréningu.')
+                    ->before(function (Model $record, DetachAction $action): void {
+                        if ($record->pivot->role === CoachRoleEnum::MAIN->value
+                            && $this->getMainCoachCount() <= 1
+                        ) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Nie je možné odpojiť posledného hlavného trénera.')
+                                ->send();
+
+                            $action->halt();
+                        }
+                    }),
             ])
             ->toolbarActions([
                 DetachBulkAction::make(),

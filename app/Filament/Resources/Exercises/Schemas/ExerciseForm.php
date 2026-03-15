@@ -4,12 +4,12 @@ namespace App\Filament\Resources\Exercises\Schemas;
 
 use App\Enums\ComplexityLevelEnum;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class ExerciseForm
 {
@@ -58,7 +58,10 @@ class ExerciseForm
                     ->options(ComplexityLevelEnum::class)
                     ->required()
                     ->default(ComplexityLevelEnum::BASIC),
-                MediaPicker::make('image')
+                SpatieMediaLibraryFileUpload::make('image')
+                    ->collection('image')
+                    ->disk('public')
+                    ->visibility('public')
                     ->label('Obrázok'),
             ]);
     }

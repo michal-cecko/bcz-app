@@ -27,7 +27,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
-use RalphJSmit\Filament\MediaLibrary\FilamentMediaLibrary;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -42,7 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->spa()
             ->unsavedChangesAlerts()
             ->databaseTransactions()
-            ->profile()
+            ->profile(\App\Filament\Pages\Auth\EditProfile::class)
             ->emailChangeVerification()
             ->passwordReset()
             ->tenant(Team::class, ownershipRelationship: 'teams')
@@ -58,7 +57,10 @@ class AdminPanelProvider extends PanelProvider
                     ->icon(Heroicon::OutlinedUserGroup),
                 Action::make('settings')
                     ->label('Nastavenia')
-                    ->url(fn (): string => SettingResource::getUrl())
+                    ->url(function (): ?string {
+                        return \Filament\Facades\Filament::getTenant() ? SettingResource::getUrl() : null;
+                    })
+                    ->visible(fn (): bool => \Filament\Facades\Filament::getTenant() !== null)
                     ->icon(Heroicon::OutlinedCog6Tooth),
             ])
             ->databaseNotifications()
@@ -116,12 +118,6 @@ class AdminPanelProvider extends PanelProvider
                 FilamentShieldPlugin::make()
                     ->scopeToTenant(false)
             )
-            ->plugin(FilamentApexChartsPlugin::make())
-            ->plugin(
-                FilamentMediaLibrary::make()
-                    ->navigationLabel('Knižnica médií')
-                    ->title('Knižnica médií')
-                    ->spatieTagsIntegration()
-            );
+            ->plugin(FilamentApexChartsPlugin::make());
     }
 }

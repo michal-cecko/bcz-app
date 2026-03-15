@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\AthleteCategories;
 
-use App\Filament\Clusters\Competitions\CompetitionsCluster;
+use App\Filament\Clusters\Events\EventsCluster;
 use App\Filament\Resources\AthleteCategories\Pages\CreateAthleteCategory;
 use App\Filament\Resources\AthleteCategories\Pages\EditAthleteCategory;
 use App\Filament\Resources\AthleteCategories\Pages\ListAthleteCategories;
@@ -28,7 +28,7 @@ class AthleteCategoryResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static ?string $cluster = CompetitionsCluster::class;
+    protected static ?string $cluster = EventsCluster::class;
 
     protected static ?int $navigationSort = 3;
 

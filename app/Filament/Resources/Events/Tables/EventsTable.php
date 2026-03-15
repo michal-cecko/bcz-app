@@ -7,12 +7,12 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
-use RalphJSmit\Filament\MediaLibrary\Filament\Tables\Columns\MediaColumn;
 
 class EventsTable
 {
@@ -21,7 +21,8 @@ class EventsTable
         return $table
             ->defaultSort('date', 'desc')
             ->columns([
-                MediaColumn::make('card_image')
+                SpatieMediaLibraryImageColumn::make('card_image')
+                    ->collection('card_image')
                     ->label('Obrázok')
                     ->circular()
                     ->toggleable(isToggledHiddenByDefault: true),

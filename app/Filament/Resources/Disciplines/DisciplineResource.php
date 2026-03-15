@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Disciplines;
 
-use App\Filament\Clusters\Competitions\CompetitionsCluster;
+use App\Filament\Clusters\Events\EventsCluster;
 use App\Filament\Resources\Disciplines\Pages\CreateDiscipline;
 use App\Filament\Resources\Disciplines\Pages\EditDiscipline;
 use App\Filament\Resources\Disciplines\Pages\ListDisciplines;
@@ -28,7 +28,7 @@ class DisciplineResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static ?string $cluster = CompetitionsCluster::class;
+    protected static ?string $cluster = EventsCluster::class;
 
     protected static ?int $navigationSort = 2;
 

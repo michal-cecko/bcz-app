@@ -5,10 +5,10 @@ namespace App\Mason\Bricks;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class ImageBrick extends Brick
 {
@@ -37,7 +37,11 @@ class ImageBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                MediaPicker::make('image')
+                FileUpload::make('image')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label(__('bricks.fields.image'))
                     ->required(),
                 TranslatableBrickFields::group(fn (string $locale) => [

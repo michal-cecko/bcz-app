@@ -6,6 +6,7 @@ use App\Filament\Clusters\Trainings\TrainingsCluster;
 use App\Filament\Resources\ExerciseCategories\Pages\CreateExerciseCategory;
 use App\Filament\Resources\ExerciseCategories\Pages\EditExerciseCategory;
 use App\Filament\Resources\ExerciseCategories\Pages\ListExerciseCategories;
+use App\Filament\Resources\ExerciseCategories\RelationManagers\ExercisesRelationManager;
 use App\Filament\Resources\ExerciseCategories\Schemas\ExerciseCategoryForm;
 use App\Filament\Resources\ExerciseCategories\Tables\ExerciseCategoriesTable;
 use App\Models\ExerciseCategory;
@@ -52,6 +53,13 @@ class ExerciseCategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return ExerciseCategoriesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            ExercisesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

@@ -5,13 +5,13 @@ namespace App\Mason\Bricks;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class VideoSectionBrick extends Brick
 {
@@ -62,7 +62,11 @@ class VideoSectionBrick extends Brick
                 TextInput::make('video_url')
                     ->label('URL videa')
                     ->visible(fn (Get $get): bool => ($get('video_source') ?? 'url') === 'url'),
-                MediaPicker::make('video_media')
+                FileUpload::make('video_media')
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
+                    ->acceptedFileTypes(['video/mp4', 'video/webm', 'image/*'])
                     ->label('Video súbor')
                     ->visible(fn (Get $get): bool => $get('video_source') === 'media'),
                 Repeater::make('checkpoints')

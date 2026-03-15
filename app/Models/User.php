@@ -16,14 +16,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class User extends Authenticatable implements FilamentUser, HasTenants, Linkable
+class User extends Authenticatable implements FilamentUser, HasMedia, HasTenants, Linkable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, HasPanelShield, HasRoles, HasSlug, HasUuidV7, Notifiable;
+    use HasFactory, HasPanelShield, HasRoles, HasSlug, HasUuidV7, InteractsWithMedia, Notifiable;
 
     protected $fillable = [
         'name',
@@ -47,6 +49,13 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Linkable
         'password',
         'remember_token',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('profile_image')
+            ->singleFile()
+            ->useDisk('public');
+    }
 
     protected function casts(): array
     {
@@ -115,6 +124,14 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Linkable
             ->withTimestamps();
     }
 
+    /**
+     * Alias for coachedTrainings — used by Filament's AttachAction inverse resolution.
+     */
+    public function trainings(): BelongsToMany
+    {
+        return $this->coachedTrainings();
+    }
+
     public function trainingRegistrations(): HasMany
     {
         return $this->hasMany(TrainingRegistration::class);
@@ -144,6 +161,20 @@ class User extends Authenticatable implements FilamentUser, HasTenants, Linkable
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function getProfileImageUrl(): ?string
+    {
+        return $this->getFirstMediaUrl('profile_image') ?: null;
+    }
+
+    public function getInitials(): string
+    {
+        $parts = explode(' ', trim($this->name));
+
+        return mb_strtoupper(
+            mb_substr($parts[0] ?? '', 0, 1).mb_substr($parts[1] ?? '', 0, 1)
+        );
     }
 
     public function getLinkUrl(): string

@@ -30,6 +30,14 @@ class MembersRelationManager extends RelationManager
 
     protected static ?string $title = 'Členovia';
 
+    protected static ?string $modelLabel = 'člen';
+
+    protected static ?string $pluralModelLabel = 'Členovia';
+
+    protected static ?string $modelLabel = 'člena';
+
+    protected static ?string $pluralModelLabel = 'členovia';
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -82,6 +90,7 @@ class MembersRelationManager extends RelationManager
             ->headerActions([
                 Action::make('invite')
                     ->label('Pozvať člena')
+                    ->modalHeading('Pozvať člena')
                     ->schema([
                         TextInput::make('email')
                             ->label('E-mail')
@@ -135,6 +144,7 @@ class MembersRelationManager extends RelationManager
             ->recordActions([
                 Action::make('addMembership')
                     ->label('Pridať členstvo')
+                    ->modalHeading('Pridať členstvo')
                     ->icon('heroicon-o-identification')
                     ->schema([
                         Select::make('period')

@@ -8,6 +8,7 @@ use App\Filament\Resources\Trainings\Pages\EditTraining;
 use App\Filament\Resources\Trainings\Pages\ListTrainings;
 use App\Filament\Resources\Trainings\Pages\ViewTraining;
 use App\Filament\Resources\Trainings\RelationManagers\CoachesRelationManager;
+use App\Filament\Resources\Trainings\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Trainings\RelationManagers\RegistrationsRelationManager;
 use App\Filament\Resources\Trainings\Schemas\TrainingForm;
 use App\Filament\Resources\Trainings\Schemas\TrainingInfolist;
@@ -68,6 +69,7 @@ class TrainingResource extends Resource
         return [
             CoachesRelationManager::class,
             RegistrationsRelationManager::class,
+            PaymentsRelationManager::class,
         ];
     }
 

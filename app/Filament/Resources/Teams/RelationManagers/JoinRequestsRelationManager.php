@@ -18,6 +18,10 @@ class JoinRequestsRelationManager extends RelationManager
 
     protected static ?string $title = 'Žiadosti o pripojenie';
 
+    protected static ?string $modelLabel = 'žiadosť';
+
+    protected static ?string $pluralModelLabel = 'Žiadosti';
+
     public function form(Schema $schema): Schema
     {
         return $schema

@@ -6,10 +6,12 @@ use App\Enums\SponsorTagEnum;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Sponsor extends Model
+class Sponsor extends Model implements HasMedia
 {
-    use HasFactory, HasUuidV7;
+    use HasFactory, HasUuidV7, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -19,6 +21,11 @@ class Sponsor extends Model
         'is_visible',
         'sort_order',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('logo')->singleFile();
+    }
 
     protected function casts(): array
     {

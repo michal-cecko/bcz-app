@@ -6,8 +6,8 @@
     $locale = app()->getLocale();
     $profile = $user->coachProfile;
     $biography = $profile?->getTranslation('biography', $locale);
-    $heroImage = $profile?->main_background_image;
-    $profileImage = $profile?->biography_image;
+    $heroImage = $profile?->getFirstMediaUrl('main_background_image');
+    $profileImage = $profile?->getFirstMediaUrl('biography_image');
     $trainings = $user->coachedTrainings;
     $certifications = $user->certifications->sortBy('sort_order');
 @endphp
@@ -16,7 +16,7 @@
     {{-- Hero Section --}}
     <section class="relative h-[450px] overflow-hidden">
         @if($heroImage)
-            <img src="{{ brick_media_url($heroImage) }}" alt="{{ $user->name }}" class="absolute inset-0 w-full h-full object-cover">
+            <img src="{{ $heroImage }}" alt="{{ $user->name }}" class="absolute inset-0 w-full h-full object-cover">
         @else
             <div class="absolute inset-0 bg-[#1A1A1A]"></div>
         @endif
@@ -35,7 +35,7 @@
             {{-- Profile Image --}}
             @if($profileImage)
                 <div class="w-[120px] h-[120px] rounded-full overflow-hidden border-2 border-bcz-red">
-                    <img src="{{ brick_media_url($profileImage) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                    <img src="{{ $profileImage }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                 </div>
             @else
                 <div class="w-[120px] h-[120px] rounded-full bg-bcz-red/20 flex items-center justify-center border-2 border-bcz-red">
@@ -169,8 +169,8 @@
                     @foreach($certifications as $cert)
                         <div class="bg-[#111111] border border-[#222222] p-6 flex flex-col gap-3">
                             <div class="flex items-center gap-3">
-                                @if($cert->icon)
-                                    <img src="{{ brick_media_url($cert->icon) }}" alt="" class="w-8 h-8 object-contain">
+                                @if($cert->getFirstMediaUrl('icon'))
+                                    <img src="{{ $cert->getFirstMediaUrl('icon') }}" alt="" class="w-8 h-8 object-contain">
                                 @else
                                     <div class="w-8 h-8 bg-bcz-red/20 rounded flex items-center justify-center">
                                         <svg class="w-4 h-4 text-bcz-red" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

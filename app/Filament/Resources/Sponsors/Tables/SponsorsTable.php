@@ -7,10 +7,10 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use RalphJSmit\Filament\MediaLibrary\Filament\Tables\Columns\MediaColumn;
 
 class SponsorsTable
 {
@@ -20,7 +20,8 @@ class SponsorsTable
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
             ->columns([
-                MediaColumn::make('logo')
+                SpatieMediaLibraryImageColumn::make('logo')
+                    ->collection('logo')
                     ->label('Logo')
                     ->size(40),
                 TextColumn::make('name')

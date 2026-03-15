@@ -5,6 +5,7 @@ namespace App\Filament\Resources\EventCategories\Schemas;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -12,7 +13,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Guava\IconPicker\Forms\Components\IconPicker;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class EventCategoryForm
 {
@@ -86,13 +86,25 @@ class EventCategoryForm
 
                 Section::make('Obrázky')
                     ->schema([
-                        MediaPicker::make('card_image')
+                        SpatieMediaLibraryFileUpload::make('card_image')
+                            ->collection('card_image')
+                            ->disk('public')
+                            ->visibility('public')
                             ->label('Obrázok karty'),
-                        MediaPicker::make('detail_image')
+                        SpatieMediaLibraryFileUpload::make('detail_image')
+                            ->collection('detail_image')
+                            ->disk('public')
+                            ->visibility('public')
                             ->label('Obrázok detailu'),
-                        MediaPicker::make('hero_image')
+                        SpatieMediaLibraryFileUpload::make('hero_image')
+                            ->collection('hero_image')
+                            ->disk('public')
+                            ->visibility('public')
                             ->label('Hero obrázok'),
-                        MediaPicker::make('about_image')
+                        SpatieMediaLibraryFileUpload::make('about_image')
+                            ->collection('about_image')
+                            ->disk('public')
+                            ->visibility('public')
                             ->label('O nás obrázok'),
                     ])
                     ->columns(2),

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Disciplines\Schemas;
 
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
@@ -9,7 +10,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Guava\IconPicker\Forms\Components\IconPicker;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class DisciplineForm
 {
@@ -61,7 +61,10 @@ class DisciplineForm
                                     ->label('Ikona')
                                     ->sets(['heroicons'])
                                     ->columns(3),
-                                MediaPicker::make('image')
+                                SpatieMediaLibraryFileUpload::make('image')
+                                    ->collection('image')
+                                    ->disk('public')
+                                    ->visibility('public')
                                     ->label('Obrázok'),
                                 TextInput::make('sort_order')
                                     ->label('Poradie')

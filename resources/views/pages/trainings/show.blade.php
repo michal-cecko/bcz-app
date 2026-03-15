@@ -9,7 +9,7 @@
     $description = $training->getTranslation('description', $locale);
     $placeName = $training->getTranslation('place_name', $locale);
     $gatheringPlace = $training->getTranslation('gathering_place', $locale);
-    $heroImage = $training->sportCategory?->hero_image;
+    $heroImage = $training->sportCategory?->getFirstMediaUrl('hero_image');
     $scheduleDays = collect($training->schedule_days ?? [])->map(fn ($d) => __('training_detail.days.' . $d))->join(', ');
     $timeRange = '';
     if ($training->start_time) {
@@ -37,7 +37,7 @@
     {{-- Hero Section --}}
     <section class="relative h-[450px] overflow-hidden">
         @if($heroImage)
-            <img src="{{ brick_media_url($heroImage) }}" alt="{{ $title }}" class="absolute inset-0 w-full h-full object-cover">
+            <img src="{{ $heroImage }}" alt="{{ $title }}" class="absolute inset-0 w-full h-full object-cover">
         @else
             <div class="absolute inset-0 bg-[#1A1A1A]"></div>
         @endif
@@ -271,8 +271,8 @@
                         <div class="bg-[#0A0A0A] border border-[#222222] rounded-2xl flex flex-col">
                             {{-- Coach Image with Badge --}}
                             <div class="relative w-full h-[250px] shrink-0 overflow-hidden rounded-t-2xl">
-                                @if($coach->coachProfile?->biography_image)
-                                    <img src="{{ brick_media_url($coach->coachProfile->biography_image) }}" alt="{{ $coach->name }}" class="w-full h-full object-cover">
+                                @if($coach->coachProfile?->getFirstMediaUrl('biography_image'))
+                                    <img src="{{ $coach->coachProfile->getFirstMediaUrl('biography_image') }}" alt="{{ $coach->name }}" class="w-full h-full object-cover">
                                 @else
                                     <div class="w-full h-full bg-[#1A1A1A] flex items-center justify-center">
                                         <span class="text-bcz-red font-display font-bold text-6xl">{{ mb_substr($coach->name, 0, 2) }}</span>

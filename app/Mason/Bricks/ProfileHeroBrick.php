@@ -5,11 +5,11 @@ namespace App\Mason\Bricks;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class ProfileHeroBrick extends Brick
 {
@@ -38,7 +38,11 @@ class ProfileHeroBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                MediaPicker::make('background_image')
+                FileUpload::make('background_image')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label('Obrázok pozadia'),
                 TranslatableBrickFields::group(fn (string $locale) => [
                     TextInput::make("badge.{$locale}")

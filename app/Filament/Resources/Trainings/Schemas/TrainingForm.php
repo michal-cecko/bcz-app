@@ -7,6 +7,7 @@ use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -20,7 +21,6 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class TrainingForm
 {
@@ -115,10 +115,19 @@ class TrainingForm
                                     ->draggable()
                                     ->clickable()
                                     ->autocomplete('place_address')
+                                    ->autocompleteReverse(true)
                                     ->reverseGeocode([
                                         'city' => '%L',
                                         'country' => '%C',
+                                        'street' => '%n %S',
                                     ])
+                                    ->reactive()
+                                    ->afterStateUpdated(function (Get $get, Set $set, ?array $state): void {
+                                        if ($state) {
+                                            $set('latitude', $state['lat'] ?? null);
+                                            $set('longitude', $state['lng'] ?? null);
+                                        }
+                                    })
                                     ->columnSpanFull(),
                             ]),
 
@@ -189,7 +198,7 @@ class TrainingForm
                                             ->itemLabel(fn (array $state): ?string => is_array($state['label'] ?? null) ? ($state['label']['sk'] ?? null) : ($state['label'] ?? null))
                                             ->columns(2)
                                             ->schema([
-                                                Tabs::make('Label')
+                                                Tabs::make('Preklady')
                                                     ->tabs([
                                                         Tabs\Tab::make('SK')->schema([
                                                             TextInput::make('label.sk')
@@ -197,12 +206,42 @@ class TrainingForm
                                                                 ->required()
                                                                 ->live(onBlur: true)
                                                                 ->afterStateUpdated(fn (Set $set, ?string $state) => $set('name', Str::slug($state ?? '', '_'))),
+                                                            TextInput::make('placeholder.sk')
+                                                                ->label('Placeholder (SK)')
+                                                                ->hidden(fn (Get $get): bool => in_array($get('type'), [
+                                                                    RegistrationFieldTypeEnum::SELECT->value,
+                                                                    RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                                    RegistrationFieldTypeEnum::DATE_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::YEAR_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::TIME_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                                ])),
                                                         ]),
                                                         Tabs\Tab::make('EN')->schema([
                                                             TextInput::make('label.en')->label('Label (EN)'),
+                                                            TextInput::make('placeholder.en')
+                                                                ->label('Placeholder (EN)')
+                                                                ->hidden(fn (Get $get): bool => in_array($get('type'), [
+                                                                    RegistrationFieldTypeEnum::SELECT->value,
+                                                                    RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                                    RegistrationFieldTypeEnum::DATE_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::YEAR_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::TIME_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                                ])),
                                                         ]),
                                                         Tabs\Tab::make('CS')->schema([
                                                             TextInput::make('label.cs')->label('Název pole (CS)'),
+                                                            TextInput::make('placeholder.cs')
+                                                                ->label('Placeholder (CS)')
+                                                                ->hidden(fn (Get $get): bool => in_array($get('type'), [
+                                                                    RegistrationFieldTypeEnum::SELECT->value,
+                                                                    RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                                    RegistrationFieldTypeEnum::DATE_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::YEAR_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::TIME_PICKER->value,
+                                                                    RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                                ])),
                                                         ]),
                                                     ])
                                                     ->columnSpanFull(),
@@ -225,30 +264,14 @@ class TrainingForm
                                                         'full' => 'Celý riadok',
                                                     ])
                                                     ->default('half'),
-                                                Tabs::make('Placeholder')
-                                                    ->tabs([
-                                                        Tabs\Tab::make('SK')->schema([
-                                                            TextInput::make('placeholder.sk')->label('Placeholder (SK)'),
-                                                        ]),
-                                                        Tabs\Tab::make('EN')->schema([
-                                                            TextInput::make('placeholder.en')->label('Placeholder (EN)'),
-                                                        ]),
-                                                        Tabs\Tab::make('CS')->schema([
-                                                            TextInput::make('placeholder.cs')->label('Placeholder (CS)'),
-                                                        ]),
-                                                    ])
-                                                    ->columnSpanFull()
-                                                    ->hidden(fn (Get $get): bool => in_array($get('type'), [
-                                                        RegistrationFieldTypeEnum::SELECT->value,
-                                                        RegistrationFieldTypeEnum::MULTI_SELECT->value,
-                                                        RegistrationFieldTypeEnum::DATE_PICKER->value,
-                                                        RegistrationFieldTypeEnum::YEAR_PICKER->value,
-                                                        RegistrationFieldTypeEnum::TIME_PICKER->value,
-                                                        RegistrationFieldTypeEnum::FILE_INPUT->value,
-                                                    ])),
+                                                Toggle::make('required')
+                                                    ->label('Povinné')
+                                                    ->inline(false)
+                                                    ->default(false),
                                                 TextInput::make('options')
                                                     ->label('Možnosti')
                                                     ->placeholder('Čiarkou oddelené')
+                                                    ->columnSpanFull()
                                                     ->required(fn (Get $get): bool => in_array($get('type'), [
                                                         RegistrationFieldTypeEnum::SELECT->value,
                                                         RegistrationFieldTypeEnum::MULTI_SELECT->value,
@@ -257,9 +280,6 @@ class TrainingForm
                                                         RegistrationFieldTypeEnum::SELECT->value,
                                                         RegistrationFieldTypeEnum::MULTI_SELECT->value,
                                                     ])),
-                                                Toggle::make('required')
-                                                    ->label('Povinné')
-                                                    ->default(false),
                                                 Section::make('Podmienka zobrazenia')
                                                     ->schema([
                                                         Toggle::make('has_condition')
@@ -312,28 +332,15 @@ class TrainingForm
 
                         Tabs\Tab::make('Galéria')
                             ->schema([
-                                Repeater::make('gallery_images')
-                                    ->label('Fotky a videá')
-                                    ->schema([
-                                        MediaPicker::make('media')
-                                            ->label('Obrázok / Video')
-                                            ->required(),
-                                        Select::make('type')
-                                            ->label('Typ')
-                                            ->options([
-                                                'image' => 'Obrázok',
-                                                'video' => 'Video',
-                                            ])
-                                            ->default('image'),
-                                    ])
-                                    ->columns(2)
-                                    ->addActionLabel('Pridať médium')
-                                    ->deleteAction(fn ($action) => $action->requiresConfirmation())
-                                    ->defaultItems(0)
+                                FileUpload::make('gallery_images')
+                                    ->label('Fotky')
+                                    ->image()
+                                    ->multiple()
                                     ->reorderable()
-                                    ->reorderableWithButtons()
-                                    ->cloneable()
-                                    ->collapsible()
+                                    ->panelLayout('grid')
+                                    ->disk('public')
+                                    ->directory('trainings/gallery')
+                                    ->visibility('public')
                                     ->columnSpanFull(),
                             ]),
 

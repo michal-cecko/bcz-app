@@ -74,7 +74,7 @@ class MembershipsTable
                         Select::make('payment_method')
                             ->label('Spôsob platby')
                             ->options(PaymentMethodEnum::translations())
-                            ->default(PaymentMethodEnum::MANUAL->value)
+                            ->default(PaymentMethodEnum::CASH->value)
                             ->required(),
                         Textarea::make('notes')
                             ->label('Poznámky')

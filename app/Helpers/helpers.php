@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\MediaLibraryItem;
 use App\Services\LinkResolver;
+use Illuminate\Support\Facades\Storage;
 
 if (! function_exists('brick_trans')) {
     /**
@@ -22,7 +22,7 @@ if (! function_exists('brick_trans')) {
 
 if (! function_exists('brick_media_url')) {
     /**
-     * Resolve a MediaPicker UUID value to a public URL.
+     * Resolve a brick image path or URL to a public URL.
      * Falls back to returning the raw value if it looks like a URL (legacy data).
      */
     function brick_media_url(mixed $value): ?string
@@ -31,20 +31,17 @@ if (! function_exists('brick_media_url')) {
             return null;
         }
 
-        // Legacy: raw URL string
         if (is_string($value) && str_starts_with($value, 'http')) {
             return $value;
         }
 
-        $item = MediaLibraryItem::find($value);
-
-        return $item?->getFirstMediaUrl('library');
+        return Storage::disk('public')->url($value);
     }
 }
 
 if (! function_exists('brick_media')) {
     /**
-     * Resolve a MediaPicker UUID value to an object with url, alt, and caption.
+     * Resolve a brick image path or URL to an object with url, alt, and caption.
      *
      * @return object{url: ?string, alt: ?string, caption: ?string}
      */
@@ -60,16 +57,10 @@ if (! function_exists('brick_media')) {
             return (object) ['url' => $value, 'alt' => null, 'caption' => null];
         }
 
-        $item = MediaLibraryItem::find($value);
-
-        if (! $item) {
-            return $empty;
-        }
-
         return (object) [
-            'url' => $item->getFirstMediaUrl('library'),
-            'alt' => $item->alt_text,
-            'caption' => $item->caption,
+            'url' => Storage::disk('public')->url($value),
+            'alt' => null,
+            'caption' => null,
         ];
     }
 }

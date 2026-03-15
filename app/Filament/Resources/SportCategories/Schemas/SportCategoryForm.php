@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SportCategories\Schemas;
 
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -9,7 +10,6 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class SportCategoryForm
 {
@@ -60,7 +60,10 @@ class SportCategoryForm
                                 TextInput::make('slug')
                                     ->disabled()
                                     ->dehydrated(),
-                                MediaPicker::make('hero_image')
+                                SpatieMediaLibraryFileUpload::make('hero_image')
+                                    ->collection('hero_image')
+                                    ->disk('public')
+                                    ->visibility('public')
                                     ->label('Hero obrázok'),
                                 TextInput::make('sort_order')
                                     ->label('Poradie')

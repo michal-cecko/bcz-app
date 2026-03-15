@@ -49,8 +49,8 @@
                 <div class="bg-[#111111] border border-[#222222] rounded-2xl overflow-hidden flex flex-col">
                     {{-- Image --}}
                     <div class="w-full h-[280px] overflow-hidden">
-                        @if($coach->coachProfile?->biography_image)
-                            <img src="{{ brick_media_url($coach->coachProfile->biography_image) }}" alt="{{ $coach->name }}" class="w-full h-full object-cover">
+                        @if($coach->coachProfile?->getFirstMediaUrl('biography_image'))
+                            <img src="{{ $coach->coachProfile->getFirstMediaUrl('biography_image') }}" alt="{{ $coach->name }}" class="w-full h-full object-cover">
                         @else
                             <div class="w-full h-full bg-[#1A1A1A] flex items-center justify-center">
                                 <span class="text-bcz-red font-display font-bold text-6xl">{{ mb_substr($coach->name, 0, 2) }}</span>

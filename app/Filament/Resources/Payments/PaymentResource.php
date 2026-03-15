@@ -40,6 +40,7 @@ class PaymentResource extends Resource
         return $schema
             ->components([
                 Grid::make(3)
+                    ->columnSpanFull()
                     ->schema([
                         Section::make('Detaily platby')
                             ->schema([

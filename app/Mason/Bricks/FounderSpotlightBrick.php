@@ -7,11 +7,11 @@ use App\Mason\Support\LinkPickerField;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class FounderSpotlightBrick extends Brick
 {
@@ -40,7 +40,11 @@ class FounderSpotlightBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                MediaPicker::make('image')
+                FileUpload::make('image')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label(__('bricks.fields.image')),
                 TranslatableBrickFields::group(fn (string $locale) => [
                     TextInput::make("label.{$locale}")

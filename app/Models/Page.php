@@ -10,13 +10,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class Page extends Model implements Linkable
+class Page extends Model implements HasMedia, Linkable
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
+    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'meta_title', 'meta_description'];
@@ -35,6 +37,11 @@ class Page extends Model implements Linkable
             'is_system' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('featured_image')->singleFile();
     }
 
     public function getSlugOptions(): SlugOptions

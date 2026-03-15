@@ -26,6 +26,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -35,7 +36,6 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class EventForm
 {
@@ -184,9 +184,15 @@ class EventForm
                                     TextInput::make('client')
                                         ->label('Klient')
                                         ->visible(fn (Get $get): bool => $get('event_type') === EventTypeEnum::Report->value),
-                                    MediaPicker::make('card_image')
+                                    SpatieMediaLibraryFileUpload::make('card_image')
+                                        ->collection('card_image')
+                                        ->disk('public')
+                                        ->visibility('public')
                                         ->label('Obrázok na karte'),
-                                    MediaPicker::make('detail_image')
+                                    SpatieMediaLibraryFileUpload::make('detail_image')
+                                        ->collection('detail_image')
+                                        ->disk('public')
+                                        ->visibility('public')
                                         ->label('Obrázok detailu'),
                                 ]),
                         ])

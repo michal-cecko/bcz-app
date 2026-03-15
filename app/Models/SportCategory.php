@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class SportCategory extends Model
+class SportCategory extends Model implements HasMedia
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7;
+    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
     public array $translatable = ['name', 'description'];
@@ -37,6 +39,11 @@ class SportCategory extends Model
             'page_content' => 'json',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('hero_image')->singleFile();
     }
 
     public function getSlugOptions(): SlugOptions

@@ -4,27 +4,23 @@ namespace Database\Seeders;
 
 use App\Enums\PageStatusEnum;
 use App\Models\Faq;
-use App\Models\MediaLibraryItem;
 use App\Models\Page;
 use App\Models\Sponsor;
-use App\Services\MediaLibraryFolderService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class PageSeeder extends Seeder
 {
-    /** @var array<string, string> Cache of uploaded media IDs keyed by slug */
+    /** @var array<string, string> Cache of uploaded media paths keyed by slug */
     private static array $mediaCache = [];
 
     /** @var array<string, string> Cache of page IDs keyed by system_key */
     private static array $pageCache = [];
 
-    private static ?string $webContentFolderId = null;
-
     public function run(): void
     {
-        $folderService = app(MediaLibraryFolderService::class);
-        $folder = $folderService->ensureWebContentFolder();
-        self::$webContentFolderId = $folder->id;
+        Storage::disk('public')->makeDirectory('bricks');
 
         self::seedMedia();
 
@@ -1522,13 +1518,12 @@ class PageSeeder extends Seeder
 
     private static function uploadMedia(string $url, string $filename): string
     {
-        $item = MediaLibraryItem::create(['folder_id' => self::$webContentFolderId]);
+        $response = Http::get($url);
 
-        $item->addMediaFromUrl($url)
-            ->usingFileName($filename)
-            ->toMediaCollection('library');
+        $path = "bricks/{$filename}";
+        Storage::disk('public')->put($path, $response->body());
 
-        return $item->id;
+        return $path;
     }
 
     private static function media(string $key): ?string

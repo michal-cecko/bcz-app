@@ -3,6 +3,7 @@
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\CompetitionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MagicLoginController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\StripeConnectController;
@@ -83,7 +84,7 @@ $frontendRoutes = function () {
     Route::redirect('/tim/{any}', '/timy', 301)->where('any', '.+');
 
     Route::get('/{slug}', [PageController::class, 'show'])
-        ->where('slug', '^(?!admin|stripe|team-invitations|en|cs|timy).*$');
+        ->where('slug', '^(?!admin|stripe|team-invitations|magic-login|en|cs|timy).*$');
 };
 
 // Localized: /en/..., /cs/...
@@ -160,7 +161,7 @@ Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
 
 // Catch-all CMS page
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', '^(?!admin|stripe|team-invitations|en|cs|timy).*$')
+    ->where('slug', '^(?!admin|stripe|team-invitations|magic-login|en|cs|timy).*$')
     ->name('page.show');
 
 /*
@@ -174,6 +175,16 @@ Route::middleware('signed')->group(function () {
     Route::get('/team-invitations/{invitation}/register', [TeamInvitationController::class, 'showRegisterForm'])
         ->name('team-invitations.register');
     Route::post('/team-invitations/{invitation}/register', [TeamInvitationController::class, 'register']);
+    Route::get('/magic-login/{user}', MagicLoginController::class)
+        ->name('magic-login');
+
+    Route::post('/logout', function () {
+        \Illuminate\Support\Facades\Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect()->to(request()->input('redirect', '/'));
+    })->name('logout');
 });
 
 Route::middleware('auth')->group(function () {

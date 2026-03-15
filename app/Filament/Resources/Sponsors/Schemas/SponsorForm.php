@@ -4,10 +4,10 @@ namespace App\Filament\Resources\Sponsors\Schemas;
 
 use App\Enums\SponsorTagEnum;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class SponsorForm
 {
@@ -22,7 +22,10 @@ class SponsorForm
                     ->label('Typ')
                     ->options(SponsorTagEnum::class)
                     ->required(),
-                MediaPicker::make('logo')
+                SpatieMediaLibraryFileUpload::make('logo')
+                    ->collection('logo')
+                    ->disk('public')
+                    ->visibility('public')
                     ->label('Logo'),
                 TextInput::make('link')
                     ->label('Odkaz')

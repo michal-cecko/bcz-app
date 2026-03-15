@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\MediaLibraryItem;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 
@@ -55,10 +54,8 @@ class SubscriptionLimitService
     public function getStorageUsageBytes(Team $team): int
     {
         return (int) DB::table('media')
-            ->join('filament_media_library', 'media.model_id', '=', 'filament_media_library.id')
-            ->where('filament_media_library.tenant_type', $team->getMorphClass())
-            ->where('filament_media_library.tenant_id', $team->id)
-            ->where('media.model_type', (new MediaLibraryItem)->getMorphClass())
+            ->where('media.model_type', $team->getMorphClass())
+            ->where('media.model_id', $team->id)
             ->sum('media.size');
     }
 

@@ -6,11 +6,11 @@ use App\Enums\ComplexityLevelEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
-use RalphJSmit\Filament\MediaLibrary\Filament\Tables\Columns\MediaColumn;
 
 class ExercisesTable
 {
@@ -18,7 +18,8 @@ class ExercisesTable
     {
         return $table
             ->columns([
-                MediaColumn::make('image')
+                SpatieMediaLibraryImageColumn::make('image')
+                    ->collection('image')
                     ->label('Obrázok')
                     ->circular(),
                 TextColumn::make('name')

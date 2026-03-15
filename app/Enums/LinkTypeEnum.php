@@ -3,7 +3,6 @@
 namespace App\Enums;
 
 use App\Models\Event;
-use App\Models\MediaLibraryItem;
 use App\Models\Page;
 use App\Models\Team;
 use App\Models\Training;
@@ -19,7 +18,6 @@ enum LinkTypeEnum: string
     case Coach = 'coach';
     case Athlete = 'athlete';
     case Judge = 'judge';
-    case Media = 'media';
     case Custom = 'custom';
 
     public function getLabel(): string
@@ -33,7 +31,6 @@ enum LinkTypeEnum: string
             self::Coach => 'Tréner',
             self::Athlete => 'Atlét',
             self::Judge => 'Rozhodca',
-            self::Media => 'Súbor z knižnice',
             self::Custom => 'Vlastná URL',
         };
     }
@@ -50,7 +47,6 @@ enum LinkTypeEnum: string
             self::Event => Event::class,
             self::Team => Team::class,
             self::Coach, self::Athlete, self::Judge => User::class,
-            self::Media => MediaLibraryItem::class,
             self::Custom => null,
         };
     }

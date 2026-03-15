@@ -29,7 +29,7 @@
             <div class="flex flex-wrap justify-center gap-6">
                 @foreach($categories as $i => $category)
                     <div class="bg-bcz-card border border-bcz-border flex flex-col overflow-hidden w-full {{ $widthClass }}">
-                        @php $catImgUrl = brick_media_url($category->hero_image); @endphp
+                        @php $catImgUrl = $category->getFirstMediaUrl('hero_image'); @endphp
                         @if($catImgUrl)
                             <div class="w-full h-[280px] bg-cover bg-center" style="background-image: url('{{ $catImgUrl }}')"></div>
                         @endif

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Athletes;
 
-use App\Filament\Clusters\Competitions\CompetitionsCluster;
+use App\Filament\Clusters\Events\EventsCluster;
 use App\Filament\Resources\Athletes\Pages\ListAthletes;
 use App\Filament\Resources\Athletes\Tables\AthletesTable;
 use App\Models\User;
@@ -24,7 +24,7 @@ class AthleteResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static ?string $cluster = CompetitionsCluster::class;
+    protected static ?string $cluster = EventsCluster::class;
 
     protected static ?int $navigationSort = 5;
 

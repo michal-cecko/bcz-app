@@ -23,6 +23,10 @@ class TimetableRelationManager extends RelationManager
 
     protected static ?string $title = 'Harmonogram';
 
+    protected static ?string $modelLabel = 'položka';
+
+    protected static ?string $pluralModelLabel = 'Harmonogram';
+
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return $ownerRecord->event_type === EventTypeEnum::Competition;
@@ -98,11 +102,14 @@ class TimetableRelationManager extends RelationManager
                     ->badge(),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->modalHeading('Vytvoriť položku harmonogramu'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->modalHeading('Upraviť položku harmonogramu'),
+                DeleteAction::make()
+                    ->modalHeading('Odstrániť položku harmonogramu'),
             ]);
     }
 }

@@ -23,6 +23,10 @@ class InvitationsRelationManager extends RelationManager
 
     protected static ?string $title = 'Pozvánky';
 
+    protected static ?string $modelLabel = 'pozvánka';
+
+    protected static ?string $pluralModelLabel = 'Pozvánky';
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -57,6 +61,7 @@ class InvitationsRelationManager extends RelationManager
             ->headerActions([
                 Action::make('create')
                     ->label('Vytvoriť pozvánku')
+                    ->modalHeading('Vytvoriť pozvánku')
                     ->schema([
                         TextInput::make('email')
                             ->label('E-mail')

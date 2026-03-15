@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,7 @@ class TrainingRegistration extends Model
     {
         return [
             'form_data' => 'json',
+            'status' => RegistrationStatusEnum::class,
             'registered_at' => 'datetime',
         ];
     }

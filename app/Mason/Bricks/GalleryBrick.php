@@ -5,11 +5,10 @@ namespace App\Mason\Bricks;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class GalleryBrick extends Brick
 {
@@ -44,17 +43,15 @@ class GalleryBrick extends Brick
                     TextInput::make("title.{$locale}")
                         ->label(__('bricks.fields.title')),
                 ]),
-                Repeater::make('images')
+                FileUpload::make('images')
                     ->label(__('bricks.gallery.images'))
-                    ->schema([
-                        MediaPicker::make('image')
-                            ->label(__('bricks.fields.image'))
-                            ->required(),
-                    ])
+                    ->image()
+                    ->multiple()
                     ->reorderable()
-                    ->reorderableWithButtons()
-                    ->cloneable()
-                    ->collapsible(),
+                    ->panelLayout('grid')
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public'),
             ]);
     }
 }

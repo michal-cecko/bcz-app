@@ -7,13 +7,13 @@ use App\Mason\Support\TranslatableBrickFields;
 use App\Models\Setting;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class SocialCtaBrick extends Brick
 {
@@ -54,7 +54,11 @@ class SocialCtaBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                MediaPicker::make('background_image')
+                FileUpload::make('background_image')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label(__('bricks.social_cta.background_image')),
                 TranslatableBrickFields::group(fn (string $locale) => [
                     TextInput::make("label.{$locale}")

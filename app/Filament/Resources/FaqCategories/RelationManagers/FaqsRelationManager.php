@@ -21,6 +21,10 @@ class FaqsRelationManager extends RelationManager
 
     protected static ?string $title = 'Otázky';
 
+    protected static ?string $modelLabel = 'otázka';
+
+    protected static ?string $pluralModelLabel = 'Otázky';
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -83,11 +87,14 @@ class FaqsRelationManager extends RelationManager
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->modalHeading('Vytvoriť otázku'),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->modalHeading('Upraviť otázku'),
+                DeleteAction::make()
+                    ->modalHeading('Odstrániť otázku'),
             ]);
     }
 }

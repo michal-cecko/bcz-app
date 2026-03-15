@@ -19,6 +19,10 @@ class JudgesRelationManager extends RelationManager
 
     protected static ?string $title = 'Rozhodcovia';
 
+    protected static ?string $modelLabel = 'rozhodca';
+
+    protected static ?string $pluralModelLabel = 'Rozhodcovia';
+
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return $ownerRecord->event_type === EventTypeEnum::Competition;
@@ -56,6 +60,7 @@ class JudgesRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
+                    ->modalHeading('Priradiť rozhodcu')
                     ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect()
                             ->label('Rozhodca')

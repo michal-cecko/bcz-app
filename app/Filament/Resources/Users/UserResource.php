@@ -10,6 +10,7 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
+use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -17,7 +18,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use RalphJSmit\Filament\MediaLibrary\Filament\Infolists\Components\MediaEntry;
 
 class UserResource extends Resource
 {
@@ -50,7 +50,8 @@ class UserResource extends Resource
                     ->schema([
                         Section::make('Profil')
                             ->schema([
-                                MediaEntry::make('profile_image')
+                                SpatieMediaLibraryImageEntry::make('profile_image')
+                                    ->collection('profile_image')
                                     ->label('Profilový obrázok')
                                     ->circular()
                                     ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name='.urlencode($record->name).'&color=7F9CF5&background=EBF4FF'),

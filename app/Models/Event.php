@@ -13,13 +13,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class Event extends Model implements Linkable
+class Event extends Model implements HasMedia, Linkable
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
+    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'card_description', 'content'];
@@ -60,6 +62,12 @@ class Event extends Model implements Linkable
             'is_published' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('card_image')->singleFile();
+        $this->addMediaCollection('detail_image')->singleFile();
     }
 
     public function getSlugOptions(): SlugOptions

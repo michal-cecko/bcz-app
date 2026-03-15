@@ -23,6 +23,10 @@ class RoundsRelationManager extends RelationManager
 
     protected static ?string $title = 'Kolá';
 
+    protected static ?string $modelLabel = 'kolo';
+
+    protected static ?string $pluralModelLabel = 'Kolá';
+
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return $ownerRecord->event_type === EventTypeEnum::Competition;
@@ -101,11 +105,14 @@ class RoundsRelationManager extends RelationManager
                     ->counts('battles'),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->modalHeading('Vytvoriť kolo'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->modalHeading('Upraviť kolo'),
+                DeleteAction::make()
+                    ->modalHeading('Odstrániť kolo'),
             ]);
     }
 }

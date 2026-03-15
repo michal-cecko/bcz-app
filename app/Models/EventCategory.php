@@ -6,13 +6,15 @@ use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class EventCategory extends Model
+class EventCategory extends Model implements HasMedia
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7;
+    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
     public array $translatable = [
@@ -52,6 +54,14 @@ class EventCategory extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('card_image')->singleFile();
+        $this->addMediaCollection('detail_image')->singleFile();
+        $this->addMediaCollection('hero_image')->singleFile();
+        $this->addMediaCollection('about_image')->singleFile();
     }
 
     public function getSlugOptions(): SlugOptions

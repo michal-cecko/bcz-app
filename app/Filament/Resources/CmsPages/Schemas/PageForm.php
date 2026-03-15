@@ -57,6 +57,7 @@ use App\Mason\Bricks\VideoSectionBrick;
 use Awcodes\Mason\Mason;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -64,7 +65,6 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class PageForm
 {
@@ -159,7 +159,10 @@ class PageForm
                                                     ]),
                                             ])
                                             ->columnSpanFull(),
-                                        MediaPicker::make('featured_image')
+                                        SpatieMediaLibraryFileUpload::make('featured_image')
+                                            ->collection('featured_image')
+                                            ->disk('public')
+                                            ->visibility('public')
                                             ->label('Hlavný obrázok'),
                                     ]),
                             ])

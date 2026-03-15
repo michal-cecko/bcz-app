@@ -2,12 +2,12 @@
     <div class="flex items-center justify-center gap-16 flex-wrap py-10">
         @foreach($sponsors as $sponsor)
             @php
-                $logo = brick_media($sponsor->logo);
+                $logoUrl = $sponsor->getFirstMediaUrl('logo');
                 $tagLabel = $sponsor->tag?->getLabel();
             @endphp
             <a href="{{ $sponsor->link ?? '#' }}" class="group flex flex-col items-center gap-3 transition-all" target="_blank" rel="noopener">
-                @if($logo->url)
-                    <img src="{{ $logo->url }}" alt="{{ $logo->alt ?: $sponsor->name }}" class="h-12 w-auto object-contain filter grayscale opacity-60 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100">
+                @if($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $sponsor->name }}" class="h-12 w-auto object-contain filter grayscale opacity-60 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100">
                 @else
                     <div class="h-12 px-6 flex items-center justify-center bg-bcz-dark">
                         <span class="text-bcz-border text-sm font-bold tracking-wider">{{ $sponsor->name }}</span>

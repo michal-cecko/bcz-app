@@ -6,11 +6,13 @@ use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
-class AthleteProfile extends Model
+class AthleteProfile extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, HasUuidV7;
+    use HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
     public array $translatable = ['journey_text'];
@@ -28,6 +30,12 @@ class AthleteProfile extends Model
         return [
             'date_started_working_out' => 'date',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('journey_image')->singleFile();
+        $this->addMediaCollection('main_image')->singleFile();
     }
 
     public function user(): BelongsTo

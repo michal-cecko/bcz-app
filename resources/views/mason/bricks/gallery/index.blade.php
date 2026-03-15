@@ -18,7 +18,7 @@
 
         @if(! empty($images))
             @php
-                $mediaItems = collect($images)->map(fn ($img) => brick_media($img['image'] ?? null))->values();
+                $mediaItems = collect($images)->map(fn ($img) => brick_media($img))->values();
                 $colImages = [[], [], []];
                 foreach ($mediaItems as $i => $item) {
                     $colImages[$i % 3][] = $item;

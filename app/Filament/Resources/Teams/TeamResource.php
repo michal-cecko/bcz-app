@@ -16,6 +16,7 @@ use App\Services\SubscriptionLimitService;
 use BackedEnum;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -24,7 +25,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
-use RalphJSmit\Filament\MediaLibrary\Filament\Infolists\Components\MediaEntry;
 
 class TeamResource extends Resource
 {
@@ -68,7 +68,8 @@ class TeamResource extends Resource
                     ->schema([
                         Section::make('Základné údaje')
                             ->schema([
-                                MediaEntry::make('logo')
+                                SpatieMediaLibraryImageEntry::make('logo')
+                                    ->collection('logo')
                                     ->label('Logo')
                                     ->circular(),
                                 TextEntry::make('name')

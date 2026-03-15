@@ -2,6 +2,8 @@
 
 use App\Enums\CoachRoleEnum;
 use App\Enums\ComplexityLevelEnum;
+use App\Enums\EventPricingTypeEnum;
+use App\Enums\EventTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\GoalStatusEnum;
 use App\Enums\InquiryReasonEnum;
@@ -17,6 +19,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PayoutStatusEnum;
 use App\Enums\PlanTierEnum;
 use App\Enums\RegistrationFieldTypeEnum;
+use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\RoundAdvancementTypeEnum;
 use App\Enums\ScoringFormatEnum;
@@ -137,7 +140,6 @@ return [
         RoleEnum::JUDGE->value => 'Porotca',
     ],
     PaymentMethodEnum::class => [
-        PaymentMethodEnum::MANUAL->value => 'Manuálne',
         PaymentMethodEnum::BANK_TRANSFER->value => 'Bankový prevod',
         PaymentMethodEnum::CASH->value => 'Hotovosť',
         PaymentMethodEnum::STRIPE->value => 'Stripe',
@@ -147,6 +149,15 @@ return [
         MembershipStatusEnum::EXPIRED->value => 'Expirované',
         MembershipStatusEnum::CANCELLED->value => 'Zrušené',
         MembershipStatusEnum::PENDING->value => 'Čakajúce',
+    ],
+    EventTypeEnum::class => [
+        EventTypeEnum::Report->value => 'Report',
+        EventTypeEnum::Organized->value => 'Organizované',
+        EventTypeEnum::Competition->value => 'Súťaž',
+    ],
+    EventPricingTypeEnum::class => [
+        EventPricingTypeEnum::Free->value => 'Zadarmo',
+        EventPricingTypeEnum::Paid->value => 'Platené',
     ],
     PayableTypeEnum::class => [
         PayableTypeEnum::MEMBERSHIP->value => 'Členstvo',
@@ -176,6 +187,12 @@ return [
         PageStatusEnum::Draft->value => 'Koncept',
         PageStatusEnum::Published->value => 'Publikovaná',
         PageStatusEnum::Archived->value => 'Archivovaná',
+    ],
+    RegistrationStatusEnum::class => [
+        RegistrationStatusEnum::Pending->value => 'Čakajúca',
+        RegistrationStatusEnum::Approved->value => 'Schválená',
+        RegistrationStatusEnum::Rejected->value => 'Zamietnutá',
+        RegistrationStatusEnum::Cancelled->value => 'Zrušená',
     ],
     MenuLocationEnum::class => [
         MenuLocationEnum::Header->value => 'Hlavička',

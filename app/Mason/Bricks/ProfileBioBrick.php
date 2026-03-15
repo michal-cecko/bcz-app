@@ -6,10 +6,10 @@ use App\Mason\Support\BrickRichEditor;
 use App\Mason\Support\TranslatableBrickFields;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
-use RalphJSmit\Filament\MediaLibrary\Filament\Forms\Components\MediaPicker;
 
 class ProfileBioBrick extends Brick
 {
@@ -38,7 +38,11 @@ class ProfileBioBrick extends Brick
         return $action
             ->slideOver()
             ->schema([
-                MediaPicker::make('image')
+                FileUpload::make('image')
+                    ->image()
+                    ->disk('public')
+                    ->directory('bricks')
+                    ->visibility('public')
                     ->label('Obrázok'),
                 TranslatableBrickFields::group(fn (string $locale) => [
                     TextInput::make("label.{$locale}")

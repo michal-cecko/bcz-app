@@ -7,10 +7,10 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-use RalphJSmit\Filament\MediaLibrary\Filament\Tables\Columns\MediaColumn;
 
 class EventCategoriesTable
 {
@@ -20,7 +20,8 @@ class EventCategoriesTable
             ->reorderable('sort_order')
             ->defaultSort('sort_order')
             ->columns([
-                MediaColumn::make('card_image')
+                SpatieMediaLibraryImageColumn::make('card_image')
+                    ->collection('card_image')
                     ->label('Image')
                     ->circular(),
                 TextColumn::make('title')
