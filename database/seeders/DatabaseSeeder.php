@@ -44,6 +44,25 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@bczclub.com'],
+            [
+                'name' => 'Admin User',
+                'first_name' => 'Admin',
+                'last_name' => 'User',
+                'password' => bcrypt('password'),
+            ],
+        );
+
+        $admin->assignRole(RoleEnum::ADMIN);
+
+        if ($bczTeam && ! $admin->teams()->where('teams.id', $bczTeam->id)->exists()) {
+            $admin->teams()->attach($bczTeam, [
+                'is_active' => true,
+                'joined_at' => now(),
+            ]);
+        }
+
         $this->call(DemoDataSeeder::class);
     }
 }

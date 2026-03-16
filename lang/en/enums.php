@@ -4,6 +4,7 @@ use App\Enums\CoachRoleEnum;
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
 use App\Enums\RegistrationStatusEnum;
+use App\Enums\RoleEnum;
 use App\Enums\SponsorTagEnum;
 
 return [
@@ -25,6 +26,16 @@ return [
         RegistrationStatusEnum::Approved->value => 'Approved',
         RegistrationStatusEnum::Rejected->value => 'Rejected',
         RegistrationStatusEnum::Cancelled->value => 'Cancelled',
+    ],
+    RoleEnum::class => [
+        RoleEnum::SUPER_ADMIN->value => 'Super Admin',
+        RoleEnum::ADMIN->value => 'Admin',
+        RoleEnum::TEAM_ADMIN->value => 'Team Admin',
+        RoleEnum::COACH->value => 'Coach',
+        RoleEnum::ATHLETE->value => 'Athlete',
+        RoleEnum::EDITOR->value => 'Editor',
+        RoleEnum::JUDGE->value => 'Judge',
+        RoleEnum::CUSTOMER->value => 'Customer',
     ],
     SponsorTagEnum::class => [
         SponsorTagEnum::MAIN_SPONSOR->value => 'Main Sponsor',

@@ -138,6 +138,7 @@ return [
         RoleEnum::ATHLETE->value => 'Športovec',
         RoleEnum::EDITOR->value => 'Editor',
         RoleEnum::JUDGE->value => 'Porotca',
+        RoleEnum::CUSTOMER->value => 'Zákazník',
     ],
     PaymentMethodEnum::class => [
         PaymentMethodEnum::BANK_TRANSFER->value => 'Bankový prevod',

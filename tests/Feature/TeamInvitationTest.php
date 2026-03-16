@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\InvitationStatusEnum;
+use App\Enums\RoleEnum;
 use App\Mail\TeamInvitationMail;
 use App\Models\Team;
 use App\Models\TeamInvitation;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class TeamInvitationTest extends TestCase
@@ -18,6 +20,9 @@ class TeamInvitationTest extends TestCase
 
     public function test_existing_user_can_accept_invitation_via_signed_url(): void
     {
+        Role::findOrCreate(RoleEnum::ATHLETE->value, 'web');
+        Role::findOrCreate(RoleEnum::CUSTOMER->value, 'web');
+
         $team = Team::factory()->create();
         $user = User::factory()->create();
         $invitation = TeamInvitation::factory()->create([
@@ -38,6 +43,8 @@ class TeamInvitationTest extends TestCase
         $this->assertTrue($team->members()->where('users.id', $user->id)->exists());
         $this->assertAuthenticatedAs($user);
 
+        $this->assertTrue($user->fresh()->hasRole(RoleEnum::ATHLETE));
+
         $invitation->refresh();
         $this->assertEquals(InvitationStatusEnum::Accepted, $invitation->status);
         $this->assertNotNull($invitation->accepted_at);
@@ -45,6 +52,8 @@ class TeamInvitationTest extends TestCase
 
     public function test_new_user_can_register_via_invitation(): void
     {
+        Role::findOrCreate(RoleEnum::ATHLETE->value, 'web');
+
         $team = Team::factory()->create();
         $invitation = TeamInvitation::factory()->create([
             'team_id' => $team->id,
@@ -82,6 +91,7 @@ class TeamInvitationTest extends TestCase
         $this->assertEquals('Test', $user->first_name);
         $this->assertEquals('User', $user->last_name);
         $this->assertTrue($team->members()->where('users.id', $user->id)->exists());
+        $this->assertTrue($user->hasRole(RoleEnum::ATHLETE));
         $this->assertAuthenticatedAs($user);
 
         $invitation->refresh();

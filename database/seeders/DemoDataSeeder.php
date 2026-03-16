@@ -55,6 +55,7 @@ use App\Models\TrainingRegistration;
 use App\Models\TrainingWaitlist;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DemoDataSeeder extends Seeder
 {
@@ -189,6 +190,11 @@ class DemoDataSeeder extends Seeder
         $members = User::factory(5)->create()->each(function (User $user) use ($bczTeam) {
             $user->assignRole(RoleEnum::ATHLETE);
             $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
+        });
+
+        // --- Customer users (no team) ---
+        User::factory(3)->create()->each(function (User $user) {
+            $user->assignRole(RoleEnum::CUSTOMER);
         });
 
         // --- Athlete profile images ---
@@ -1591,7 +1597,7 @@ class DemoDataSeeder extends Seeder
             $sponsor = Sponsor::factory()->create($data);
 
             $sponsor->addMediaFromUrl("https://picsum.photos/seed/sponsor-{$index}/200/100")
-                ->usingFileName('sponsor-'.\Illuminate\Support\Str::slug($data['name']).'.png')
+                ->usingFileName('sponsor-'.Str::slug($data['name']).'.png')
                 ->toMediaCollection('logo');
         }
 

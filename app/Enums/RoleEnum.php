@@ -16,4 +16,5 @@ enum RoleEnum: string implements HasLabel
     case ATHLETE = 'ATHLETE';
     case EDITOR = 'EDITOR';
     case JUDGE = 'JUDGE';
+    case CUSTOMER = 'CUSTOMER';
 }

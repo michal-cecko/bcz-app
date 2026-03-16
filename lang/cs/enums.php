@@ -4,6 +4,7 @@ use App\Enums\CoachRoleEnum;
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
 use App\Enums\RegistrationStatusEnum;
+use App\Enums\RoleEnum;
 use App\Enums\SponsorTagEnum;
 
 return [
@@ -25,6 +26,16 @@ return [
         RegistrationStatusEnum::Approved->value => 'Schválená',
         RegistrationStatusEnum::Rejected->value => 'Zamítnutá',
         RegistrationStatusEnum::Cancelled->value => 'Zrušená',
+    ],
+    RoleEnum::class => [
+        RoleEnum::SUPER_ADMIN->value => 'Super Admin',
+        RoleEnum::ADMIN->value => 'Admin',
+        RoleEnum::TEAM_ADMIN->value => 'Tymovy Admin',
+        RoleEnum::COACH->value => 'Trener',
+        RoleEnum::ATHLETE->value => 'Sportovec',
+        RoleEnum::EDITOR->value => 'Editor',
+        RoleEnum::JUDGE->value => 'Porotce',
+        RoleEnum::CUSTOMER->value => 'Zakaznik',
     ],
     SponsorTagEnum::class => [
         SponsorTagEnum::MAIN_SPONSOR->value => 'Hlavni sponzor',

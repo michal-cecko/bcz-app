@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\InvitationStatusEnum;
+use App\Enums\RoleEnum;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,12 @@ class TeamInvitationController extends Controller
                 'joined_at' => now(),
             ],
         ]);
+
+        if ($user->hasRole(RoleEnum::CUSTOMER) && $user->roles()->count() === 1) {
+            $user->syncRoles(RoleEnum::ATHLETE);
+        } elseif (! $user->hasRole(RoleEnum::ATHLETE)) {
+            $user->assignRole(RoleEnum::ATHLETE);
+        }
 
         $invitation->update([
             'status' => InvitationStatusEnum::Accepted,
@@ -69,6 +76,8 @@ class TeamInvitationController extends Controller
             'password' => Hash::make($validated['password']),
             'email_verified_at' => now(),
         ]);
+
+        $user->assignRole(RoleEnum::ATHLETE);
 
         $user->teams()->attach($invitation->team_id, [
             'is_active' => true,
