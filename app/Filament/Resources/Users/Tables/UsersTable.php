@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Enums\RoleEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -25,7 +26,8 @@ class UsersTable
                     ->sortable(),
                 TextColumn::make('roles.name')
                     ->label('Roly')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => RoleEnum::tryFrom($state)?->getLabel() ?? $state),
                 TextColumn::make('created_at')
                     ->label('Vytvorené')
                     ->since()

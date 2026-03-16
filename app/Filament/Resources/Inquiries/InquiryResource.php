@@ -32,11 +32,9 @@ class InquiryResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Obsah';
+    protected static string|\UnitEnum|null $navigationGroup = 'Ostatné';
 
-    protected static ?int $navigationSort = 10;
-
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?int $navigationSort = 12;
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
 

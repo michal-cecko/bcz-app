@@ -43,6 +43,9 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         'bank_account_name',
         'stripe_connect_account_id',
         'default_locale',
+        'contact_email',
+        'contact_phone',
+        'contact_website',
     ];
 
     protected function casts(): array
@@ -175,5 +178,15 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     public function joinRequests(): HasMany
     {
         return $this->hasMany(TeamJoinRequest::class);
+    }
+
+    public function emailTemplates(): HasMany
+    {
+        return $this->hasMany(EmailTemplate::class);
+    }
+
+    public function mediaItems(): HasMany
+    {
+        return $this->hasMany(MediaItem::class);
     }
 }

@@ -32,6 +32,7 @@ class UserForm
                 Select::make('roles')
                     ->label('Roly')
                     ->relationship('roles', 'name')
+                    ->getOptionLabelFromRecordUsing(fn ($record): string => \App\Enums\RoleEnum::tryFrom($record->name)?->getLabel() ?? $record->name)
                     ->multiple()
                     ->preload()
                     ->required(),

@@ -6,6 +6,7 @@ use App\Contracts\Linkable;
 use App\Models\Concerns\HasUuidV7;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,7 +23,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class User extends Authenticatable implements FilamentUser, HasMedia, HasTenants, Linkable
+class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia, HasTenants, Linkable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasPanelShield, HasRoles, HasSlug, HasUuidV7, InteractsWithMedia, Notifiable;
@@ -163,9 +164,14 @@ class User extends Authenticatable implements FilamentUser, HasMedia, HasTenants
         return $this->hasMany(Payment::class);
     }
 
-    public function getProfileImageUrl(): ?string
+    public function getFilamentAvatarUrl(): ?string
     {
         return $this->getFirstMediaUrl('profile_image') ?: null;
+    }
+
+    public function getProfileImageUrl(): ?string
+    {
+        return $this->getFilamentAvatarUrl();
     }
 
     public function getInitials(): string

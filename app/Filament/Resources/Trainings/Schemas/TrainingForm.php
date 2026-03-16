@@ -182,7 +182,8 @@ class TrainingForm
                                                 };
                                             }),
                                         Toggle::make('notify_on_available')
-                                            ->label('Upozorniť pri voľnom mieste'),
+                                            ->label('Upozorniť pri voľnom mieste')
+                                            ->helperText('Ak je tréning plný, používatelia sa môžu zapísať na čakací zoznam a budú notifikovaní, keď sa uvoľní miesto.'),
                                         Select::make('pricing_type')
                                             ->label('Typ ceny')
                                             ->options(TrainingPricingTypeEnum::class)

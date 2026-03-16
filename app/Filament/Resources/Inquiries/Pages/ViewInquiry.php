@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Inquiries\Pages;
 
 use App\Enums\InquiryStatusEnum;
+use App\Filament\Actions\SendEmailAction;
 use App\Filament\Resources\Inquiries\InquiryResource;
+use App\Filament\Resources\Inquiries\Tables\InquiriesTable;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
@@ -27,6 +29,10 @@ class ViewInquiry extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            SendEmailAction::make('send_email')
+                ->resolveRecipients(function ($record) {
+                    return InquiriesTable::resolveInquiryRecipient($record);
+                }),
             Action::make('changeStatus')
                 ->label('Zmeniť stav')
                 ->icon(Heroicon::OutlinedArrowPath)

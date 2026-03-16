@@ -5,10 +5,13 @@ namespace App\Filament\Resources\Teams\RelationManagers;
 use App\Enums\InvitationStatusEnum;
 use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
+use App\Filament\Actions\SendEmailAction;
+use App\Filament\Actions\SendEmailBulkAction;
 use App\Mail\TeamInvitationMail;
 use App\Models\Membership;
 use App\Models\TeamInvitation;
 use App\Models\User;
+use App\Services\EmailService;
 use Filament\Actions\Action;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
@@ -18,6 +21,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
@@ -52,7 +56,8 @@ class MembersRelationManager extends RelationManager
                     ->searchable(),
                 TextColumn::make('roles.name')
                     ->label('Roly')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => \App\Enums\RoleEnum::tryFrom($state)?->getLabel() ?? $state),
                 TextColumn::make('pivot.joined_at')
                     ->label('Pripojený')
                     ->date()
@@ -84,6 +89,7 @@ class MembersRelationManager extends RelationManager
                     ->placeholder('-'),
             ])
             ->headerActions([
+                $this->makeMembersSendEmailAction(),
                 Action::make('invite')
                     ->label('Pozvať člena')
                     ->modalHeading('Pozvať člena')
@@ -138,6 +144,21 @@ class MembersRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
+                SendEmailAction::make('send_email')
+                    ->resolveRecipients(function (User $record) {
+                        $team = $this->getOwnerRecord();
+
+                        return [
+                            [
+                                'email' => $record->email,
+                                'variables' => [
+                                    'meno' => $record->name,
+                                    'email' => $record->email,
+                                    'nazov_timu' => $team->getTranslation('name', 'sk'),
+                                ],
+                            ],
+                        ];
+                    }),
                 Action::make('addMembership')
                     ->label('Pridať členstvo')
                     ->modalHeading('Pridať členstvo')
@@ -188,7 +209,85 @@ class MembersRelationManager extends RelationManager
                 DetachAction::make(),
             ])
             ->toolbarActions([
+                SendEmailBulkAction::make('send_email_bulk')
+                    ->resolveRecipients(function (User $record) {
+                        $team = $this->getOwnerRecord();
+
+                        return [
+                            [
+                                'email' => $record->email,
+                                'variables' => [
+                                    'meno' => $record->name,
+                                    'email' => $record->email,
+                                    'nazov_timu' => $team->getTranslation('name', 'sk'),
+                                ],
+                            ],
+                        ];
+                    }),
                 DetachBulkAction::make(),
             ]);
+    }
+
+    protected function makeMembersSendEmailAction(): Action
+    {
+        return Action::make('send_email_all')
+            ->label('Odoslať e-mail všetkým')
+            ->icon(Heroicon::OutlinedEnvelope)
+            ->color('primary')
+            ->slideOver()
+            ->schema(fn (): array => array_merge(
+                [$this->buildMembersRecipientsPlaceholder()],
+                (new \App\Filament\Actions\SendEmailAction('temp'))->getEmailFormSchema(),
+            ))
+            ->modalSubmitActionLabel('Odoslať e-mail')
+            ->modalSubmitAction(fn ($action) => $action->requiresConfirmation()
+                ->modalHeading('Potvrdiť odoslanie')
+                ->modalDescription('E-mail bude odoslaný všetkým členom tímu.')
+                ->modalSubmitActionLabel('Áno, odoslať'))
+            ->action(function (array $data): void {
+                $team = $this->getOwnerRecord();
+                $teamName = $team->getTranslation('name', 'sk');
+                $allRecipients = [];
+
+                foreach ($team->members as $member) {
+                    $allRecipients[] = [
+                        'email' => $member->email,
+                        'variables' => [
+                            'meno' => $member->name,
+                            'email' => $member->email,
+                            'nazov_timu' => $teamName,
+                        ],
+                    ];
+                }
+
+                if (empty($allRecipients)) {
+                    Notification::make()->warning()->title('Žiadni príjemcovia')->send();
+
+                    return;
+                }
+
+                $count = EmailService::send(
+                    subject: $data['subject'],
+                    brickContent: $data['content'],
+                    recipients: $allRecipients,
+                    team: filament()->getTenant(),
+                );
+
+                Notification::make()
+                    ->success()
+                    ->title('E-mail odoslaný')
+                    ->body("E-mail bol odoslaný {$count} príjemcom.")
+                    ->send();
+            });
+    }
+
+    protected function buildMembersRecipientsPlaceholder(): \Filament\Forms\Components\Placeholder
+    {
+        $emails = $this->getOwnerRecord()->members->pluck('email')->unique()->values();
+        $list = $emails->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+
+        return \Filament\Forms\Components\Placeholder::make('recipients_info')
+            ->label('Príjemcovia ('.$emails->count().')')
+            ->content(new \Illuminate\Support\HtmlString($emails->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
     }
 }

@@ -35,6 +35,11 @@ class LinkResolver
             return null;
         }
 
+        // Media links resolve directly to the file URL
+        if ($type === LinkTypeEnum::Media) {
+            return $model->getLinkUrl() ?: null;
+        }
+
         // Role-based link types use specific route prefixes
         $routePrefix = $type->getRoutePrefix();
         $url = $routePrefix ? $routePrefix.$model->slug : $model->getLinkUrl();

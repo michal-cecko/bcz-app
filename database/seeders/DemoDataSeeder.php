@@ -572,6 +572,13 @@ class DemoDataSeeder extends Seeder
                 'card_description' => ['sk' => 'Hands-on workshopy zamerané na základy parkour a kalistheniky.'],
                 'sort_order' => 3,
             ],
+            [
+                'title' => ['sk' => 'Freestyle súťaž', 'en' => 'Freestyle Competition', 'cz' => 'Freestyle soutěž'],
+                'color' => '#FF6B6B',
+                'card_subtitle' => ['sk' => 'Freestyle súťaže pre všetky úrovne'],
+                'card_description' => ['sk' => 'Súťaže vo freestyle kalistenike a street workoutových disciplínach.'],
+                'sort_order' => 4,
+            ],
         ])->map(function ($data) {
             return EventCategory::factory()->create(array_merge($data, ['is_active' => true]));
         });

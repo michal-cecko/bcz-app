@@ -187,7 +187,18 @@ Route::middleware('signed')->group(function () {
     })->name('logout');
 });
 
+Route::get('/admin/email-preview/{key}', [\App\Http\Controllers\Admin\EmailPreviewController::class, 'show'])
+    ->name('admin.email-preview');
+
 Route::middleware('auth')->group(function () {
+    Route::post('/admin/email-preview', [\App\Http\Controllers\Admin\EmailPreviewController::class, 'store'])
+        ->name('admin.email-preview.store');
+
+    Route::post('/admin/impersonate/{user}', [\App\Http\Controllers\Admin\ImpersonationController::class, 'start'])
+        ->name('admin.impersonate.start');
+    Route::post('/admin/impersonate-stop', [\App\Http\Controllers\Admin\ImpersonationController::class, 'stop'])
+        ->name('admin.impersonate.stop');
+
     Route::get('/stripe/connect/{team}/onboard', [StripeConnectController::class, 'onboard'])
         ->name('stripe.connect.onboard');
     Route::get('/stripe/connect/callback', [StripeConnectController::class, 'callback'])

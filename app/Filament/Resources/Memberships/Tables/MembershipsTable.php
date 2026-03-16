@@ -4,6 +4,8 @@ namespace App\Filament\Resources\Memberships\Tables;
 
 use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
+use App\Filament\Actions\SendEmailAction;
+use App\Filament\Actions\SendEmailBulkAction;
 use App\Models\Membership;
 use App\Services\PaymentService;
 use App\Services\QrPaymentService;
@@ -56,6 +58,25 @@ class MembershipsTable
                     ->options(MembershipStatusEnum::translations()),
             ])
             ->recordActions([
+                SendEmailAction::make('send_email')
+                    ->resolveRecipients(function (Membership $record) {
+                        if (! $record->user?->email) {
+                            return [];
+                        }
+
+                        $team = Filament::getTenant();
+
+                        return [
+                            [
+                                'email' => $record->user->email,
+                                'variables' => [
+                                    'meno' => $record->user->name,
+                                    'email' => $record->user->email,
+                                    'nazov_timu' => $team?->getTranslation('name', 'sk') ?? '',
+                                ],
+                            ],
+                        ];
+                    }),
                 EditAction::make(),
                 Action::make('recordPayment')
                     ->label('Zaznamenať platbu')
@@ -133,6 +154,27 @@ class MembershipsTable
                         return new HtmlString($html);
                     })
                     ->modalSubmitAction(false),
+            ])
+            ->toolbarActions([
+                SendEmailBulkAction::make('send_email_bulk')
+                    ->resolveRecipients(function (Membership $record) {
+                        if (! $record->user?->email) {
+                            return [];
+                        }
+
+                        $team = Filament::getTenant();
+
+                        return [
+                            [
+                                'email' => $record->user->email,
+                                'variables' => [
+                                    'meno' => $record->user->name,
+                                    'email' => $record->user->email,
+                                    'nazov_timu' => $team?->getTranslation('name', 'sk') ?? '',
+                                ],
+                            ],
+                        ];
+                    }),
             ]);
     }
 }

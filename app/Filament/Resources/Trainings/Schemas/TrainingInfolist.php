@@ -83,7 +83,8 @@ class TrainingInfolist
                                             ->state(fn ($record): int => $record->registrations()->count()),
                                         IconEntry::make('notify_on_available')
                                             ->label('Upozornenie pri voľnom mieste')
-                                            ->boolean(),
+                                            ->boolean()
+                                            ->tooltip('Ak je tréning plný, používatelia sa môžu zapísať na čakací zoznam a budú notifikovaní, keď sa uvoľní miesto.'),
                                     ])
                                     ->columns(3),
                             ])

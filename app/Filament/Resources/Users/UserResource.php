@@ -47,6 +47,7 @@ class UserResource extends Resource
         return $schema
             ->components([
                 Grid::make(3)
+                    ->columnSpanFull()
                     ->schema([
                         Section::make('Profil')
                             ->schema([
@@ -62,7 +63,8 @@ class UserResource extends Resource
                                     ->copyable(),
                                 TextEntry::make('roles.name')
                                     ->label('Roly')
-                                    ->badge(),
+                                    ->badge()
+                                    ->formatStateUsing(fn (string $state): string => \App\Enums\RoleEnum::tryFrom($state)?->getLabel() ?? $state),
                             ])
                             ->columnSpan(2),
 

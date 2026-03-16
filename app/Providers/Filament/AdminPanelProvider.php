@@ -76,11 +76,16 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): View => view('filament.topbar-homepage-link'),
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn (): View => view('filament.impersonation-banner'),
+            )
             ->sidebarCollapsibleOnDesktop()
             ->collapsibleNavigationGroups()
             ->navigationGroups([
                 'Organizácia',
                 'Obsah',
+                'Ostatné',
             ])
             ->brandLogo(asset('logo/logo-horizontal-short.svg'))
             ->darkModeBrandLogo(asset('logo/logo-horizontal-short-white.svg'))

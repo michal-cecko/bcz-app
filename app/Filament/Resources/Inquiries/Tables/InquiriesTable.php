@@ -4,10 +4,14 @@ namespace App\Filament\Resources\Inquiries\Tables;
 
 use App\Enums\InquiryReasonEnum;
 use App\Enums\InquiryStatusEnum;
+use App\Filament\Actions\SendEmailAction;
+use App\Filament\Actions\SendEmailBulkAction;
+use App\Models\Inquiry;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -55,10 +59,18 @@ class InquiriesTable
                     ->options(InquiryStatusEnum::class),
             ])
             ->recordActions([
+                SendEmailAction::make('send_email')
+                    ->resolveRecipients(function (Inquiry $record) {
+                        return static::resolveInquiryRecipient($record);
+                    }),
                 ViewAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    SendEmailBulkAction::make('send_email_bulk')
+                        ->resolveRecipients(function (Inquiry $record) {
+                            return static::resolveInquiryRecipient($record);
+                        }),
                     BulkAction::make('markResolved')
                         ->label('Označiť ako vyriešené')
                         ->icon('heroicon-o-check')
@@ -66,5 +78,28 @@ class InquiriesTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * @return list<array{email: string, variables: array<string, string>}>
+     */
+    public static function resolveInquiryRecipient(Inquiry $record): array
+    {
+        if (! $record->email) {
+            return [];
+        }
+
+        $team = Filament::getTenant();
+
+        return [
+            [
+                'email' => $record->email,
+                'variables' => [
+                    'meno' => $record->name,
+                    'email' => $record->email,
+                    'nazov_timu' => $team?->getTranslation('name', 'sk') ?? '',
+                ],
+            ],
+        ];
     }
 }

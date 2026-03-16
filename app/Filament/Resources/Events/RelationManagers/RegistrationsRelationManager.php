@@ -3,10 +3,16 @@
 namespace App\Filament\Resources\Events\RelationManagers;
 
 use App\Enums\EventTypeEnum;
+use App\Filament\Actions\SendEmailAction;
+use App\Filament\Actions\SendEmailBulkAction;
+use App\Models\Event;
 use App\Models\User;
+use App\Services\EmailService;
 use App\Services\RegistrationService;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -17,6 +23,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -118,6 +125,7 @@ class RegistrationsRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->headerActions([
+                $this->makeEventSendEmailAction(),
                 CreateAction::make()
                     ->label('Zaregistrovať')
                     ->modalHeading('Pridať zákazníka do podujatia')
@@ -148,12 +156,115 @@ class RegistrationsRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
+                SendEmailAction::make('send_email')
+                    ->contextVariables(['nazov_eventu', 'datum_eventu'])
+                    ->resolveRecipients(function ($record) {
+                        return $this->resolveEventRegistrationRecipient($record);
+                    }),
                 ViewAction::make()
                     ->modalHeading('Zobraziť registráciu'),
                 EditAction::make()
                     ->modalHeading('Upraviť registráciu'),
                 DeleteAction::make()
                     ->modalHeading('Odstrániť registráciu'),
+            ])
+            ->toolbarActions([
+                SendEmailBulkAction::make('send_email_bulk')
+                    ->contextVariables(['nazov_eventu', 'datum_eventu'])
+                    ->resolveRecipients(function ($record) {
+                        return $this->resolveEventRegistrationRecipient($record);
+                    }),
+                DeleteBulkAction::make(),
             ]);
+    }
+
+    /**
+     * @return list<array{email: string, variables: array<string, string>}>
+     */
+    protected function resolveEventRegistrationRecipient($record): array
+    {
+        $email = $record->user?->email;
+        if (! $email) {
+            return [];
+        }
+
+        /** @var Event $event */
+        $event = $this->getOwnerRecord();
+        $teamName = $event->team->getTranslation('name', 'sk');
+
+        return [
+            [
+                'email' => $email,
+                'variables' => [
+                    'meno' => $record->user?->name ?? '',
+                    'email' => $email,
+                    'nazov_timu' => $teamName,
+                    'nazov_eventu' => $event->getTranslation('title', 'sk'),
+                    'datum_eventu' => $event->date?->format('d.m.Y') ?? '',
+                ],
+            ],
+        ];
+    }
+
+    protected function makeEventSendEmailAction(): Action
+    {
+        return Action::make('send_email_all')
+            ->label('Odoslať e-mail všetkým')
+            ->icon(Heroicon::OutlinedEnvelope)
+            ->color('primary')
+            ->slideOver()
+            ->schema(fn (): array => array_merge(
+                [$this->buildEventRecipientsPlaceholder()],
+                (new \App\Filament\Actions\SendEmailAction('temp'))
+                    ->contextVariables(['nazov_eventu', 'datum_eventu'])
+                    ->getEmailFormSchema(),
+            ))
+            ->modalSubmitActionLabel('Odoslať e-mail')
+            ->modalSubmitAction(fn ($action) => $action->requiresConfirmation()
+                ->modalHeading('Potvrdiť odoslanie')
+                ->modalDescription('E-mail bude odoslaný všetkým registrovaným.')
+                ->modalSubmitActionLabel('Áno, odoslať'))
+            ->action(function (array $data): void {
+                $allRecipients = [];
+
+                foreach ($this->getOwnerRecord()->registrations()->with('user')->get() as $registration) {
+                    $allRecipients = array_merge($allRecipients, $this->resolveEventRegistrationRecipient($registration));
+                }
+
+                if (empty($allRecipients)) {
+                    Notification::make()->warning()->title('Žiadni príjemcovia')->send();
+
+                    return;
+                }
+
+                $count = EmailService::send(
+                    subject: $data['subject'],
+                    brickContent: $data['content'],
+                    recipients: $allRecipients,
+                    team: filament()->getTenant(),
+                );
+
+                Notification::make()
+                    ->success()
+                    ->title('E-mail odoslaný')
+                    ->body("E-mail bol odoslaný {$count} príjemcom.")
+                    ->send();
+            });
+    }
+
+    protected function buildEventRecipientsPlaceholder(): \Filament\Forms\Components\Placeholder
+    {
+        $emails = collect();
+        foreach ($this->getOwnerRecord()->registrations()->with('user')->get() as $reg) {
+            foreach ($this->resolveEventRegistrationRecipient($reg) as $r) {
+                $emails->push($r['email']);
+            }
+        }
+        $unique = $emails->unique()->values();
+        $list = $unique->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+
+        return \Filament\Forms\Components\Placeholder::make('recipients_info')
+            ->label('Príjemcovia ('.$unique->count().')')
+            ->content(new \Illuminate\Support\HtmlString($unique->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
     }
 }
