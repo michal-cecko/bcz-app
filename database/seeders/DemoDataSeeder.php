@@ -104,8 +104,8 @@ class DemoDataSeeder extends Seeder
                 'name' => $data['name'],
                 'email' => $data['email'],
             ]);
-            $user->assignRole(RoleEnum::COACH);
-            $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(6, 36))]);
+            $user->assignRole(RoleEnum::CUSTOMER);
+            $user->teams()->attach($bczTeam, ['role' => RoleEnum::COACH->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(6, 36))]);
 
             $coachProfile = CoachProfile::factory()->create([
                 'user_id' => $user->id,
@@ -120,8 +120,8 @@ class DemoDataSeeder extends Seeder
         });
 
         $athletes = User::factory(8)->create()->each(function (User $user, int $index) use ($bczTeam) {
-            $user->assignRole(RoleEnum::ATHLETE);
-            $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 24))]);
+            $user->assignRole(RoleEnum::CUSTOMER);
+            $user->teams()->attach($bczTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 24))]);
             AthleteProfile::factory()->create(['user_id' => $user->id]);
 
             // Give first 5 athletes a public profile (approved)
@@ -172,7 +172,7 @@ class DemoDataSeeder extends Seeder
                 'country_code' => $data['country_code'],
             ]);
             $user->assignRole(RoleEnum::JUDGE);
-            $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(3, 12))]);
+            $user->teams()->attach($bczTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(3, 12))]);
 
             foreach ($data['certifications'] as $index => $cert) {
                 Certification::factory()->create([
@@ -188,8 +188,8 @@ class DemoDataSeeder extends Seeder
         });
 
         $members = User::factory(5)->create()->each(function (User $user) use ($bczTeam) {
-            $user->assignRole(RoleEnum::ATHLETE);
-            $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
+            $user->assignRole(RoleEnum::CUSTOMER);
+            $user->teams()->attach($bczTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
         });
 
         // --- Customer users (no team) ---
@@ -1132,8 +1132,8 @@ class DemoDataSeeder extends Seeder
 
         // Create extra athletes for competitions to have realistic numbers
         $compAthletes = User::factory(12)->create()->each(function (User $user) use ($bczTeam) {
-            $user->assignRole(RoleEnum::ATHLETE);
-            $user->teams()->attach($bczTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 12))]);
+            $user->assignRole(RoleEnum::CUSTOMER);
+            $user->teams()->attach($bczTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 12))]);
         });
         $allCompetitors = $athletes->merge($compAthletes);
 
@@ -1852,8 +1852,8 @@ class DemoDataSeeder extends Seeder
 
         // Memberships for second team
         User::factory(3)->create()->each(function (User $user) use ($secondTeam) {
-            $user->assignRole(RoleEnum::ATHLETE);
-            $user->teams()->attach($secondTeam, ['is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
+            $user->assignRole(RoleEnum::CUSTOMER);
+            $user->teams()->attach($secondTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
 
             Membership::create([
                 'team_id' => $secondTeam->id,

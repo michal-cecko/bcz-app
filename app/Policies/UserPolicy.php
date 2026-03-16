@@ -16,7 +16,7 @@ class UserPolicy
      */
     public function viewAny(User $authUser): bool
     {
-        return $authUser->hasRole([
+        return $authUser->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
@@ -33,12 +33,12 @@ class UserPolicy
      */
     public function view(User $authUser, User $user): bool
     {
-        if ($authUser->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::TEAM_ADMIN, RoleEnum::COACH, RoleEnum::EDITOR])) {
+        if ($authUser->hasAnyAppRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::TEAM_ADMIN, RoleEnum::COACH, RoleEnum::EDITOR])) {
             return true;
         }
 
-        if ($authUser->hasRole(RoleEnum::ATHLETE)) {
-            return $user->hasRole(RoleEnum::ATHLETE);
+        if ($authUser->hasAnyAppRole([RoleEnum::ATHLETE])) {
+            return $user->hasAnyAppRole([RoleEnum::ATHLETE]);
         }
 
         return false;

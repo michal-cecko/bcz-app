@@ -29,9 +29,10 @@ class ListUsers extends ListRecords
         }
 
         // ATHLETE: only see other athletes
-        if ($user->hasRole(RoleEnum::ATHLETE) && ! $user->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::COACH, RoleEnum::EDITOR])) {
-            $query->whereHas('roles', function (Builder $query): void {
-                $query->where('name', RoleEnum::ATHLETE->value);
+        if ($user->hasAnyAppRole([RoleEnum::ATHLETE])
+            && ! $user->hasAnyAppRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::COACH, RoleEnum::EDITOR])) {
+            $query->whereHas('teams', function (Builder $query): void {
+                $query->where('team_user.role', RoleEnum::ATHLETE->value);
             });
 
             return $query;

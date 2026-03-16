@@ -48,9 +48,11 @@ class CoachesArchive extends Component
         $locale = app()->getLocale();
         $teamId = Setting::get('default_team_id');
 
-        $query = User::role(RoleEnum::COACH)
-            ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->with(['coachProfile', 'certifications', 'coachedTrainings' => fn ($q) => $q->where('is_active', true)->with('sportCategory')]);
+        $query = User::whereHas('teams', fn ($q) => $q
+            ->where('teams.id', $teamId)
+            ->where('team_user.role', RoleEnum::COACH->value)
+            ->where('team_user.is_active', true)
+        )->with(['coachProfile', 'certifications', 'coachedTrainings' => fn ($q) => $q->where('is_active', true)->with('sportCategory')]);
 
         if ($this->categoryFilter) {
             $query->whereHas('coachedTrainings', fn ($q) => $q->where('sport_category_id', $this->categoryFilter));

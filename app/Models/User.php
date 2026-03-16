@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Contracts\Linkable;
+use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasTenants;
@@ -16,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -25,7 +28,7 @@ use Spatie\Sluggable\SlugOptions;
 
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia, HasTenants, Linkable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, HasPanelShield, HasRoles, HasSlug, HasUuidV7, InteractsWithMedia, Notifiable;
 
     protected $fillable = [
@@ -79,8 +82,49 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class)
-            ->withPivot('is_active', 'joined_at')
+            ->using(TeamUser::class)
+            ->withPivot('role', 'is_active', 'joined_at')
             ->withTimestamps();
+    }
+
+    /**
+     * Check if user has a team-scoped role in the given team (defaults to current Filament tenant).
+     */
+    public function hasTeamRole(RoleEnum|array $roles, ?Team $team = null): bool
+    {
+        $team ??= filament()->getTenant();
+        if (! $team) {
+            return false;
+        }
+
+        $roles = Arr::wrap($roles);
+        $roleValues = collect($roles)->map(fn ($r) => $r instanceof RoleEnum ? $r->value : $r);
+
+        return $this->teams()
+            ->where('teams.id', $team->id)
+            ->wherePivotIn('role', $roleValues)
+            ->exists();
+    }
+
+    /**
+     * Check if user has ANY of the given roles (global via Spatie OR team-scoped via pivot).
+     */
+    public function hasAnyAppRole(RoleEnum|array $roles, ?Team $team = null): bool
+    {
+        $roles = Arr::wrap($roles);
+
+        $globalRoles = array_filter($roles, fn ($r) => $r instanceof RoleEnum && $r->isGlobal());
+        $teamRoles = array_filter($roles, fn ($r) => $r instanceof RoleEnum && $r->isTeamScoped());
+
+        if (! empty($globalRoles) && $this->hasRole($globalRoles)) {
+            return true;
+        }
+
+        if (! empty($teamRoles) && $this->hasTeamRole($teamRoles, $team)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getTenants(Panel $panel): Collection
@@ -206,6 +250,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
      */
     public static function linkableOptionsForRole(string $role): Collection
     {
+        $roleEnum = RoleEnum::tryFrom($role);
+
+        if ($roleEnum && $roleEnum->isTeamScoped()) {
+            return static::whereHas('teams', fn ($q) => $q->where('team_user.role', $role))
+                ->orderBy('name')
+                ->get()
+                ->mapWithKeys(fn (User $u) => [$u->id => $u->getLinkLabel()]);
+        }
+
         return static::role($role)
             ->orderBy('name')
             ->get()

@@ -13,7 +13,7 @@ class PaymentPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
@@ -22,7 +22,7 @@ class PaymentPolicy
 
     public function view(User $user, Payment $payment): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
@@ -31,7 +31,7 @@ class PaymentPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,

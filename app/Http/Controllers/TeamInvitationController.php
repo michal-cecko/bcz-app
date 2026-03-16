@@ -22,17 +22,18 @@ class TeamInvitationController extends Controller
 
         $user = User::where('email', $invitation->email)->firstOrFail();
 
-        $user->teams()->syncWithoutDetaching([
-            $invitation->team_id => [
+        // Attach user to team with ATHLETE role (ignore if already exists)
+        $alreadyHasRole = $user->teams()
+            ->where('teams.id', $invitation->team_id)
+            ->wherePivot('role', RoleEnum::ATHLETE->value)
+            ->exists();
+
+        if (! $alreadyHasRole) {
+            $user->teams()->attach($invitation->team_id, [
+                'role' => RoleEnum::ATHLETE->value,
                 'is_active' => true,
                 'joined_at' => now(),
-            ],
-        ]);
-
-        if ($user->hasRole(RoleEnum::CUSTOMER) && $user->roles()->count() === 1) {
-            $user->syncRoles(RoleEnum::ATHLETE);
-        } elseif (! $user->hasRole(RoleEnum::ATHLETE)) {
-            $user->assignRole(RoleEnum::ATHLETE);
+            ]);
         }
 
         $invitation->update([
@@ -77,9 +78,10 @@ class TeamInvitationController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        $user->assignRole(RoleEnum::ATHLETE);
+        $user->assignRole(RoleEnum::CUSTOMER);
 
         $user->teams()->attach($invitation->team_id, [
+            'role' => RoleEnum::ATHLETE->value,
             'is_active' => true,
             'joined_at' => now(),
         ]);

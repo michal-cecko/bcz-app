@@ -13,7 +13,7 @@ class TeamSubscriptionPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
@@ -22,7 +22,7 @@ class TeamSubscriptionPolicy
 
     public function view(User $user, TeamSubscription $subscription): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,

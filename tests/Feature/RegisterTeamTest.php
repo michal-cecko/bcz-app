@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\InvitationStatusEnum;
 use App\Enums\PlanTierEnum;
 use App\Enums\RoleEnum;
+use App\Livewire\RegisterTeam;
 use App\Models\SubscriptionPlan;
 use App\Models\Team;
 use App\Models\TeamInvitation;
@@ -30,14 +31,14 @@ class RegisterTeamTest extends TestCase
 
     public function test_step1_validates_required_fields(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->call('nextStep')
             ->assertHasErrors(['firstName', 'lastName', 'email', 'password', 'passwordConfirmation']);
     }
 
     public function test_step1_validates_email_format(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Test')
             ->set('lastName', 'User')
             ->set('email', 'not-an-email')
@@ -51,7 +52,7 @@ class RegisterTeamTest extends TestCase
     {
         User::factory()->create(['email' => 'taken@example.com']);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Test')
             ->set('lastName', 'User')
             ->set('email', 'taken@example.com')
@@ -63,7 +64,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_step1_validates_password_minimum_length(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Test')
             ->set('lastName', 'User')
             ->set('email', 'test@example.com')
@@ -75,7 +76,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_step1_validates_password_confirmation(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Test')
             ->set('lastName', 'User')
             ->set('email', 'test@example.com')
@@ -87,7 +88,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_step1_advances_to_step2_on_valid_data(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Test')
             ->set('lastName', 'User')
             ->set('email', 'test@example.com')
@@ -101,7 +102,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_step2_validates_required_fields(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('step', 2)
             ->set('teamName', '')
             ->set('ownerName', '')
@@ -112,7 +113,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_step2_validates_owner_email_format(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('step', 2)
             ->set('teamName', 'My Team')
             ->set('ownerName', 'Owner')
@@ -124,7 +125,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_step2_validates_logo_must_be_image(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('step', 2)
             ->set('teamName', 'My Team')
             ->set('ownerName', 'Owner')
@@ -137,7 +138,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_step2_advances_to_step3_on_valid_data(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('step', 2)
             ->set('teamName', 'My Team')
             ->set('ownerName', 'Owner Name')
@@ -149,7 +150,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_previous_step_navigates_back(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('step', 2)
             ->call('previousStep')
             ->assertSet('step', 1);
@@ -157,7 +158,7 @@ class RegisterTeamTest extends TestCase
 
     public function test_previous_step_does_not_go_below_1(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('step', 1)
             ->call('previousStep')
             ->assertSet('step', 1);
@@ -167,14 +168,14 @@ class RegisterTeamTest extends TestCase
     {
         $plan = SubscriptionPlan::factory()->create();
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->call('selectPlan', $plan->id)
             ->assertSet('selectedPlanId', $plan->id);
     }
 
     public function test_billing_period_toggles(): void
     {
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->assertSet('billingPeriod', 'monthly')
             ->call('toggleBilling')
             ->assertSet('billingPeriod', 'yearly')
@@ -189,7 +190,7 @@ class RegisterTeamTest extends TestCase
             'is_active' => true,
         ]);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Dominik')
             ->set('lastName', 'Klimek')
             ->set('email', 'dominik@bczclub.sk')
@@ -223,6 +224,14 @@ class RegisterTeamTest extends TestCase
         $this->assertEquals('BCZ Club', $team->getTranslation('name', 'sk'));
         $this->assertTrue($team->members()->where('users.id', $user->id)->exists());
 
+        // Team creator gets TEAM_ADMIN pivot role
+        $this->assertTrue(
+            $user->teams()
+                ->where('teams.id', $team->id)
+                ->wherePivot('role', RoleEnum::TEAM_ADMIN->value)
+                ->exists()
+        );
+
         $subscription = TeamSubscription::where('team_id', $team->id)->first();
         $this->assertNotNull($subscription);
         $this->assertEquals('active', $subscription->getRawOriginal('status'));
@@ -238,7 +247,7 @@ class RegisterTeamTest extends TestCase
             'is_active' => true,
         ]);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Test')
             ->set('lastName', 'User')
             ->set('email', 'test@example.com')
@@ -265,7 +274,7 @@ class RegisterTeamTest extends TestCase
             'is_active' => true,
         ]);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Test')
             ->set('lastName', 'User')
             ->set('email', 'default@example.com')
@@ -293,7 +302,7 @@ class RegisterTeamTest extends TestCase
             'is_active' => true,
         ]);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Auth')
             ->set('lastName', 'Test')
             ->set('email', 'auth@example.com')
@@ -318,7 +327,7 @@ class RegisterTeamTest extends TestCase
             'is_active' => true,
         ]);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Ján')
             ->set('lastName', 'Novák')
             ->set('email', 'jan@novak.sk')
@@ -356,7 +365,7 @@ class RegisterTeamTest extends TestCase
             'is_active' => true,
         ]);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Invited')
             ->set('lastName', 'User')
             ->set('email', 'invited@example.com')
@@ -395,7 +404,7 @@ class RegisterTeamTest extends TestCase
 
         session(['pending_invite_code' => 'JOIN1234']);
 
-        Livewire::test(\App\Livewire\RegisterTeam::class)
+        Livewire::test(RegisterTeam::class)
             ->set('firstName', 'Joined')
             ->set('lastName', 'User')
             ->set('email', 'joined@example.com')

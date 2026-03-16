@@ -48,11 +48,13 @@ class AthletesArchive extends Component
         $locale = app()->getLocale();
         $teamId = Setting::get('default_team_id');
 
-        $query = User::role(RoleEnum::ATHLETE)
-            ->where('has_public_profile', true)
+        $query = User::where('has_public_profile', true)
             ->whereNotNull('public_profile_approved_at')
-            ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->with(['athleteProfile', 'certifications']);
+            ->whereHas('teams', fn ($q) => $q
+                ->where('teams.id', $teamId)
+                ->where('team_user.role', RoleEnum::ATHLETE->value)
+                ->where('team_user.is_active', true)
+            )->with(['athleteProfile', 'certifications']);
 
         if ($this->categoryFilter) {
             $query->whereHas('trainingRegistrations.training', fn ($q) => $q->where('sport_category_id', $this->categoryFilter));

@@ -10,7 +10,10 @@ class AthleteController extends Controller
 {
     public function show(User $user): View
     {
-        abort_unless($user->hasRole(RoleEnum::ATHLETE), 404);
+        abort_unless(
+            $user->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists(),
+            404
+        );
 
         $user->load([
             'athleteProfile',

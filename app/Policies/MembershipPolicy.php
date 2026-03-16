@@ -13,7 +13,7 @@ class MembershipPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
@@ -22,7 +22,7 @@ class MembershipPolicy
 
     public function view(User $user, Membership $membership): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,
@@ -31,7 +31,7 @@ class MembershipPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole([
+        return $user->hasAnyAppRole([
             RoleEnum::SUPER_ADMIN,
             RoleEnum::ADMIN,
             RoleEnum::TEAM_ADMIN,

@@ -1,12 +1,26 @@
 @php
     use App\Enums\RoleEnum;
 
-    $roles = auth()->user()?->getRoleNames() ?? collect();
+    $globalRoles = auth()->user()?->getRoleNames()
+        ?->reject(fn ($r) => $r === 'panel_user')
+        ?? collect();
+
+    $teamRoles = collect();
+    $tenant = filament()->getTenant();
+    if ($tenant && auth()->user()) {
+        $teamRoles = auth()->user()->teams()
+            ->where('teams.id', $tenant->id)
+            ->get()
+            ->pluck('pivot.role')
+            ->unique();
+    }
+
+    $allRoles = $globalRoles->merge($teamRoles)->unique();
 @endphp
 
-@if ($roles->isNotEmpty())
+@if ($allRoles->isNotEmpty())
     <div class="flex items-center gap-2">
-        @foreach ($roles->reject(fn ($r) => $r === 'panel_user') as $role)
+        @foreach ($allRoles as $role)
             <x-filament::badge size="sm" color="gray">
                 {{ RoleEnum::tryFrom($role)?->getLabel() ?? $role }}
             </x-filament::badge>

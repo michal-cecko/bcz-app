@@ -11,6 +11,7 @@ use App\Models\TeamInvitation;
 use App\Models\TeamSubscription;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -198,6 +199,7 @@ class RegisterTeam extends Component
             }
 
             $user->teams()->attach($team->id, [
+                'role' => RoleEnum::TEAM_ADMIN->value,
                 'is_active' => true,
                 'joined_at' => now(),
             ]);
@@ -254,12 +256,18 @@ class RegisterTeam extends Component
             return;
         }
 
-        $user->teams()->syncWithoutDetaching([
-            $invitation->team_id => [
+        $alreadyHasRole = $user->teams()
+            ->where('teams.id', $invitation->team_id)
+            ->wherePivot('role', RoleEnum::ATHLETE->value)
+            ->exists();
+
+        if (! $alreadyHasRole) {
+            $user->teams()->attach($invitation->team_id, [
+                'role' => RoleEnum::ATHLETE->value,
                 'is_active' => true,
                 'joined_at' => now(),
-            ],
-        ]);
+            ]);
+        }
 
         $invitation->update([
             'status' => InvitationStatusEnum::Accepted,
@@ -267,7 +275,7 @@ class RegisterTeam extends Component
         ]);
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, SubscriptionPlan> */
+    /** @return Collection<int, SubscriptionPlan> */
     public function getPlansProperty()
     {
         return SubscriptionPlan::query()

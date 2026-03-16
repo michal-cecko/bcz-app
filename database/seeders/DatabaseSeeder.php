@@ -37,8 +37,9 @@ class DatabaseSeeder extends Seeder
 
         $bczTeam = Team::query()->where('slug', 'bcz-club')->first();
 
-        if ($bczTeam && ! $superAdmin->teams()->where('teams.id', $bczTeam->id)->exists()) {
+        if ($bczTeam && ! $superAdmin->teams()->where('teams.id', $bczTeam->id)->wherePivot('role', RoleEnum::TEAM_ADMIN->value)->exists()) {
             $superAdmin->teams()->attach($bczTeam, [
+                'role' => RoleEnum::TEAM_ADMIN->value,
                 'is_active' => true,
                 'joined_at' => now(),
             ]);
@@ -56,8 +57,9 @@ class DatabaseSeeder extends Seeder
 
         $admin->assignRole(RoleEnum::ADMIN);
 
-        if ($bczTeam && ! $admin->teams()->where('teams.id', $bczTeam->id)->exists()) {
+        if ($bczTeam && ! $admin->teams()->where('teams.id', $bczTeam->id)->wherePivot('role', RoleEnum::TEAM_ADMIN->value)->exists()) {
             $admin->teams()->attach($bczTeam, [
+                'role' => RoleEnum::TEAM_ADMIN->value,
                 'is_active' => true,
                 'joined_at' => now(),
             ]);

@@ -43,7 +43,13 @@ class TeamInvitationTest extends TestCase
         $this->assertTrue($team->members()->where('users.id', $user->id)->exists());
         $this->assertAuthenticatedAs($user);
 
-        $this->assertTrue($user->fresh()->hasRole(RoleEnum::ATHLETE));
+        // Team-scoped ATHLETE role is on pivot, not Spatie
+        $this->assertTrue(
+            $user->fresh()->teams()
+                ->where('teams.id', $team->id)
+                ->wherePivot('role', RoleEnum::ATHLETE->value)
+                ->exists()
+        );
 
         $invitation->refresh();
         $this->assertEquals(InvitationStatusEnum::Accepted, $invitation->status);
@@ -53,6 +59,7 @@ class TeamInvitationTest extends TestCase
     public function test_new_user_can_register_via_invitation(): void
     {
         Role::findOrCreate(RoleEnum::ATHLETE->value, 'web');
+        Role::findOrCreate(RoleEnum::CUSTOMER->value, 'web');
 
         $team = Team::factory()->create();
         $invitation = TeamInvitation::factory()->create([
@@ -91,7 +98,14 @@ class TeamInvitationTest extends TestCase
         $this->assertEquals('Test', $user->first_name);
         $this->assertEquals('User', $user->last_name);
         $this->assertTrue($team->members()->where('users.id', $user->id)->exists());
-        $this->assertTrue($user->hasRole(RoleEnum::ATHLETE));
+        // Global role is CUSTOMER, team-scoped ATHLETE on pivot
+        $this->assertTrue($user->hasRole(RoleEnum::CUSTOMER));
+        $this->assertTrue(
+            $user->teams()
+                ->where('teams.id', $team->id)
+                ->wherePivot('role', RoleEnum::ATHLETE->value)
+                ->exists()
+        );
         $this->assertAuthenticatedAs($user);
 
         $invitation->refresh();

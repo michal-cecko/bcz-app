@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Enums\RoleEnum;
+use App\Models\Team;
 use App\Models\User;
 use App\Policies\UserPolicy;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -13,6 +15,8 @@ class UserPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected Team $team;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -20,6 +24,18 @@ class UserPolicyTest extends TestCase
         foreach (RoleEnum::cases() as $role) {
             Role::firstOrCreate(['name' => $role->value, 'guard_name' => 'web']);
         }
+
+        $this->team = Team::factory()->create();
+
+        // Authenticate a dummy user and set tenant so hasTeamRole can resolve it
+        $dummyUser = User::factory()->create();
+        $dummyUser->teams()->attach($this->team->id, [
+            'role' => RoleEnum::ATHLETE->value,
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
+        $this->actingAs($dummyUser);
+        Filament::setTenant($this->team);
     }
 
     public function test_superadmin_can_view_any_users(): void
@@ -194,7 +210,16 @@ class UserPolicyTest extends TestCase
     protected function createUserWithRole(RoleEnum $role): User
     {
         $user = User::factory()->create();
-        $user->assignRole($role);
+
+        if ($role->isTeamScoped()) {
+            $user->teams()->attach($this->team->id, [
+                'role' => $role->value,
+                'is_active' => true,
+                'joined_at' => now(),
+            ]);
+        } else {
+            $user->assignRole($role);
+        }
 
         return $user;
     }

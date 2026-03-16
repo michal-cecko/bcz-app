@@ -12,16 +12,20 @@ class CoachController extends Controller
     public function index(): View
     {
         $teamId = Setting::get('default_team_id');
-        $coachCount = User::role(RoleEnum::COACH)
-            ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->count();
+        $coachCount = User::whereHas('teams', fn ($q) => $q
+            ->where('teams.id', $teamId)
+            ->where('team_user.role', RoleEnum::COACH->value)
+        )->count();
 
         return view('pages.coaches.index', compact('coachCount'));
     }
 
     public function show(User $user): View
     {
-        abort_unless($user->hasRole(RoleEnum::COACH), 404);
+        abort_unless(
+            $user->teams()->wherePivot('role', RoleEnum::COACH->value)->exists(),
+            404
+        );
 
         $user->load([
             'coachProfile',
@@ -35,11 +39,12 @@ class CoachController extends Controller
     public function indexAthletes(): View
     {
         $teamId = Setting::get('default_team_id');
-        $athleteCount = User::role(RoleEnum::ATHLETE)
-            ->where('has_public_profile', true)
+        $athleteCount = User::where('has_public_profile', true)
             ->whereNotNull('public_profile_approved_at')
-            ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->count();
+            ->whereHas('teams', fn ($q) => $q
+                ->where('teams.id', $teamId)
+                ->where('team_user.role', RoleEnum::ATHLETE->value)
+            )->count();
 
         return view('pages.athletes.index', compact('athleteCount'));
     }
@@ -56,7 +61,10 @@ class CoachController extends Controller
 
     public function showAthlete(User $user): View
     {
-        abort_unless($user->hasRole(RoleEnum::ATHLETE), 404);
+        abort_unless(
+            $user->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists(),
+            404
+        );
 
         $user->load([
             'athleteProfile',

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Contracts\Linkable;
 use App\Enums\MembershipPeriodEnum;
+use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
 use Filament\Models\Contracts\HasAvatar;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -98,8 +99,14 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withPivot('is_active', 'joined_at')
+            ->using(TeamUser::class)
+            ->withPivot('role', 'is_active', 'joined_at')
             ->withTimestamps();
+    }
+
+    public function membersWithRole(RoleEnum $role): BelongsToMany
+    {
+        return $this->members()->wherePivot('role', $role->value);
     }
 
     public function sportCategories(): HasMany
