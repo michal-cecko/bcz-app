@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
@@ -18,10 +17,12 @@ class Membership extends Model
     protected $fillable = [
         'team_id',
         'user_id',
+        'team_season_id',
         'status',
-        'period',
         'fee_amount',
         'fee_currency',
+        'is_free',
+        'payment_deadline_at',
         'starts_at',
         'ends_at',
     ];
@@ -30,8 +31,9 @@ class Membership extends Model
     {
         return [
             'status' => MembershipStatusEnum::class,
-            'period' => MembershipPeriodEnum::class,
             'fee_amount' => 'decimal:2',
+            'is_free' => 'boolean',
+            'payment_deadline_at' => 'datetime',
             'starts_at' => 'date',
             'ends_at' => 'date',
         ];
@@ -51,6 +53,11 @@ class Membership extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function season(): BelongsTo
+    {
+        return $this->belongsTo(TeamSeason::class, 'team_season_id');
     }
 
     public function payments(): MorphMany

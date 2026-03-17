@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Team;
 use App\Models\User;
@@ -130,6 +132,10 @@ class PaymentService
             'stripe_payment_id' => $session->payment_intent,
             'paid_at' => now(),
         ]);
+
+        if ($payment->payable instanceof Membership) {
+            $payment->payable->update(['status' => MembershipStatusEnum::ACTIVE]);
+        }
 
         return $payment;
     }

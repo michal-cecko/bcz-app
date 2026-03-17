@@ -137,7 +137,7 @@ class SeasonsRelationManager extends RelationManager
                         }
 
                         Notification::make()
-                            ->title("Notifikacia odoslana {$count} clenom.")
+                            ->title("Notifikácia odoslaná {$count} členom.")
                             ->success()
                             ->send();
                     }),

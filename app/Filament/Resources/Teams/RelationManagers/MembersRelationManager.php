@@ -145,7 +145,7 @@ class MembersRelationManager extends RelationManager
                         Mail::to($email)->send(new TeamInvitationMail($invitation));
 
                         Notification::make()
-                            ->title('Pozvanka bola odoslana.')
+                            ->title('Pozvánka bola odoslaná.')
                             ->success()
                             ->send();
                     }),
@@ -167,12 +167,12 @@ class MembersRelationManager extends RelationManager
                         ];
                     }),
                 Action::make('addMembership')
-                    ->label('Pridat clenstvo')
-                    ->modalHeading('Pridat clenstvo')
+                    ->label('Pridať členstvo')
+                    ->modalHeading('Pridať členstvo')
                     ->icon('heroicon-o-identification')
                     ->schema([
                         Select::make('team_season_id')
-                            ->label('Sezona')
+                            ->label('Sezóna')
                             ->options(function (RelationManager $livewire): array {
                                 $team = $livewire->getOwnerRecord();
 
@@ -224,7 +224,7 @@ class MembersRelationManager extends RelationManager
 
                         if (! $season) {
                             Notification::make()
-                                ->title('Sezona nebola najdena.')
+                                ->title('Sezóna nebola nájdená.')
                                 ->danger()
                                 ->send();
 
@@ -241,7 +241,7 @@ class MembersRelationManager extends RelationManager
                         }
 
                         Notification::make()
-                            ->title('Clenstvo bolo vytvorene.')
+                            ->title('Členstvo bolo vytvorené.')
                             ->success()
                             ->send();
                     }),
@@ -270,7 +270,7 @@ class MembersRelationManager extends RelationManager
     protected function makeMembersSendEmailAction(): Action
     {
         return Action::make('send_email_all')
-            ->label('Odoslat e-mail vsetkym')
+            ->label('Odoslať e-mail všetkým')
             ->icon(Heroicon::OutlinedEnvelope)
             ->color('primary')
             ->slideOver()
@@ -278,11 +278,11 @@ class MembersRelationManager extends RelationManager
                 [$this->buildMembersRecipientsPlaceholder()],
                 (new SendEmailAction('temp'))->getEmailFormSchema(),
             ))
-            ->modalSubmitActionLabel('Odoslat e-mail')
+            ->modalSubmitActionLabel('Odoslať e-mail')
             ->modalSubmitAction(fn ($action) => $action->requiresConfirmation()
-                ->modalHeading('Potvrdit odoslanie')
-                ->modalDescription('E-mail bude odoslany vsetkym clenom timu.')
-                ->modalSubmitActionLabel('Ano, odoslat'))
+                ->modalHeading('Potvrdiť odoslanie')
+                ->modalDescription('E-mail bude odoslaný všetkým členom tímu.')
+                ->modalSubmitActionLabel('Áno, odoslať'))
             ->action(function (array $data): void {
                 $team = $this->getOwnerRecord();
                 $teamName = $team->getTranslation('name', 'sk');
@@ -300,7 +300,7 @@ class MembersRelationManager extends RelationManager
                 }
 
                 if (empty($allRecipients)) {
-                    Notification::make()->warning()->title('Ziadni prijemcovia')->send();
+                    Notification::make()->warning()->title('Žiadni príjemcovia')->send();
 
                     return;
                 }
@@ -314,8 +314,8 @@ class MembersRelationManager extends RelationManager
 
                 Notification::make()
                     ->success()
-                    ->title('E-mail odoslany')
-                    ->body("E-mail bol odoslany {$count} prijemcom.")
+                    ->title('E-mail odoslaný')
+                    ->body("E-mail bol odoslaný {$count} príjemcom.")
                     ->send();
             });
     }
@@ -326,7 +326,7 @@ class MembersRelationManager extends RelationManager
         $list = $emails->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
 
         return Placeholder::make('recipients_info')
-            ->label('Prijemcovia ('.$emails->count().')')
-            ->content(new HtmlString($emails->isEmpty() ? '<span style="color:#9ca3af;">Ziadni prijemcovia</span>' : $list));
+            ->label('Príjemcovia ('.$emails->count().')')
+            ->content(new HtmlString($emails->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
     }
 }

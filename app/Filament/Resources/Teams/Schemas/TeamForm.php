@@ -71,18 +71,18 @@ class TeamForm
                     ->keyLabel('Platforma')
                     ->valueLabel('URL'),
                 Toggle::make('is_active')
-                    ->label('Aktivny')
+                    ->label('Aktívny')
                     ->default(true),
                 Select::make('join_mode')
-                    ->label('Rezim pripojenia')
+                    ->label('Režim pripojenia')
                     ->options(TeamJoinModeEnum::translations())
                     ->default(TeamJoinModeEnum::APPROVAL->value)
-                    ->helperText('Otvoreny = automaticky prijaty, So schvalenim = admin musi schvalit'),
+                    ->helperText('Otvorený = automaticky prijatý, So schválením = admin musí schváliť'),
 
-                Section::make('Nastavenie clenstva')
+                Section::make('Nastavenie členstva')
                     ->schema([
                         Toggle::make('membership_enabled')
-                            ->label('Clenstvo povolene')
+                            ->label('Členstvo povolené')
                             ->live(),
                         Select::make('membership_fee_currency')
                             ->label('Mena')
@@ -94,26 +94,26 @@ class TeamForm
                             ->default('EUR')
                             ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
                         Textarea::make('membership_description')
-                            ->label('Popis clenstva')
+                            ->label('Popis členstva')
                             ->rows(3)
                             ->visible(fn (Get $get): bool => (bool) $get('membership_enabled'))
-                            ->helperText('Sezonne clenstva sa spravuju v zalozke Sezony'),
+                            ->helperText('Sezónne členstvá sa spravujú v záložke Sezóny'),
                     ])
                     ->collapsible()
                     ->columnSpanFull(),
 
-                Section::make('Platobne udaje')
+                Section::make('Platobné údaje')
                     ->schema([
                         TextInput::make('bank_account_iban')
                             ->label('IBAN')
                             ->placeholder('SK89 7500 0000 0000 1234 5678'),
                         TextInput::make('bank_account_name')
-                            ->label('Meno prijemcu'),
+                            ->label('Meno príjemcu'),
                         TextInput::make('stripe_connect_account_id')
-                            ->label('Stripe Connect ucet')
+                            ->label('Stripe Connect účet')
                             ->disabled()
                             ->dehydrated()
-                            ->placeholder('Nepripojeny'),
+                            ->placeholder('Nepripojený'),
                     ])
                     ->collapsible()
                     ->columnSpanFull(),

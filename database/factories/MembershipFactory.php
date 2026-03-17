@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
 use App\Models\Membership;
 use App\Models\Team;
+use App\Models\TeamSeason;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,10 +21,12 @@ class MembershipFactory extends Factory
         return [
             'team_id' => Team::factory(),
             'user_id' => User::factory(),
+            'team_season_id' => null,
             'status' => MembershipStatusEnum::ACTIVE,
-            'period' => fake()->randomElement(MembershipPeriodEnum::cases()),
             'fee_amount' => fake()->randomFloat(2, 5, 100),
             'fee_currency' => 'EUR',
+            'is_free' => false,
+            'payment_deadline_at' => null,
             'starts_at' => $startsAt,
             'ends_at' => now()->addYear(),
         ];
@@ -50,6 +52,27 @@ class MembershipFactory extends Factory
     {
         return $this->state(fn () => [
             'status' => MembershipStatusEnum::PENDING,
+        ]);
+    }
+
+    public function free(): static
+    {
+        return $this->state(fn () => [
+            'is_free' => true,
+            'fee_amount' => 0,
+            'status' => MembershipStatusEnum::ACTIVE,
+        ]);
+    }
+
+    public function forSeason(TeamSeason $season): static
+    {
+        return $this->state(fn () => [
+            'team_id' => $season->team_id,
+            'team_season_id' => $season->id,
+            'fee_amount' => $season->fee_amount,
+            'fee_currency' => $season->fee_currency,
+            'starts_at' => $season->starts_at,
+            'ends_at' => $season->ends_at,
         ]);
     }
 }

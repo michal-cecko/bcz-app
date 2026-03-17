@@ -16,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -31,13 +32,17 @@ class MembershipsTable
                     ->label('Používateľ')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('season.name')
+                    ->label('Sezóna')
+                    ->placeholder('-')
+                    ->sortable(),
                 TextColumn::make('status')
                     ->label('Stav')
                     ->badge()
                     ->sortable(),
-                TextColumn::make('period')
-                    ->label('Obdobie')
-                    ->sortable(),
+                IconColumn::make('is_free')
+                    ->label('Zadarmo')
+                    ->boolean(),
                 TextColumn::make('fee_amount')
                     ->label('Suma')
                     ->formatStateUsing(fn ($record): string => number_format((float) $record->fee_amount, 2).' '.$record->fee_currency)
@@ -56,6 +61,9 @@ class MembershipsTable
                 SelectFilter::make('status')
                     ->label('Stav')
                     ->options(MembershipStatusEnum::translations()),
+                SelectFilter::make('team_season_id')
+                    ->label('Sezóna')
+                    ->relationship('season', 'name'),
             ])
             ->recordActions([
                 SendEmailAction::make('send_email')
@@ -126,7 +134,6 @@ class MembershipsTable
                     ->modalContent(function (Membership $record): HtmlString {
                         $qrService = app(QrPaymentService::class);
 
-                        // Create a temporary payment-like object for QR generation
                         $latestPayment = $record->payments()->latest()->first();
 
                         if (! $latestPayment) {

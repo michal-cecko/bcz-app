@@ -71,10 +71,6 @@ return [
         InquiryStatusEnum::IN_PROGRESS->value => 'Prebieha',
         InquiryStatusEnum::RESOLVED->value => 'Vyriešený',
     ],
-    MembershipPeriodEnum::class => [
-        MembershipPeriodEnum::MONTHLY->value => 'Mesačne',
-        MembershipPeriodEnum::SEASONAL->value => 'Sezónne',
-    ],
     BillingPeriodEnum::class => [
         BillingPeriodEnum::MONTHLY->value => 'Mesačne',
         BillingPeriodEnum::YEARLY->value => 'Ročne',

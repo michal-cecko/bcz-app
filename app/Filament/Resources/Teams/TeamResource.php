@@ -9,6 +9,7 @@ use App\Filament\Resources\Teams\Pages\ViewTeam;
 use App\Filament\Resources\Teams\RelationManagers\InvitationsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\JoinRequestsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\MembersRelationManager;
+use App\Filament\Resources\Teams\RelationManagers\SeasonsRelationManager;
 use App\Filament\Resources\Teams\Schemas\TeamForm;
 use App\Filament\Resources\Teams\Tables\TeamsTable;
 use App\Models\Team;
@@ -161,6 +162,7 @@ class TeamResource extends Resource
     {
         return [
             MembersRelationManager::class,
+            SeasonsRelationManager::class,
             InvitationsRelationManager::class,
             JoinRequestsRelationManager::class,
         ];

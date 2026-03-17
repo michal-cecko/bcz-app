@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('team-invitations:expire')->daily();
+Schedule::command('memberships:cancel-unpaid')->daily();

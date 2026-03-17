@@ -8,7 +8,6 @@ use App\Enums\ComplexityLevelEnum;
 use App\Enums\GenderEnum;
 use App\Enums\InquiryReasonEnum;
 use App\Enums\InquiryStatusEnum;
-use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
@@ -49,6 +48,7 @@ use App\Models\SportCategory;
 use App\Models\SubscriptionPlan;
 use App\Models\Team;
 use App\Models\TeamPayout;
+use App\Models\TeamSeason;
 use App\Models\TeamSubscription;
 use App\Models\TimetableEntry;
 use App\Models\Training;
@@ -1607,34 +1607,51 @@ class DemoDataSeeder extends Seeder
         // Enable membership on BCZ team
         $bczTeam->update([
             'membership_enabled' => true,
-            'membership_allow_monthly' => true,
-            'membership_allow_seasonal' => true,
-            'membership_fee_amount_monthly' => 5.00,
-            'membership_fee_amount_seasonal' => 50.00,
-            'membership_season_start_month' => 3,
-            'membership_season_end_month' => 11,
             'membership_fee_currency' => 'EUR',
             'membership_description' => 'Sezónne členstvo v BCZ Club zahŕňa prístup k tréningom a zľavy na súťaže.',
             'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
             'bank_account_name' => 'BCZ Club o.z.',
         ]);
 
+        // Create seasons for BCZ team
+        $pastSeason = TeamSeason::create([
+            'team_id' => $bczTeam->id,
+            'name' => 'Sezóna '.(now()->year - 1),
+            'starts_at' => now()->subYear()->startOfYear()->month(3)->startOfMonth(),
+            'ends_at' => now()->subYear()->startOfYear()->month(11)->endOfMonth(),
+            'fee_amount' => 50.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 14,
+        ]);
+
+        $currentSeason = TeamSeason::create([
+            'team_id' => $bczTeam->id,
+            'name' => 'Sezóna '.now()->year,
+            'starts_at' => now()->startOfYear()->month(3)->startOfMonth(),
+            'ends_at' => now()->startOfYear()->month(11)->endOfMonth(),
+            'fee_amount' => 50.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 14,
+        ]);
+
         // Memberships for athletes
         $memberships = collect();
-        $athletes->each(function (User $athlete, $index) use ($bczTeam, &$memberships) {
+        $athletes->each(function (User $athlete, $index) use ($bczTeam, $currentSeason, $pastSeason, &$memberships) {
             $status = $index < 5 ? MembershipStatusEnum::ACTIVE : ($index < 7 ? MembershipStatusEnum::EXPIRED : MembershipStatusEnum::PENDING);
-            $startsAt = $status === MembershipStatusEnum::EXPIRED ? now()->subYear()->subMonth() : now()->subMonths(rand(1, 6));
-            $endsAt = $status === MembershipStatusEnum::EXPIRED ? now()->subMonth() : now()->addMonths(rand(3, 12));
+            $season = $status === MembershipStatusEnum::EXPIRED ? $pastSeason : $currentSeason;
+            $isFree = $index === 4;
 
             $membership = Membership::create([
                 'team_id' => $bczTeam->id,
                 'user_id' => $athlete->id,
+                'team_season_id' => $season->id,
                 'status' => $status,
-                'period' => MembershipPeriodEnum::SEASONAL,
-                'fee_amount' => 20.00,
+                'fee_amount' => $isFree ? 0 : 50.00,
                 'fee_currency' => 'EUR',
-                'starts_at' => $startsAt,
-                'ends_at' => $endsAt,
+                'is_free' => $isFree,
+                'payment_deadline_at' => $status === MembershipStatusEnum::PENDING ? now()->addDays(14) : null,
+                'starts_at' => $season->starts_at,
+                'ends_at' => $season->ends_at,
             ]);
 
             $memberships->push($membership);
@@ -1855,20 +1872,30 @@ class DemoDataSeeder extends Seeder
             'period_to' => now()->endOfMonth(),
         ]);
 
-        // Memberships for second team
-        User::factory(3)->create()->each(function (User $user) use ($secondTeam) {
+        // Season + memberships for second team
+        $secondTeamSeason = TeamSeason::create([
+            'team_id' => $secondTeam->id,
+            'name' => 'Sezóna '.now()->year,
+            'starts_at' => now()->startOfYear()->month(1)->startOfMonth(),
+            'ends_at' => now()->startOfYear()->month(12)->endOfMonth(),
+            'fee_amount' => 120.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 14,
+        ]);
+
+        User::factory(3)->create()->each(function (User $user) use ($secondTeam, $secondTeamSeason) {
             $user->assignRole(RoleEnum::CUSTOMER);
             $user->teams()->attach($secondTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
 
             Membership::create([
                 'team_id' => $secondTeam->id,
                 'user_id' => $user->id,
+                'team_season_id' => $secondTeamSeason->id,
                 'status' => MembershipStatusEnum::ACTIVE,
-                'period' => MembershipPeriodEnum::MONTHLY,
-                'fee_amount' => 10.00,
+                'fee_amount' => 120.00,
                 'fee_currency' => 'EUR',
-                'starts_at' => now()->subMonth(),
-                'ends_at' => now()->addMonths(11),
+                'starts_at' => $secondTeamSeason->starts_at,
+                'ends_at' => $secondTeamSeason->ends_at,
             ]);
         });
     }
