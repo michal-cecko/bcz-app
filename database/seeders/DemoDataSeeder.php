@@ -1613,13 +1613,23 @@ class DemoDataSeeder extends Seeder
             'bank_account_name' => 'BCZ Club o.z.',
         ]);
 
-        // Create seasons for BCZ team
+        // Create seasons for BCZ team — historical + current + future
+        $olderSeason = TeamSeason::create([
+            'team_id' => $bczTeam->id,
+            'name' => 'Sezóna '.(now()->year - 2),
+            'starts_at' => now()->subYears(2)->startOfYear()->month(3)->startOfMonth(),
+            'ends_at' => now()->subYears(2)->startOfYear()->month(11)->endOfMonth(),
+            'fee_amount' => 40.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 14,
+        ]);
+
         $pastSeason = TeamSeason::create([
             'team_id' => $bczTeam->id,
             'name' => 'Sezóna '.(now()->year - 1),
             'starts_at' => now()->subYear()->startOfYear()->month(3)->startOfMonth(),
             'ends_at' => now()->subYear()->startOfYear()->month(11)->endOfMonth(),
-            'fee_amount' => 50.00,
+            'fee_amount' => 45.00,
             'fee_currency' => 'EUR',
             'payment_deadline_days' => 14,
         ]);
@@ -1631,27 +1641,92 @@ class DemoDataSeeder extends Seeder
             'ends_at' => now()->startOfYear()->month(11)->endOfMonth(),
             'fee_amount' => 50.00,
             'fee_currency' => 'EUR',
+            'max_capacity' => 20,
             'payment_deadline_days' => 14,
         ]);
 
-        // Memberships for athletes
+        $futureSeason = TeamSeason::create([
+            'team_id' => $bczTeam->id,
+            'name' => 'Sezóna '.(now()->year + 1),
+            'starts_at' => now()->addYear()->startOfYear()->month(3)->startOfMonth(),
+            'ends_at' => now()->addYear()->startOfYear()->month(11)->endOfMonth(),
+            'fee_amount' => 55.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 21,
+        ]);
+
+        // Historical memberships for older season (all expired/completed)
+        $athletes->take(4)->each(function (User $athlete) use ($bczTeam, $olderSeason) {
+            Membership::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $athlete->id,
+                'team_season_id' => $olderSeason->id,
+                'status' => MembershipStatusEnum::EXPIRED,
+                'fee_amount' => 40.00,
+                'fee_currency' => 'EUR',
+                'starts_at' => $olderSeason->starts_at,
+                'ends_at' => $olderSeason->ends_at,
+            ]);
+        });
+
+        // Past season memberships — mix of expired and cancelled
+        $athletes->take(6)->each(function (User $athlete, $index) use ($bczTeam, $pastSeason) {
+            $status = $index < 4 ? MembershipStatusEnum::EXPIRED : MembershipStatusEnum::CANCELLED;
+
+            Membership::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $athlete->id,
+                'team_season_id' => $pastSeason->id,
+                'status' => $status,
+                'fee_amount' => $status === MembershipStatusEnum::CANCELLED ? 0 : 45.00,
+                'fee_currency' => 'EUR',
+                'starts_at' => $pastSeason->starts_at,
+                'ends_at' => $pastSeason->ends_at,
+            ]);
+        });
+
+        // Current season memberships — active, pending, free, cancelled (overdue)
         $memberships = collect();
-        $athletes->each(function (User $athlete, $index) use ($bczTeam, $currentSeason, $pastSeason, &$memberships) {
-            $status = $index < 5 ? MembershipStatusEnum::ACTIVE : ($index < 7 ? MembershipStatusEnum::EXPIRED : MembershipStatusEnum::PENDING);
-            $season = $status === MembershipStatusEnum::EXPIRED ? $pastSeason : $currentSeason;
-            $isFree = $index === 4;
+        $athletes->each(function (User $athlete, $index) use ($bczTeam, $currentSeason, &$memberships) {
+            // 0-4: ACTIVE (paid), 5: ACTIVE (free), 6: CANCELLED (overdue), 7-8: PENDING (waiting)
+            if ($index <= 4) {
+                $status = MembershipStatusEnum::ACTIVE;
+                $isFree = false;
+                $feeAmount = 50.00;
+                $deadlineAt = null;
+            } elseif ($index === 5) {
+                $status = MembershipStatusEnum::ACTIVE;
+                $isFree = true;
+                $feeAmount = 0;
+                $deadlineAt = null;
+            } elseif ($index === 6) {
+                $status = MembershipStatusEnum::CANCELLED;
+                $isFree = false;
+                $feeAmount = 50.00;
+                $deadlineAt = now()->subDays(3);
+            } else {
+                $status = MembershipStatusEnum::PENDING;
+                $isFree = false;
+                // Mid-season join — prorated fee
+                $feeAmount = $currentSeason->proratedFee();
+                $deadlineAt = now()->addDays(rand(3, 12));
+            }
+
+            $startsAt = $index >= 7
+                ? now()->subDays(rand(1, 5))
+                : $currentSeason->starts_at;
 
             $membership = Membership::create([
                 'team_id' => $bczTeam->id,
                 'user_id' => $athlete->id,
-                'team_season_id' => $season->id,
+                'team_season_id' => $currentSeason->id,
                 'status' => $status,
-                'fee_amount' => $isFree ? 0 : 50.00,
+                'fee_amount' => $feeAmount,
                 'fee_currency' => 'EUR',
                 'is_free' => $isFree,
-                'payment_deadline_at' => $status === MembershipStatusEnum::PENDING ? now()->addDays(14) : null,
-                'starts_at' => $season->starts_at,
-                'ends_at' => $season->ends_at,
+                'payment_deadline_at' => $deadlineAt,
+                'starts_at' => $startsAt,
+                'ends_at' => $currentSeason->ends_at,
             ]);
 
             $memberships->push($membership);
