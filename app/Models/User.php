@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Contracts\Linkable;
+use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
+use Carbon\Carbon;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -47,6 +49,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         'password',
         'has_public_profile',
         'public_profile_approved_at',
+        'birth_date',
+        'gender',
     ];
 
     protected $hidden = [
@@ -69,6 +73,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             'socials' => 'json',
             'has_public_profile' => 'boolean',
             'public_profile_approved_at' => 'datetime',
+            'birth_date' => 'date',
+            'gender' => GenderEnum::class,
         ];
     }
 
@@ -261,6 +267,34 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             ->orderBy('name')
             ->get()
             ->mapWithKeys(fn (User $u) => [$u->id => $u->getLinkLabel()]);
+    }
+
+    public function getAge(): ?int
+    {
+        if (! $this->birth_date) {
+            return null;
+        }
+
+        return (int) Carbon::now()->diffInYears($this->birth_date);
+    }
+
+    /**
+     * Returns true when the user has no admin-level roles — i.e. is a regular member (ATHLETE/CUSTOMER).
+     */
+    public function isMemberLevel(?Team $team = null): bool
+    {
+        $adminGlobalRoles = [RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::EDITOR, RoleEnum::JUDGE];
+        $adminTeamRoles = [RoleEnum::TEAM_ADMIN, RoleEnum::COACH];
+
+        if ($this->hasRole($adminGlobalRoles)) {
+            return false;
+        }
+
+        if ($this->hasTeamRole($adminTeamRoles, $team)) {
+            return false;
+        }
+
+        return true;
     }
 
     public function canImpersonate(): bool
