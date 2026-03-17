@@ -2,15 +2,14 @@
 
 namespace App\Filament\Resources\Teams\RelationManagers;
 
+use App\Filament\Resources\TeamSeasons\TeamSeasonResource;
 use App\Models\TeamSeason;
-use App\Notifications\MembershipPaymentDue;
 use App\Services\SeasonService;
-use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -68,7 +67,8 @@ class SeasonsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('name')
                     ->label('Názov')
-                    ->searchable(),
+                    ->searchable()
+                    ->url(fn (TeamSeason $record): string => TeamSeasonResource::getUrl('view', ['record' => $record])),
                 TextColumn::make('starts_at')
                     ->label('Začiatok')
                     ->date()
@@ -117,30 +117,8 @@ class SeasonsRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
-                Action::make('notifyUnpaid')
-                    ->label('Upozorniť nezaplatených')
-                    ->icon('heroicon-o-bell')
-                    ->requiresConfirmation()
-                    ->action(function (TeamSeason $record): void {
-                        $unpaidMemberships = $record->memberships()
-                            ->where('status', 'pending')
-                            ->where('is_free', false)
-                            ->with('user')
-                            ->get();
-
-                        $count = 0;
-                        foreach ($unpaidMemberships as $membership) {
-                            if ($membership->user) {
-                                $membership->user->notify(new MembershipPaymentDue($membership));
-                                $count++;
-                            }
-                        }
-
-                        Notification::make()
-                            ->title("Notifikácia odoslaná {$count} členom.")
-                            ->success()
-                            ->send();
-                    }),
+                DeleteAction::make()
+                    ->requiresConfirmation(),
             ]);
     }
 }
