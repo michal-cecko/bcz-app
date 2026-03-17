@@ -22,7 +22,7 @@
     <div class="flex items-center gap-2">
         @foreach ($allRoles as $role)
             <x-filament::badge size="sm" color="gray">
-                {{ RoleEnum::tryFrom($role)?->getLabel() ?? $role }}
+                {{ ($role instanceof RoleEnum ? $role : RoleEnum::tryFrom($role))?->getLabel() ?? $role }}
             </x-filament::badge>
         @endforeach
     </div>

@@ -70,6 +70,9 @@ class TrainingResourceTest extends TestCase
                 'sport_category_id' => $sportCategory->id,
                 'pricing_type' => TrainingPricingTypeEnum::FREE->value,
                 'is_active' => true,
+                'registration_form_schema' => [
+                    ['name' => 'email', 'type' => 'email', 'label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'required' => true],
+                ],
             ])
             ->call('create')
             ->assertNotified()

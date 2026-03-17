@@ -127,6 +127,24 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         return false;
     }
 
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($this->hasRole(RoleEnum::SUPER_ADMIN)) {
+            return true;
+        }
+
+        if ($this->hasRole([RoleEnum::ADMIN, RoleEnum::EDITOR, RoleEnum::JUDGE])) {
+            return true;
+        }
+
+        // Any user with a team-scoped role (TEAM_ADMIN, COACH, ATHLETE)
+        if ($this->teams()->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function getTenants(Panel $panel): Collection
     {
         return $this->teams;
@@ -243,6 +261,31 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             ->orderBy('name')
             ->get()
             ->mapWithKeys(fn (User $u) => [$u->id => $u->getLinkLabel()]);
+    }
+
+    public function canImpersonate(): bool
+    {
+        return $this->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN]);
+    }
+
+    /**
+     * SUPERADMIN cannot be impersonated by anyone.
+     * ADMIN cannot be impersonated by other ADMINs (only by SUPERADMIN).
+     */
+    public function canBeImpersonated(): bool
+    {
+        if ($this->hasRole(RoleEnum::SUPER_ADMIN)) {
+            return false;
+        }
+
+        if ($this->hasRole(RoleEnum::ADMIN)) {
+            /** @var User|null $current */
+            $current = auth()->user();
+
+            return $current && $current->hasRole(RoleEnum::SUPER_ADMIN);
+        }
+
+        return true;
     }
 
     /**

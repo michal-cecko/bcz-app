@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Contracts\Linkable;
 use App\Enums\MembershipPeriodEnum;
 use App\Enums\RoleEnum;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Filament\Models\Contracts\HasAvatar;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,7 +23,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Team extends Model implements HasAvatar, HasMedia, Linkable
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
+    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['name', 'story', 'achievements'];

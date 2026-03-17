@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Contracts\Linkable;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
+use Database\Factories\MediaItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,8 +15,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class MediaItem extends Model implements HasMedia, Linkable
 {
-    /** @use HasFactory<\Database\Factories\MediaItemFactory> */
-    use HasFactory, HasUuidV7, InteractsWithMedia;
+    /** @use HasFactory<MediaItemFactory> */
+    use HasCreator, HasFactory, HasUuidV7, InteractsWithMedia;
 
     protected $fillable = [
         'team_id',

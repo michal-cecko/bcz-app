@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\RoleEnum;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -13,44 +12,36 @@ class PaymentPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyAppRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-            RoleEnum::TEAM_ADMIN,
-        ]);
+        return $user->can('ViewAny:Payment');
     }
 
     public function view(User $user, Payment $payment): bool
     {
-        return $user->hasAnyAppRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-            RoleEnum::TEAM_ADMIN,
-        ]);
+        return $user->can('View:Payment');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyAppRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-            RoleEnum::TEAM_ADMIN,
-        ]);
+        return $user->can('Create:Payment');
     }
 
     public function update(User $user, Payment $payment): bool
     {
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-        ]);
+        return $user->can('Update:Payment');
     }
 
     public function delete(User $user, Payment $payment): bool
     {
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-        ]);
+        return $user->can('Delete:Payment');
+    }
+
+    public function restore(User $user, Payment $payment): bool
+    {
+        return $user->can('Restore:Payment');
+    }
+
+    public function forceDelete(User $user, Payment $payment): bool
+    {
+        return $user->can('ForceDelete:Payment');
     }
 }

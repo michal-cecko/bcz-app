@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
-use App\Enums\RoleEnum;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -11,8 +10,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
+use STS\FilamentImpersonate\Actions\Impersonate;
 
 class EditUser extends EditRecord
 {
@@ -26,59 +25,46 @@ class EditUser extends EditRecord
         $user = $this->record;
 
         return [
-            Action::make('impersonate')
-                ->label('Prihlasiť sa ako')
-                ->icon(Heroicon::OutlinedEye)
-                ->color('gray')
-                ->requiresConfirmation()
-                ->modalHeading('Prihlasiť sa ako používateľ')
-                ->modalDescription(fn () => "Budete prihlasený ako {$user->name}. Pôvodné prihlásenie bude obnovené po ukončení.")
-                ->modalSubmitActionLabel('Prihlasiť sa')
-                ->action(function () use ($user): void {
-                    \App\Services\ImpersonationService::start($user);
-                    $this->redirect(filament()->getUrl());
-                })
-                ->visible(fn () => Auth::id() !== $user->id
-                    && Auth::user()->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN])
-                    && ! \App\Services\ImpersonationService::isImpersonating()),
+            Impersonate::make()
+                ->record($this->getRecord()),
             Action::make('approveProfile')
-                ->label('Schváliť profil')
+                ->label('Schvalit profil')
                 ->icon(Heroicon::OutlinedCheckCircle)
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalHeading('Schváliť verejný profil')
-                ->modalDescription('Naozaj chcete schváliť verejný profil tohto používateľa?')
+                ->modalHeading('Schvalit verejny profil')
+                ->modalDescription('Naozaj chcete schvalit verejny profil tohto pouzivatela?')
                 ->action(fn () => $user->update(['public_profile_approved_at' => now()]))
                 ->visible(fn () => $user->has_public_profile && ! $user->public_profile_approved_at),
             Action::make('revokeProfile')
-                ->label('Zrušiť schválenie')
+                ->label('Zrusit schvalenie')
                 ->icon(Heroicon::OutlinedXCircle)
                 ->color('danger')
                 ->requiresConfirmation()
-                ->modalHeading('Zrušiť schválenie profilu')
-                ->modalDescription('Profil používateľa bude odstránený z verejného zoznamu.')
+                ->modalHeading('Zrusit schvalenie profilu')
+                ->modalDescription('Profil pouzivatela bude odstraneny z verejneho zoznamu.')
                 ->action(fn () => $user->update(['public_profile_approved_at' => null]))
                 ->visible(fn () => $user->has_public_profile && $user->public_profile_approved_at),
             Action::make('sendPasswordReset')
-                ->label('Obnoviť heslo')
+                ->label('Obnovit heslo')
                 ->icon(Heroicon::OutlinedKey)
                 ->color('gray')
                 ->requiresConfirmation()
-                ->modalHeading('Odoslať reset hesla')
-                ->modalDescription(fn () => "E-mail na obnovu hesla bude odoslaný na {$user->email}.")
-                ->modalSubmitActionLabel('Odoslať')
+                ->modalHeading('Odoslat reset hesla')
+                ->modalDescription(fn () => "E-mail na obnovu hesla bude odoslany na {$user->email}.")
+                ->modalSubmitActionLabel('Odoslat')
                 ->action(function () use ($user): void {
                     $status = Password::sendResetLink(['email' => $user->email]);
 
                     if ($status === Password::RESET_LINK_SENT) {
                         Notification::make()
                             ->success()
-                            ->title('E-mail na obnovu hesla bol odoslaný.')
+                            ->title('E-mail na obnovu hesla bol odoslany.')
                             ->send();
                     } else {
                         Notification::make()
                             ->danger()
-                            ->title('Nepodarilo sa odoslať e-mail.')
+                            ->title('Nepodarilo sa odoslat e-mail.')
                             ->body(__($status))
                             ->send();
                     }

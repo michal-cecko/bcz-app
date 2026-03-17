@@ -12,13 +12,17 @@ use App\Models\TrainingRegistration;
 use App\Observers\TrainingObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        $this->registerTeamScopedGate();
+
         Training::observe(TrainingObserver::class);
 
         Relation::morphMap([
@@ -48,6 +52,36 @@ class AppServiceProvider extends ServiceProvider
             Cache::forget('menu_header');
             Cache::forget('menu_footer_discover');
             Cache::forget('menu_footer_programs');
+        });
+    }
+
+    /**
+     * Bridge team-scoped roles (stored in team_user pivot) to Spatie permissions.
+     * This allows $user->can('Training:ViewAny') to work for TEAM_ADMIN/COACH/ATHLETE.
+     */
+    protected function registerTeamScopedGate(): void
+    {
+        Gate::before(function ($user, string $ability) {
+            $tenant = filament()->getTenant();
+            if (! $tenant) {
+                return null;
+            }
+
+            $teamRoles = $user->teams()
+                ->where('teams.id', $tenant->id)
+                ->pluck('team_user.role')
+                ->toArray();
+
+            if (empty($teamRoles)) {
+                return null;
+            }
+
+            $hasPermission = Role::query()
+                ->whereIn('name', $teamRoles)
+                ->whereHas('permissions', fn ($q) => $q->where('name', $ability))
+                ->exists();
+
+            return $hasPermission ?: null;
         });
     }
 }

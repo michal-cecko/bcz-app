@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Enums\RoleEnum;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
@@ -61,10 +62,25 @@ class UserResource extends Resource
                                 TextEntry::make('email')
                                     ->label('E-mail')
                                     ->copyable(),
-                                TextEntry::make('roles.name')
+                                TextEntry::make('all_roles')
                                     ->label('Roly')
                                     ->badge()
-                                    ->formatStateUsing(fn (string $state): string => \App\Enums\RoleEnum::tryFrom($state)?->getLabel() ?? $state),
+                                    ->state(function (User $record): array {
+                                        $globalRoles = $record->getRoleNames()
+                                            ->reject(fn ($r) => $r === 'panel_user')
+                                            ->values();
+
+                                        $tenant = filament()->getTenant();
+                                        $teamRoles = $tenant
+                                            ? $record->teams()
+                                                ->where('teams.id', $tenant->id)
+                                                ->pluck('team_user.role')
+                                                ->map(fn ($r) => $r instanceof RoleEnum ? $r->value : $r)
+                                            : collect();
+
+                                        return $globalRoles->merge($teamRoles)->unique()->values()->toArray();
+                                    })
+                                    ->formatStateUsing(fn (string $state): string => RoleEnum::tryFrom($state)?->getLabel() ?? $state),
                             ])
                             ->columnSpan(2),
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Contracts\Linkable;
 use App\Enums\EventTypeEnum;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +22,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Event extends Model implements HasMedia, Linkable
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
+    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'card_description', 'content'];

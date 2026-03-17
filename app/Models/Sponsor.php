@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\SponsorTagEnum;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Sponsor extends Model implements HasMedia
 {
-    use HasFactory, HasUuidV7, InteractsWithMedia;
+    use HasCreator, HasFactory, HasUuidV7, InteractsWithMedia;
 
     protected $fillable = [
         'name',

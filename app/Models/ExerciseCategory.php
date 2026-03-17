@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Spatie\Translatable\HasTranslations;
 
 class ExerciseCategory extends Model
 {
-    use HasFactory, HasTranslations, HasUuidV7;
+    use HasCreator, HasFactory, HasTranslations, HasUuidV7;
 
     /** @var list<string> */
     public array $translatable = ['name', 'description'];

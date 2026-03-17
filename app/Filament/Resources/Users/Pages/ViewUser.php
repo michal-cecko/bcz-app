@@ -2,15 +2,14 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
-use App\Enums\RoleEnum;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
+use STS\FilamentImpersonate\Actions\Impersonate;
 
 class ViewUser extends ViewRecord
 {
@@ -19,41 +18,28 @@ class ViewUser extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('impersonate')
-                ->label('Prihlasiť sa ako')
-                ->icon(Heroicon::OutlinedEye)
-                ->color('gray')
-                ->requiresConfirmation()
-                ->modalHeading('Prihlasiť sa ako používateľ')
-                ->modalDescription(fn () => "Budete prihlasený ako {$this->record->name}. Pôvodné prihlásenie bude obnovené po ukončení.")
-                ->modalSubmitActionLabel('Prihlasiť sa')
-                ->action(function (): void {
-                    \App\Services\ImpersonationService::start($this->record);
-                    $this->redirect(filament()->getUrl());
-                })
-                ->visible(fn () => Auth::id() !== $this->record->id
-                    && Auth::user()->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN])
-                    && ! \App\Services\ImpersonationService::isImpersonating()),
+            Impersonate::make()
+                ->record($this->getRecord()),
             Action::make('sendPasswordReset')
-                ->label('Obnoviť heslo')
+                ->label('Obnovit heslo')
                 ->icon(Heroicon::OutlinedKey)
                 ->color('gray')
                 ->requiresConfirmation()
-                ->modalHeading('Odoslať reset hesla')
-                ->modalDescription(fn () => "E-mail na obnovu hesla bude odoslaný na {$this->record->email}.")
-                ->modalSubmitActionLabel('Odoslať')
+                ->modalHeading('Odoslat reset hesla')
+                ->modalDescription(fn () => "E-mail na obnovu hesla bude odoslany na {$this->record->email}.")
+                ->modalSubmitActionLabel('Odoslat')
                 ->action(function (): void {
                     $status = Password::sendResetLink(['email' => $this->record->email]);
 
                     if ($status === Password::RESET_LINK_SENT) {
                         Notification::make()
                             ->success()
-                            ->title('E-mail na obnovu hesla bol odoslaný.')
+                            ->title('E-mail na obnovu hesla bol odoslany.')
                             ->send();
                     } else {
                         Notification::make()
                             ->danger()
-                            ->title('Nepodarilo sa odoslať e-mail.')
+                            ->title('Nepodarilo sa odoslat e-mail.')
                             ->body(__($status))
                             ->send();
                     }

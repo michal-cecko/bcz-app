@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PlanTierEnum;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Spatie\Translatable\HasTranslations;
 
 class SubscriptionPlan extends Model
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7;
+    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7;
 
     /** @var list<string> */
     public array $translatable = ['name', 'description', 'features'];

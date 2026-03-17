@@ -1,6 +1,10 @@
 <?php
 
 declare(strict_types=1);
+use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
+use Filament\Pages\Dashboard;
+use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
 
 return [
 
@@ -23,7 +27,7 @@ return [
             'pages' => true,
             'widgets' => true,
             'resources' => true,
-            'custom_permissions' => false,
+            'custom_permissions' => true,
         ],
     ],
 
@@ -67,7 +71,7 @@ return [
     'super_admin' => [
         'enabled' => true,
         'name' => 'SUPERADMIN',
-        'define_via_gate' => false,
+        'define_via_gate' => true,
         'intercept_gate' => 'before',
     ],
 
@@ -165,7 +169,7 @@ return [
     'resources' => [
         'subject' => 'model',
         'manage' => [
-            \BezhanSalleh\FilamentShield\Resources\Roles\RoleResource::class => [
+            RoleResource::class => [
                 'viewAny',
                 'view',
                 'create',
@@ -193,7 +197,7 @@ return [
         'subject' => 'class',
         'prefix' => 'view',
         'exclude' => [
-            \Filament\Pages\Dashboard::class,
+            Dashboard::class,
         ],
     ],
 
@@ -212,8 +216,8 @@ return [
         'subject' => 'class',
         'prefix' => 'view',
         'exclude' => [
-            \Filament\Widgets\AccountWidget::class,
-            \Filament\Widgets\FilamentInfoWidget::class,
+            AccountWidget::class,
+            FilamentInfoWidget::class,
         ],
     ],
 
@@ -228,7 +232,18 @@ return [
     |
     */
 
-    'custom_permissions' => [],
+    'custom_permissions' => [
+        'UpdateOwn:Training',
+        'DeleteOwn:Training',
+        'UpdateOwn:Exercise',
+        'DeleteOwn:Exercise',
+        'UpdateOwn:EmailTemplate',
+        'DeleteOwn:EmailTemplate',
+        'UpdateOwn:MediaItem',
+        'DeleteOwn:MediaItem',
+        'UpdateOwn:Inquiry',
+        'DeleteOwn:Inquiry',
+    ],
 
     /*
     |--------------------------------------------------------------------------

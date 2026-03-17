@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\RoleEnum;
 use App\Models\Page;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -13,38 +12,22 @@ class PagePolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-            RoleEnum::EDITOR,
-        ]);
+        return $user->can('ViewAny:Page');
     }
 
     public function view(User $user, Page $page): bool
     {
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-            RoleEnum::EDITOR,
-        ]);
+        return $user->can('View:Page');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-            RoleEnum::EDITOR,
-        ]);
+        return $user->can('Create:Page');
     }
 
     public function update(User $user, Page $page): bool
     {
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-            RoleEnum::EDITOR,
-        ]);
+        return $user->can('Update:Page');
     }
 
     public function delete(User $user, Page $page): bool
@@ -53,10 +36,7 @@ class PagePolicy
             return false;
         }
 
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-        ]);
+        return $user->can('Delete:Page');
     }
 
     public function forceDelete(User $user, Page $page): bool
@@ -65,16 +45,31 @@ class PagePolicy
             return false;
         }
 
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-        ]);
+        return $user->can('ForceDelete:Page');
     }
 
     public function restore(User $user, Page $page): bool
     {
-        return $user->hasRole([
-            RoleEnum::SUPER_ADMIN,
-            RoleEnum::ADMIN,
-        ]);
+        return $user->can('Restore:Page');
+    }
+
+    public function forceDeleteAny(User $user): bool
+    {
+        return $user->can('ForceDeleteAny:Page');
+    }
+
+    public function restoreAny(User $user): bool
+    {
+        return $user->can('RestoreAny:Page');
+    }
+
+    public function replicate(User $user, Page $page): bool
+    {
+        return $user->can('Replicate:Page');
+    }
+
+    public function reorder(User $user): bool
+    {
+        return $user->can('Reorder:Page');
     }
 }

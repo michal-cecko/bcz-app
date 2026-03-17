@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Contracts\Linkable;
 use App\Enums\PageStatusEnum;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Page extends Model implements HasMedia, Linkable
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
+    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'meta_title', 'meta_description'];

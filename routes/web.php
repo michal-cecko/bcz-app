@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\EmailPreviewController;
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\CompetitionController;
 use App\Http\Controllers\EventController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TrainingController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -179,7 +181,7 @@ Route::middleware('signed')->group(function () {
         ->name('magic-login');
 
     Route::post('/logout', function () {
-        \Illuminate\Support\Facades\Auth::logout();
+        Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
@@ -187,17 +189,12 @@ Route::middleware('signed')->group(function () {
     })->name('logout');
 });
 
-Route::get('/admin/email-preview/{key}', [\App\Http\Controllers\Admin\EmailPreviewController::class, 'show'])
+Route::get('/admin/email-preview/{key}', [EmailPreviewController::class, 'show'])
     ->name('admin.email-preview');
 
 Route::middleware('auth')->group(function () {
-    Route::post('/admin/email-preview', [\App\Http\Controllers\Admin\EmailPreviewController::class, 'store'])
+    Route::post('/admin/email-preview', [EmailPreviewController::class, 'store'])
         ->name('admin.email-preview.store');
-
-    Route::post('/admin/impersonate/{user}', [\App\Http\Controllers\Admin\ImpersonationController::class, 'start'])
-        ->name('admin.impersonate.start');
-    Route::post('/admin/impersonate-stop', [\App\Http\Controllers\Admin\ImpersonationController::class, 'stop'])
-        ->name('admin.impersonate.stop');
 
     Route::get('/stripe/connect/{team}/onboard', [StripeConnectController::class, 'onboard'])
         ->name('stripe.connect.onboard');

@@ -2,15 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Models\Faq;
 use App\Models\Page;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class PageControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('systemPagesProvider')]
+    #[DataProvider('systemPagesProvider')]
     public function test_system_page_returns_200_and_shows_content(string $systemKey, string $slug, string $titleSk, array $content, string $expectedText): void
     {
         Page::factory()->published()->create([
@@ -96,7 +98,7 @@ class PageControllerTest extends TestCase
             ],
             'services' => [
                 'services',
-                'vystupenia-workshopy',
+                'vystupenia-prednasky-workshopy',
                 'Vystúpenia & Workshopy',
                 [
                     ['type' => 'masonBrick', 'attrs' => ['id' => 'hero', 'config' => ['title' => ['sk' => 'Vystúpenia, Workshopy & Prednášky']]]],
@@ -171,7 +173,7 @@ class PageControllerTest extends TestCase
 
     public function test_page_with_faq_brick_renders_accordion(): void
     {
-        $faq = \App\Models\Faq::factory()->create([
+        $faq = Faq::factory()->create([
             'question' => ['sk' => 'Test question?'],
             'answer' => ['sk' => '<p>Test answer.</p>'],
             'is_published' => true,

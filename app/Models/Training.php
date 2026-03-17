@@ -6,6 +6,7 @@ use App\Contracts\Linkable;
 use App\Enums\GenderEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +21,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Training extends Model implements Linkable
 {
-    use HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
+    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'description', 'place_name', 'gathering_place'];

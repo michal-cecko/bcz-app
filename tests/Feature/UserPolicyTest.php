@@ -6,6 +6,7 @@ use App\Enums\RoleEnum;
 use App\Models\Team;
 use App\Models\User;
 use App\Policies\UserPolicy;
+use Database\Seeders\ShieldPermissionSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -24,6 +25,8 @@ class UserPolicyTest extends TestCase
         foreach (RoleEnum::cases() as $role) {
             Role::firstOrCreate(['name' => $role->value, 'guard_name' => 'web']);
         }
+
+        $this->seed(ShieldPermissionSeeder::class);
 
         $this->team = Team::factory()->create();
 

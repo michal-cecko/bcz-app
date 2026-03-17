@@ -2,11 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Resources\Settings\SettingResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Models\Team;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -41,7 +43,7 @@ class AdminPanelProvider extends PanelProvider
             ->spa()
             ->unsavedChangesAlerts()
             ->databaseTransactions()
-            ->profile(\App\Filament\Pages\Auth\EditProfile::class)
+            ->profile(EditProfile::class)
             ->emailChangeVerification()
             ->passwordReset()
             ->tenant(Team::class, ownershipRelationship: 'teams')
@@ -49,18 +51,18 @@ class AdminPanelProvider extends PanelProvider
                 Action::make('my-team')
                     ->label('Môj tím')
                     ->url(function (): ?string {
-                        $tenant = \Filament\Facades\Filament::getTenant();
+                        $tenant = Filament::getTenant();
 
                         return $tenant ? TeamResource::getUrl('view', ['record' => $tenant]) : null;
                     })
-                    ->visible(fn (): bool => \Filament\Facades\Filament::getTenant() !== null)
+                    ->visible(fn (): bool => Filament::getTenant() !== null)
                     ->icon(Heroicon::OutlinedUserGroup),
                 Action::make('settings')
                     ->label('Nastavenia')
                     ->url(function (): ?string {
-                        return \Filament\Facades\Filament::getTenant() ? SettingResource::getUrl() : null;
+                        return Filament::getTenant() ? SettingResource::getUrl() : null;
                     })
-                    ->visible(fn (): bool => \Filament\Facades\Filament::getTenant() !== null)
+                    ->visible(fn (): bool => Filament::getTenant() !== null)
                     ->icon(Heroicon::OutlinedCog6Tooth),
             ])
             ->databaseNotifications()
@@ -75,10 +77,6 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): View => view('filament.topbar-homepage-link'),
-            )
-            ->renderHook(
-                PanelsRenderHook::BODY_START,
-                fn (): View => view('filament.impersonation-banner'),
             )
             ->sidebarCollapsibleOnDesktop()
             ->collapsibleNavigationGroups()

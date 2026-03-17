@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ComplexityLevelEnum;
+use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Exercise extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
+    use HasCreator, HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
     public array $translatable = ['name', 'description'];

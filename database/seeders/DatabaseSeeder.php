@@ -65,6 +65,7 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $this->call(ShieldPermissionSeeder::class);
         $this->call(DemoDataSeeder::class);
     }
 }
