@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\GenderEnum;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -36,6 +38,13 @@ class UserForm
                     ->multiple()
                     ->preload()
                     ->required(),
+                DatePicker::make('birth_date')
+                    ->label('Dátum narodenia')
+                    ->native(false)
+                    ->maxDate(now()),
+                Select::make('gender')
+                    ->label('Pohlavie')
+                    ->options(GenderEnum::translations()),
                 SpatieMediaLibraryFileUpload::make('profile_image')
                     ->collection('profile_image')
                     ->disk('public')

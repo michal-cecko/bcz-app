@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages\Auth;
 
+use App\Enums\GenderEnum;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
@@ -27,6 +29,13 @@ class EditProfile extends BaseEditProfile
                 TextInput::make('phone')
                     ->label('Telefón')
                     ->tel(),
+                DatePicker::make('birth_date')
+                    ->label('Dátum narodenia')
+                    ->native(false)
+                    ->maxDate(now()),
+                Select::make('gender')
+                    ->label('Pohlavie')
+                    ->options(GenderEnum::translations()),
                 Select::make('locale')
                     ->label('Predvolený jazyk')
                     ->options([
