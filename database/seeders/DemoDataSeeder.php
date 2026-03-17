@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BillingPeriodEnum;
 use App\Enums\CoachRoleEnum;
 use App\Enums\ComplexityLevelEnum;
 use App\Enums\GenderEnum;
@@ -1607,11 +1608,13 @@ class DemoDataSeeder extends Seeder
         $bczTeam->update([
             'membership_enabled' => true,
             'membership_allow_monthly' => true,
-            'membership_allow_yearly' => true,
+            'membership_allow_seasonal' => true,
             'membership_fee_amount_monthly' => 5.00,
-            'membership_fee_amount_yearly' => 50.00,
+            'membership_fee_amount_seasonal' => 50.00,
+            'membership_season_start_month' => 3,
+            'membership_season_end_month' => 11,
             'membership_fee_currency' => 'EUR',
-            'membership_description' => 'Ročné členstvo v BCZ Club zahŕňa prístup k tréningom a zľavy na súťaže.',
+            'membership_description' => 'Sezónne členstvo v BCZ Club zahŕňa prístup k tréningom a zľavy na súťaže.',
             'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
             'bank_account_name' => 'BCZ Club o.z.',
         ]);
@@ -1627,7 +1630,7 @@ class DemoDataSeeder extends Seeder
                 'team_id' => $bczTeam->id,
                 'user_id' => $athlete->id,
                 'status' => $status,
-                'period' => MembershipPeriodEnum::YEARLY,
+                'period' => MembershipPeriodEnum::SEASONAL,
                 'fee_amount' => 20.00,
                 'fee_currency' => 'EUR',
                 'starts_at' => $startsAt,
@@ -1773,7 +1776,7 @@ class DemoDataSeeder extends Seeder
                     'team_id' => $bczTeam->id,
                     'subscription_plan_id' => $proPlan->id,
                     'status' => SubscriptionStatusEnum::ACTIVE,
-                    'billing_period' => MembershipPeriodEnum::YEARLY,
+                    'billing_period' => BillingPeriodEnum::YEARLY,
                     'amount' => 789.00,
                     'currency' => 'EUR',
                     'starts_at' => now()->subMonths(3),
@@ -1786,7 +1789,7 @@ class DemoDataSeeder extends Seeder
                 'team_id' => $secondTeam->id,
                 'subscription_plan_id' => $freePlan->id,
                 'status' => SubscriptionStatusEnum::ACTIVE,
-                'billing_period' => MembershipPeriodEnum::MONTHLY,
+                'billing_period' => BillingPeriodEnum::MONTHLY,
                 'amount' => 0,
                 'currency' => 'EUR',
                 'starts_at' => now()->subMonths(6),

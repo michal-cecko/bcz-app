@@ -1,0 +1,95 @@
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bcz-app
+    env_file: .env.prod
+    depends_on:
+      - redis
+    volumes:
+      - type: bind
+        source: /volumes/bcz-app/storage/app
+        target: /var/www/storage/app
+      - type: bind
+        source: /volumes/bcz-app/storage/logs
+        target: /var/www/storage/logs
+      - type: tmpfs
+        target: /var/www/bootstrap/cache
+      - type: tmpfs
+        target: /var/www/storage/framework/cache
+      - type: tmpfs
+        target: /var/www/storage/framework/sessions
+      - type: tmpfs
+        target: /var/www/storage/framework/views
+    labels:
+      - "traefik.enable=true"
+      # HTTP router - redirects to HTTPS
+      - "traefik.http.routers.bcz-app.rule=Host(`bcz-club.com`)"
+      - "traefik.http.routers.bcz-app.entrypoints=web"
+      - "traefik.http.routers.bcz-app.middlewares=bcz-app-redirect"
+      # HTTPS router
+      - "traefik.http.routers.bcz-app-secure.rule=Host(`bcz-club.com`)"
+      - "traefik.http.routers.bcz-app-secure.entrypoints=websecure"
+      - "traefik.http.routers.bcz-app-secure.tls.certresolver=myresolver"
+      # Service
+      - "traefik.http.services.bcz-app.loadbalancer.server.port=8000"
+      # Redirect middleware
+      - "traefik.http.middlewares.bcz-app-redirect.redirectscheme.scheme=https"
+      - "traefik.docker.network=web"
+    networks:
+      - web
+      - database
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bcz-app-worker
+    env_file: .env.prod
+    depends_on:
+      - redis
+    command: sh -c "php artisan schedule:work & php artisan queue:work --sleep=3 --tries=3 --max-time=3600"
+    volumes:
+      - type: bind
+        source: /volumes/bcz-app/storage/app
+        target: /var/www/storage/app
+      - type: bind
+        source: /volumes/bcz-app/storage/logs
+        target: /var/www/storage/logs
+      - type: tmpfs
+        target: /var/www/bootstrap/cache
+      - type: tmpfs
+        target: /var/www/storage/framework/cache
+      - type: tmpfs
+        target: /var/www/storage/framework/sessions
+      - type: tmpfs
+        target: /var/www/storage/framework/views
+    networks:
+      - database
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: bcz-redis
+    volumes:
+      - bcz-redis:/data
+    networks:
+      - database
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      retries: 3
+      timeout: 5s
+    restart: unless-stopped
+
+networks:
+  web:
+    external: true
+  database:
+    external: true
+
+volumes:
+  bcz-redis:
+    driver: local

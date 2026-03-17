@@ -9,7 +9,7 @@ class TeamUser extends Pivot
 {
     protected $table = 'team_user';
 
-    public $incrementing = true;
+    public $incrementing = false;
 
     protected function casts(): array
     {

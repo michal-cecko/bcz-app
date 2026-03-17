@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\MembershipPeriodEnum;
+use App\Enums\BillingPeriodEnum;
 use App\Enums\SubscriptionStatusEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
@@ -33,7 +33,7 @@ class TeamSubscription extends Model
     {
         return [
             'status' => SubscriptionStatusEnum::class,
-            'billing_period' => MembershipPeriodEnum::class,
+            'billing_period' => BillingPeriodEnum::class,
             'amount' => 'decimal:2',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',

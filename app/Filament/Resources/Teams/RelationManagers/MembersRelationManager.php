@@ -3,25 +3,27 @@
 namespace App\Filament\Resources\Teams\RelationManagers;
 
 use App\Enums\InvitationStatusEnum;
-use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
+use App\Filament\Resources\Users\UserResource;
 use App\Mail\TeamInvitationMail;
-use App\Models\Membership;
 use App\Models\TeamInvitation;
+use App\Models\TeamSeason;
 use App\Models\User;
 use App\Services\EmailService;
+use App\Services\SeasonService;
 use Filament\Actions\Action;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -54,7 +56,8 @@ class MembersRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('name')
                     ->label('Meno')
-                    ->searchable(),
+                    ->searchable()
+                    ->url(fn (User $record): string => UserResource::getUrl('view', ['record' => $record])),
                 TextColumn::make('email')
                     ->label('E-mail')
                     ->searchable(),
@@ -142,7 +145,7 @@ class MembersRelationManager extends RelationManager
                         Mail::to($email)->send(new TeamInvitationMail($invitation));
 
                         Notification::make()
-                            ->title('Pozvánka bola odoslaná.')
+                            ->title('Pozvanka bola odoslana.')
                             ->success()
                             ->send();
                     }),
@@ -164,76 +167,81 @@ class MembersRelationManager extends RelationManager
                         ];
                     }),
                 Action::make('addMembership')
-                    ->label('Pridať členstvo')
-                    ->modalHeading('Pridať členstvo')
+                    ->label('Pridat clenstvo')
+                    ->modalHeading('Pridat clenstvo')
                     ->icon('heroicon-o-identification')
                     ->schema([
-                        Select::make('period')
-                            ->label('Obdobie')
+                        Select::make('team_season_id')
+                            ->label('Sezona')
                             ->options(function (RelationManager $livewire): array {
                                 $team = $livewire->getOwnerRecord();
-                                $options = [];
 
-                                if ($team->membership_allow_monthly) {
-                                    $options[MembershipPeriodEnum::MONTHLY->value] = MembershipPeriodEnum::MONTHLY->getLabel();
-                                }
-
-                                if ($team->membership_allow_yearly) {
-                                    $options[MembershipPeriodEnum::YEARLY->value] = MembershipPeriodEnum::YEARLY->getLabel();
-                                }
-
-                                return $options ?: MembershipPeriodEnum::translations();
+                                return TeamSeason::where('team_id', $team->id)
+                                    ->where('ends_at', '>=', now())
+                                    ->orderBy('starts_at', 'desc')
+                                    ->pluck('name', 'id')
+                                    ->toArray();
                             })
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function (string $state, RelationManager $livewire, Set $set): void {
-                                $team = $livewire->getOwnerRecord();
+                            ->afterStateUpdated(function (?string $state, Set $set): void {
+                                if (! $state) {
+                                    return;
+                                }
 
-                                if ($state === MembershipPeriodEnum::MONTHLY->value && $team->membership_fee_amount_monthly) {
-                                    $set('fee_amount', (string) $team->membership_fee_amount_monthly);
-                                } elseif ($state === MembershipPeriodEnum::YEARLY->value && $team->membership_fee_amount_yearly) {
-                                    $set('fee_amount', (string) $team->membership_fee_amount_yearly);
+                                $season = TeamSeason::find($state);
+
+                                if ($season) {
+                                    $set('fee_amount', (string) $season->proratedFee());
+                                    $set('fee_currency', $season->fee_currency);
+                                }
+                            }),
+                        Toggle::make('is_free')
+                            ->label('Zadarmo')
+                            ->live()
+                            ->afterStateUpdated(function (bool $state, Set $set, Get $get): void {
+                                if ($state) {
+                                    $set('fee_amount', '0');
+                                } elseif ($get('team_season_id')) {
+                                    $season = TeamSeason::find($get('team_season_id'));
+                                    if ($season) {
+                                        $set('fee_amount', (string) $season->proratedFee());
+                                    }
                                 }
                             }),
                         TextInput::make('fee_amount')
                             ->label('Suma')
                             ->numeric()
-                            ->required()
-                            ->default(function (RelationManager $livewire): ?string {
-                                $team = $livewire->getOwnerRecord();
-
-                                return (string) ($team->membership_fee_amount_monthly ?? $team->membership_fee_amount_yearly);
-                            }),
+                            ->required(),
                         Select::make('fee_currency')
                             ->label('Mena')
                             ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
                             ->default(fn (RelationManager $livewire): string => $livewire->getOwnerRecord()->membership_fee_currency ?? 'EUR')
                             ->required(),
-                        DatePicker::make('starts_at')
-                            ->label('Začiatok')
-                            ->default(now())
-                            ->required(),
-                        DatePicker::make('ends_at')
-                            ->label('Koniec')
-                            ->default(now()->addYear())
-                            ->required(),
                     ])
                     ->action(function (array $data, User $record, RelationManager $livewire): void {
-                        $team = $livewire->getOwnerRecord();
+                        $season = TeamSeason::find($data['team_season_id']);
 
-                        Membership::create([
-                            'team_id' => $team->id,
-                            'user_id' => $record->id,
-                            'status' => MembershipStatusEnum::PENDING,
-                            'period' => $data['period'],
-                            'fee_amount' => $data['fee_amount'],
-                            'fee_currency' => $data['fee_currency'],
-                            'starts_at' => $data['starts_at'],
-                            'ends_at' => $data['ends_at'],
-                        ]);
+                        if (! $season) {
+                            Notification::make()
+                                ->title('Sezona nebola najdena.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $seasonService = app(SeasonService::class);
+
+                        if ($data['is_free'] ?? false) {
+                            $membership = $seasonService->addMidSeasonMember($season, $record);
+                            $seasonService->markMembershipFree($membership);
+                        } else {
+                            $seasonService->addMidSeasonMember($season, $record);
+                        }
 
                         Notification::make()
-                            ->title('Členstvo bolo vytvorené.')
+                            ->title('Clenstvo bolo vytvorene.')
                             ->success()
                             ->send();
                     }),
@@ -262,7 +270,7 @@ class MembersRelationManager extends RelationManager
     protected function makeMembersSendEmailAction(): Action
     {
         return Action::make('send_email_all')
-            ->label('Odoslať e-mail všetkým')
+            ->label('Odoslat e-mail vsetkym')
             ->icon(Heroicon::OutlinedEnvelope)
             ->color('primary')
             ->slideOver()
@@ -270,11 +278,11 @@ class MembersRelationManager extends RelationManager
                 [$this->buildMembersRecipientsPlaceholder()],
                 (new SendEmailAction('temp'))->getEmailFormSchema(),
             ))
-            ->modalSubmitActionLabel('Odoslať e-mail')
+            ->modalSubmitActionLabel('Odoslat e-mail')
             ->modalSubmitAction(fn ($action) => $action->requiresConfirmation()
-                ->modalHeading('Potvrdiť odoslanie')
-                ->modalDescription('E-mail bude odoslaný všetkým členom tímu.')
-                ->modalSubmitActionLabel('Áno, odoslať'))
+                ->modalHeading('Potvrdit odoslanie')
+                ->modalDescription('E-mail bude odoslany vsetkym clenom timu.')
+                ->modalSubmitActionLabel('Ano, odoslat'))
             ->action(function (array $data): void {
                 $team = $this->getOwnerRecord();
                 $teamName = $team->getTranslation('name', 'sk');
@@ -292,7 +300,7 @@ class MembersRelationManager extends RelationManager
                 }
 
                 if (empty($allRecipients)) {
-                    Notification::make()->warning()->title('Žiadni príjemcovia')->send();
+                    Notification::make()->warning()->title('Ziadni prijemcovia')->send();
 
                     return;
                 }
@@ -306,8 +314,8 @@ class MembersRelationManager extends RelationManager
 
                 Notification::make()
                     ->success()
-                    ->title('E-mail odoslaný')
-                    ->body("E-mail bol odoslaný {$count} príjemcom.")
+                    ->title('E-mail odoslany')
+                    ->body("E-mail bol odoslany {$count} prijemcom.")
                     ->send();
             });
     }
@@ -318,7 +326,7 @@ class MembersRelationManager extends RelationManager
         $list = $emails->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
 
         return Placeholder::make('recipients_info')
-            ->label('Príjemcovia ('.$emails->count().')')
-            ->content(new HtmlString($emails->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
+            ->label('Prijemcovia ('.$emails->count().')')
+            ->content(new HtmlString($emails->isEmpty() ? '<span style="color:#9ca3af;">Ziadni prijemcovia</span>' : $list));
     }
 }

@@ -71,37 +71,19 @@ class TeamForm
                     ->keyLabel('Platforma')
                     ->valueLabel('URL'),
                 Toggle::make('is_active')
-                    ->label('Aktívny')
+                    ->label('Aktivny')
                     ->default(true),
                 Select::make('join_mode')
-                    ->label('Režim pripojenia')
+                    ->label('Rezim pripojenia')
                     ->options(TeamJoinModeEnum::translations())
                     ->default(TeamJoinModeEnum::APPROVAL->value)
-                    ->helperText('Otvorený = automaticky prijatý, So schválením = admin musí schváliť'),
+                    ->helperText('Otvoreny = automaticky prijaty, So schvalenim = admin musi schvalit'),
 
-                Section::make('Nastavenie členstva')
+                Section::make('Nastavenie clenstva')
                     ->schema([
                         Toggle::make('membership_enabled')
-                            ->label('Členstvo povolené')
+                            ->label('Clenstvo povolene')
                             ->live(),
-                        Toggle::make('membership_allow_monthly')
-                            ->label('Povoliť mesačné členstvo')
-                            ->live()
-                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
-                        TextInput::make('membership_fee_amount_monthly')
-                            ->label('Suma mesačného členského')
-                            ->numeric()
-                            ->prefix('€')
-                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled') && (bool) $get('membership_allow_monthly')),
-                        Toggle::make('membership_allow_yearly')
-                            ->label('Povoliť ročné členstvo')
-                            ->live()
-                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
-                        TextInput::make('membership_fee_amount_yearly')
-                            ->label('Suma ročného členského')
-                            ->numeric()
-                            ->prefix('€')
-                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled') && (bool) $get('membership_allow_yearly')),
                         Select::make('membership_fee_currency')
                             ->label('Mena')
                             ->options([
@@ -112,25 +94,26 @@ class TeamForm
                             ->default('EUR')
                             ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
                         Textarea::make('membership_description')
-                            ->label('Popis členstva')
+                            ->label('Popis clenstva')
                             ->rows(3)
-                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
+                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled'))
+                            ->helperText('Sezonne clenstva sa spravuju v zalozke Sezony'),
                     ])
                     ->collapsible()
                     ->columnSpanFull(),
 
-                Section::make('Platobné údaje')
+                Section::make('Platobne udaje')
                     ->schema([
                         TextInput::make('bank_account_iban')
                             ->label('IBAN')
                             ->placeholder('SK89 7500 0000 0000 1234 5678'),
                         TextInput::make('bank_account_name')
-                            ->label('Meno príjemcu'),
+                            ->label('Meno prijemcu'),
                         TextInput::make('stripe_connect_account_id')
-                            ->label('Stripe Connect účet')
+                            ->label('Stripe Connect ucet')
                             ->disabled()
                             ->dehydrated()
-                            ->placeholder('Nepripojený'),
+                            ->placeholder('Nepripojeny'),
                     ])
                     ->collapsible()
                     ->columnSpanFull(),

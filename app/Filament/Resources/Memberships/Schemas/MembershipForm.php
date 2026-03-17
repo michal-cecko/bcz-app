@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\Memberships\Schemas;
 
-use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
+use App\Models\TeamSeason;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
@@ -31,31 +33,44 @@ class MembershipForm
                     ->options(MembershipStatusEnum::translations())
                     ->default(MembershipStatusEnum::PENDING->value)
                     ->required(),
-                Select::make('period')
-                    ->label('Obdobie')
+                Select::make('team_season_id')
+                    ->label('Sezóna')
                     ->options(function (): array {
                         $team = Filament::getTenant();
-                        $options = [];
 
-                        if ($team?->membership_allow_monthly) {
-                            $options[MembershipPeriodEnum::MONTHLY->value] = MembershipPeriodEnum::MONTHLY->getLabel();
-                        }
-
-                        if ($team?->membership_allow_yearly) {
-                            $options[MembershipPeriodEnum::YEARLY->value] = MembershipPeriodEnum::YEARLY->getLabel();
-                        }
-
-                        return $options ?: MembershipPeriodEnum::translations();
+                        return TeamSeason::where('team_id', $team?->id)
+                            ->where('ends_at', '>=', now())
+                            ->orderBy('starts_at', 'desc')
+                            ->pluck('name', 'id')
+                            ->toArray();
                     })
                     ->required()
                     ->live()
-                    ->afterStateUpdated(function (string $state, Set $set): void {
-                        $team = Filament::getTenant();
+                    ->afterStateUpdated(function (?string $state, Set $set): void {
+                        if (! $state) {
+                            return;
+                        }
 
-                        if ($state === MembershipPeriodEnum::MONTHLY->value && $team?->membership_fee_amount_monthly) {
-                            $set('fee_amount', (string) $team->membership_fee_amount_monthly);
-                        } elseif ($state === MembershipPeriodEnum::YEARLY->value && $team?->membership_fee_amount_yearly) {
-                            $set('fee_amount', (string) $team->membership_fee_amount_yearly);
+                        $season = TeamSeason::find($state);
+
+                        if ($season) {
+                            $set('fee_amount', (string) $season->proratedFee());
+                            $set('fee_currency', $season->fee_currency);
+                            $set('starts_at', now()->toDateString());
+                            $set('ends_at', $season->ends_at->toDateString());
+                        }
+                    }),
+                Toggle::make('is_free')
+                    ->label('Zadarmo')
+                    ->live()
+                    ->afterStateUpdated(function (bool $state, Set $set, Get $get): void {
+                        if ($state) {
+                            $set('fee_amount', '0');
+                        } elseif ($get('team_season_id')) {
+                            $season = TeamSeason::find($get('team_season_id'));
+                            if ($season) {
+                                $set('fee_amount', (string) $season->proratedFee());
+                            }
                         }
                     }),
                 TextInput::make('fee_amount')

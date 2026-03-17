@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BillingPeriodEnum;
 use App\Enums\CoachRoleEnum;
 use App\Enums\ComplexityLevelEnum;
 use App\Enums\EventPricingTypeEnum;
@@ -9,7 +10,6 @@ use App\Enums\GoalStatusEnum;
 use App\Enums\InquiryReasonEnum;
 use App\Enums\InquiryStatusEnum;
 use App\Enums\InvitationStatusEnum;
-use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
 use App\Enums\MenuLocationEnum;
 use App\Enums\PageStatusEnum;
@@ -73,7 +73,11 @@ return [
     ],
     MembershipPeriodEnum::class => [
         MembershipPeriodEnum::MONTHLY->value => 'Mesačne',
-        MembershipPeriodEnum::YEARLY->value => 'Ročne',
+        MembershipPeriodEnum::SEASONAL->value => 'Sezónne',
+    ],
+    BillingPeriodEnum::class => [
+        BillingPeriodEnum::MONTHLY->value => 'Mesačne',
+        BillingPeriodEnum::YEARLY->value => 'Ročne',
     ],
     PaymentStatusEnum::class => [
         PaymentStatusEnum::PENDING->value => 'Čaká na platbu',

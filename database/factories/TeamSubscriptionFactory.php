@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\MembershipPeriodEnum;
+use App\Enums\BillingPeriodEnum;
 use App\Enums\SubscriptionStatusEnum;
 use App\Models\SubscriptionPlan;
 use App\Models\Team;
@@ -20,7 +20,7 @@ class TeamSubscriptionFactory extends Factory
             'team_id' => Team::factory(),
             'subscription_plan_id' => SubscriptionPlan::factory(),
             'status' => SubscriptionStatusEnum::ACTIVE,
-            'billing_period' => MembershipPeriodEnum::MONTHLY,
+            'billing_period' => BillingPeriodEnum::MONTHLY,
             'amount' => fake()->randomFloat(2, 10, 200),
             'currency' => 'EUR',
             'starts_at' => now(),

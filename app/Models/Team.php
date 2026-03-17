@@ -38,10 +38,6 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         'is_active',
         'join_mode',
         'membership_enabled',
-        'membership_allow_monthly',
-        'membership_allow_yearly',
-        'membership_fee_amount_monthly',
-        'membership_fee_amount_yearly',
         'membership_fee_currency',
         'membership_description',
         'bank_account_iban',
@@ -60,10 +56,6 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
             'is_active' => 'boolean',
             'join_mode' => TeamJoinModeEnum::class,
             'membership_enabled' => 'boolean',
-            'membership_allow_monthly' => 'boolean',
-            'membership_allow_yearly' => 'boolean',
-            'membership_fee_amount_monthly' => 'decimal:2',
-            'membership_fee_amount_yearly' => 'decimal:2',
         ];
     }
 
@@ -162,6 +154,19 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         return $this->hasMany(TeamInvitation::class);
     }
 
+    public function seasons(): HasMany
+    {
+        return $this->hasMany(TeamSeason::class);
+    }
+
+    public function currentSeason(): HasOne
+    {
+        return $this->hasOne(TeamSeason::class)
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
+            ->latest('starts_at');
+    }
+
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
@@ -203,4 +208,5 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     {
         return $this->hasMany(MediaItem::class);
     }
+
 }

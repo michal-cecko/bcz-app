@@ -5,10 +5,10 @@ namespace App\Enums;
 use App\Enums\Concerns\EnumHelper;
 use Filament\Support\Contracts\HasLabel;
 
-enum MembershipPeriodEnum: string implements HasLabel
+enum BillingPeriodEnum: string implements HasLabel
 {
     use EnumHelper;
 
     case MONTHLY = 'monthly';
-    case SEASONAL = 'seasonal';
+    case YEARLY = 'yearly';
 }

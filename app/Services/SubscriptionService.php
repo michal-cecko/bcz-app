@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\MembershipPeriodEnum;
+use App\Enums\BillingPeriodEnum;
 use App\Enums\SubscriptionStatusEnum;
 use App\Models\SubscriptionPlan;
 use App\Models\Team;
@@ -31,7 +31,7 @@ class SubscriptionService
             'team_id' => $team->id,
             'subscription_plan_id' => $freePlan->id,
             'status' => SubscriptionStatusEnum::ACTIVE,
-            'billing_period' => MembershipPeriodEnum::MONTHLY,
+            'billing_period' => BillingPeriodEnum::MONTHLY,
             'amount' => 0,
             'currency' => 'EUR',
             'starts_at' => now(),
@@ -41,15 +41,15 @@ class SubscriptionService
     public function createSubscription(
         Team $team,
         SubscriptionPlan $plan,
-        MembershipPeriodEnum $billingPeriod,
+        BillingPeriodEnum $billingPeriod,
         string $currency = 'EUR',
     ): TeamSubscription {
         $price = $plan->getPriceForCurrency(
             $currency,
-            $billingPeriod === MembershipPeriodEnum::YEARLY ? 'yearly' : 'monthly',
+            $billingPeriod === BillingPeriodEnum::YEARLY ? 'yearly' : 'monthly',
         );
 
-        $endsAt = $billingPeriod === MembershipPeriodEnum::YEARLY
+        $endsAt = $billingPeriod === BillingPeriodEnum::YEARLY
             ? now()->addYear()
             : now()->addMonth();
 
