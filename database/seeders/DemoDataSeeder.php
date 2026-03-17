@@ -1947,7 +1947,17 @@ class DemoDataSeeder extends Seeder
             'period_to' => now()->endOfMonth(),
         ]);
 
-        // Season + memberships for second team
+        // Seasons + memberships for second team
+        $secondTeamPastSeason = TeamSeason::create([
+            'team_id' => $secondTeam->id,
+            'name' => 'Sezóna '.(now()->year - 1),
+            'starts_at' => now()->subYear()->startOfYear()->month(1)->startOfMonth(),
+            'ends_at' => now()->subYear()->startOfYear()->month(12)->endOfMonth(),
+            'fee_amount' => 100.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 7,
+        ]);
+
         $secondTeamSeason = TeamSeason::create([
             'team_id' => $secondTeam->id,
             'name' => 'Sezóna '.now()->year,
@@ -1955,20 +1965,46 @@ class DemoDataSeeder extends Seeder
             'ends_at' => now()->startOfYear()->month(12)->endOfMonth(),
             'fee_amount' => 120.00,
             'fee_currency' => 'EUR',
-            'payment_deadline_days' => 14,
+            'max_capacity' => 10,
+            'payment_deadline_days' => 7,
         ]);
 
-        User::factory(3)->create()->each(function (User $user) use ($secondTeam, $secondTeamSeason) {
+        $secondTeamUsers = User::factory(5)->create();
+        $secondTeamUsers->each(function (User $user, $index) use ($secondTeam, $secondTeamSeason, $secondTeamPastSeason) {
             $user->assignRole(RoleEnum::CUSTOMER);
-            $user->teams()->attach($secondTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 6))]);
+            $user->teams()->attach($secondTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 12))]);
+
+            // Past season — expired memberships for first 3 users
+            if ($index < 3) {
+                Membership::create([
+                    'team_id' => $secondTeam->id,
+                    'user_id' => $user->id,
+                    'team_season_id' => $secondTeamPastSeason->id,
+                    'status' => MembershipStatusEnum::EXPIRED,
+                    'fee_amount' => 100.00,
+                    'fee_currency' => 'EUR',
+                    'starts_at' => $secondTeamPastSeason->starts_at,
+                    'ends_at' => $secondTeamPastSeason->ends_at,
+                ]);
+            }
+
+            // Current season — varied statuses
+            $isFree = $index === 0;
+            $status = match (true) {
+                $index <= 2 => MembershipStatusEnum::ACTIVE,
+                $index === 3 => MembershipStatusEnum::PENDING,
+                default => MembershipStatusEnum::CANCELLED,
+            };
 
             Membership::create([
                 'team_id' => $secondTeam->id,
                 'user_id' => $user->id,
                 'team_season_id' => $secondTeamSeason->id,
-                'status' => MembershipStatusEnum::ACTIVE,
-                'fee_amount' => 120.00,
+                'status' => $status,
+                'fee_amount' => $isFree ? 0 : 120.00,
                 'fee_currency' => 'EUR',
+                'is_free' => $isFree,
+                'payment_deadline_at' => $status === MembershipStatusEnum::PENDING ? now()->addDays(5) : null,
                 'starts_at' => $secondTeamSeason->starts_at,
                 'ends_at' => $secondTeamSeason->ends_at,
             ]);
