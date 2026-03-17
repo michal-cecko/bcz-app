@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Trainings\Schemas;
 
 use App\Enums\TrainingPricingTypeEnum;
+use App\Models\Training;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
