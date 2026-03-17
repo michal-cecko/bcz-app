@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Memberships\Pages;
 
+use App\Filament\Actions\SendEmailAction;
 use App\Filament\Resources\Memberships\MembershipResource;
 use App\Models\Membership;
 use App\Services\EmailService;
@@ -12,17 +13,31 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 
 class ListMemberships extends ListRecords
 {
     protected static string $resource = MembershipResource::class;
 
+    protected function getTableQuery(): ?Builder
+    {
+        $query = parent::getTableQuery();
+
+        if (auth()->user()?->isMemberLevel()) {
+            $query?->where('user_id', auth()->id());
+        }
+
+        return $query;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            $this->makeMembershipsSendEmailAction(),
-            CreateAction::make(),
+            $this->makeMembershipsSendEmailAction()
+                ->visible(fn (): bool => ! auth()->user()?->isMemberLevel()),
+            CreateAction::make()
+                ->visible(fn (): bool => ! auth()->user()?->isMemberLevel()),
         ];
     }
 
@@ -35,7 +50,7 @@ class ListMemberships extends ListRecords
             ->slideOver()
             ->schema(fn (): array => array_merge(
                 [$this->buildMembershipsRecipientsPlaceholder()],
-                (new \App\Filament\Actions\SendEmailAction('temp'))->getEmailFormSchema(),
+                (new SendEmailAction('temp'))->getEmailFormSchema(),
             ))
             ->modalSubmitActionLabel('Odoslať e-mail')
             ->modalSubmitAction(fn ($action) => $action->requiresConfirmation()

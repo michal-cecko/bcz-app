@@ -1,9 +1,11 @@
 # TODO
 
-## Cleanup Tasks
-- [x] Merge `/resources/views/emails` and `/mail` into a single directory
-- [] Mailgun finish
+PRIORITY CUSTOMER ROLE DASHBOARD:
 - [] 
-- []
-- []
-- []
+
+
+LATER:
+
+## Cleanup Tasks
+- [] Mailgun finish
+

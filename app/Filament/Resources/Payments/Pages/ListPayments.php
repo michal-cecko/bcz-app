@@ -4,7 +4,9 @@ namespace App\Filament\Resources\Payments\Pages;
 
 use App\Enums\PaymentMethodEnum;
 use App\Filament\Resources\Payments\PaymentResource;
+use App\Models\EventRegistration;
 use App\Models\Membership;
+use App\Models\TrainingRegistration;
 use App\Models\User;
 use App\Services\PaymentService;
 use Filament\Actions\Action;
@@ -15,15 +17,28 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListPayments extends ListRecords
 {
     protected static string $resource = PaymentResource::class;
 
+    protected function getTableQuery(): ?Builder
+    {
+        $query = parent::getTableQuery();
+
+        if (auth()->user()?->isMemberLevel()) {
+            $query?->where('user_id', auth()->id());
+        }
+
+        return $query;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             Action::make('recordPayment')
+                ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                 ->label('Zaznamenať platbu')
                 ->schema([
                     Select::make('user_id')
@@ -59,13 +74,13 @@ class ListPayments extends ListRecords
                                     ->get()
                                     ->mapWithKeys(fn ($m) => [$m->id => $m->period->getLabel().' ('.$m->starts_at->format('d.m.Y').' - '.$m->ends_at->format('d.m.Y').')'])
                                     ->toArray(),
-                                'training_registration' => \App\Models\TrainingRegistration::where('user_id', $userId)
+                                'training_registration' => TrainingRegistration::where('user_id', $userId)
                                     ->whereHas('training', fn ($q) => $q->where('team_id', Filament::getTenant()->id))
                                     ->with('training')
                                     ->get()
                                     ->mapWithKeys(fn ($r) => [$r->id => $r->training->getTranslation('title', 'sk').' ('.$r->registered_at?->format('d.m.Y').')'])
                                     ->toArray(),
-                                'competition_registration', 'event_registration' => \App\Models\EventRegistration::where('user_id', $userId)
+                                'competition_registration', 'event_registration' => EventRegistration::where('user_id', $userId)
                                     ->whereHas('event', fn ($q) => $q->where('team_id', Filament::getTenant()->id))
                                     ->with('event')
                                     ->get()
@@ -105,8 +120,8 @@ class ListPayments extends ListRecords
 
                     $payableClass = match ($data['payable_type']) {
                         'membership' => Membership::class,
-                        'training_registration' => \App\Models\TrainingRegistration::class,
-                        'competition_registration' => \App\Models\EventRegistration::class,
+                        'training_registration' => TrainingRegistration::class,
+                        'competition_registration' => EventRegistration::class,
                     };
 
                     $payable = $payableClass::findOrFail($data['payable_id']);

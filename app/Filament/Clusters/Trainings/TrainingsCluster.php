@@ -18,4 +18,9 @@ class TrainingsCluster extends Cluster
     protected static ?int $navigationSort = 2;
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
 }

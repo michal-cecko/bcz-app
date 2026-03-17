@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Trainings\Tables;
 
 use App\Enums\TrainingPricingTypeEnum;
+use App\Filament\Resources\Trainings\TrainingResource;
 use App\Models\Training;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -30,8 +31,21 @@ class TrainingsTable
                 TextColumn::make('sportCategory.name')
                     ->label('Šport')
                     ->state(fn (Training $record): ?string => $record->sportCategory?->getTranslation('name', 'sk')),
-                TextColumn::make('age_group')
-                    ->label('Veková skupina'),
+                TextColumn::make('min_age')
+                    ->label('Vek')
+                    ->formatStateUsing(function (Training $record): string {
+                        if ($record->min_age === null && $record->max_age === null) {
+                            return 'Všetky';
+                        }
+                        if ($record->max_age === null) {
+                            return $record->min_age.'+';
+                        }
+                        if ($record->min_age === null) {
+                            return 'do '.$record->max_age;
+                        }
+
+                        return $record->min_age.'-'.$record->max_age;
+                    }),
                 TextColumn::make('pricing_type')
                     ->label('Typ ceny')
                     ->badge(),
@@ -70,7 +84,7 @@ class TrainingsTable
                 TernaryFilter::make('is_active')
                     ->label('Aktívny'),
             ])
-            ->recordUrl(fn (Training $record): string => \App\Filament\Resources\Trainings\TrainingResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn (Training $record): string => TrainingResource::getUrl('view', ['record' => $record]))
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),

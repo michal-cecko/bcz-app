@@ -121,9 +121,21 @@ class TrainingInfolist
                                 Section::make('Nastavenia')
                                     ->icon('heroicon-o-cog-6-tooth')
                                     ->schema([
-                                        TextEntry::make('age_group')
+                                        TextEntry::make('age_range')
                                             ->label('Veková skupina')
-                                            ->placeholder('Všetky'),
+                                            ->state(function (Training $record): string {
+                                                if ($record->min_age === null && $record->max_age === null) {
+                                                    return 'Všetky';
+                                                }
+                                                if ($record->max_age === null) {
+                                                    return $record->min_age.'+';
+                                                }
+                                                if ($record->min_age === null) {
+                                                    return 'do '.$record->max_age;
+                                                }
+
+                                                return $record->min_age.'-'.$record->max_age;
+                                            }),
                                         TextEntry::make('gender')
                                             ->label('Pohlavie')
                                             ->badge()

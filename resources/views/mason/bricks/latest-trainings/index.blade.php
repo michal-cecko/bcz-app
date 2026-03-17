@@ -61,8 +61,8 @@
                         {{-- Header: Title + Age Badge --}}
                         <div class="flex items-center justify-between gap-2">
                             <h3 class="text-white text-lg font-bold">{{ $training->title }}</h3>
-                            @if($training->age_group)
-                                <span class="bg-bcz-red/20 text-bcz-red text-[10px] font-bold tracking-wider px-3 py-1.5 shrink-0">{{ $training->age_group }}</span>
+                            @if($training->age_range)
+                                <span class="bg-bcz-red/20 text-bcz-red text-[10px] font-bold tracking-wider px-3 py-1.5 shrink-0">{{ $training->age_range }}</span>
                             @endif
                         </div>
 

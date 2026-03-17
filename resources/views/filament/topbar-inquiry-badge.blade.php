@@ -1,4 +1,9 @@
 @php
+    $user = auth()->user();
+    if ($user?->isMemberLevel()) {
+        return;
+    }
+
     $count = \App\Models\Inquiry::query()
         ->where('team_id', \Filament\Facades\Filament::getTenant()?->id)
         ->where('status', \App\Enums\InquiryStatusEnum::NEW)

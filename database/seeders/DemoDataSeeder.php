@@ -315,7 +315,8 @@ class DemoDataSeeder extends Seeder
                 'sport_category_id' => $parkour->id,
                 'pricing_type' => TrainingPricingTypeEnum::PAID,
                 'price_amount' => 8.00,
-                'age_group' => '13-17',
+                'min_age' => 13,
+                'max_age' => 17,
                 'max_capacity' => 12,
                 'schedule_days' => ['monday', 'wednesday'],
                 'start_time' => '17:00',
@@ -335,7 +336,8 @@ class DemoDataSeeder extends Seeder
                 'sport_category_id' => $streetWorkout->id,
                 'pricing_type' => TrainingPricingTypeEnum::PAID,
                 'price_amount' => 12.00,
-                'age_group' => '16+',
+                'min_age' => 16,
+                'max_age' => null,
                 'max_capacity' => 15,
                 'schedule_days' => ['tuesday', 'thursday'],
                 'start_time' => '18:00',
@@ -354,7 +356,8 @@ class DemoDataSeeder extends Seeder
                 ],
                 'sport_category_id' => $parkour->id,
                 'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
-                'age_group' => '14-25',
+                'min_age' => 14,
+                'max_age' => 25,
                 'max_capacity' => 20,
                 'schedule_days' => ['wednesday', 'friday'],
                 'start_time' => '17:30',
@@ -374,7 +377,8 @@ class DemoDataSeeder extends Seeder
                 'sport_category_id' => $parkour->id,
                 'pricing_type' => TrainingPricingTypeEnum::PAID,
                 'price_amount' => 15.00,
-                'age_group' => '16+',
+                'min_age' => 16,
+                'max_age' => null,
                 'max_capacity' => 10,
                 'schedule_days' => ['saturday'],
                 'start_time' => '10:00',
@@ -393,7 +397,8 @@ class DemoDataSeeder extends Seeder
                 ],
                 'sport_category_id' => $streetWorkout->id,
                 'pricing_type' => TrainingPricingTypeEnum::FREE,
-                'age_group' => '10-16',
+                'min_age' => 10,
+                'max_age' => 16,
                 'max_capacity' => 20,
                 'schedule_days' => ['monday', 'thursday'],
                 'start_time' => '16:00',
@@ -412,7 +417,8 @@ class DemoDataSeeder extends Seeder
                 'sport_category_id' => $streetWorkout->id,
                 'pricing_type' => TrainingPricingTypeEnum::PAID,
                 'price_amount' => 6.00,
-                'age_group' => '8-14',
+                'min_age' => 8,
+                'max_age' => 14,
                 'max_capacity' => 18,
                 'schedule_days' => ['tuesday', 'friday'],
                 'start_time' => '15:30',
@@ -431,7 +437,8 @@ class DemoDataSeeder extends Seeder
                 ],
                 'sport_category_id' => $parkour->id,
                 'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
-                'age_group' => '14-25',
+                'min_age' => 14,
+                'max_age' => 25,
                 'max_capacity' => 16,
                 'schedule_days' => ['monday', 'wednesday', 'friday'],
                 'start_time' => '19:00',
@@ -450,7 +457,8 @@ class DemoDataSeeder extends Seeder
                 ],
                 'sport_category_id' => $streetWorkout->id,
                 'pricing_type' => TrainingPricingTypeEnum::FREE,
-                'age_group' => '16+',
+                'min_age' => 16,
+                'max_age' => null,
                 'max_capacity' => 30,
                 'notify_on_available' => true,
                 'schedule_days' => ['saturday', 'sunday'],
@@ -470,7 +478,8 @@ class DemoDataSeeder extends Seeder
                 'sport_category_id' => $parkour->id,
                 'pricing_type' => TrainingPricingTypeEnum::PAID,
                 'price_amount' => 25.00,
-                'age_group' => '14-25',
+                'min_age' => 14,
+                'max_age' => 25,
                 'max_capacity' => 10,
                 'notify_on_available' => true,
                 'schedule_days' => ['sunday'],
@@ -1726,6 +1735,42 @@ class DemoDataSeeder extends Seeder
                 'is_free' => $isFree,
                 'payment_deadline_at' => $deadlineAt,
                 'starts_at' => $startsAt,
+                'ends_at' => $currentSeason->ends_at,
+            ]);
+
+            $memberships->push($membership);
+        });
+
+        // Members (line 191) — mid-season PENDING memberships (waiting for payment)
+        $members->each(function (User $member) use ($bczTeam, $currentSeason, &$memberships) {
+            $membership = Membership::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $member->id,
+                'team_season_id' => $currentSeason->id,
+                'status' => MembershipStatusEnum::PENDING,
+                'fee_amount' => $currentSeason->proratedFee(),
+                'fee_currency' => 'EUR',
+                'is_free' => false,
+                'payment_deadline_at' => now()->addDays(rand(5, 14)),
+                'starts_at' => now()->subDays(rand(1, 7)),
+                'ends_at' => $currentSeason->ends_at,
+            ]);
+
+            $memberships->push($membership);
+        });
+
+        // Judges — ACTIVE memberships (free, as judges)
+        $judges->each(function (User $judge) use ($bczTeam, $currentSeason, &$memberships) {
+            $membership = Membership::create([
+                'team_id' => $bczTeam->id,
+                'user_id' => $judge->id,
+                'team_season_id' => $currentSeason->id,
+                'status' => MembershipStatusEnum::ACTIVE,
+                'fee_amount' => 0,
+                'fee_currency' => 'EUR',
+                'is_free' => true,
+                'payment_deadline_at' => null,
+                'starts_at' => $currentSeason->starts_at,
                 'ends_at' => $currentSeason->ends_at,
             ]);
 

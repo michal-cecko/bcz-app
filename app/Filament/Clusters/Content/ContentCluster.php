@@ -18,4 +18,9 @@ class ContentCluster extends Cluster
     protected static ?int $navigationSort = 6;
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
 }

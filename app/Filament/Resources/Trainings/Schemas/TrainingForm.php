@@ -368,9 +368,18 @@ class TrainingForm
                         Tabs\Tab::make('Nastavenia')
                             ->columns(4)
                             ->schema([
-                                TextInput::make('age_group')
-                                    ->label('Veková skupina')
-                                    ->placeholder('napr. 6-10, 14-18, 18+'),
+                                TextInput::make('min_age')
+                                    ->label('Min. vek')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(99)
+                                    ->placeholder('napr. 6'),
+                                TextInput::make('max_age')
+                                    ->label('Max. vek')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(99)
+                                    ->placeholder('napr. 18'),
                                 Select::make('gender')
                                     ->label('Pohlavie')
                                     ->options(GenderEnum::class)

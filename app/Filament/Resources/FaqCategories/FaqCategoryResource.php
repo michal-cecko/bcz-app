@@ -35,6 +35,11 @@ class FaqCategoryResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
+
     public static function getGloballySearchableAttributes(): array
     {
         return ['title'];

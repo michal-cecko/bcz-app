@@ -61,6 +61,22 @@ class Payment extends Model
         return $this->morphTo();
     }
 
+    public function getPayableNameAttribute(): string
+    {
+        $payable = $this->payable;
+
+        if (! $payable) {
+            return '-';
+        }
+
+        return match ($this->payable_type) {
+            'membership' => $payable->season?->name ?? 'Členstvo',
+            'training_registration' => $payable->training?->getTranslation('title', 'sk') ?? 'Tréning',
+            'competition_registration', 'event_registration' => $payable->event?->getTranslation('title', 'sk') ?? 'Podujatie',
+            default => '-',
+        };
+    }
+
     public function getDisplayNameAttribute(): string
     {
         return $this->user?->name ?? $this->payer_name ?? '-';

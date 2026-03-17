@@ -71,8 +71,8 @@
                                         @if($training->sportCategory)
                                             <span class="bg-bcz-red/20 text-bcz-red text-[10px] font-bold px-3 py-1.5 rounded">{{ $training->sportCategory->getTranslation('name', app()->getLocale()) }}</span>
                                         @endif
-                                        @if($training->age_group)
-                                            <span class="bg-[#222222] text-[#888888] text-[10px] font-bold px-3 py-1.5 rounded">{{ $training->age_group }}</span>
+                                        @if($training->age_range)
+                                            <span class="bg-[#222222] text-[#888888] text-[10px] font-bold px-3 py-1.5 rounded">{{ $training->age_range }}</span>
                                         @endif
                                     </div>
 

@@ -21,7 +21,7 @@
         </div>
 
         {{-- Filter Dropdowns --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {{-- Category Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.category') }}</label>
@@ -51,6 +51,28 @@
                     <option value="">{{ __('archive.all_locations') }}</option>
                     @foreach($locations as $location)
                         <option value="{{ $location }}">{{ $location }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Age Group Filter --}}
+            <div class="flex flex-col gap-3">
+                <label class="text-[#888888] text-xs">{{ __('archive.age_group') }}</label>
+                <select wire:model.live="ageGroupFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                    <option value="">{{ __('archive.all_age_groups') }}</option>
+                    @foreach($ageGroups as $ageGroup)
+                        <option value="{{ $ageGroup }}">{{ $ageGroup }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Gender Filter --}}
+            <div class="flex flex-col gap-3">
+                <label class="text-[#888888] text-xs">{{ __('archive.gender') }}</label>
+                <select wire:model.live="genderFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                    <option value="">{{ __('archive.all_genders') }}</option>
+                    @foreach($genders as $gender)
+                        <option value="{{ $gender->value }}">{{ $gender->getLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -92,6 +114,22 @@
                 @if($locationFilter)
                     <button wire:click="$set('locationFilter', '')" class="inline-flex items-center gap-2 bg-bcz-red/20 text-bcz-red text-xs rounded-full px-3 py-2 hover:bg-bcz-red/30 transition-colors cursor-pointer">
                         {{ $locationFilter }}
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                @endif
+                @if($ageGroupFilter)
+                    <button wire:click="$set('ageGroupFilter', '')" class="inline-flex items-center gap-2 bg-bcz-red/20 text-bcz-red text-xs rounded-full px-3 py-2 hover:bg-bcz-red/30 transition-colors cursor-pointer">
+                        {{ $ageGroupFilter }}
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                @endif
+                @if($genderFilter)
+                    <button wire:click="$set('genderFilter', '')" class="inline-flex items-center gap-2 bg-bcz-red/20 text-bcz-red text-xs rounded-full px-3 py-2 hover:bg-bcz-red/30 transition-colors cursor-pointer">
+                        {{ \App\Enums\GenderEnum::tryFrom($genderFilter)?->getLabel() ?? $genderFilter }}
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
                         </svg>
@@ -142,8 +180,8 @@
                             @if($training->sportCategory)
                                 <span class="bg-bcz-red/20 text-bcz-red text-[10px] font-normal uppercase px-3 py-1.5 rounded">{{ $training->sportCategory->getTranslation('name', app()->getLocale()) }}</span>
                             @endif
-                            @if($training->age_group)
-                                <span class="bg-[#222222] text-[#888888] text-[10px] font-normal uppercase px-3 py-1.5 rounded">{{ $training->age_group }}</span>
+                            @if($training->age_range)
+                                <span class="bg-[#222222] text-[#888888] text-[10px] font-normal uppercase px-3 py-1.5 rounded">{{ $training->age_range }}</span>
                             @endif
                         </div>
 

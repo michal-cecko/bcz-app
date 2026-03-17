@@ -32,6 +32,11 @@ class AthleteResource extends Resource
 
     protected static ?string $slug = 'athletes';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->whereHas('athleteProfile');

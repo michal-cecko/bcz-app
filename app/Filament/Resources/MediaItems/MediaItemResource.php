@@ -13,6 +13,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -40,6 +41,11 @@ class MediaItemResource extends Resource
     protected static ?int $navigationSort = 11;
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -110,7 +116,7 @@ class MediaItemResource extends Resource
                     ->color('gray')
                     ->action(function (MediaItem $record): void {
                         $url = $record->getFirstMediaUrl('file');
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->title('URL skopírovaná')
                             ->body($url)
                             ->success()

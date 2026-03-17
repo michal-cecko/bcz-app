@@ -14,7 +14,7 @@ class TrainingFilterService
 
     public function matchesAge(Training $training, User $user): bool
     {
-        if (! $training->age_group) {
+        if ($training->min_age === null && $training->max_age === null) {
             return true;
         }
 
@@ -23,27 +23,15 @@ class TrainingFilterService
             return true;
         }
 
-        $ranges = array_map('trim', explode(',', $training->age_group));
-
-        foreach ($ranges as $range) {
-            if (str_ends_with($range, '+')) {
-                $min = (int) rtrim($range, '+');
-                if ($age >= $min) {
-                    return true;
-                }
-            } elseif (str_contains($range, '-')) {
-                [$min, $max] = explode('-', $range, 2);
-                if ($age >= (int) $min && $age <= (int) $max) {
-                    return true;
-                }
-            } else {
-                if ($age === (int) $range) {
-                    return true;
-                }
-            }
+        if ($training->min_age !== null && $age < $training->min_age) {
+            return false;
         }
 
-        return false;
+        if ($training->max_age !== null && $age > $training->max_age) {
+            return false;
+        }
+
+        return true;
     }
 
     public function matchesGender(Training $training, User $user): bool

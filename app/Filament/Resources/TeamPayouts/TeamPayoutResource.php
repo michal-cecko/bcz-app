@@ -34,6 +34,11 @@ class TeamPayoutResource extends Resource
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
+
     public static function infolist(Schema $schema): Schema
     {
         return $schema

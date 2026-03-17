@@ -67,6 +67,7 @@ class MembershipsTable
             ])
             ->recordActions([
                 SendEmailAction::make('send_email')
+                    ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->resolveRecipients(function (Membership $record) {
                         if (! $record->user?->email) {
                             return [];
@@ -85,10 +86,12 @@ class MembershipsTable
                             ],
                         ];
                     }),
-                EditAction::make(),
+                EditAction::make()
+                    ->visible(fn (): bool => ! auth()->user()?->isMemberLevel()),
                 Action::make('recordPayment')
                     ->label('Zaznamenať platbu')
                     ->icon('heroicon-o-banknotes')
+                    ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->schema([
                         TextInput::make('amount')
                             ->label('Suma')
@@ -131,6 +134,7 @@ class MembershipsTable
                 Action::make('qrCode')
                     ->label('QR kód')
                     ->icon('heroicon-o-qr-code')
+                    ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->modalContent(function (Membership $record): HtmlString {
                         $qrService = app(QrPaymentService::class);
 
@@ -164,6 +168,7 @@ class MembershipsTable
             ])
             ->toolbarActions([
                 SendEmailBulkAction::make('send_email_bulk')
+                    ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->resolveRecipients(function (Membership $record) {
                         if (! $record->user?->email) {
                             return [];

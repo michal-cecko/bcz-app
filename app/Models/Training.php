@@ -32,7 +32,8 @@ class Training extends Model implements Linkable
         'title',
         'slug',
         'description',
-        'age_group',
+        'min_age',
+        'max_age',
         'gender',
         'duration_minutes',
         'start_time',
@@ -55,6 +56,8 @@ class Training extends Model implements Linkable
     protected function casts(): array
     {
         return [
+            'min_age' => 'integer',
+            'max_age' => 'integer',
             'gender' => GenderEnum::class,
             'pricing_type' => TrainingPricingTypeEnum::class,
             'schedule_days' => 'json',
@@ -76,6 +79,23 @@ class Training extends Model implements Linkable
         return SlugOptions::create()
             ->generateSlugsFrom(fn (Training $model) => $model->getTranslation('title', 'sk'))
             ->saveSlugsTo('slug');
+    }
+
+    public function getAgeRangeAttribute(): ?string
+    {
+        if ($this->min_age === null && $this->max_age === null) {
+            return null;
+        }
+
+        if ($this->max_age === null) {
+            return $this->min_age.'+';
+        }
+
+        if ($this->min_age === null) {
+            return 'do '.$this->max_age;
+        }
+
+        return $this->min_age.'-'.$this->max_age;
     }
 
     public function getLinkUrl(): string

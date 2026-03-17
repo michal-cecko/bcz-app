@@ -59,11 +59,11 @@
             </h1>
 
             {{-- Badge --}}
-            @if($training->age_group || $training->sportCategory)
+            @if($training->age_range || $training->sportCategory)
                 <div class="flex items-center gap-3 border border-bcz-red bg-bcz-red/10 px-5 py-2.5">
                     <span class="text-bcz-red text-[11px] font-bold tracking-wider">
-                        @if($training->age_group){{ $training->age_group }}@endif
-                        @if($training->age_group && $training->sportCategory)&nbsp;&middot;&nbsp;@endif
+                        @if($training->age_range){{ $training->age_range }}@endif
+                        @if($training->age_range && $training->sportCategory)&nbsp;&middot;&nbsp;@endif
                         @if($training->sportCategory){{ $training->sportCategory->getTranslation('name', $locale) }}@endif
                     </span>
                 </div>
@@ -109,12 +109,22 @@
                             <span class="text-white text-sm font-semibold">{{ $training->sportCategory->getTranslation('name', $locale) }}</span>
                         </div>
                     @endif
-                    @if($training->age_group)
+                    @if($training->age_range)
                         <div class="flex items-center justify-between">
                             <span class="text-[#666666] text-sm">{{ __('training_detail.detail_age_group') }}</span>
-                            <span class="text-white text-sm font-semibold">{{ $training->age_group }}</span>
+                            <span class="text-white text-sm font-semibold">{{ $training->age_range }}</span>
                         </div>
                     @endif
+                    <div class="flex items-center justify-between">
+                        <span class="text-[#666666] text-sm">{{ __('training_detail.detail_gender') }}</span>
+                        <span class="text-white text-sm font-semibold">
+                            @if($training->gender)
+                                {{ $training->gender->translation() }}
+                            @else
+                                {{ __('training_detail.all_genders') }}
+                            @endif
+                        </span>
+                    </div>
                     @if($scheduleDays)
                         <div class="flex items-center justify-between">
                             <span class="text-[#666666] text-sm">{{ __('training_detail.detail_day') }}</span>

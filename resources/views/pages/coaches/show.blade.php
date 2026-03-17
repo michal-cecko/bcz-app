@@ -102,9 +102,9 @@
                                 @if($training->sportCategory)
                                     <span class="text-bcz-red text-[11px] font-bold tracking-wider">{{ $training->sportCategory->getTranslation('name', $locale) }}</span>
                                 @endif
-                                @if($training->age_group)
+                                @if($training->age_range)
                                     <span class="text-[#444444] text-[11px]">&middot;</span>
-                                    <span class="text-[#666666] text-[11px] font-medium">{{ $training->age_group }}</span>
+                                    <span class="text-[#666666] text-[11px] font-medium">{{ $training->age_range }}</span>
                                 @endif
                             </div>
 

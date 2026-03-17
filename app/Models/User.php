@@ -6,8 +6,8 @@ use App\Contracts\Linkable;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
-use Carbon\Carbon;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
+use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
@@ -275,7 +275,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             return null;
         }
 
-        return (int) Carbon::now()->diffInYears($this->birth_date);
+        return (int) $this->birth_date->diffInYears(Carbon::now(), absolute: true);
     }
 
     /**

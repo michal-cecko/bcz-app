@@ -10,6 +10,8 @@ return [
     'details_title' => 'DETAILY TRÉNINGU',
     'detail_category' => 'Kategória',
     'detail_age_group' => 'Veková skupina',
+    'detail_gender' => 'Pohlavie',
+    'all_genders' => 'Obe pohlavia',
     'detail_day' => 'Deň',
     'detail_time' => 'Čas',
     'detail_place' => 'Miesto',

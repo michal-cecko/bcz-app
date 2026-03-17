@@ -17,5 +17,10 @@ class FinancesCluster extends Cluster
 
     protected static ?int $navigationSort = 3;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
+
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 }

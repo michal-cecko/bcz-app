@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Enums\GenderEnum;
 use App\Models\Setting;
 use App\Models\SportCategory;
 use App\Models\Training;
@@ -23,6 +24,12 @@ class TrainingsArchive extends Component
     #[Url(as: 'miesto')]
     public string $locationFilter = '';
 
+    #[Url(as: 'vek')]
+    public string $ageGroupFilter = '';
+
+    #[Url(as: 'pohlavie')]
+    public string $genderFilter = '';
+
     #[Url(as: 'hladat')]
     public string $search = '';
 
@@ -41,6 +48,16 @@ class TrainingsArchive extends Component
         $this->resetPage();
     }
 
+    public function updatedAgeGroupFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedGenderFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -51,13 +68,15 @@ class TrainingsArchive extends Component
         $this->categoryFilter = '';
         $this->dayFilter = '';
         $this->locationFilter = '';
+        $this->ageGroupFilter = '';
+        $this->genderFilter = '';
         $this->search = '';
         $this->resetPage();
     }
 
     public function hasActiveFilters(): bool
     {
-        return $this->categoryFilter !== '' || $this->dayFilter !== '' || $this->locationFilter !== '' || $this->search !== '';
+        return $this->categoryFilter !== '' || $this->dayFilter !== '' || $this->locationFilter !== '' || $this->ageGroupFilter !== '' || $this->genderFilter !== '' || $this->search !== '';
     }
 
     public function render(): View
@@ -82,6 +101,18 @@ class TrainingsArchive extends Component
 
         if ($this->locationFilter) {
             $query->where("place_name->{$locale}", $this->locationFilter);
+        }
+
+        if ($this->ageGroupFilter) {
+            $parts = explode('-', $this->ageGroupFilter);
+            if (count($parts) === 2) {
+                $query->where('min_age', '<=', (int) $parts[1])
+                    ->where('max_age', '>=', (int) $parts[0]);
+            }
+        }
+
+        if ($this->genderFilter) {
+            $query->where(fn ($q) => $q->where('gender', $this->genderFilter)->orWhereNull('gender'));
         }
 
         if ($this->search) {
@@ -121,11 +152,32 @@ class TrainingsArchive extends Component
             ->sort()
             ->values();
 
+        $ageGroups = Training::query()
+            ->where('is_active', true)
+            ->where('team_id', $teamId)
+            ->where(fn ($q) => $q->whereNotNull('min_age')->orWhereNotNull('max_age'))
+            ->get()
+            ->map(function (Training $t) {
+                if ($t->min_age !== null && $t->max_age !== null) {
+                    return $t->min_age.'-'.$t->max_age;
+                }
+                if ($t->min_age !== null) {
+                    return $t->min_age.'+';
+                }
+
+                return 'do '.$t->max_age;
+            })
+            ->unique()
+            ->sort()
+            ->values();
+
         return view('livewire.trainings-archive', [
             'trainings' => $trainings,
             'categories' => $categories,
             'days' => $days,
             'locations' => $locations,
+            'ageGroups' => $ageGroups,
+            'genders' => GenderEnum::cases(),
         ]);
     }
 }

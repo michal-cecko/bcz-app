@@ -33,6 +33,11 @@ class MenuResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
+
     public static function canCreate(): bool
     {
         return Menu::query()->count() < count(MenuLocationEnum::cases());

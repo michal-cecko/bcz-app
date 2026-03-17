@@ -8,6 +8,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 
 class EditProfile extends BaseEditProfile
@@ -26,25 +27,28 @@ class EditProfile extends BaseEditProfile
                     ->columnSpanFull(),
                 $this->getNameFormComponent(),
                 $this->getEmailFormComponent(),
-                TextInput::make('phone')
-                    ->label('Telefón')
-                    ->tel(),
-                DatePicker::make('birth_date')
-                    ->label('Dátum narodenia')
-                    ->native(false)
-                    ->maxDate(now()),
-                Select::make('gender')
-                    ->label('Pohlavie')
-                    ->options(GenderEnum::translations()),
-                Select::make('locale')
-                    ->label('Predvolený jazyk')
-                    ->options([
-                        'sk' => 'Slovenčina',
-                        'en' => 'Angličtina',
-                        'cs' => 'Čeština',
-                    ])
-                    ->default('sk')
-                    ->required(),
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('phone')
+                            ->label('Telefón')
+                            ->tel(),
+                        DatePicker::make('birth_date')
+                            ->label('Dátum narodenia')
+                            ->native(false)
+                            ->maxDate(now()),
+                        Select::make('gender')
+                            ->label('Pohlavie')
+                            ->options(GenderEnum::translations()),
+                        Select::make('locale')
+                            ->label('Predvolený jazyk')
+                            ->options([
+                                'sk' => 'Slovenčina',
+                                'en' => 'Angličtina',
+                                'cs' => 'Čeština',
+                            ])
+                            ->default('sk')
+                            ->required(),
+                    ]),
                 $this->getPasswordFormComponent(),
                 $this->getPasswordConfirmationFormComponent(),
             ]);
