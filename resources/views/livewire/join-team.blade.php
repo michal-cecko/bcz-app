@@ -64,7 +64,9 @@
                                 <p class="text-white text-[15px] font-bold truncate">{{ $team->getTranslation('name', app()->getLocale()) }}</p>
                                 <p class="text-bcz-muted text-xs">{{ $team->members_count }} {{ $team->members_count === 1 ? 'člen' : 'členov' }}</p>
                             </div>
-                            @if($requestSent && $selectedTeamId === $team->id)
+                            @if($joinedDirectly && $selectedTeamId === $team->id)
+                                <span class="text-green-500 text-xs font-semibold">Pripojený</span>
+                            @elseif($requestSent && $selectedTeamId === $team->id)
                                 <span class="text-green-500 text-xs font-semibold">Odoslané</span>
                             @elseif($requestError && $selectedTeamId === $team->id)
                                 <span class="text-bcz-red text-xs">{{ $requestError }}</span>
@@ -73,7 +75,7 @@
                                     wire:click="selectTeam('{{ $team->id }}')"
                                     class="px-5 py-2.5 rounded-lg text-xs font-bold {{ $selectedTeamId === $team->id ? 'bg-bcz-red text-white' : 'border border-bcz-faint text-bcz-lighter hover:border-bcz-muted' }} transition-colors"
                                 >
-                                    Požiadať
+                                    {{ $team->join_mode?->value === 'open' ? 'Pripojiť sa' : 'Požiadať' }}
                                 </button>
                             @endif
                         </div>
@@ -111,8 +113,13 @@
                 </div>
             @endif
 
-            {{-- Request sent message --}}
-            @if($requestSent)
+            {{-- Request sent / joined directly message --}}
+            @if($joinedDirectly)
+                <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
+                    <p class="text-green-500 text-sm font-semibold">Úspešne ste sa pripojili k tímu!</p>
+                    <a href="/admin" class="text-bcz-red text-xs font-semibold hover:underline mt-1 inline-block">Prejsť na dashboard &rarr;</a>
+                </div>
+            @elseif($requestSent)
                 <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
                     <p class="text-green-500 text-sm font-semibold">Žiadosť bola úspešne odoslaná!</p>
                     <p class="text-bcz-dim text-xs mt-1">Po schválení vám príde notifikácia na email.</p>

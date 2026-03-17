@@ -1606,9 +1606,11 @@ class DemoDataSeeder extends Seeder
         // Enable membership on BCZ team
         $bczTeam->update([
             'membership_enabled' => true,
-            'membership_fee_amount' => 20.00,
+            'membership_allow_monthly' => true,
+            'membership_allow_yearly' => true,
+            'membership_fee_amount_monthly' => 5.00,
+            'membership_fee_amount_yearly' => 50.00,
             'membership_fee_currency' => 'EUR',
-            'membership_period' => MembershipPeriodEnum::YEARLY,
             'membership_description' => 'Ročné členstvo v BCZ Club zahŕňa prístup k tréningom a zľavy na súťaže.',
             'bank_account_iban' => 'SK89 7500 0000 0000 1234 5678',
             'bank_account_name' => 'BCZ Club o.z.',

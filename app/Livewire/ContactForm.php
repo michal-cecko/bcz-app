@@ -8,6 +8,7 @@ use App\Mail\InquiryReceivedMail;
 use App\Models\Inquiry;
 use App\Models\Setting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 
@@ -51,6 +52,13 @@ class ContactForm extends Component
         $this->contactPhone = $contactPhone;
         $this->contactLocation = $contactLocation;
         $this->responseText = $responseText;
+
+        if (Auth::check()) {
+            $user = Auth::user();
+            $this->name = $user->name;
+            $this->email = $user->email;
+            $this->phone = $user->phone ?? '';
+        }
     }
 
     /** @return array<string, string[]> */

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Teams\Schemas;
 
-use App\Enums\MembershipPeriodEnum;
+use App\Enums\TeamJoinModeEnum;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -73,17 +73,35 @@ class TeamForm
                 Toggle::make('is_active')
                     ->label('Aktívny')
                     ->default(true),
+                Select::make('join_mode')
+                    ->label('Režim pripojenia')
+                    ->options(TeamJoinModeEnum::translations())
+                    ->default(TeamJoinModeEnum::APPROVAL->value)
+                    ->helperText('Otvorený = automaticky prijatý, So schválením = admin musí schváliť'),
 
                 Section::make('Nastavenie členstva')
                     ->schema([
                         Toggle::make('membership_enabled')
                             ->label('Členstvo povolené')
                             ->live(),
-                        TextInput::make('membership_fee_amount')
-                            ->label('Suma členského')
+                        Toggle::make('membership_allow_monthly')
+                            ->label('Povoliť mesačné členstvo')
+                            ->live()
+                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
+                        TextInput::make('membership_fee_amount_monthly')
+                            ->label('Suma mesačného členského')
                             ->numeric()
                             ->prefix('€')
+                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled') && (bool) $get('membership_allow_monthly')),
+                        Toggle::make('membership_allow_yearly')
+                            ->label('Povoliť ročné členstvo')
+                            ->live()
                             ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
+                        TextInput::make('membership_fee_amount_yearly')
+                            ->label('Suma ročného členského')
+                            ->numeric()
+                            ->prefix('€')
+                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled') && (bool) $get('membership_allow_yearly')),
                         Select::make('membership_fee_currency')
                             ->label('Mena')
                             ->options([
@@ -92,10 +110,6 @@ class TeamForm
                                 'USD' => 'USD',
                             ])
                             ->default('EUR')
-                            ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
-                        Select::make('membership_period')
-                            ->label('Obdobie')
-                            ->options(MembershipPeriodEnum::translations())
                             ->visible(fn (Get $get): bool => (bool) $get('membership_enabled')),
                         Textarea::make('membership_description')
                             ->label('Popis členstva')

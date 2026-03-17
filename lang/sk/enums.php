@@ -27,6 +27,7 @@ use App\Enums\SettingTypeEnum;
 use App\Enums\SponsorTagEnum;
 use App\Enums\SportCategoryTypeEnum;
 use App\Enums\SubscriptionStatusEnum;
+use App\Enums\TeamJoinModeEnum;
 use App\Enums\TimetableEntryStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 
@@ -199,5 +200,9 @@ return [
         MenuLocationEnum::Header->value => 'Hlavička',
         MenuLocationEnum::FooterDiscover->value => 'Päta — Objavte',
         MenuLocationEnum::FooterPrograms->value => 'Päta — Programy',
+    ],
+    TeamJoinModeEnum::class => [
+        TeamJoinModeEnum::APPROVAL->value => 'So schválením',
+        TeamJoinModeEnum::OPEN->value => 'Otvorený',
     ],
 ];

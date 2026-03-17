@@ -8,6 +8,7 @@ use App\Mail\InquiryReceivedMail;
 use App\Models\Inquiry;
 use App\Models\Setting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 
@@ -24,6 +25,16 @@ class InquiryForm extends Component
     public string $message = '';
 
     public string $reason = '';
+
+    public function mount(): void
+    {
+        if (Auth::check()) {
+            $user = Auth::user();
+            $this->name = $user->name;
+            $this->email = $user->email;
+            $this->phone = $user->phone ?? '';
+        }
+    }
 
     /** @return array<string, string[]> */
     protected function rules(): array

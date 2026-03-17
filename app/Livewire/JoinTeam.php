@@ -2,7 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Enums\InvitationStatusEnum;
 use App\Enums\JoinRequestStatusEnum;
+use App\Enums\RoleEnum;
+use App\Enums\TeamJoinModeEnum;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\TeamJoinRequest;
@@ -30,11 +33,21 @@ class JoinTeam extends Component
 
     public bool $requestSent = false;
 
+    public bool $joinedDirectly = false;
+
     public ?string $requestError = null;
 
     public ?string $codeError = null;
 
     public bool $codeSuccess = false;
+
+    public function mount(): void
+    {
+        if (Auth::check()) {
+            $this->requestName = Auth::user()->name;
+            $this->requestEmail = Auth::user()->email;
+        }
+    }
 
     public function updatedSearch(): void
     {
@@ -62,11 +75,19 @@ class JoinTeam extends Component
     public function selectTeam(string $teamId): void
     {
         $this->selectedTeamId = $teamId;
-        $this->showRequestForm = ! Auth::check();
         $this->requestError = null;
+        $this->joinedDirectly = false;
+
+        $team = Team::findOrFail($teamId);
 
         if (Auth::check()) {
-            $this->submitJoinRequest($teamId);
+            if ($team->join_mode === TeamJoinModeEnum::OPEN) {
+                $this->joinTeamDirectly($team);
+            } else {
+                $this->submitJoinRequest($teamId);
+            }
+        } else {
+            $this->showRequestForm = true;
         }
     }
 
@@ -124,7 +145,7 @@ class JoinTeam extends Component
             ]);
 
             $invitation->update([
-                'status' => \App\Enums\InvitationStatusEnum::Accepted,
+                'status' => InvitationStatusEnum::Accepted,
                 'accepted_at' => now(),
             ]);
 
@@ -133,6 +154,27 @@ class JoinTeam extends Component
             session(['pending_invite_code' => $this->inviteCode]);
             $this->redirect(route('register'));
         }
+    }
+
+    protected function joinTeamDirectly(Team $team): void
+    {
+        $user = Auth::user();
+
+        if ($user->teams()->where('teams.id', $team->id)->exists()) {
+            $this->requestError = __('Už ste členom tohto tímu.');
+            $this->showRequestForm = false;
+
+            return;
+        }
+
+        $user->teams()->attach($team->id, [
+            'role' => RoleEnum::ATHLETE->value,
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
+
+        $this->joinedDirectly = true;
+        $this->showRequestForm = false;
     }
 
     protected function submitJoinRequest(string $teamId): void
@@ -178,6 +220,7 @@ class JoinTeam extends Component
     {
         $this->showRequestForm = false;
         $this->requestSent = false;
+        $this->joinedDirectly = false;
         $this->requestError = null;
         $this->selectedTeamId = null;
     }

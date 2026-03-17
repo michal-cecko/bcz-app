@@ -8,6 +8,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class MembershipForm
@@ -32,8 +33,31 @@ class MembershipForm
                     ->required(),
                 Select::make('period')
                     ->label('Obdobie')
-                    ->options(MembershipPeriodEnum::translations())
-                    ->required(),
+                    ->options(function (): array {
+                        $team = Filament::getTenant();
+                        $options = [];
+
+                        if ($team?->membership_allow_monthly) {
+                            $options[MembershipPeriodEnum::MONTHLY->value] = MembershipPeriodEnum::MONTHLY->getLabel();
+                        }
+
+                        if ($team?->membership_allow_yearly) {
+                            $options[MembershipPeriodEnum::YEARLY->value] = MembershipPeriodEnum::YEARLY->getLabel();
+                        }
+
+                        return $options ?: MembershipPeriodEnum::translations();
+                    })
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function (string $state, Set $set): void {
+                        $team = Filament::getTenant();
+
+                        if ($state === MembershipPeriodEnum::MONTHLY->value && $team?->membership_fee_amount_monthly) {
+                            $set('fee_amount', (string) $team->membership_fee_amount_monthly);
+                        } elseif ($state === MembershipPeriodEnum::YEARLY->value && $team?->membership_fee_amount_yearly) {
+                            $set('fee_amount', (string) $team->membership_fee_amount_yearly);
+                        }
+                    }),
                 TextInput::make('fee_amount')
                     ->label('Suma')
                     ->numeric()

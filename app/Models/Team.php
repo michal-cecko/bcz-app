@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Contracts\Linkable;
-use App\Enums\MembershipPeriodEnum;
 use App\Enums\RoleEnum;
+use App\Enums\TeamJoinModeEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
 use Filament\Models\Contracts\HasAvatar;
@@ -36,10 +36,13 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         'socials',
         'logo',
         'is_active',
+        'join_mode',
         'membership_enabled',
-        'membership_fee_amount',
+        'membership_allow_monthly',
+        'membership_allow_yearly',
+        'membership_fee_amount_monthly',
+        'membership_fee_amount_yearly',
         'membership_fee_currency',
-        'membership_period',
         'membership_description',
         'bank_account_iban',
         'bank_account_name',
@@ -55,9 +58,12 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         return [
             'socials' => 'json',
             'is_active' => 'boolean',
+            'join_mode' => TeamJoinModeEnum::class,
             'membership_enabled' => 'boolean',
-            'membership_fee_amount' => 'decimal:2',
-            'membership_period' => MembershipPeriodEnum::class,
+            'membership_allow_monthly' => 'boolean',
+            'membership_allow_yearly' => 'boolean',
+            'membership_fee_amount_monthly' => 'decimal:2',
+            'membership_fee_amount_yearly' => 'decimal:2',
         ];
     }
 

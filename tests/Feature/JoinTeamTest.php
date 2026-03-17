@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\InvitationStatusEnum;
 use App\Enums\JoinRequestStatusEnum;
+use App\Enums\TeamJoinModeEnum;
+use App\Livewire\JoinTeam;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\TeamJoinRequest;
@@ -29,7 +31,7 @@ class JoinTeamTest extends TestCase
         $team = Team::factory()->create(['name' => ['sk' => 'BCZ Bratislava'], 'is_active' => true]);
         Team::factory()->create(['name' => ['sk' => 'Workout Žilina'], 'is_active' => true]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->set('search', 'BCZ')
             ->assertSee('BCZ Bratislava')
             ->assertDontSee('Workout Žilina');
@@ -39,7 +41,7 @@ class JoinTeamTest extends TestCase
     {
         Team::factory()->create(['name' => ['sk' => 'BCZ'], 'is_active' => true]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->set('search', 'B')
             ->assertDontSee('BCZ');
     }
@@ -48,7 +50,7 @@ class JoinTeamTest extends TestCase
     {
         Team::factory()->create(['name' => ['sk' => 'Inactive Team'], 'is_active' => false]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->set('search', 'Inactive')
             ->assertDontSee('Inactive Team');
     }
@@ -59,7 +61,7 @@ class JoinTeamTest extends TestCase
         $team = Team::factory()->create(['is_active' => true]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\JoinTeam::class)
+            ->test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->assertSet('requestSent', true);
 
@@ -75,7 +77,7 @@ class JoinTeamTest extends TestCase
     {
         $team = Team::factory()->create(['is_active' => true]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->assertSet('showRequestForm', true)
             ->assertSet('selectedTeamId', $team->id);
@@ -85,7 +87,7 @@ class JoinTeamTest extends TestCase
     {
         $team = Team::factory()->create(['is_active' => true]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->set('requestName', 'Ján Novák')
             ->set('requestEmail', 'jan@example.com')
@@ -105,7 +107,7 @@ class JoinTeamTest extends TestCase
     {
         $team = Team::factory()->create(['is_active' => true]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->call('submitGuestRequest')
             ->assertHasErrors(['requestName', 'requestEmail']);
@@ -115,7 +117,7 @@ class JoinTeamTest extends TestCase
     {
         $team = Team::factory()->create(['is_active' => true]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->set('requestName', 'Test')
             ->set('requestEmail', 'not-an-email')
@@ -135,7 +137,7 @@ class JoinTeamTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\JoinTeam::class)
+            ->test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->assertSet('requestError', 'Žiadosť o pripojenie už bola odoslaná.');
     }
@@ -147,7 +149,7 @@ class JoinTeamTest extends TestCase
         $user->teams()->attach($team->id, ['is_active' => true, 'joined_at' => now()]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\JoinTeam::class)
+            ->test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->assertSet('requestError', 'Už ste členom tohto tímu.');
     }
@@ -164,7 +166,7 @@ class JoinTeamTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\JoinTeam::class)
+            ->test(JoinTeam::class)
             ->set('inviteCode', 'TEST1234')
             ->call('redeemCode')
             ->assertSet('codeSuccess', true);
@@ -179,7 +181,7 @@ class JoinTeamTest extends TestCase
         $user = User::factory()->create();
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\JoinTeam::class)
+            ->test(JoinTeam::class)
             ->set('inviteCode', 'INVALID')
             ->call('redeemCode')
             ->assertSet('codeError', 'Neplatný pozývací kód.');
@@ -187,7 +189,7 @@ class JoinTeamTest extends TestCase
 
     public function test_empty_invite_code_shows_error(): void
     {
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->call('redeemCode')
             ->assertSet('codeError', 'Zadajte pozývací kód.');
     }
@@ -203,7 +205,7 @@ class JoinTeamTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\JoinTeam::class)
+            ->test(JoinTeam::class)
             ->set('inviteCode', 'EXPIRED1')
             ->call('redeemCode')
             ->assertSet('codeError', 'Tento pozývací kód už nie je platný.');
@@ -223,7 +225,7 @@ class JoinTeamTest extends TestCase
         ]);
 
         Livewire::actingAs($user)
-            ->test(\App\Livewire\JoinTeam::class)
+            ->test(JoinTeam::class)
             ->set('inviteCode', 'MEMBER01')
             ->call('redeemCode')
             ->assertSet('codeError', 'Už ste členom tohto tímu.');
@@ -239,7 +241,7 @@ class JoinTeamTest extends TestCase
             'invited_by' => User::factory()->create()->id,
         ]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->set('inviteCode', 'GUEST123')
             ->call('redeemCode')
             ->assertRedirect(route('register'));
@@ -249,11 +251,82 @@ class JoinTeamTest extends TestCase
     {
         $team = Team::factory()->create(['is_active' => true]);
 
-        Livewire::test(\App\Livewire\JoinTeam::class)
+        Livewire::test(JoinTeam::class)
             ->call('selectTeam', $team->id)
             ->assertSet('showRequestForm', true)
             ->set('search', 'New search')
             ->assertSet('showRequestForm', false)
             ->assertSet('selectedTeamId', null);
+    }
+
+    public function test_open_join_mode_adds_user_directly(): void
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create([
+            'is_active' => true,
+            'join_mode' => TeamJoinModeEnum::OPEN,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(JoinTeam::class)
+            ->call('selectTeam', $team->id)
+            ->assertSet('joinedDirectly', true)
+            ->assertSet('requestSent', false);
+
+        $this->assertTrue($team->members()->where('users.id', $user->id)->exists());
+        $this->assertDatabaseMissing('team_join_requests', [
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_approval_join_mode_creates_join_request(): void
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create([
+            'is_active' => true,
+            'join_mode' => TeamJoinModeEnum::APPROVAL,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(JoinTeam::class)
+            ->call('selectTeam', $team->id)
+            ->assertSet('requestSent', true)
+            ->assertSet('joinedDirectly', false);
+
+        $this->assertFalse($team->members()->where('users.id', $user->id)->exists());
+        $this->assertDatabaseHas('team_join_requests', [
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+            'status' => JoinRequestStatusEnum::Pending->value,
+        ]);
+    }
+
+    public function test_open_join_mode_prevents_duplicate_membership(): void
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create([
+            'is_active' => true,
+            'join_mode' => TeamJoinModeEnum::OPEN,
+        ]);
+        $user->teams()->attach($team->id, ['is_active' => true, 'joined_at' => now()]);
+
+        Livewire::actingAs($user)
+            ->test(JoinTeam::class)
+            ->call('selectTeam', $team->id)
+            ->assertSet('requestError', 'Už ste členom tohto tímu.');
+    }
+
+    public function test_autofills_user_data_when_authenticated(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(JoinTeam::class)
+            ->assertSet('requestName', 'Test User')
+            ->assertSet('requestEmail', 'test@example.com');
     }
 }

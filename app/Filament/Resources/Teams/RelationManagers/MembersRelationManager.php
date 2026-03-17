@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Teams\RelationManagers;
 use App\Enums\InvitationStatusEnum;
 use App\Enums\MembershipPeriodEnum;
 use App\Enums\MembershipStatusEnum;
+use App\Enums\RoleEnum;
 use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
 use App\Mail\TeamInvitationMail;
@@ -16,16 +17,19 @@ use Filament\Actions\Action;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class MembersRelationManager extends RelationManager
@@ -57,7 +61,7 @@ class MembersRelationManager extends RelationManager
                 TextColumn::make('roles.name')
                     ->label('Roly')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => \App\Enums\RoleEnum::tryFrom($state)?->getLabel() ?? $state),
+                    ->formatStateUsing(fn (string $state): string => RoleEnum::tryFrom($state)?->getLabel() ?? $state),
                 TextColumn::make('pivot.joined_at')
                     ->label('Pripojený')
                     ->date()
@@ -166,13 +170,40 @@ class MembersRelationManager extends RelationManager
                     ->schema([
                         Select::make('period')
                             ->label('Obdobie')
-                            ->options(MembershipPeriodEnum::translations())
-                            ->required(),
+                            ->options(function (RelationManager $livewire): array {
+                                $team = $livewire->getOwnerRecord();
+                                $options = [];
+
+                                if ($team->membership_allow_monthly) {
+                                    $options[MembershipPeriodEnum::MONTHLY->value] = MembershipPeriodEnum::MONTHLY->getLabel();
+                                }
+
+                                if ($team->membership_allow_yearly) {
+                                    $options[MembershipPeriodEnum::YEARLY->value] = MembershipPeriodEnum::YEARLY->getLabel();
+                                }
+
+                                return $options ?: MembershipPeriodEnum::translations();
+                            })
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (string $state, RelationManager $livewire, Set $set): void {
+                                $team = $livewire->getOwnerRecord();
+
+                                if ($state === MembershipPeriodEnum::MONTHLY->value && $team->membership_fee_amount_monthly) {
+                                    $set('fee_amount', (string) $team->membership_fee_amount_monthly);
+                                } elseif ($state === MembershipPeriodEnum::YEARLY->value && $team->membership_fee_amount_yearly) {
+                                    $set('fee_amount', (string) $team->membership_fee_amount_yearly);
+                                }
+                            }),
                         TextInput::make('fee_amount')
                             ->label('Suma')
                             ->numeric()
                             ->required()
-                            ->default(fn (RelationManager $livewire): ?string => (string) $livewire->getOwnerRecord()->membership_fee_amount),
+                            ->default(function (RelationManager $livewire): ?string {
+                                $team = $livewire->getOwnerRecord();
+
+                                return (string) ($team->membership_fee_amount_monthly ?? $team->membership_fee_amount_yearly);
+                            }),
                         Select::make('fee_currency')
                             ->label('Mena')
                             ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
@@ -237,7 +268,7 @@ class MembersRelationManager extends RelationManager
             ->slideOver()
             ->schema(fn (): array => array_merge(
                 [$this->buildMembersRecipientsPlaceholder()],
-                (new \App\Filament\Actions\SendEmailAction('temp'))->getEmailFormSchema(),
+                (new SendEmailAction('temp'))->getEmailFormSchema(),
             ))
             ->modalSubmitActionLabel('Odoslať e-mail')
             ->modalSubmitAction(fn ($action) => $action->requiresConfirmation()
@@ -281,13 +312,13 @@ class MembersRelationManager extends RelationManager
             });
     }
 
-    protected function buildMembersRecipientsPlaceholder(): \Filament\Forms\Components\Placeholder
+    protected function buildMembersRecipientsPlaceholder(): Placeholder
     {
         $emails = $this->getOwnerRecord()->members->pluck('email')->unique()->values();
         $list = $emails->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
 
-        return \Filament\Forms\Components\Placeholder::make('recipients_info')
+        return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$emails->count().')')
-            ->content(new \Illuminate\Support\HtmlString($emails->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
+            ->content(new HtmlString($emails->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
     }
 }
