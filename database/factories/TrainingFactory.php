@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\TrainingPricingTypeEnum;
+use App\Models\City;
 use App\Models\SportCategory;
 use App\Models\Team;
 use App\Models\Training;
@@ -20,6 +21,7 @@ class TrainingFactory extends Factory
         return [
             'sport_category_id' => SportCategory::factory(),
             'team_id' => Team::factory(),
+            'city_id' => City::factory(),
             'title' => ['sk' => fake()->words(3, true), 'en' => fake()->words(3, true)],
             'description' => ['sk' => fake()->sentence(), 'en' => fake()->sentence()],
             'min_age' => fake()->randomElement([null, 6, 10, 14, 18]),
@@ -32,9 +34,13 @@ class TrainingFactory extends Factory
             'latitude' => fake()->latitude(48.0, 49.5),
             'longitude' => fake()->longitude(16.5, 22.5),
             'max_capacity' => fake()->numberBetween(10, 30),
-            'pricing_type' => fake()->randomElement(TrainingPricingTypeEnum::cases()),
-            'price_amount' => fake()->randomFloat(2, 5, 50),
+            'pricing_type' => fake()->randomElement([TrainingPricingTypeEnum::FREE, TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED]),
+            'price_amount' => null,
             'is_active' => true,
+            'is_recurring' => true,
+            'event_date' => null,
+            'registration_opens_at' => null,
+            'registration_closes_at' => null,
             'sort_order' => fake()->numberBetween(0, 10),
             'registration_form_schema' => [
                 ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
@@ -54,6 +60,17 @@ class TrainingFactory extends Factory
         return $this->state(fn () => [
             'pricing_type' => TrainingPricingTypeEnum::FREE,
             'price_amount' => null,
+        ]);
+    }
+
+    public function oneTime(): static
+    {
+        return $this->state(fn () => [
+            'is_recurring' => false,
+            'event_date' => fake()->dateTimeBetween('+1 week', '+3 months'),
+            'schedule_days' => null,
+            'pricing_type' => fake()->randomElement([TrainingPricingTypeEnum::FREE, TrainingPricingTypeEnum::PAID]),
+            'price_amount' => fake()->randomFloat(2, 5, 50),
         ]);
     }
 }

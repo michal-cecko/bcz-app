@@ -15,7 +15,9 @@ use App\Models\Payment;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Notifications\TrainingPaymentConfirmed;
 use App\Notifications\TrainingRegistrationCancelled;
+use App\Services\EmailService;
 use App\Services\RegistrationService;
 use App\Services\TrainingCapacityService;
 use Filament\Actions\Action;
@@ -23,8 +25,10 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Component;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -39,6 +43,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class RegistrationsRelationManager extends RelationManager
 {
@@ -215,6 +220,7 @@ class RegistrationsRelationManager extends RelationManager
                             registrationType: 'tréning',
                             registrationTitle: $training->getTranslation('title', 'sk'),
                             isNewUser: $data['_is_new_user'] ?? false,
+                            team: $training->team,
                         );
 
                         Notification::make()
@@ -267,7 +273,7 @@ class RegistrationsRelationManager extends RelationManager
                             'user_id' => $record->user_id,
                             'payer_name' => $user?->name,
                             'payer_email' => $user?->email,
-                            'payable_type' => \App\Models\TrainingRegistration::class,
+                            'payable_type' => TrainingRegistration::class,
                             'payable_id' => $record->id,
                             'amount' => $data['amount'],
                             'currency' => 'EUR',
@@ -276,6 +282,15 @@ class RegistrationsRelationManager extends RelationManager
                             'paid_at' => now(),
                             'notes' => $data['notes'] ?? null,
                         ]);
+
+                        // Auto-approve registration on completed payment
+                        if (PaymentStatusEnum::tryFrom($data['status']) === PaymentStatusEnum::COMPLETED) {
+                            $record->update(['status' => RegistrationStatusEnum::Approved]);
+
+                            if ($user) {
+                                $user->notify(new TrainingPaymentConfirmed($training));
+                            }
+                        }
 
                         Notification::make()
                             ->success()
@@ -353,7 +368,7 @@ class RegistrationsRelationManager extends RelationManager
     }
 
     /**
-     * @return list<\Filament\Forms\Components\Component>
+     * @return list<Component>
      */
     protected function buildDynamicFormFields(): array
     {
@@ -520,7 +535,7 @@ class RegistrationsRelationManager extends RelationManager
             ->slideOver()
             ->schema(fn (): array => array_merge(
                 [$this->buildAllRecipientsPlaceholder()],
-                (new \App\Filament\Actions\SendEmailAction('temp'))
+                (new SendEmailAction('temp'))
                     ->contextVariables(['nazov_treningu', 'miesto', 'cas', 'kapacita'])
                     ->getEmailFormSchema(),
             ))
@@ -542,7 +557,7 @@ class RegistrationsRelationManager extends RelationManager
                     return;
                 }
 
-                $count = \App\Services\EmailService::send(
+                $count = EmailService::send(
                     subject: $data['subject'],
                     brickContent: $data['content'],
                     recipients: $allRecipients,
@@ -557,7 +572,7 @@ class RegistrationsRelationManager extends RelationManager
             });
     }
 
-    protected function buildAllRecipientsPlaceholder(): \Filament\Forms\Components\Placeholder
+    protected function buildAllRecipientsPlaceholder(): Placeholder
     {
         $emails = collect();
         foreach ($this->getOwnerRecord()->registrations()->with('user')->get() as $reg) {
@@ -569,8 +584,8 @@ class RegistrationsRelationManager extends RelationManager
         $unique = $emails->unique()->values();
         $list = $unique->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
 
-        return \Filament\Forms\Components\Placeholder::make('recipients_info')
+        return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$unique->count().')')
-            ->content(new \Illuminate\Support\HtmlString($unique->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
+            ->content(new HtmlString($unique->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
     }
 }

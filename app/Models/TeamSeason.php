@@ -21,8 +21,11 @@ class TeamSeason extends Model
         'ends_at',
         'fee_amount',
         'fee_currency',
+        'variable_symbol',
+        'payment_note',
         'max_capacity',
         'payment_deadline_days',
+        'renewal_notified_at',
     ];
 
     protected function casts(): array
@@ -33,6 +36,7 @@ class TeamSeason extends Model
             'fee_amount' => 'decimal:2',
             'max_capacity' => 'integer',
             'payment_deadline_days' => 'integer',
+            'renewal_notified_at' => 'datetime',
         ];
     }
 

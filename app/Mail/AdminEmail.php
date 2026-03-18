@@ -35,7 +35,7 @@ class AdminEmail extends Mailable implements ShouldQueue
         $teamUrl = $teamSlug ? url("/timy/{$teamSlug}") : url('/');
 
         return new Content(
-            view: 'emails.admin-email',
+            view: 'emails.layout',
             with: [
                 'emailSubject' => $this->emailSubject,
                 'emailBody' => $this->emailBody,

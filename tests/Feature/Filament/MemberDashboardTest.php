@@ -4,7 +4,6 @@ namespace Tests\Feature\Filament;
 
 use App\Enums\MembershipStatusEnum;
 use App\Enums\RoleEnum;
-use App\Filament\Pages\AvailableTrainings;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\MemberEvents;
 use App\Filament\Pages\MemberMembership;
@@ -118,7 +117,6 @@ class MemberDashboardTest extends TestCase
         $this->actingAsMember();
 
         $this->assertTrue(MyTrainings::shouldRegisterNavigation());
-        $this->assertTrue(AvailableTrainings::shouldRegisterNavigation());
         $this->assertTrue(MemberEvents::shouldRegisterNavigation());
         $this->assertTrue(MemberMembership::shouldRegisterNavigation());
         $this->assertTrue(MemberPayments::shouldRegisterNavigation());
@@ -129,7 +127,6 @@ class MemberDashboardTest extends TestCase
         $this->actingAsAdmin();
 
         $this->assertFalse(MyTrainings::shouldRegisterNavigation());
-        $this->assertFalse(AvailableTrainings::shouldRegisterNavigation());
         $this->assertFalse(MemberEvents::shouldRegisterNavigation());
         $this->assertFalse(MemberMembership::shouldRegisterNavigation());
         $this->assertFalse(MemberPayments::shouldRegisterNavigation());

@@ -25,20 +25,25 @@ class TrainingRegistrationCancelled extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $locale = $notifiable->locale ?? 'sk';
-        $title = $this->training->getTranslation('title', $locale)
+        $user = $notifiable;
+        $trainingTitle = $this->training->getTranslation('title', $user->locale ?? 'sk')
             ?: $this->training->getTranslation('title', 'sk');
 
-        $mail = (new MailMessage)
-            ->subject('Zrušenie registrácie na tréning')
-            ->greeting('Dobrý deň,')
-            ->line("Vaša registrácia na tréning **{$title}** bola zrušená.");
-
-        if ($this->reason) {
-            $mail->line("Dôvod: {$this->reason}");
-        }
-
-        return $mail->salutation('S pozdravom, tím BCZ');
+        return (new MailMessage)
+            ->subject('Zrušenie registrácie na tréning — '.$trainingTitle)
+            ->view('emails.training-cancelled', [
+                'user' => $user,
+                'training' => $this->training,
+                'trainingTitle' => $trainingTitle,
+                'reason' => $this->reason,
+                'emailSubject' => 'Zrušenie registrácie na tréning',
+                'teamName' => null,
+                'teamLogoUrl' => null,
+                'teamUrl' => null,
+                'teamEmail' => null,
+                'teamPhone' => null,
+                'teamWebsite' => null,
+            ]);
     }
 
     /** @return array<string, mixed> */

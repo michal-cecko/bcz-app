@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Teams\Schemas;
 
 use App\Enums\TeamJoinModeEnum;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -114,6 +115,15 @@ class TeamForm
                             ->disabled()
                             ->dehydrated()
                             ->placeholder('Nepripojený'),
+                        CheckboxList::make('payment_methods_enabled')
+                            ->label('Povolené platobné metódy')
+                            ->options([
+                                'stripe' => 'Platba kartou (Stripe)',
+                                'bank_transfer' => 'Bankový prevod',
+                                'cash' => 'Hotovosť',
+                            ])
+                            ->default(['stripe', 'bank_transfer', 'cash'])
+                            ->helperText('Platobné metódy zobrazené pri registrácii na tréningy a platbe členstva.'),
                     ])
                     ->collapsible()
                     ->columnSpanFull(),

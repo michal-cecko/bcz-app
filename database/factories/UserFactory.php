@@ -3,12 +3,13 @@
 namespace Database\Factories;
 
 use App\Enums\GenderEnum;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -28,7 +29,6 @@ class UserFactory extends Factory
         $lastName = fake()->lastName();
 
         return [
-            'name' => "$firstName $lastName",
             'first_name' => $firstName,
             'last_name' => $lastName,
             'email' => fake()->unique()->safeEmail(),
@@ -37,6 +37,7 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'locale' => 'sk',
             'country_code' => 'SK',
+            'phone' => fake()->numerify('+421 9## ### ###'),
             'birth_date' => fake()->dateTimeBetween('-40 years', '-6 years')->format('Y-m-d'),
             'gender' => fake()->randomElement(GenderEnum::cases()),
         ];

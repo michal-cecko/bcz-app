@@ -7,13 +7,6 @@
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Moje tréningy</span>
         </a>
 
-        <a href="{{ \App\Filament\Pages\AvailableTrainings::getUrl() }}" class="group flex flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white p-5 text-center transition hover:border-success-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-success-500">
-            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-success-50 transition group-hover:bg-success-100 dark:bg-success-500/10 dark:group-hover:bg-success-500/20">
-                <x-filament::icon icon="heroicon-o-magnifying-glass" class="h-6 w-6 text-success-600 dark:text-success-400" />
-            </div>
-            <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">Dostupné tréningy</span>
-        </a>
-
         <a href="{{ \App\Filament\Pages\MemberPayments::getUrl() }}" class="group flex flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white p-5 text-center transition hover:border-warning-400 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-warning-500">
             <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-warning-50 transition group-hover:bg-warning-100 dark:bg-warning-500/10 dark:group-hover:bg-warning-500/20">
                 <x-filament::icon icon="heroicon-o-banknotes" class="h-6 w-6 text-warning-600 dark:text-warning-400" />

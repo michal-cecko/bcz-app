@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\RegistrationStatusEnum;
-use App\Filament\Pages\AvailableTrainings;
 use App\Filament\Pages\MyTrainings;
 use App\Models\TrainingRegistration;
 use Filament\Actions\Action;
@@ -67,7 +66,7 @@ class UpcomingTrainingsWidget extends TableWidget
             ->emptyStateActions([
                 Action::make('findTraining')
                     ->label('Nájsť tréning')
-                    ->url(AvailableTrainings::getUrl())
+                    ->url(MyTrainings::getUrl())
                     ->icon('heroicon-o-magnifying-glass'),
             ]);
     }

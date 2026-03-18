@@ -18,6 +18,20 @@ class TeamInvitationMail extends Mailable implements ShouldQueue
 
     public string $acceptUrl;
 
+    public string $emailSubject;
+
+    public ?string $teamName;
+
+    public ?string $teamLogoUrl;
+
+    public ?string $teamUrl;
+
+    public ?string $teamEmail;
+
+    public ?string $teamPhone;
+
+    public ?string $teamWebsite;
+
     public function __construct(public TeamInvitation $invitation)
     {
         $existingUser = User::where('email', $invitation->email)->exists();
@@ -31,14 +45,22 @@ class TeamInvitationMail extends Mailable implements ShouldQueue
             $invitation->expires_at,
             ['invitation' => $invitation->id],
         );
+
+        $team = $invitation->team;
+        $this->teamName = $team->getTranslation('name', 'sk');
+        $this->emailSubject = "Pozvánka do tímu {$this->teamName}";
+        $this->teamLogoUrl = $team->getFirstMediaUrl('logo') ?: null;
+        $teamSlug = $team->slug;
+        $this->teamUrl = $teamSlug ? url("/timy/{$teamSlug}") : url('/');
+        $this->teamEmail = $team->contact_email;
+        $this->teamPhone = $team->contact_phone;
+        $this->teamWebsite = $team->contact_website;
     }
 
     public function envelope(): Envelope
     {
-        $teamName = $this->invitation->team->getTranslation('name', 'sk');
-
         return new Envelope(
-            subject: "Pozvánka do tímu {$teamName}",
+            subject: $this->emailSubject,
         );
     }
 

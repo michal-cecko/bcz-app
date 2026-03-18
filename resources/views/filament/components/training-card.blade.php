@@ -54,14 +54,14 @@
         @if($scheduleText)
             <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-500 dark:text-gray-400">Deň</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $scheduleText }}</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-gray-300">{{ $scheduleText }}</span>
             </div>
         @endif
 
         @if($timeText)
             <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-500 dark:text-gray-400">Čas</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $timeText }}</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-gray-300">{{ $timeText }}</span>
             </div>
         @endif
 
@@ -69,15 +69,25 @@
             <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-500 dark:text-gray-400">Tréneri</span>
                 <span
-                    class="text-sm font-semibold text-gray-900 dark:text-white">{{ $training->coaches->pluck('name')->implode(', ') }}</span>
+                    class="text-sm font-semibold text-gray-900 dark:text-gray-300">{{ $training->coaches->pluck('name')->implode(', ') }}</span>
             </div>
         @endif
 
-        @if($training->place_name)
+        @php
+            $placeName = $training->getTranslation('place_name', $locale) ?: $training->getTranslation('place_name', 'sk');
+            $cityName = $training->city?->getTranslation('name', $locale) ?: $training->city?->getTranslation('name', 'sk');
+        @endphp
+        @if($placeName)
             <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-500 dark:text-gray-400">Miesto</span>
-                <span
-                    class="text-sm font-semibold text-gray-900 dark:text-white">{{ $training->getTranslation('place_name', $locale) ?: $training->getTranslation('place_name', 'sk') }}</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-gray-300">{{ $placeName }}</span>
+            </div>
+        @endif
+
+        @if($cityName)
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500 dark:text-gray-400">Mesto</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-gray-300">{{ $cityName }}</span>
             </div>
         @endif
     </div>
@@ -92,7 +102,7 @@
                 <span class="text-[13px] text-gray-500 dark:text-gray-400">Kapacita</span>
                 <span class="text-[13px] font-semibold" style="color: {{ $capacityColorHex }}">{{ $remaining }}/{{ $training->max_capacity }} miest</span>
             </div>
-            <div style="width: 100%; height: 6px; border-radius: 9999px; background: #d1d5db;">
+            <div style="width: 100%; height: 6px; border-radius: 9999px; background: rgba(128, 128, 128, 0.2);">
                 <div style="height: 100%; border-radius: 9999px; background: {{ $capacityColorHex }}; width: {{ max($capacityPercent, 2) }}%;"></div>
             </div>
         </div>

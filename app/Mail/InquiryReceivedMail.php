@@ -14,15 +14,31 @@ class InquiryReceivedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    public string $emailSubject;
+
+    public ?string $teamName = null;
+
+    public ?string $teamLogoUrl = null;
+
+    public ?string $teamUrl = null;
+
+    public ?string $teamEmail = null;
+
+    public ?string $teamPhone = null;
+
+    public ?string $teamWebsite = null;
+
     public function __construct(
         public Inquiry $inquiry,
-    ) {}
+    ) {
+        $this->emailSubject = 'Nová správa z kontaktného formulára — '.$this->inquiry->name;
+    }
 
     public function envelope(): Envelope
     {
         return new Envelope(
             to: [config('mail.from.address')],
-            subject: 'Nová správa z kontaktného formulára — '.$this->inquiry->name,
+            subject: $this->emailSubject,
         );
     }
 

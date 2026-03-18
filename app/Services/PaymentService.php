@@ -5,10 +5,14 @@ namespace App\Services;
 use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\RegistrationStatusEnum;
+use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Team;
+use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Notifications\TrainingPaymentConfirmed;
 use Illuminate\Database\Eloquent\Model;
 use Stripe\Checkout\Session;
 use Stripe\Refund;
@@ -135,6 +139,18 @@ class PaymentService
 
         if ($payment->payable instanceof Membership) {
             $payment->payable->update(['status' => MembershipStatusEnum::ACTIVE]);
+
+            // Auto-approve pending registrations for MEMBERSHIP_REQUIRED trainings
+            $this->autoApprovePendingRegistrationsForMembership($payment->payable);
+        }
+
+        if ($payment->payable instanceof TrainingRegistration) {
+            $registration = $payment->payable;
+            $registration->update(['status' => RegistrationStatusEnum::Approved]);
+
+            if ($registration->user) {
+                $registration->user->notify(new TrainingPaymentConfirmed($registration->training));
+            }
         }
 
         return $payment;
@@ -155,6 +171,31 @@ class PaymentService
         ]);
 
         return $payment;
+    }
+
+    /**
+     * Auto-approve all pending training registrations for MEMBERSHIP_REQUIRED trainings
+     * when a membership becomes active.
+     */
+    protected function autoApprovePendingRegistrationsForMembership(Membership $membership): void
+    {
+        $pendingRegistrations = TrainingRegistration::query()
+            ->where('user_id', $membership->user_id)
+            ->where('status', RegistrationStatusEnum::Pending)
+            ->whereHas('training', function ($query) use ($membership) {
+                $query->where('team_id', $membership->team_id)
+                    ->where('pricing_type', TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED);
+            })
+            ->with('training')
+            ->get();
+
+        foreach ($pendingRegistrations as $registration) {
+            $registration->update(['status' => RegistrationStatusEnum::Approved]);
+
+            if ($registration->user) {
+                $registration->user->notify(new TrainingPaymentConfirmed($registration->training));
+            }
+        }
     }
 
     public function generateVariableSymbol(): string

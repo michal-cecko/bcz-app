@@ -1,16 +1,3 @@
-{{-- Rebranding Banner --}}
-@php
-    $topbarShowUntil = \App\Models\Setting::get('topbar_show_until');
-@endphp
-@if($topbarShowUntil && now()->lte(\Carbon\Carbon::parse($topbarShowUntil)))
-    <div class="w-full h-8 bg-[#1A1A1A] flex items-center justify-center gap-2 text-[11px]">
-        <span class="text-bcz-muted hidden sm:inline">Nová značka, rovnaká vášeň:</span>
-        <span class="text-bcz-dim hidden sm:inline">Street Workout Kysuce</span>
-        <span class="text-bcz-muted font-bold hidden sm:inline">→</span>
-        <img src="/logo/logo-horizontal-short-white.svg" alt="BCZ Club" class="h-3.5">
-    </div>
-@endif
-
 {{-- Header --}}
 <header x-data="{ mobileOpen: false, ctaOpen: false }" class="w-full bg-bcz-dark sticky top-0 z-50 border-b border-bcz-border/30">
     <div class="max-w-[1440px] mx-auto h-16 lg:h-20 flex items-center justify-between px-5 md:px-10 lg:px-20">

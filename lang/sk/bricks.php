@@ -215,6 +215,8 @@ return [
         'day' => 'Deň',
         'time' => 'Čas',
         'coach' => 'Tréner',
+        'location' => 'Miesto',
+        'city' => 'Mesto',
         'capacity' => 'Kapacita',
         'spots' => 'miest',
         'sign_up' => 'PRIHLÁSIŤ SA',

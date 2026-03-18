@@ -20,6 +20,7 @@ use App\Mason\Bricks\QuoteBrick;
 use App\Mason\Bricks\RichTextBrick;
 use App\Mason\Bricks\StatsBrick;
 use App\Mason\Bricks\TableBrick;
+use Awcodes\Mason\Brick;
 use Awcodes\Mason\Mason;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
@@ -233,6 +234,14 @@ class EventForm
                                 ])
                                 ->default('EUR')
                                 ->visible(fn (Get $get): bool => $get('pricing_type') === EventPricingTypeEnum::Paid->value),
+                            TextInput::make('variable_symbol')
+                                ->label('Variabilný symbol')
+                                ->maxLength(10)
+                                ->visible(fn (Get $get): bool => $get('pricing_type') === EventPricingTypeEnum::Paid->value),
+                            TextInput::make('payment_note')
+                                ->label('Poznámka platby')
+                                ->maxLength(50)
+                                ->visible(fn (Get $get): bool => $get('pricing_type') === EventPricingTypeEnum::Paid->value),
                             DateTimePicker::make('registration_opens_at')
                                 ->label('Registrácia od'),
                             DateTimePicker::make('registration_closes_at')
@@ -313,7 +322,7 @@ class EventForm
         ];
     }
 
-    /** @return list<class-string<\Awcodes\Mason\Brick>> */
+    /** @return list<class-string<Brick>> */
     private static function bricks(): array
     {
         return [

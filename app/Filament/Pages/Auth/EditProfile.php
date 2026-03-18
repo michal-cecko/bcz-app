@@ -25,7 +25,15 @@ class EditProfile extends BaseEditProfile
                     ->avatar()
                     ->circleCropper()
                     ->columnSpanFull(),
-                $this->getNameFormComponent(),
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('first_name')
+                            ->label('Meno')
+                            ->required(),
+                        TextInput::make('last_name')
+                            ->label('Priezvisko')
+                            ->required(),
+                    ]),
                 $this->getEmailFormComponent(),
                 Grid::make(2)
                     ->schema([
@@ -52,5 +60,15 @@ class EditProfile extends BaseEditProfile
                 $this->getPasswordFormComponent(),
                 $this->getPasswordConfirmationFormComponent(),
             ]);
+    }
+
+    /** @param  array<string, mixed>  $data */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (! empty($data['password'])) {
+            $data['password_set_at'] = now();
+        }
+
+        return $data;
     }
 }

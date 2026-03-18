@@ -24,19 +24,26 @@ class TrainingSpotAvailable extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $locale = $notifiable->locale ?? 'sk';
-        $title = $this->training->getTranslation('title', $locale)
+        $user = $notifiable;
+        $trainingTitle = $this->training->getTranslation('title', $user->locale ?? 'sk')
             ?: $this->training->getTranslation('title', 'sk');
-
-        $url = url($this->training->getLinkUrl());
+        $trainingUrl = url($this->training->getLinkUrl());
 
         return (new MailMessage)
-            ->subject('Uvoľnilo sa miesto na tréning')
-            ->greeting('Dobrý deň,')
-            ->line("Uvoľnilo sa miesto na tréning **{$title}**.")
-            ->line('Zaregistrujte sa čo najskôr, miesta sú obmedzené.')
-            ->action('Zobraziť tréning', $url)
-            ->salutation('S pozdravom, tím BCZ');
+            ->subject('Uvoľnilo sa miesto na tréning — '.$trainingTitle)
+            ->view('emails.training-spot-available', [
+                'user' => $user,
+                'training' => $this->training,
+                'trainingTitle' => $trainingTitle,
+                'trainingUrl' => $trainingUrl,
+                'emailSubject' => 'Uvoľnilo sa miesto na tréning',
+                'teamName' => null,
+                'teamLogoUrl' => null,
+                'teamUrl' => null,
+                'teamEmail' => null,
+                'teamPhone' => null,
+                'teamWebsite' => null,
+            ]);
     }
 
     /** @return array<string, mixed> */

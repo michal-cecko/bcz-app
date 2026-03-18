@@ -24,19 +24,30 @@ class MembershipPaymentDue extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
+        $user = $notifiable;
         $teamName = $this->membership->team?->getTranslation('name', 'sk') ?? '';
         $seasonName = $this->membership->season?->name ?? '';
-        $feeAmount = number_format((float) $this->membership->fee_amount, 2).' '.$this->membership->fee_currency;
-        $deadline = $this->membership->payment_deadline_at?->format('d.m.Y') ?? '';
+        $feeAmount = number_format((float) $this->membership->fee_amount, 2);
+        $feeCurrency = $this->membership->fee_currency;
+        $paymentDeadline = $this->membership->payment_deadline_at?->format('d.m.Y') ?? '';
 
         return (new MailMessage)
-            ->subject("Platba za členstvo — {$seasonName}")
-            ->greeting('Dobry den,')
-            ->line("Bolo vam vytvorene clenstvo v time **{$teamName}** pre sezonu **{$seasonName}**.")
-            ->line("Suma: **{$feeAmount}**")
-            ->line("Splatnost do: **{$deadline}**")
-            ->line('Prosim, uhradte platbu co najskor. Po uplynuti terminu bude clenstvo automaticky zrusene.')
-            ->salutation('S pozdravom, tim BCZ');
+            ->subject('Platba za členstvo — '.$seasonName)
+            ->view('emails.membership-payment-due', [
+                'user' => $user,
+                'membership' => $this->membership,
+                'teamName' => $teamName,
+                'seasonName' => $seasonName,
+                'feeAmount' => $feeAmount,
+                'feeCurrency' => $feeCurrency,
+                'paymentDeadline' => $paymentDeadline,
+                'emailSubject' => 'Platba za členstvo',
+                'teamLogoUrl' => null,
+                'teamUrl' => null,
+                'teamEmail' => null,
+                'teamPhone' => null,
+                'teamWebsite' => null,
+            ]);
     }
 
     /** @return array<string, mixed> */

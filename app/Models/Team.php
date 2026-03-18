@@ -47,6 +47,7 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         'contact_email',
         'contact_phone',
         'contact_website',
+        'payment_methods_enabled',
     ];
 
     protected function casts(): array
@@ -56,6 +57,7 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
             'is_active' => 'boolean',
             'join_mode' => TeamJoinModeEnum::class,
             'membership_enabled' => 'boolean',
+            'payment_methods_enabled' => 'array',
         ];
     }
 
@@ -208,5 +210,4 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     {
         return $this->hasMany(MediaItem::class);
     }
-
 }

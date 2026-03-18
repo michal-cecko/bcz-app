@@ -8,6 +8,8 @@ use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -78,6 +80,21 @@ class TrainingForm
                         Tabs\Tab::make('Miesto')
                             ->columns(4)
                             ->schema([
+                                Select::make('city_id')
+                                    ->label('Mesto')
+                                    ->relationship(name: 'city', titleAttribute: 'name')
+                                    ->getOptionLabelFromRecordUsing(fn (Model $record): string => $record->getTranslation('name', 'sk'))
+                                    ->required()
+                                    ->preload()
+                                    ->searchable()
+                                    ->createOptionForm([
+                                        TextInput::make('name.sk')
+                                            ->label('Názov (SK)')
+                                            ->required(),
+                                        TextInput::make('name.en')
+                                            ->label('Názov (EN)'),
+                                    ])
+                                    ->columnSpanFull(),
                                 Tabs::make('Preklady miesta')
                                     ->tabs([
                                         Tabs\Tab::make('SK')
@@ -137,6 +154,25 @@ class TrainingForm
                             ->schema([
                                 Section::make('Rozvrh')
                                     ->schema([
+                                        Toggle::make('is_recurring')
+                                            ->label('Pravidelný tréning')
+                                            ->helperText('Pravidelný = opakuje sa každý týždeň. Jednorazový = konkrétny dátum.')
+                                            ->default(true)
+                                            ->live()
+                                            ->afterStateUpdated(function (Get $get, Set $set, bool $state): void {
+                                                if ($state) {
+                                                    $set('event_date', null);
+                                                    if ($get('pricing_type') === TrainingPricingTypeEnum::PAID->value) {
+                                                        $set('pricing_type', TrainingPricingTypeEnum::FREE->value);
+                                                        $set('price_amount', null);
+                                                    }
+                                                } else {
+                                                    $set('schedule_days', null);
+                                                    if ($get('pricing_type') === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED->value) {
+                                                        $set('pricing_type', TrainingPricingTypeEnum::FREE->value);
+                                                    }
+                                                }
+                                            }),
                                         TextInput::make('duration_minutes')
                                             ->label('Trvanie')
                                             ->numeric()
@@ -154,7 +190,12 @@ class TrainingForm
                                                 'saturday' => 'Sobota',
                                                 'sunday' => 'Nedeľa',
                                             ])
-                                            ->columns(2),
+                                            ->columns(2)
+                                            ->visible(fn (Get $get): bool => (bool) $get('is_recurring')),
+                                        DatePicker::make('event_date')
+                                            ->label('Dátum')
+                                            ->required(fn (Get $get): bool => ! $get('is_recurring'))
+                                            ->visible(fn (Get $get): bool => ! $get('is_recurring')),
                                     ]),
 
                                 Section::make('Kapacita a ceny')
@@ -186,7 +227,15 @@ class TrainingForm
                                             ->helperText('Ak je tréning plný, používatelia sa môžu zapísať na čakací zoznam a budú notifikovaní, keď sa uvoľní miesto.'),
                                         Select::make('pricing_type')
                                             ->label('Typ ceny')
-                                            ->options(TrainingPricingTypeEnum::class)
+                                            ->options(fn (Get $get): array => $get('is_recurring')
+                                                ? [
+                                                    TrainingPricingTypeEnum::FREE->value => TrainingPricingTypeEnum::FREE->getLabel(),
+                                                    TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED->value => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED->getLabel(),
+                                                ]
+                                                : [
+                                                    TrainingPricingTypeEnum::FREE->value => TrainingPricingTypeEnum::FREE->getLabel(),
+                                                    TrainingPricingTypeEnum::PAID->value => TrainingPricingTypeEnum::PAID->getLabel(),
+                                                ])
                                             ->required()
                                             ->default(TrainingPricingTypeEnum::FREE)
                                             ->live(),
@@ -195,11 +244,30 @@ class TrainingForm
                                             ->numeric()
                                             ->prefix('€')
                                             ->visible(fn (Get $get): bool => $get('pricing_type') === TrainingPricingTypeEnum::PAID->value),
+                                        TextInput::make('variable_symbol')
+                                            ->label('Variabilný symbol')
+                                            ->maxLength(10)
+                                            ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
+                                        TextInput::make('payment_note')
+                                            ->label('Poznámka platby')
+                                            ->maxLength(50)
+                                            ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
                                     ]),
                             ]),
 
                         Tabs\Tab::make('Registrácia')
                             ->schema([
+                                Section::make('Okno registrácie')
+                                    ->description('Nastavte obdobie, kedy je registrácia otvorená. Ak ponecháte prázdne, registrácia bude otvorená bez obmedzení.')
+                                    ->columns(2)
+                                    ->schema([
+                                        DateTimePicker::make('registration_opens_at')
+                                            ->label('Registrácia sa otvorí'),
+                                        DateTimePicker::make('registration_closes_at')
+                                            ->label('Registrácia sa zatvorí'),
+                                    ])
+                                    ->collapsible()
+                                    ->collapsed(),
                                 Section::make('Registračný formulár')
                                     ->description('Definujte všetky polia registračného formulára. Aspoň jedno pole typu Email je povinné.')
                                     ->schema([
@@ -236,6 +304,8 @@ class TrainingForm
                                                                     RegistrationFieldTypeEnum::YEAR_PICKER->value,
                                                                     RegistrationFieldTypeEnum::TIME_PICKER->value,
                                                                     RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                                    RegistrationFieldTypeEnum::BIRTH_DATE->value,
+                                                                    RegistrationFieldTypeEnum::GENDER->value,
                                                                 ])),
                                                         ]),
                                                         Tabs\Tab::make('EN')->schema([
@@ -249,6 +319,8 @@ class TrainingForm
                                                                     RegistrationFieldTypeEnum::YEAR_PICKER->value,
                                                                     RegistrationFieldTypeEnum::TIME_PICKER->value,
                                                                     RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                                    RegistrationFieldTypeEnum::BIRTH_DATE->value,
+                                                                    RegistrationFieldTypeEnum::GENDER->value,
                                                                 ])),
                                                         ]),
                                                         Tabs\Tab::make('CS')->schema([
@@ -262,6 +334,8 @@ class TrainingForm
                                                                     RegistrationFieldTypeEnum::YEAR_PICKER->value,
                                                                     RegistrationFieldTypeEnum::TIME_PICKER->value,
                                                                     RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                                    RegistrationFieldTypeEnum::BIRTH_DATE->value,
+                                                                    RegistrationFieldTypeEnum::GENDER->value,
                                                                 ])),
                                                         ]),
                                                     ])

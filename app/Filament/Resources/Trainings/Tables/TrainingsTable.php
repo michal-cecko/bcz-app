@@ -27,10 +27,15 @@ class TrainingsTable
                 TextColumn::make('title')
                     ->label('Názov')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn (Training $record): string => $record->is_recurring ? 'Pravidelný' : 'Jednorazový — '.($record->event_date?->format('d.m.Y') ?? '')),
                 TextColumn::make('sportCategory.name')
                     ->label('Šport')
                     ->state(fn (Training $record): ?string => $record->sportCategory?->getTranslation('name', 'sk')),
+                TextColumn::make('city.name')
+                    ->label('Mesto')
+                    ->state(fn (Training $record): ?string => $record->city?->getTranslation('name', 'sk'))
+                    ->placeholder('-'),
                 TextColumn::make('min_age')
                     ->label('Vek')
                     ->formatStateUsing(function (Training $record): string {
@@ -81,6 +86,8 @@ class TrainingsTable
                 SelectFilter::make('pricing_type')
                     ->label('Typ ceny')
                     ->options(TrainingPricingTypeEnum::class),
+                TernaryFilter::make('is_recurring')
+                    ->label('Pravidelný'),
                 TernaryFilter::make('is_active')
                     ->label('Aktívny'),
             ])

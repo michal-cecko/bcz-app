@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BannerTypeEnum;
 use App\Enums\BillingPeriodEnum;
 use App\Enums\CoachRoleEnum;
 use App\Enums\ComplexityLevelEnum;
@@ -32,6 +33,11 @@ use App\Enums\TimetableEntryStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 
 return [
+    BannerTypeEnum::class => [
+        BannerTypeEnum::Topbar->value => 'Horná lišta',
+        BannerTypeEnum::Floating->value => 'Plávajúci',
+        BannerTypeEnum::Popup->value => 'Popup',
+    ],
     InvitationStatusEnum::class => [
         InvitationStatusEnum::Pending->value => 'Čakajúca',
         InvitationStatusEnum::Accepted->value => 'Prijatá',
@@ -130,6 +136,11 @@ return [
         RegistrationFieldTypeEnum::PHONE->value => 'Telefón',
         RegistrationFieldTypeEnum::EMAIL->value => 'E-mail',
         RegistrationFieldTypeEnum::FILE_INPUT->value => 'Súbor',
+        RegistrationFieldTypeEnum::FIRST_NAME->value => 'Meno',
+        RegistrationFieldTypeEnum::LAST_NAME->value => 'Priezvisko',
+        RegistrationFieldTypeEnum::FULL_NAME->value => 'Celé meno',
+        RegistrationFieldTypeEnum::BIRTH_DATE->value => 'Dátum narodenia',
+        RegistrationFieldTypeEnum::GENDER->value => 'Pohlavie',
     ],
     RoleEnum::class => [
         RoleEnum::SUPER_ADMIN->value => 'Super Admin',

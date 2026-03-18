@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\GenderEnum;
+use App\Enums\RoleEnum;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -18,9 +20,15 @@ class UserForm
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->label('Meno')
-                    ->required(),
+                Grid::make(2)
+                    ->schema([
+                        TextInput::make('first_name')
+                            ->label('Meno')
+                            ->required(),
+                        TextInput::make('last_name')
+                            ->label('Priezvisko')
+                            ->required(),
+                    ]),
                 TextInput::make('email')
                     ->label('E-mail')
                     ->email()
@@ -34,7 +42,7 @@ class UserForm
                 Select::make('roles')
                     ->label('Roly')
                     ->relationship('roles', 'name')
-                    ->getOptionLabelFromRecordUsing(fn ($record): string => \App\Enums\RoleEnum::tryFrom($record->name)?->getLabel() ?? $record->name)
+                    ->getOptionLabelFromRecordUsing(fn ($record): string => RoleEnum::tryFrom($record->name)?->getLabel() ?? $record->name)
                     ->multiple()
                     ->preload()
                     ->required(),

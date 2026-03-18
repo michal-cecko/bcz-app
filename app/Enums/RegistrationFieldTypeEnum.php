@@ -20,4 +20,9 @@ enum RegistrationFieldTypeEnum: string implements HasLabel
     case PHONE = 'phone';
     case EMAIL = 'email';
     case FILE_INPUT = 'file_input';
+    case FIRST_NAME = 'first_name';
+    case LAST_NAME = 'last_name';
+    case FULL_NAME = 'full_name';
+    case BIRTH_DATE = 'birth_date';
+    case GENDER = 'gender';
 }

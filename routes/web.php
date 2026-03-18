@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Pages\Auth\SetPassword;
 use App\Http\Controllers\Admin\EmailPreviewController;
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\CompetitionController;
@@ -179,15 +180,20 @@ Route::middleware('signed')->group(function () {
     Route::post('/team-invitations/{invitation}/register', [TeamInvitationController::class, 'register']);
     Route::get('/magic-login/{user}', MagicLoginController::class)
         ->name('magic-login');
-
-    Route::post('/logout', function () {
-        Auth::logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-
-        return redirect()->to(request()->input('redirect', '/'));
-    })->name('logout');
 });
+
+Route::get('/login', fn () => redirect('/admin/login'))->name('login');
+Route::get('/admin/set-password', SetPassword::class)
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.auth.set-password');
+
+Route::post('/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect()->to(request()->input('redirect', '/'));
+})->name('logout');
 
 Route::get('/admin/email-preview/{key}', [EmailPreviewController::class, 'show'])
     ->name('admin.email-preview');

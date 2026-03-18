@@ -29,6 +29,7 @@ class Training extends Model implements Linkable
     protected $fillable = [
         'sport_category_id',
         'team_id',
+        'city_id',
         'title',
         'slug',
         'description',
@@ -47,9 +48,15 @@ class Training extends Model implements Linkable
         'notify_on_available',
         'pricing_type',
         'price_amount',
+        'variable_symbol',
+        'payment_note',
         'registration_form_schema',
         'gallery_images',
         'is_active',
+        'is_recurring',
+        'event_date',
+        'registration_opens_at',
+        'registration_closes_at',
         'sort_order',
     ];
 
@@ -64,6 +71,8 @@ class Training extends Model implements Linkable
             'registration_form_schema' => 'json',
             'gallery_images' => 'json',
             'is_active' => 'boolean',
+            'is_recurring' => 'boolean',
+            'event_date' => 'date',
             'notify_on_available' => 'boolean',
             'duration_minutes' => 'integer',
             'max_capacity' => 'integer',
@@ -71,7 +80,38 @@ class Training extends Model implements Linkable
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'sort_order' => 'integer',
+            'registration_opens_at' => 'datetime',
+            'registration_closes_at' => 'datetime',
         ];
+    }
+
+    public function isRegistrationOpen(): bool
+    {
+        if ($this->registration_opens_at && now()->lt($this->registration_opens_at)) {
+            return false;
+        }
+
+        if ($this->registration_closes_at && now()->gt($this->registration_closes_at)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return 'open'|'not_yet_open'|'closed'
+     */
+    public function registrationStatus(): string
+    {
+        if ($this->registration_opens_at && now()->lt($this->registration_opens_at)) {
+            return 'not_yet_open';
+        }
+
+        if ($this->registration_closes_at && now()->gt($this->registration_closes_at)) {
+            return 'closed';
+        }
+
+        return 'open';
     }
 
     public function getSlugOptions(): SlugOptions
@@ -116,6 +156,11 @@ class Training extends Model implements Linkable
             ->orderBy('sort_order')
             ->get()
             ->mapWithKeys(fn (Training $t) => [$t->id => $t->getLinkLabel()]);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function sportCategory(): BelongsTo

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BannerTypeEnum;
 use App\Enums\BillingPeriodEnum;
 use App\Enums\CoachRoleEnum;
 use App\Enums\ComplexityLevelEnum;
@@ -23,8 +24,10 @@ use App\Models\AthleteCategory;
 use App\Models\AthleteExercise;
 use App\Models\AthleteGoal;
 use App\Models\AthleteProfile;
+use App\Models\Banner;
 use App\Models\Battle;
 use App\Models\Certification;
+use App\Models\City;
 use App\Models\CoachProfile;
 use App\Models\CompetitionDetail;
 use App\Models\CompetitionResult;
@@ -75,7 +78,8 @@ class DemoDataSeeder extends Seeder
         // --- Users with roles ---
         $coachData = [
             [
-                'name' => 'Michal Čečko',
+                'first_name' => 'Michal',
+                'last_name' => 'Čečko',
                 'email' => 'michal@bczclub.com',
                 'biography' => [
                     'sk' => '8 rokov aktívneho tréningu a 5 rokov skúseností s vedením skupín. Michal sa špecializuje na výuku techniky a bezpečný progres. Jeho tréningy sú známe skvelou atmosférou a individuálnym prístupom ku každému účastníkovi.',
@@ -83,7 +87,8 @@ class DemoDataSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Dominik Klimek',
+                'first_name' => 'Dominik',
+                'last_name' => 'Klimek',
                 'email' => 'dominik@bczclub.com',
                 'biography' => [
                     'sk' => 'Spoluzakladateľ BCZ Club a profesionálny parkour atléta s 10 rokmi skúseností. Dominik vedie pokročilé tréningy a pripravuje atlétov na súťaže. Je držiteľom certifikátu A.D.A.P.T. a pravidelne sa zúčastňuje medzinárodných workshopov.',
@@ -91,7 +96,8 @@ class DemoDataSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Tomáš Bartek',
+                'first_name' => 'Tomáš',
+                'last_name' => 'Bartek',
                 'email' => 'tomas@bczclub.com',
                 'biography' => [
                     'sk' => 'Certifikovaný tréner kalisteniky a street workoutu. Tomáš má za sebou 6 rokov súťažného street workoutu a viacero umiestnení na slovenských a českých súťažiach. Zameriava sa na silový tréning s vlastnou váhou a progresiu k náročným prvkom.',
@@ -102,7 +108,8 @@ class DemoDataSeeder extends Seeder
 
         $coaches = collect($coachData)->map(function ($data, $index) use ($bczTeam) {
             $user = User::factory()->create([
-                'name' => $data['name'],
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
                 'email' => $data['email'],
             ]);
             $user->assignRole(RoleEnum::CUSTOMER);
@@ -136,7 +143,8 @@ class DemoDataSeeder extends Seeder
 
         $judgeData = [
             [
-                'name' => 'Peter Novák',
+                'first_name' => 'Peter',
+                'last_name' => 'Novák',
                 'country_code' => 'SK',
                 'certifications' => [
                     ['name' => ['sk' => 'WSWCF Level A', 'en' => 'WSWCF Level A'], 'description' => ['sk' => 'Medzinárodná rozhodcovská licencia World Street Workout & Calisthenics Federation', 'en' => 'International judge license from World Street Workout & Calisthenics Federation'], 'year_of_issue' => 2021],
@@ -144,14 +152,16 @@ class DemoDataSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Tomáš Horváth',
+                'first_name' => 'Tomáš',
+                'last_name' => 'Horváth',
                 'country_code' => 'SK',
                 'certifications' => [
                     ['name' => ['sk' => 'FIG Parkour Judge', 'en' => 'FIG Parkour Judge'], 'description' => ['sk' => 'Medzinárodná rozhodcovská licencia Fédération Internationale de Gymnastique', 'en' => 'International judge license from Fédération Internationale de Gymnastique'], 'year_of_issue' => 2022],
                 ],
             ],
             [
-                'name' => 'Marek Kováč',
+                'first_name' => 'Marek',
+                'last_name' => 'Kováč',
                 'country_code' => 'CZ',
                 'certifications' => [
                     ['name' => ['sk' => 'WSWCF Level B', 'en' => 'WSWCF Level B'], 'description' => ['sk' => 'Rozhodcovská licencia World Street Workout & Calisthenics Federation', 'en' => 'Judge license from World Street Workout & Calisthenics Federation'], 'year_of_issue' => 2023],
@@ -159,7 +169,8 @@ class DemoDataSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Jakub Vlček',
+                'first_name' => 'Jakub',
+                'last_name' => 'Vlček',
                 'country_code' => 'SK',
                 'certifications' => [
                     ['name' => ['sk' => 'BCZ Certified Judge', 'en' => 'BCZ Certified Judge'], 'description' => ['sk' => 'Interná rozhodcovská certifikácia BCZ Club', 'en' => 'Internal BCZ Club judge certification'], 'year_of_issue' => 2025],
@@ -169,7 +180,8 @@ class DemoDataSeeder extends Seeder
 
         $judges = collect($judgeData)->map(function ($data) use ($bczTeam) {
             $user = User::factory()->create([
-                'name' => $data['name'],
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
                 'country_code' => $data['country_code'],
             ]);
             $user->assignRole(RoleEnum::JUDGE);
@@ -304,6 +316,16 @@ class DemoDataSeeder extends Seeder
             array_merge($mandatoryFields, [$extraPhone, $extraNote]),
         ];
 
+        // --- Cities ---
+        $banskaBystrica = City::create([
+            'name' => ['sk' => 'Banská Bystrica', 'en' => 'Banská Bystrica', 'cs' => 'Banská Bystrica'],
+            'sort_order' => 0,
+        ]);
+        $cadca = City::create([
+            'name' => ['sk' => 'Čadca', 'en' => 'Čadca', 'cs' => 'Čadca'],
+            'sort_order' => 1,
+        ]);
+
         // --- Trainings ---
         $trainings = collect([
             [
@@ -313,8 +335,7 @@ class DemoDataSeeder extends Seeder
                     'en' => "Parkour Teens is a group training designed for youth aged 13-17. You will learn the basics of parkour and freerunning - from safe falls, to jumps and climbs, to dynamic movements and flips.\n\nTrainings focus on gradual progression, proper technique, and most importantly having fun in a great community.",
                 ],
                 'sport_category_id' => $parkour->id,
-                'pricing_type' => TrainingPricingTypeEnum::PAID,
-                'price_amount' => 8.00,
+                'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
                 'min_age' => 13,
                 'max_age' => 17,
                 'max_capacity' => 12,
@@ -334,8 +355,7 @@ class DemoDataSeeder extends Seeder
                     'en' => "Advanced street workout training for experienced athletes. We focus on static elements like planche, front lever and human flag, as well as dynamic combinations on the bar.\n\nTraining requires mastery of calisthenics basics - min. 10 clean pull-ups and 20 push-ups.",
                 ],
                 'sport_category_id' => $streetWorkout->id,
-                'pricing_type' => TrainingPricingTypeEnum::PAID,
-                'price_amount' => 12.00,
+                'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
                 'min_age' => 16,
                 'max_age' => null,
                 'max_capacity' => 15,
@@ -375,8 +395,7 @@ class DemoDataSeeder extends Seeder
                     'en' => "Intensive training for advanced traceurs. We work on height technique, precision landings and efficient movement through challenging obstacles in real environments.\n\nRequired level: min. 2 years of regular parkour training.",
                 ],
                 'sport_category_id' => $parkour->id,
-                'pricing_type' => TrainingPricingTypeEnum::PAID,
-                'price_amount' => 15.00,
+                'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
                 'min_age' => 16,
                 'max_age' => null,
                 'max_capacity' => 10,
@@ -415,8 +434,7 @@ class DemoDataSeeder extends Seeder
                     'en' => "Fun training for kids aged 8-14. Through games and challenges, they learn the basics of bodyweight exercises. We develop strength, flexibility and coordination in a safe environment.\n\nEvery training ends with a small competition with prizes!",
                 ],
                 'sport_category_id' => $streetWorkout->id,
-                'pricing_type' => TrainingPricingTypeEnum::PAID,
-                'price_amount' => 6.00,
+                'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
                 'min_age' => 8,
                 'max_age' => 14,
                 'max_capacity' => 18,
@@ -481,8 +499,10 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 14,
                 'max_age' => 25,
                 'max_capacity' => 10,
+                'is_recurring' => false,
+                'event_date' => now()->addWeeks(3)->format('Y-m-d'),
                 'notify_on_available' => true,
-                'schedule_days' => ['sunday'],
+                'schedule_days' => null,
                 'start_time' => '14:00',
                 'duration_minutes' => 120,
                 'place_name' => ['sk' => 'BCZ Gym Bratislava', 'en' => 'BCZ Gym Bratislava'],
@@ -491,9 +511,14 @@ class DemoDataSeeder extends Seeder
                 'latitude' => 48.1698,
                 'longitude' => 17.1436,
             ],
-        ])->map(function ($data, $index) use ($bczTeam, $registrationSchemas) {
+        ])->map(function ($data, $index) use ($bczTeam, $registrationSchemas, $banskaBystrica, $cadca) {
+            // Čadca trainings: Parkour Teens (0), Kalistenické základy (4), Street Workout pre deti (5)
+            // Banská Bystrica: Freerunning Kreativita (2), Parkour pre pokročilých (3)
+            $cityMap = [0 => $cadca->id, 2 => $banskaBystrica->id, 3 => $banskaBystrica->id, 4 => $cadca->id, 5 => $cadca->id];
+
             return Training::factory()->create(array_merge($data, [
                 'team_id' => $bczTeam->id,
+                'city_id' => $cityMap[$index] ?? $cadca->id,
                 'sort_order' => $index,
                 'registration_form_schema' => $registrationSchemas[$index] ?? $registrationSchemas[count($registrationSchemas) - 1],
             ]));
@@ -2054,5 +2079,77 @@ class DemoDataSeeder extends Seeder
                 'ends_at' => $secondTeamSeason->ends_at,
             ]);
         });
+
+        // --- Banners ---
+
+        // Rebranding topbar
+        Banner::create([
+            'name' => ['sk' => 'Rebranding', 'en' => 'Rebranding', 'cs' => 'Rebranding'],
+            'type' => BannerTypeEnum::Topbar,
+            'placement' => 'all',
+            'content' => [
+                'bg_color' => '#1A1A1A',
+                'title' => [
+                    'sk' => 'Nová značka, rovnaká vášeň: Street Workout Kysuce → BCZ Club',
+                    'en' => 'New brand, same passion: Street Workout Kysuce → BCZ Club',
+                    'cs' => 'Nová značka, stejná vášeň: Street Workout Kysuce → BCZ Club',
+                ],
+            ],
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        // 2% z dane floating window
+        Banner::create([
+            'name' => ['sk' => '2% z daní', 'en' => '2% tax donation', 'cs' => '2% z daní'],
+            'type' => BannerTypeEnum::Floating,
+            'placement' => 'all',
+            'content' => [
+                'icon' => 'heart',
+                'bg_color' => '#FFFFFF',
+                'title' => [
+                    'sk' => 'Darujte nám 2% z dane',
+                    'en' => 'Donate 2% of your taxes',
+                    'cs' => 'Darujte nám 2% z daní',
+                ],
+                'description' => [
+                    'sk' => 'Podporíte rozvoj parkouru na Slovensku a pomôžete nám vychovávať ďalšiu generáciu športovcov.',
+                    'en' => 'Support the development of parkour in Slovakia and help us raise the next generation of athletes.',
+                    'cs' => 'Podpoříte rozvoj parkouru na Slovensku a pomůžete nám vychovávat další generaci sportovců.',
+                ],
+                'stat1_value' => '500+',
+                'stat1_label' => [
+                    'sk' => 'detí ročne',
+                    'en' => 'kids per year',
+                    'cs' => 'dětí ročně',
+                ],
+                'stat2_value' => '10+',
+                'stat2_label' => [
+                    'sk' => 'rokov',
+                    'en' => 'years',
+                    'cs' => 'let',
+                ],
+                'primary_button_text' => [
+                    'sk' => 'ZÍSKAŤ TLAČIVO',
+                    'en' => 'GET THE FORM',
+                    'cs' => 'ZÍSKAT FORMULÁŘ',
+                ],
+                'primary_button_link_type' => 'custom',
+                'primary_button_link_url' => [
+                    'sk' => '/2-percenta',
+                    'en' => '/en/2-percenta',
+                    'cs' => '/cs/2-percenta',
+                ],
+                'note' => [
+                    'sk' => 'IČO: 42 195 250 • Právna forma: občianske združenie',
+                    'en' => 'ID: 42 195 250 • Legal form: civic association',
+                    'cs' => 'IČO: 42 195 250 • Právní forma: občanské sdružení',
+                ],
+            ],
+            'is_active' => true,
+            'active_from' => now()->startOfYear()->toDateTimeString(),
+            'active_to' => now()->month(4)->endOfMonth()->toDateTimeString(),
+            'sort_order' => 10,
+        ]);
     }
 }

@@ -72,7 +72,6 @@ class TeamInvitationController extends Controller
         $user = User::create([
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
-            'name' => $validated['first_name'].' '.$validated['last_name'],
             'email' => $invitation->email,
             'password' => Hash::make($validated['password']),
             'email_verified_at' => now(),

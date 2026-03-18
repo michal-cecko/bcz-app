@@ -143,6 +143,12 @@
                             <span class="text-white text-sm font-semibold">{{ $placeName }}</span>
                         </div>
                     @endif
+                    @if($training->city)
+                        <div class="flex items-center justify-between">
+                            <span class="text-[#666666] text-sm">{{ __('training_detail.detail_city') }}</span>
+                            <span class="text-white text-sm font-semibold">{{ $training->city->getTranslation('name', $locale) ?: $training->city->getTranslation('name', 'sk') }}</span>
+                        </div>
+                    @endif
                     @if($training->price_amount)
                         <div class="flex items-center justify-between">
                             <span class="text-[#666666] text-sm">{{ __('training_detail.detail_price') }}</span>

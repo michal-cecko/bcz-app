@@ -15,6 +15,11 @@ class MagicLoginController extends Controller
 
         $request->session()->regenerate();
 
+        // If user has no real password (created via guest registration), prompt them to set one
+        if ($user->password_set_at === null) {
+            return redirect('/admin/set-password');
+        }
+
         return redirect('/');
     }
 }

@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <title>{{ $emailSubject }}</title>
+    <title>{{ $emailSubject ?? '' }}</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
@@ -50,6 +50,7 @@
             .powered-brand { color: #666666 !important; }
             .bcz-logo-light { display: none !important; }
             .bcz-logo-dark { display: inline !important; }
+            .info-box { background-color: #1A1A1A !important; }
         }
 
         @media only screen and (max-width: 600px) {
@@ -82,7 +83,11 @@
                 <!-- Content -->
                 <tr>
                     <td class="content-bg content-padding" style="background-color: #FAFAFA; padding: 40px;">
-                        {!! $emailBody !!}
+                        @hasSection('content')
+                            @yield('content')
+                        @elseif(!empty($emailBody))
+                            {!! $emailBody !!}
+                        @endif
                     </td>
                 </tr>
 

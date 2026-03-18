@@ -170,7 +170,6 @@ class RegisterTeam extends Component
             $user = User::create([
                 'first_name' => $this->firstName,
                 'last_name' => $this->lastName,
-                'name' => $this->firstName.' '.$this->lastName,
                 'email' => $this->email,
                 'password' => Hash::make($this->password),
                 'locale' => app()->getLocale(),

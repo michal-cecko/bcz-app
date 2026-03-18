@@ -47,6 +47,11 @@ class TrainingInfolist
                                 Section::make('Miesto konania')
                                     ->icon('heroicon-o-map-pin')
                                     ->schema([
+                                        TextEntry::make('city.name')
+                                            ->label('Mesto')
+                                            ->badge()
+                                            ->color('primary')
+                                            ->placeholder('-'),
                                         TextEntry::make('place_name')
                                             ->label('Názov miesta')
                                             ->placeholder('-'),

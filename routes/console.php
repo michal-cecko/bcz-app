@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('team-invitations:expire')->daily();
 Schedule::command('memberships:cancel-unpaid')->daily();
+Schedule::command('memberships:send-renewal-reminders')->daily();

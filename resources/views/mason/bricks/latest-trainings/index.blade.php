@@ -57,14 +57,23 @@
                         }
                         $coachName = $training->coaches->first()?->name;
                     @endphp
+                    @php
+                        $placeName = $training->getTranslation('place_name', app()->getLocale()) ?: $training->getTranslation('place_name', 'sk');
+                        $cityName = $training->city?->getTranslation('name', app()->getLocale()) ?: $training->city?->getTranslation('name', 'sk');
+                    @endphp
                     <div class="bg-[#0A0A0A] border border-[#222222] flex flex-col p-7 gap-5 w-full {{ $widthClass }}">
-                        {{-- Header: Title + Age Badge --}}
-                        <div class="flex items-center justify-between gap-2">
-                            <h3 class="text-white text-lg font-bold">{{ $training->title }}</h3>
+                        {{-- Badges --}}
+                        <div class="flex items-center gap-2">
                             @if($training->age_range)
-                                <span class="bg-bcz-red/20 text-bcz-red text-[10px] font-bold tracking-wider px-3 py-1.5 shrink-0">{{ $training->age_range }}</span>
+                                <span class="bg-bcz-red/20 text-bcz-red text-[10px] font-bold tracking-wider px-3 py-1.5">{{ $training->age_range }}</span>
+                            @endif
+                            @if($training->gender)
+                                <span class="bg-blue-500/20 text-blue-400 text-[10px] font-bold tracking-wider px-3 py-1.5">{{ $training->gender->getLabel() }}</span>
                             @endif
                         </div>
+
+                        {{-- Title --}}
+                        <h3 class="text-white text-lg font-bold">{{ $training->title }}</h3>
 
                         {{-- Info rows --}}
                         <div class="flex flex-col gap-3">
@@ -84,6 +93,18 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-[#666666] text-sm">{{ __('bricks.latest_trainings.coach') }}</span>
                                     <span class="text-white text-sm font-semibold">{{ $coachName }}</span>
+                                </div>
+                            @endif
+                            @if($placeName)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[#666666] text-sm">{{ __('bricks.latest_trainings.location') }}</span>
+                                    <span class="text-white text-sm font-semibold text-right">{{ $placeName }}</span>
+                                </div>
+                            @endif
+                            @if($cityName)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[#666666] text-sm">{{ __('bricks.latest_trainings.city') }}</span>
+                                    <span class="text-white text-sm font-semibold text-right">{{ $cityName }}</span>
                                 </div>
                             @endif
                         </div>

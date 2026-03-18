@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Services\EmailService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class EmailPreviewController
 {
-    public function show(string $key): \Illuminate\Http\Response
+    public function show(string $key): Response
     {
         $data = Cache::get("email-preview:{$key}");
 
@@ -30,7 +33,7 @@ class EmailPreviewController
         $emailBody = EmailService::replaceVariables($emailBody, $sampleVariables);
         $subject = EmailService::replaceVariables($subject, $sampleVariables);
 
-        $emailHtml = view('emails.admin-email', [
+        $emailHtml = view('emails.layout', [
             'emailSubject' => $subject,
             'emailBody' => $emailBody,
             'teamName' => $teamName,
@@ -47,9 +50,9 @@ class EmailPreviewController
         ])->render());
     }
 
-    public function store(Request $request): \Illuminate\Http\JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $key = \Illuminate\Support\Str::random(32);
+        $key = Str::random(32);
 
         Cache::put("email-preview:{$key}", [
             'subject' => $request->input('subject', ''),

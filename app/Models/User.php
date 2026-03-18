@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Contracts\Linkable;
 use App\Enums\GenderEnum;
+use App\Enums\MembershipStatusEnum;
 use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
@@ -51,6 +52,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         'public_profile_approved_at',
         'birth_date',
         'gender',
+        'password_set_at',
     ];
 
     protected $hidden = [
@@ -75,14 +77,24 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             'public_profile_approved_at' => 'datetime',
             'birth_date' => 'date',
             'gender' => GenderEnum::class,
+            'password_set_at' => 'datetime',
         ];
     }
 
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
-            ->generateSlugsFrom('name')
+            ->generateSlugsFrom(['first_name', 'last_name'])
             ->saveSlugsTo('slug');
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->isDirty(['first_name', 'last_name'])) {
+                $user->name = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
+            }
+        });
     }
 
     public function teams(): BelongsToMany
@@ -227,6 +239,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         return $this->hasMany(Membership::class);
     }
 
+    public function hasActiveMembershipForTeam(string $teamId): bool
+    {
+        return $this->memberships()
+            ->where('team_id', $teamId)
+            ->where('status', MembershipStatusEnum::ACTIVE)
+            ->where('ends_at', '>=', now())
+            ->exists();
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
@@ -244,10 +265,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
 
     public function getInitials(): string
     {
-        $parts = explode(' ', trim($this->name));
-
         return mb_strtoupper(
-            mb_substr($parts[0] ?? '', 0, 1).mb_substr($parts[1] ?? '', 0, 1)
+            mb_substr($this->first_name ?? '', 0, 1).mb_substr($this->last_name ?? '', 0, 1)
         );
     }
 
@@ -320,6 +339,13 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         }
 
         return true;
+    }
+
+    public function isProfileIncomplete(): bool
+    {
+        return $this->phone === null
+            || $this->birth_date === null
+            || $this->gender === null;
     }
 
     /**

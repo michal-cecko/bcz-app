@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,30 +18,53 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
 
     public string $magicUrl;
 
+    public string $emailSubject;
+
+    public ?string $teamName;
+
+    public ?string $teamLogoUrl;
+
+    public ?string $teamUrl;
+
+    public ?string $teamEmail;
+
+    public ?string $teamPhone;
+
+    public ?string $teamWebsite;
+
     public function __construct(
         public User $user,
         public string $registrationType,
         public string $registrationTitle,
         public bool $isNewUser = false,
+        public ?Team $team = null,
     ) {
-        $this->magicUrl = URL::temporarySignedRoute(
-            'magic-login',
-            now()->addDays(7),
-            ['user' => $user->id],
-        );
+        $this->magicUrl = $isNewUser
+            ? URL::temporarySignedRoute('magic-login', now()->addDays(7), ['user' => $user->id])
+            : '';
+
+        $this->emailSubject = $this->isNewUser
+            ? "Váš účet bol vytvorený — {$this->registrationTitle}"
+            : "Potvrdenie registrácie — {$this->registrationTitle}";
+
+        $this->teamName = $this->team?->getTranslation('name', 'sk');
+        $this->teamLogoUrl = $this->team?->getFirstMediaUrl('logo') ?: null;
+        $teamSlug = $this->team?->slug;
+        $this->teamUrl = $teamSlug ? url("/timy/{$teamSlug}") : url('/');
+        $this->teamEmail = $this->team?->contact_email;
+        $this->teamPhone = $this->team?->contact_phone;
+        $this->teamWebsite = $this->team?->contact_website;
     }
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: "Potvrdenie registrácie — {$this->registrationTitle}",
-        );
+        return new Envelope(subject: $this->emailSubject);
     }
 
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.registration-confirmation',
+            view: 'emails.registration-confirmation',
         );
     }
 }

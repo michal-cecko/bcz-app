@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\CompleteProfileWidget;
 use App\Filament\Widgets\MembershipStatusWidget;
 use App\Filament\Widgets\RecentPaymentsWidget;
 use App\Filament\Widgets\UpcomingTrainingsWidget;
@@ -34,6 +35,7 @@ class Dashboard extends BaseDashboard
 
         if ($user?->isMemberLevel()) {
             return [
+                CompleteProfileWidget::class,
                 MembershipStatusWidget::class,
                 RecentPaymentsWidget::class,
                 UpcomingTrainingsWidget::class,
@@ -41,6 +43,7 @@ class Dashboard extends BaseDashboard
         }
 
         return [
+            CompleteProfileWidget::class,
             AccountWidget::class,
         ];
     }

@@ -33,6 +33,12 @@ class TeamSeasonForm
                     ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
                     ->default('EUR')
                     ->required(),
+                TextInput::make('variable_symbol')
+                    ->label('Variabilný symbol')
+                    ->maxLength(10),
+                TextInput::make('payment_note')
+                    ->label('Poznámka platby')
+                    ->maxLength(50),
                 TextInput::make('max_capacity')
                     ->label('Maximálny počet členov')
                     ->numeric()

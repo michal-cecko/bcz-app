@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BannerTypeEnum;
 use App\Enums\CoachRoleEnum;
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
@@ -8,6 +9,11 @@ use App\Enums\RoleEnum;
 use App\Enums\SponsorTagEnum;
 
 return [
+    BannerTypeEnum::class => [
+        BannerTypeEnum::Topbar->value => 'Horni lista',
+        BannerTypeEnum::Floating->value => 'Plovouci',
+        BannerTypeEnum::Popup->value => 'Popup',
+    ],
     CoachRoleEnum::class => [
         CoachRoleEnum::MAIN->value => 'Hlavni trener',
         CoachRoleEnum::SECONDARY->value => 'Asistent trenera',

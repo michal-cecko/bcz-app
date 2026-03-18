@@ -20,7 +20,7 @@ class UsersTable
             ->columns([
                 TextColumn::make('name')
                     ->label('Meno')
-                    ->searchable()
+                    ->searchable(['first_name', 'last_name'])
                     ->sortable(),
                 TextColumn::make('email')
                     ->label('E-mail')

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\SetLocale;
 use App\Services\LinkResolver;
 use Illuminate\Support\Facades\Storage;
 
@@ -53,8 +54,29 @@ if (! function_exists('brick_media')) {
             return $empty;
         }
 
+        if (is_array($value)) {
+            $url = $value['url'] ?? $value['path'] ?? null;
+            if (empty($url)) {
+                return $empty;
+            }
+
+            $resolvedUrl = str_starts_with($url, 'http')
+                ? $url
+                : Storage::disk('public')->url($url);
+
+            return (object) [
+                'url' => $resolvedUrl,
+                'alt' => $value['alt'] ?? null,
+                'caption' => $value['caption'] ?? null,
+            ];
+        }
+
         if (is_string($value) && str_starts_with($value, 'http')) {
             return (object) ['url' => $value, 'alt' => null, 'caption' => null];
+        }
+
+        if (! is_string($value)) {
+            return $empty;
         }
 
         return (object) [
@@ -86,7 +108,7 @@ if (! function_exists('locale_url')) {
     function locale_url(string $path): string
     {
         $locale = app()->getLocale();
-        $prefix = \App\Http\Middleware\SetLocale::PREFIX_MAP[$locale] ?? null;
+        $prefix = SetLocale::PREFIX_MAP[$locale] ?? null;
 
         if (! $prefix) {
             return $path;
@@ -107,14 +129,14 @@ if (! function_exists('locale_switch_url')) {
         $path = request()->getPathInfo();
 
         // Strip existing locale prefix
-        foreach (\App\Http\Middleware\SetLocale::SUPPORTED_PREFIXES as $prefix) {
+        foreach (SetLocale::SUPPORTED_PREFIXES as $prefix) {
             if (str_starts_with($path, '/'.$prefix.'/') || $path === '/'.$prefix) {
                 $path = substr($path, strlen('/'.$prefix)) ?: '/';
                 break;
             }
         }
 
-        $urlPrefix = \App\Http\Middleware\SetLocale::PREFIX_MAP[$targetLocale] ?? null;
+        $urlPrefix = SetLocale::PREFIX_MAP[$targetLocale] ?? null;
 
         if ($urlPrefix) {
             $path = '/'.$urlPrefix.($path === '/' ? '' : $path);
