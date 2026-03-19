@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources\Trainings\Schemas;
 
+use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Training;
 use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 
 class TrainingInfolist
@@ -16,149 +19,229 @@ class TrainingInfolist
     {
         return $schema
             ->components([
-                Grid::make(3)
-                    ->columnSpanFull()
-                    ->schema([
-                        Grid::make(1)
-                            ->schema([
-                                Section::make('Základné údaje')
-                                    ->icon('heroicon-o-academic-cap')
-                                    ->schema([
-                                        TextEntry::make('title')
-                                            ->label('Názov')
-                                            ->size('lg')
-                                            ->weight('bold'),
-                                        TextEntry::make('description')
-                                            ->label('Popis')
-                                            ->placeholder('Bez popisu')
-                                            ->html()
-                                            ->columnSpanFull(),
-                                        TextEntry::make('sportCategory.name')
-                                            ->label('Športová kategória')
-                                            ->badge()
-                                            ->color('primary'),
-                                        TextEntry::make('slug')
-                                            ->label('URL slug')
-                                            ->color('gray')
-                                            ->copyable(),
-                                    ])
-                                    ->columns(2),
-
-                                Section::make('Miesto konania')
-                                    ->icon('heroicon-o-map-pin')
-                                    ->schema([
-                                        TextEntry::make('city.name')
-                                            ->label('Mesto')
-                                            ->badge()
-                                            ->color('primary')
-                                            ->placeholder('-'),
-                                        TextEntry::make('place_name')
-                                            ->label('Názov miesta')
-                                            ->placeholder('-'),
-                                        TextEntry::make('place_address')
-                                            ->label('Adresa')
-                                            ->placeholder('-'),
-                                        TextEntry::make('gathering_place')
-                                            ->label('Miesto stretnutia')
-                                            ->placeholder('-'),
-                                        TextEntry::make('latitude')
-                                            ->label('Súradnice')
-                                            ->placeholder('-')
-                                            ->formatStateUsing(fn ($record): ?string => $record->latitude && $record->longitude
-                                                ? "{$record->latitude}, {$record->longitude}"
-                                                : null),
-                                    ])
-                                    ->columns(2)
-                                    ->collapsible(),
-
-                                Section::make('Kapacita a ceny')
-                                    ->icon('heroicon-o-currency-euro')
-                                    ->schema([
-                                        TextEntry::make('pricing_type')
-                                            ->label('Typ ceny')
-                                            ->badge(),
-                                        TextEntry::make('price_amount')
-                                            ->label('Cena')
-                                            ->money('EUR')
-                                            ->visible(fn ($record): bool => $record->pricing_type === TrainingPricingTypeEnum::PAID),
-                                        TextEntry::make('max_capacity')
-                                            ->label('Max. kapacita')
-                                            ->placeholder('Neobmedzená'),
-                                        TextEntry::make('registrations_count')
-                                            ->label('Registrácie')
-                                            ->state(fn ($record): int => $record->registrations()->count()),
-                                        IconEntry::make('notify_on_available')
-                                            ->label('Upozornenie pri voľnom mieste')
-                                            ->boolean()
-                                            ->tooltip('Ak je tréning plný, používatelia sa môžu zapísať na čakací zoznam a budú notifikovaní, keď sa uvoľní miesto.'),
-                                    ])
-                                    ->columns(3),
-                            ])
-                            ->columnSpan(2),
-
-                        Grid::make(1)
-                            ->schema([
-                                Section::make('Rozvrh')
-                                    ->icon('heroicon-o-clock')
-                                    ->schema([
-                                        TextEntry::make('duration_minutes')
-                                            ->label('Trvanie')
-                                            ->suffix(' minút')
-                                            ->placeholder('-'),
-                                        TextEntry::make('start_time')
-                                            ->label('Čas začiatku')
-                                            ->placeholder('-'),
-                                        TextEntry::make('schedule_days')
-                                            ->label('Dni v týždni')
-                                            ->badge()
-                                            ->formatStateUsing(fn (string $state): string => match ($state) {
-                                                'monday' => 'Po',
-                                                'tuesday' => 'Ut',
-                                                'wednesday' => 'St',
-                                                'thursday' => 'Št',
-                                                'friday' => 'Pi',
-                                                'saturday' => 'So',
-                                                'sunday' => 'Ne',
-                                                default => $state,
-                                            })
-                                            ->color('primary'),
-                                    ]),
-
-                                Section::make('Nastavenia')
-                                    ->icon('heroicon-o-cog-6-tooth')
-                                    ->schema([
-                                        TextEntry::make('age_range')
-                                            ->label('Veková skupina')
-                                            ->state(function (Training $record): string {
-                                                if ($record->min_age === null && $record->max_age === null) {
-                                                    return 'Všetky';
-                                                }
-                                                if ($record->max_age === null) {
-                                                    return $record->min_age.'+';
-                                                }
-                                                if ($record->min_age === null) {
-                                                    return 'do '.$record->max_age;
-                                                }
-
-                                                return $record->min_age.'-'.$record->max_age;
-                                            }),
-                                        TextEntry::make('gender')
-                                            ->label('Pohlavie')
-                                            ->badge()
-                                            ->placeholder('Všetky'),
-                                        IconEntry::make('is_active')
-                                            ->label('Aktívny')
-                                            ->boolean(),
-                                        TextEntry::make('created_at')
-                                            ->label('Vytvorené')
-                                            ->dateTime('d.m.Y H:i'),
-                                        TextEntry::make('updated_at')
-                                            ->label('Upravené')
-                                            ->dateTime('d.m.Y H:i'),
-                                    ]),
-                            ])
-                            ->columnSpan(1),
-                    ]),
+                Tabs::make('Tréning')
+                    ->tabs([
+                        Tabs\Tab::make('Základné')
+                            ->schema(self::baseTab()),
+                        Tabs\Tab::make('Miesto')
+                            ->schema(self::locationTab()),
+                        Tabs\Tab::make('Rozvrh a kapacita')
+                            ->schema(self::scheduleTab()),
+                        Tabs\Tab::make('Registrácia')
+                            ->schema(self::registrationTab()),
+                        Tabs\Tab::make('Nastavenia')
+                            ->schema(self::settingsTab()),
+                    ])
+                    ->columnSpanFull(),
             ]);
+    }
+
+    private static function baseTab(): array
+    {
+        return [
+            Section::make('Základné údaje')
+                ->icon('heroicon-o-academic-cap')
+                ->schema([
+                    TextEntry::make('title')
+                        ->label('Názov')
+                        ->size('lg')
+                        ->weight('bold'),
+                    TextEntry::make('description')
+                        ->label('Popis')
+                        ->placeholder('Bez popisu')
+                        ->html()
+                        ->columnSpanFull(),
+                    TextEntry::make('sportCategory.name')
+                        ->label('Športová kategória')
+                        ->badge()
+                        ->color('primary'),
+                    TextEntry::make('slug')
+                        ->label('URL slug')
+                        ->color('gray')
+                        ->copyable(),
+                ])
+                ->columns(2),
+        ];
+    }
+
+    private static function locationTab(): array
+    {
+        return [
+            Section::make('Miesto konania')
+                ->icon('heroicon-o-map-pin')
+                ->schema([
+                    TextEntry::make('city.name')
+                        ->label('Mesto')
+                        ->badge()
+                        ->color('primary')
+                        ->placeholder('-'),
+                    TextEntry::make('place_name')
+                        ->label('Názov miesta')
+                        ->placeholder('-'),
+                    TextEntry::make('place_address')
+                        ->label('Adresa')
+                        ->placeholder('-'),
+                    TextEntry::make('gathering_place')
+                        ->label('Miesto stretnutia')
+                        ->placeholder('-'),
+                    TextEntry::make('latitude')
+                        ->label('Súradnice')
+                        ->placeholder('-')
+                        ->formatStateUsing(fn ($record): ?string => $record->latitude && $record->longitude
+                            ? "{$record->latitude}, {$record->longitude}"
+                            : null),
+                ])
+                ->columns(2),
+        ];
+    }
+
+    private static function scheduleTab(): array
+    {
+        return [
+            Grid::make(2)
+                ->schema([
+                    Section::make('Rozvrh')
+                        ->icon('heroicon-o-clock')
+                        ->schema([
+                            IconEntry::make('is_recurring')
+                                ->label('Pravidelný tréning')
+                                ->boolean(),
+                            TextEntry::make('duration_minutes')
+                                ->label('Trvanie')
+                                ->suffix(' minút')
+                                ->placeholder('-'),
+                            TextEntry::make('start_time')
+                                ->label('Čas začiatku')
+                                ->placeholder('-'),
+                            TextEntry::make('schedule_days')
+                                ->label('Dni v týždni')
+                                ->badge()
+                                ->formatStateUsing(fn (string $state): string => match ($state) {
+                                    'monday' => 'Po',
+                                    'tuesday' => 'Ut',
+                                    'wednesday' => 'St',
+                                    'thursday' => 'Št',
+                                    'friday' => 'Pi',
+                                    'saturday' => 'So',
+                                    'sunday' => 'Ne',
+                                    default => $state,
+                                })
+                                ->color('primary')
+                                ->visible(fn ($record): bool => (bool) $record->is_recurring),
+                            TextEntry::make('event_date')
+                                ->label('Dátum')
+                                ->date('d.m.Y')
+                                ->placeholder('-')
+                                ->visible(fn ($record): bool => ! $record->is_recurring),
+                        ]),
+
+                    Section::make('Kapacita a ceny')
+                        ->icon('heroicon-o-currency-euro')
+                        ->schema([
+                            TextEntry::make('pricing_type')
+                                ->label('Typ ceny')
+                                ->badge(),
+                            TextEntry::make('price_amount')
+                                ->label('Cena')
+                                ->money('EUR')
+                                ->visible(fn ($record): bool => $record->pricing_type === TrainingPricingTypeEnum::PAID),
+                            TextEntry::make('variable_symbol')
+                                ->label('Variabilný symbol')
+                                ->placeholder('-')
+                                ->visible(fn ($record): bool => $record->pricing_type !== TrainingPricingTypeEnum::FREE),
+                            TextEntry::make('payment_note')
+                                ->label('Poznámka platby')
+                                ->placeholder('-')
+                                ->visible(fn ($record): bool => $record->pricing_type !== TrainingPricingTypeEnum::FREE),
+                            TextEntry::make('max_capacity')
+                                ->label('Max. kapacita')
+                                ->placeholder('Neobmedzená'),
+                            TextEntry::make('registrations_count')
+                                ->label('Registrácie')
+                                ->state(fn ($record): int => $record->registrations()->count()),
+                            IconEntry::make('notify_on_available')
+                                ->label('Upozornenie pri voľnom mieste')
+                                ->boolean(),
+                        ]),
+                ]),
+        ];
+    }
+
+    private static function registrationTab(): array
+    {
+        return [
+            Section::make('Okno registrácie')
+                ->schema([
+                    TextEntry::make('registration_opens_at')
+                        ->label('Registrácia sa otvorí')
+                        ->dateTime('d.m.Y H:i')
+                        ->placeholder('Bez obmedzenia'),
+                    TextEntry::make('registration_closes_at')
+                        ->label('Registrácia sa zatvorí')
+                        ->dateTime('d.m.Y H:i')
+                        ->placeholder('Bez obmedzenia'),
+                ])
+                ->columns(2),
+
+            Section::make('Registračný formulár')
+                ->schema([
+                    RepeatableEntry::make('registration_form_schema')
+                        ->label('Schéma formuláru')
+                        ->schema([
+                            TextEntry::make('label.sk')
+                                ->label('Názov'),
+                            TextEntry::make('type')
+                                ->label('Typ')
+                                ->badge()
+                                ->formatStateUsing(fn (string $state): string => RegistrationFieldTypeEnum::tryFrom($state)?->getLabel() ?? $state),
+                            IconEntry::make('required')
+                                ->label('Povinné')
+                                ->boolean(),
+                        ])
+                        ->columns(3)
+                        ->placeholder('Žiadne polia formulára'),
+                ]),
+        ];
+    }
+
+    private static function settingsTab(): array
+    {
+        return [
+            Section::make('Nastavenia')
+                ->icon('heroicon-o-cog-6-tooth')
+                ->schema([
+                    TextEntry::make('age_range')
+                        ->label('Veková skupina')
+                        ->state(function (Training $record): string {
+                            if ($record->min_age === null && $record->max_age === null) {
+                                return 'Všetky';
+                            }
+                            if ($record->max_age === null) {
+                                return $record->min_age.'+';
+                            }
+                            if ($record->min_age === null) {
+                                return 'do '.$record->max_age;
+                            }
+
+                            return $record->min_age.'-'.$record->max_age;
+                        }),
+                    TextEntry::make('gender')
+                        ->label('Pohlavie')
+                        ->badge()
+                        ->placeholder('Všetky'),
+                    IconEntry::make('is_active')
+                        ->label('Aktívny')
+                        ->boolean(),
+                    TextEntry::make('sort_order')
+                        ->label('Poradie'),
+                    TextEntry::make('created_at')
+                        ->label('Vytvorené')
+                        ->dateTime('d.m.Y H:i'),
+                    TextEntry::make('updated_at')
+                        ->label('Upravené')
+                        ->dateTime('d.m.Y H:i'),
+                ])
+                ->columns(3),
+        ];
     }
 }

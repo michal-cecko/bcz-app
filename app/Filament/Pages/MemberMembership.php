@@ -5,7 +5,6 @@ namespace App\Filament\Pages;
 use App\Enums\MembershipStatusEnum;
 use App\Models\Membership;
 use App\Models\Payment;
-use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -13,6 +12,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Components\EmptyState;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -32,6 +32,15 @@ class MemberMembership extends Page implements HasTable
     protected static ?string $title = 'Členstvo';
 
     protected static ?int $navigationSort = 4;
+
+    public string $paymentMethod = '';
+
+    public function mount(): void
+    {
+        $team = Filament::getTenant();
+        $enabledMethods = $team?->payment_methods_enabled ?? ['bank_transfer', 'cash'];
+        $this->paymentMethod = $enabledMethods[0] ?? 'bank_transfer';
+    }
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -64,12 +73,33 @@ class MemberMembership extends Page implements HasTable
                 $components[] = $this->buildPaymentsSection($membership);
             }
         } else {
-            $components[] = Section::make('Aktuálna sezóna')
-                ->schema([
-                    EmptyState::make('Žiadne aktívne členstvo')
-                        ->description('V tomto tíme momentálne nie je aktívna sezóna.')
-                        ->icon(Heroicon::OutlinedIdentification),
-                ]);
+            $team = Filament::getTenant();
+            $activeSeason = $team?->currentSeason;
+
+            if ($activeSeason) {
+                $components[] = Section::make('Aktuálna sezóna: '.$activeSeason->name)
+                    ->description($activeSeason->starts_at->format('d.m.Y').' - '.$activeSeason->ends_at->format('d.m.Y'))
+                    ->schema([
+                        TextEntry::make('season_fee')
+                            ->label('Členský poplatok')
+                            ->state(number_format((float) $activeSeason->proratedFee(), 2).' '.($activeSeason->fee_currency ?? 'EUR'))
+                            ->helperText('Pomerná čiastka za zostávajúce obdobie sezóny'),
+                        TextEntry::make('season_ends')
+                            ->label('Sezóna končí')
+                            ->state($activeSeason->ends_at->format('d.m.Y')),
+                        View::make('filament.components.membership-payment-widget')
+                            ->viewData(['season' => $activeSeason, 'paymentMethod' => $this->paymentMethod])
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2);
+            } else {
+                $components[] = Section::make('Aktuálna sezóna')
+                    ->schema([
+                        EmptyState::make('Žiadna aktívna sezóna')
+                            ->description('V tomto tíme momentálne nie je aktívna sezóna.')
+                            ->icon(Heroicon::OutlinedIdentification),
+                    ]);
+            }
         }
 
         $components[] = EmbeddedTable::make();
@@ -79,44 +109,42 @@ class MemberMembership extends Page implements HasTable
 
     private function buildCurrentMembershipSection(Membership $membership): Section
     {
-        $headerActions = [];
+        $schema = [
+            TextEntry::make('status')
+                ->label('Stav')
+                ->state($membership->status->getLabel())
+                ->badge()
+                ->color($membership->status->getColor()),
+            TextEntry::make('fee')
+                ->label('Poplatok')
+                ->state($membership->is_free ? 'Zadarmo' : number_format((float) $membership->fee_amount, 2).' '.$membership->fee_currency),
+            TextEntry::make('starts_at')
+                ->label('Platné od')
+                ->state($membership->starts_at?->format('d.m.Y') ?? '-'),
+            TextEntry::make('ends_at')
+                ->label('Platné do')
+                ->state($membership->ends_at?->format('d.m.Y') ?? '-'),
+            IconEntry::make('is_free')
+                ->label('Zadarmo')
+                ->state($membership->is_free)
+                ->boolean(),
+            TextEntry::make('deadline')
+                ->label('Splatnosť')
+                ->state($membership->payment_deadline_at?->format('d.m.Y') ?? '-')
+                ->color($membership->status === MembershipStatusEnum::PENDING ? 'warning' : null),
+        ];
 
-        if ($membership->status === MembershipStatusEnum::PENDING && ! $membership->is_free) {
-            $headerActions[] = Action::make('pay')
-                ->label('Zaplatiť '.$membership->fee_amount.' '.$membership->fee_currency)
-                ->color('warning')
-                ->icon(Heroicon::OutlinedBanknotes)
-                ->url(Dashboard::getUrl());
+        // Add inline payment widget for pending memberships
+        if ($membership->status === MembershipStatusEnum::PENDING && ! $membership->is_free && $membership->season) {
+            $schema[] = View::make('filament.components.membership-payment-widget')
+                ->viewData(['season' => $membership->season, 'paymentMethod' => $this->paymentMethod])
+                ->columnSpanFull();
         }
 
         return Section::make('Aktuálna sezóna')
             ->description($membership->season?->name)
-            ->schema([
-                TextEntry::make('status')
-                    ->label('Stav')
-                    ->state($membership->status->getLabel())
-                    ->badge()
-                    ->color($membership->status->getColor()),
-                TextEntry::make('fee')
-                    ->label('Poplatok')
-                    ->state($membership->is_free ? 'Zadarmo' : number_format((float) $membership->fee_amount, 2).' '.$membership->fee_currency),
-                TextEntry::make('starts_at')
-                    ->label('Platné od')
-                    ->state($membership->starts_at?->format('d.m.Y') ?? '-'),
-                TextEntry::make('ends_at')
-                    ->label('Platné do')
-                    ->state($membership->ends_at?->format('d.m.Y') ?? '-'),
-                IconEntry::make('is_free')
-                    ->label('Zadarmo')
-                    ->state($membership->is_free)
-                    ->boolean(),
-                TextEntry::make('deadline')
-                    ->label('Splatnosť')
-                    ->state($membership->payment_deadline_at?->format('d.m.Y') ?? '-')
-                    ->color($membership->status === MembershipStatusEnum::PENDING ? 'warning' : null),
-            ])
-            ->columns(3)
-            ->headerActions($headerActions);
+            ->schema($schema)
+            ->columns(3);
     }
 
     private function buildPaymentsSection(Membership $membership): Section

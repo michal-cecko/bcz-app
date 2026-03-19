@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\TeamSeasons\Schemas;
 
+use App\Rules\NoOverlappingSeason;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -11,6 +13,9 @@ class TeamSeasonForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $teamId = Filament::getTenant()?->id ?? '';
+        $recordId = $schema->getModel()?->id ?? null;
+
         return $schema
             ->components([
                 TextInput::make('name')
@@ -18,11 +23,13 @@ class TeamSeasonForm
                     ->required(),
                 DatePicker::make('starts_at')
                     ->label('Začiatok')
-                    ->required(),
+                    ->required()
+                    ->rules([new NoOverlappingSeason($teamId, $recordId)]),
                 DatePicker::make('ends_at')
                     ->label('Koniec')
                     ->required()
-                    ->after('starts_at'),
+                    ->after('starts_at')
+                    ->rules([new NoOverlappingSeason($teamId, $recordId)]),
                 TextInput::make('fee_amount')
                     ->label('Suma')
                     ->numeric()

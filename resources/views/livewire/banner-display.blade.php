@@ -1,4 +1,4 @@
-<div>
+<div wire:replace>
     {{-- Topbar Banner --}}
     @if($topbarHtml)
         <div class="relative w-full" wire:key="topbar-{{ $topbarId }}">

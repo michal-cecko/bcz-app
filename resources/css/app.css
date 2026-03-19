@@ -46,10 +46,14 @@
     --color-bcz-card: #141414;
     --color-bcz-surface: #0F0F0F;
     --color-bcz-border: #222222;
-    --color-bcz-muted: #888888;
-    --color-bcz-dim: #666666;
-    --color-bcz-subtle: #444444;
-    --color-bcz-faint: #333333;
+    --color-bcz-muted: #999999;
+    --color-bcz-dim: #777777;
+    --color-bcz-subtle: #555555;
+    --color-bcz-faint: #444444;
     --color-bcz-light: #CCCCCC;
     --color-bcz-lighter: #AAAAAA;
+}
+
+html, body {
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 }

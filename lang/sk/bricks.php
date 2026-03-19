@@ -220,6 +220,7 @@ return [
         'capacity' => 'Kapacita',
         'spots' => 'miest',
         'sign_up' => 'PRIHLÁSIŤ SA',
+        'registered' => 'PRIHLÁSENÝ',
         'days' => [
             'monday' => 'Pondelok',
             'tuesday' => 'Utorok',

@@ -44,6 +44,17 @@ class EmailPreviewController
             'teamWebsite' => $teamWebsite,
         ])->render();
 
+        // Strip dark mode CSS so the JS toggle has full control.
+        // Remove @media (prefers-color-scheme: dark) { ... } block (with nested braces).
+        $emailHtml = preg_replace(
+            '/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/s',
+            '',
+            $emailHtml
+        );
+        // Force color-scheme to light only to prevent browser auto-darkening.
+        $emailHtml = str_replace('color-scheme: light dark', 'color-scheme: light only', $emailHtml);
+        $emailHtml = str_replace('content="light dark"', 'content="light only"', $emailHtml);
+
         return response(view('emails.preview', [
             'subject' => $subject,
             'emailHtml' => $emailHtml,

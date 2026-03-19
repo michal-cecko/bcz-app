@@ -1,6 +1,5 @@
 <?php
 
-use App\Filament\Pages\Auth\SetPassword;
 use App\Http\Controllers\Admin\EmailPreviewController;
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\CompetitionController;
@@ -73,7 +72,9 @@ $frontendRoutes = function () {
     Route::get('/cennik', [PricingController::class, 'index']);
 
     Route::get('/pridaj-sa', fn () => view('pages.join-team'));
-    Route::get('/registracia', fn () => view('pages.register-team'));
+    // Route hidden for MVP single-team flow — kept for future multi-team use
+    // Route::get('/registracia', fn () => view('pages.register-team'));
+    Route::redirect('/registracia', '/pridaj-sa', 302);
 
     // Legacy redirects
     Route::redirect('/archiv-treningov', '/treningy', 301);
@@ -149,7 +150,9 @@ Route::get('/kategoria/parkour-freerunning', [PageController::class, 'show'])->d
 Route::get('/kategoria/street-workout', [PageController::class, 'show'])->defaults('slug', 'kategoria/street-workout')->name('street-workout');
 Route::get('/cennik', [PricingController::class, 'index'])->name('cennik');
 Route::get('/pridaj-sa', fn () => view('pages.join-team'))->name('pridaj-sa');
-Route::get('/registracia', fn () => view('pages.register-team'))->name('register');
+// Route hidden for MVP single-team flow — kept for future multi-team use
+// Route::get('/registracia', fn () => view('pages.register-team'))->name('register');
+Route::redirect('/registracia', '/pridaj-sa', 302)->name('register');
 
 // Legacy redirects
 Route::redirect('/archiv-treningov', '/treningy', 301);
@@ -183,9 +186,6 @@ Route::middleware('signed')->group(function () {
 });
 
 Route::get('/login', fn () => redirect('/admin/login'))->name('login');
-Route::get('/admin/set-password', SetPassword::class)
-    ->middleware(['web', 'auth'])
-    ->name('filament.admin.auth.set-password');
 
 Route::post('/logout', function () {
     Auth::logout();

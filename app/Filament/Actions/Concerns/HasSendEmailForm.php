@@ -21,6 +21,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 trait HasSendEmailForm
 {
@@ -64,13 +65,14 @@ trait HasSendEmailForm
                     Mason::make('content')
                         ->label('')
                         ->bricks(static::getEmailBricks())
+                        ->previewLayout('mason.email-preview-layout')
                         ->required(),
                     Actions::make([
                         Action::make('preview')
                             ->label('Náhľad e-mailu')
                             ->icon(Heroicon::OutlinedEye)
                             ->color('gray')
-                            ->action(function (Get $get, \Livewire\Component $livewire) {
+                            ->action(function (Get $get, Component $livewire) {
                                 $team = filament()->getTenant();
                                 $key = Str::random(32);
 

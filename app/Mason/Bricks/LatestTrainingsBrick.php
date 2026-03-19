@@ -43,14 +43,16 @@ class LatestTrainingsBrick extends Brick
             $trainings = Training::query()
                 ->where('is_active', true)
                 ->where('team_id', $teamId)
-                ->with(['sportCategory', 'coaches', 'registrations', 'team', 'city'])
+                ->current()
+                ->with(['sportCategory', 'coaches', 'registrations.payments', 'team', 'city'])
                 ->orderBy('sort_order')
                 ->get();
         } elseif (! empty($trainingIds)) {
             $trainings = Training::query()
                 ->whereIn('id', $trainingIds)
                 ->where('is_active', true)
-                ->with(['sportCategory', 'coaches', 'registrations', 'team', 'city'])
+                ->current()
+                ->with(['sportCategory', 'coaches', 'registrations.payments', 'team', 'city'])
                 ->get()
                 ->sortBy(fn (Training $t) => array_search($t->id, $trainingIds))
                 ->values();

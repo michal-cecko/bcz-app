@@ -84,12 +84,16 @@ class MyTrainings extends Page implements HasTable
             ->query(
                 TrainingRegistration::query()
                     ->where('user_id', auth()->id())
-                    ->whereHas('training', fn (Builder $q) => $q->where('team_id', $team?->id))
-                    ->with(['training.sportCategory', 'training.coaches', 'training.city'])
+                    ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
+                    ->whereHas('training', fn (Builder $q) => $q
+                        ->where('team_id', $team?->id)
+                        ->current()
+                    )
+                    ->with(['training.sportCategory', 'training.coaches', 'training.city', 'training.season'])
             )
             ->columns([
                 TextColumn::make('training.title')
-                    ->label('Tréning')
+                    ->label('Trening')
                     ->formatStateUsing(fn ($record): string => $record->training->getTranslation('title', app()->getLocale()) ?: $record->training->getTranslation('title', 'sk'))
                     ->description(fn ($record): ?string => $record->training->sportCategory?->getTranslation('name', app()->getLocale()))
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('training', fn ($q) => $q->where('title', 'ilike', "%{$search}%"))),
@@ -102,7 +106,7 @@ class MyTrainings extends Page implements HasTable
                         return trim("{$days} {$time}");
                     }),
                 TextColumn::make('training.coaches')
-                    ->label('Tréner')
+                    ->label('Trener')
                     ->formatStateUsing(fn ($record): string => $record->training->coaches->pluck('name')->implode(', '))
                     ->placeholder('-'),
                 TextColumn::make('training.city.name')
@@ -125,9 +129,55 @@ class MyTrainings extends Page implements HasTable
                     ->badge(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->emptyStateHeading('Nie ste registrovaný na žiadne tréningy')
-            ->emptyStateDescription('Pozrite si dostupné tréningy nižšie a zaregistrujte sa.')
+            ->emptyStateHeading('Nie ste registrovany na ziadne treningy')
+            ->emptyStateDescription('Pozrite si dostupne treningy nizsie a zaregistrujte sa.')
             ->paginated(false);
+    }
+
+    public function historyTable(Schema $schema): Schema
+    {
+        $team = Filament::getTenant();
+        $locale = app()->getLocale();
+
+        $historyRegistrations = TrainingRegistration::query()
+            ->where('user_id', auth()->id())
+            ->whereHas('training', fn (Builder $q) => $q->where('team_id', $team?->id))
+            ->where(function (Builder $q) {
+                $q->where('status', RegistrationStatusEnum::Cancelled)
+                    ->orWhereHas('training', fn ($tq) => $tq->archived());
+            })
+            ->with(['training.sportCategory', 'training.season', 'training.city'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy(fn ($reg) => $reg->training->season?->name ?? 'Bez sezony');
+
+        if ($historyRegistrations->isEmpty()) {
+            return $schema->components([
+                Placeholder::make('no_history')
+                    ->content('Zatial ziadna historia treningov.')
+                    ->hiddenLabel(),
+            ]);
+        }
+
+        $components = [];
+
+        foreach ($historyRegistrations as $seasonName => $registrations) {
+            $season = $registrations->first()->training->season;
+            $dateRange = $season
+                ? $season->starts_at->format('d.m.Y').' - '.$season->ends_at->format('d.m.Y')
+                : '';
+
+            $components[] = Section::make($seasonName.($dateRange ? " ({$dateRange})" : ''))
+                ->schema(
+                    $registrations->map(fn ($reg) => Placeholder::make('reg_'.$reg->id)
+                        ->label($reg->training->getTranslation('title', $locale) ?: $reg->training->getTranslation('title', 'sk'))
+                        ->content(fn () => $reg->status->getLabel().($reg->cancellation_reason ? ' - '.$reg->cancellation_reason : ''))
+                    )->toArray()
+                )
+                ->collapsed();
+        }
+
+        return $schema->components($components);
     }
 
     public function content(Schema $schema): Schema
@@ -282,6 +332,7 @@ class MyTrainings extends Page implements HasTable
         $query = Training::query()
             ->where('team_id', $team?->id)
             ->where('is_active', true)
+            ->current()
             ->whereNotIn('id', $registeredTrainingIds)
             ->with(['sportCategory', 'coaches', 'registrations', 'city'])
             ->orderBy('sort_order');

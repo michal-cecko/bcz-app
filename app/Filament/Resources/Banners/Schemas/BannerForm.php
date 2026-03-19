@@ -115,11 +115,12 @@ class BannerForm
                                             ->default('all')
                                             ->required()
                                             ->live(),
-                                        Select::make('page_id')
-                                            ->label('Stránka')
+                                        Select::make('page_ids')
+                                            ->label('Stránky')
                                             ->options(fn () => Page::query()->orderBy('sort_order')->get()->mapWithKeys(
                                                 fn (Page $page) => [$page->id => $page->getTranslation('title', 'sk')]
                                             ))
+                                            ->multiple()
                                             ->searchable()
                                             ->visible(fn (Get $get): bool => $get('placement') === 'specific'),
                                         Toggle::make('is_active')

@@ -37,7 +37,7 @@
 
     <div style="height: 28px;"></div>
 
-    <a href="{{ $paymentUrl }}" target="_blank" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF !important; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Zaplatiť členské</a>
+    <a href="{{ $paymentUrl }}" target="_blank" class="btn-cta" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF !important; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Zaplatiť členské</a>
 
     <div style="height: 32px;"></div>
 

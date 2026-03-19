@@ -33,13 +33,36 @@ new class extends Component
         // Check if already registered (logged-in users)
         $user = auth()->user();
         if ($user) {
-            $hasRegistration = TrainingRegistration::where('training_id', $this->training->id)
+            $registration = TrainingRegistration::where('training_id', $this->training->id)
                 ->where('user_id', $user->id)
                 ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
-                ->exists();
+                ->first();
 
-            if ($hasRegistration) {
-                $this->registrationState = 'already_registered';
+            if ($registration) {
+                if ($registration->status === RegistrationStatusEnum::Pending) {
+                    // Show payment info for pending registrations
+                    $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $user);
+                    $this->autoSelectPaymentMethod();
+                } elseif ($registration->status === RegistrationStatusEnum::Approved) {
+                    // Re-check: membership-required training where membership expired/unpaid
+                    $needsMembership = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED
+                        && ! $user->hasActiveMembershipForTeam($this->training->team_id);
+
+                    // Re-check: paid training with no completed payment
+                    $needsPayment = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID
+                        && $this->training->price_amount > 0
+                        && $registration->payments()->where('status', \App\Enums\PaymentStatusEnum::COMPLETED)->doesntExist();
+
+                    $this->registrationState = ($needsMembership || $needsPayment)
+                        ? RegistrationService::determinePostRegistrationState($this->training, $user)
+                        : 'already_registered';
+
+                    if ($needsMembership || $needsPayment) {
+                        $this->autoSelectPaymentMethod();
+                    }
+                } else {
+                    $this->registrationState = 'already_registered';
+                }
 
                 return;
             }
@@ -169,12 +192,15 @@ new class extends Component
 
         $status = RegistrationService::determineRegistrationStatus($this->training, $user);
 
+        $paymentDueAt = $status === RegistrationStatusEnum::Pending ? now()->addDays(7) : null;
+
         TrainingRegistration::create([
             'training_id' => $this->training->id,
             'user_id' => $user?->id,
             'form_data' => $this->fields,
             'status' => $status->value,
             'registered_at' => now(),
+            'payment_due_at' => $paymentDueAt,
         ]);
 
         if ($user) {
@@ -184,15 +210,28 @@ new class extends Component
                 registrationTitle: $this->training->getTranslation('title', app()->getLocale()),
                 isNewUser: $isNewUser,
                 team: $this->training->team,
+                customEmailContent: $this->training->confirmation_email_content,
+                locale: app()->getLocale(),
             );
         }
 
         $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $user);
+        $this->autoSelectPaymentMethod();
     }
 
     public function selectPaymentMethod(string $method): void
     {
         $this->selectedPaymentMethod = $method;
+    }
+
+    protected function autoSelectPaymentMethod(): void
+    {
+        if ($this->selectedPaymentMethod !== null) {
+            return;
+        }
+
+        $enabledMethods = $this->training->team?->payment_methods_enabled ?? ['stripe', 'bank_transfer', 'cash'];
+        $this->selectedPaymentMethod = $enabledMethods[0] ?? null;
     }
 
     public function handlePayment(): void

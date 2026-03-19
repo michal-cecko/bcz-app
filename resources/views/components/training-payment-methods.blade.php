@@ -60,89 +60,92 @@
 
 {{-- Bank transfer: show details inline --}}
 @if($selectedPaymentMethod === 'bank_transfer')
-    <div class="w-full rounded-xl bg-[#0A0A0A] border border-[#FF2D2D]/20 p-5 flex flex-col sm:flex-row gap-5">
-        {{-- Left: payment details --}}
-        <div class="flex flex-col gap-2.5 flex-1">
-            <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-[#FF2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
-                <span class="text-white text-[13px] font-semibold">{{ __('training_detail.bank_payment_details') }}</span>
+    <div class="w-full rounded-xl bg-[#0A0A0A] border border-[#FF2D2D]/20 p-5 flex flex-col gap-5">
+        {{-- Payment details + QR code row --}}
+        <div class="flex flex-col sm:flex-row gap-5">
+            {{-- Left: payment details --}}
+            <div class="flex flex-col gap-2.5 flex-1">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-[#FF2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/></svg>
+                    <span class="text-white text-[13px] font-semibold">{{ __('training_detail.bank_payment_details') }}</span>
+                </div>
+
+                @if($team?->bank_account_iban)
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_iban') }}</span>
+                        <span class="text-white text-xs font-bold tracking-wide">{{ $team->bank_account_iban }}</span>
+                    </div>
+                @endif
+
+                @if($variableSymbol)
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_variable_symbol') }}</span>
+                        <span class="text-[#FF2D2D] text-xs font-bold">{{ $variableSymbol }}</span>
+                    </div>
+                @endif
+
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_amount') }}</span>
+                    <span class="text-white text-xs font-bold">{{ number_format((float) $feeAmount, 2, ',', ' ') }} {{ $feeCurrency === 'CZK' ? 'Kč' : '€' }}</span>
+                </div>
+
+                @if($team?->bank_account_name)
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_recipient') }}</span>
+                        <span class="text-[#AAAAAA] text-xs font-semibold">{{ $team->bank_account_name }}</span>
+                    </div>
+                @endif
+
+                @if($paymentNote)
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_message') }}</span>
+                        <span class="text-[#AAAAAA] text-xs font-semibold">{{ $paymentNote }}</span>
+                    </div>
+                @elseif($season)
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_message') }}</span>
+                        <span class="text-[#AAAAAA] text-xs font-semibold">{{ __('training_detail.bank_message_value', ['season' => $season->name]) }}</span>
+                    </div>
+                @endif
             </div>
 
+            {{-- Right: QR code --}}
             @if($team?->bank_account_iban)
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_iban') }}</span>
-                    <span class="text-white text-xs font-bold tracking-wide">{{ $team->bank_account_iban }}</span>
-                </div>
+                @php
+                    $qrImage = \App\Services\QrPaymentService::payBySquare(
+                        iban: $team->bank_account_iban,
+                        amount: (float) $feeAmount,
+                        currency: $feeCurrency,
+                        variableSymbol: $variableSymbol ?? '',
+                    );
+                @endphp
+                @if($qrImage)
+                    <div class="flex flex-col items-center gap-1.5">
+                        <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
+                            <img src="data:image/png;base64,{{ $qrImage }}" alt="QR" class="w-full h-full">
+                        </div>
+                        <span class="text-[#666666] text-[10px] font-medium">{{ __('training_detail.bank_scan_qr') }}</span>
+                    </div>
+                @endif
             @endif
-
-            @if($variableSymbol)
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_variable_symbol') }}</span>
-                    <span class="text-[#FF2D2D] text-xs font-bold">{{ $variableSymbol }}</span>
-                </div>
-            @endif
-
-            <div class="flex items-center gap-1.5">
-                <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_amount') }}</span>
-                <span class="text-white text-xs font-bold">{{ number_format((float) $feeAmount, 2, ',', ' ') }} {{ $feeCurrency === 'CZK' ? 'Kč' : '€' }}</span>
-            </div>
-
-            @if($team?->bank_account_name)
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_recipient') }}</span>
-                    <span class="text-[#AAAAAA] text-xs font-semibold">{{ $team->bank_account_name }}</span>
-                </div>
-            @endif
-
-            @if($paymentNote)
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_message') }}</span>
-                    <span class="text-[#AAAAAA] text-xs font-semibold">{{ $paymentNote }}</span>
-                </div>
-            @elseif($season)
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[#666666] text-[11px] font-medium">{{ __('training_detail.bank_message') }}</span>
-                    <span class="text-[#AAAAAA] text-xs font-semibold">{{ __('training_detail.bank_message_value', ['season' => $season->name]) }}</span>
-                </div>
-            @endif
-
-            {{-- Instructions box --}}
-            <div class="rounded-lg bg-[#FF2D2D]/[0.03] border border-[#FF2D2D]/[0.12] p-2.5 flex flex-col gap-1.5 mt-1">
-                <div class="flex items-center gap-1.5">
-                    <svg class="w-3 h-3 text-[#FF2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <span class="text-[#FF2D2D] text-[11px] font-semibold">{{ __('training_detail.bank_instructions_title') }}</span>
-                </div>
-                <p class="text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_1') }}</p>
-                <p class="text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_2') }}</p>
-                <p class="text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_3') }}</p>
-            </div>
         </div>
 
-        {{-- Right: QR code --}}
-        @if($team?->bank_account_iban)
-            @php
-                $qrImage = \App\Services\QrPaymentService::payBySquare(
-                    iban: $team->bank_account_iban,
-                    amount: (float) $feeAmount,
-                    currency: $feeCurrency,
-                    variableSymbol: $variableSymbol ?? '',
-                );
-            @endphp
-            @if($qrImage)
-                <div class="flex flex-col items-center gap-1.5">
-                    <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
-                        <img src="data:image/png;base64,{{ $qrImage }}" alt="QR" class="w-full h-full">
-                    </div>
-                    <span class="text-[#666666] text-[10px] font-medium">{{ __('training_detail.bank_scan_qr') }}</span>
-                </div>
-            @endif
-        @endif
+        {{-- Instructions box (full width) --}}
+        <div class="rounded-lg bg-[#FF2D2D]/[0.03] border border-[#FF2D2D]/[0.12] p-2.5 flex flex-col gap-1.5 w-full">
+            <div class="flex items-center gap-1.5">
+                <svg class="w-3 h-3 text-[#FF2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span class="text-[#FF2D2D] text-[11px] font-semibold">{{ __('training_detail.bank_instructions_title') }}</span>
+            </div>
+            <p class="text-left text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_1') }}</p>
+            <p class="text-left text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_2') }}</p>
+            <p class="text-left text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_3') }}</p>
+        </div>
     </div>
 @endif
 
 {{-- Cash: show instructions inline --}}
 @if($selectedPaymentMethod === 'cash')
-    <div class="w-full rounded-xl bg-[#0A0A0A] border border-[#FF2D2D]/20 p-5 flex flex-col gap-4">
+    <div class="rounded-xl bg-[#0A0A0A] border border-[#FF2D2D]/20 p-5 flex flex-col gap-4 w-full">
         {{-- Header --}}
         <div class="flex items-center gap-2">
             <svg class="w-4 h-4 text-[#FF2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="3"/></svg>

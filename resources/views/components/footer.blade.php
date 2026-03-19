@@ -1,6 +1,7 @@
 <footer id="footer" class="bg-bcz-darker pt-12 lg:pt-20 pb-10">
     <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
     {{-- Partners --}}
+    @if(empty($hidePartners))
     <div class="flex flex-wrap justify-center gap-6 lg:gap-12 pb-10">
         @for ($i = 0; $i < 4; $i++)
             <div class="w-24 h-10 bg-bcz-dark border border-[#1A1A1A] flex items-center justify-center">
@@ -8,6 +9,7 @@
             </div>
         @endfor
     </div>
+    @endif
 
     {{-- Footer Top --}}
     <div class="flex flex-col lg:flex-row justify-between gap-10 lg:gap-0 mt-10 lg:mt-16">
@@ -70,7 +72,7 @@
 
     {{-- Footer Bottom --}}
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 lg:mt-10">
-        <span class="text-[#555555] text-[13px]">&copy; {{ date('Y') }} BCZ Club. Všetky práva vyhradené.</span>
+        <span class="text-[#666666] text-[13px]">&copy; {{ date('Y') }} BCZ Club. Všetky práva vyhradené.</span>
         <div class="flex items-center gap-5">
             <span class="text-bcz-subtle text-[11px] font-medium">BCZ = Beyond Comfort Zone</span>
             <span class="w-1 h-1 rounded-full bg-bcz-faint"></span>

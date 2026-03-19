@@ -20,6 +20,13 @@ use App\Mason\Bricks\QuoteBrick;
 use App\Mason\Bricks\RichTextBrick;
 use App\Mason\Bricks\StatsBrick;
 use App\Mason\Bricks\TableBrick;
+use App\Mason\EmailBricks\EmailButtonBrick;
+use App\Mason\EmailBricks\EmailCalloutBrick;
+use App\Mason\EmailBricks\EmailDividerBrick;
+use App\Mason\EmailBricks\EmailHeadingBrick;
+use App\Mason\EmailBricks\EmailImageBrick;
+use App\Mason\EmailBricks\EmailRichTextBrick;
+use App\Mason\EmailBricks\EmailSpacerBrick;
 use Awcodes\Mason\Brick;
 use Awcodes\Mason\Mason;
 use Filament\Forms\Components\DatePicker;
@@ -52,6 +59,13 @@ class EventForm
                         Tabs\Tab::make('Organizácia')
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema(self::organizationTab())
+                            ->visible(fn (Get $get): bool => in_array($get('event_type'), [
+                                EventTypeEnum::Organized->value,
+                                EventTypeEnum::Competition->value,
+                            ])),
+                        Tabs\Tab::make('Potvrdzovací e-mail')
+                            ->icon('heroicon-o-envelope')
+                            ->schema(self::confirmationEmailTab())
                             ->visible(fn (Get $get): bool => in_array($get('event_type'), [
                                 EventTypeEnum::Organized->value,
                                 EventTypeEnum::Competition->value,
@@ -319,6 +333,56 @@ class EventForm
                         ->preload()
                         ->searchable(),
                 ]),
+        ];
+    }
+
+    private static function confirmationEmailTab(): array
+    {
+        return [
+            Section::make('Obsah potvrdzovacieho e-mailu')
+                ->description('Voliteľný obsah, ktorý sa pridá do potvrdzovacieho e-mailu po registrácii.')
+                ->relationship('organization')
+                ->schema([
+                    Tabs::make('E-mail preklady')
+                        ->tabs([
+                            Tabs\Tab::make('SK')
+                                ->schema([
+                                    Mason::make('confirmation_email_content.sk')
+                                        ->label('Obsah e-mailu (SK)')
+                                        ->bricks(self::emailBricks())
+                                        ->previewLayout('mason.email-preview-layout'),
+                                ]),
+                            Tabs\Tab::make('EN')
+                                ->schema([
+                                    Mason::make('confirmation_email_content.en')
+                                        ->label('Obsah e-mailu (EN)')
+                                        ->bricks(self::emailBricks())
+                                        ->previewLayout('mason.email-preview-layout'),
+                                ]),
+                            Tabs\Tab::make('CZ')
+                                ->schema([
+                                    Mason::make('confirmation_email_content.cs')
+                                        ->label('Obsah e-mailu (CZ)')
+                                        ->bricks(self::emailBricks())
+                                        ->previewLayout('mason.email-preview-layout'),
+                                ]),
+                        ])
+                        ->columnSpanFull(),
+                ]),
+        ];
+    }
+
+    /** @return list<class-string> */
+    private static function emailBricks(): array
+    {
+        return [
+            EmailRichTextBrick::class,
+            EmailButtonBrick::class,
+            EmailHeadingBrick::class,
+            EmailImageBrick::class,
+            EmailCalloutBrick::class,
+            EmailDividerBrick::class,
+            EmailSpacerBrick::class,
         ];
     }
 

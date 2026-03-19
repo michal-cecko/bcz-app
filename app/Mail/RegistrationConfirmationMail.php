@@ -38,6 +38,7 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
         public string $registrationTitle,
         public bool $isNewUser = false,
         public ?Team $team = null,
+        public ?string $customContent = null,
     ) {
         $this->magicUrl = $isNewUser
             ? URL::temporarySignedRoute('magic-login', now()->addDays(7), ['user' => $user->id])

@@ -7,7 +7,6 @@ use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
@@ -20,7 +19,7 @@ class Banner extends Model
     public array $translatable = ['name'];
 
     protected $fillable = [
-        'name', 'type', 'placement', 'page_id', 'content',
+        'name', 'type', 'placement', 'page_ids', 'content',
         'is_active', 'active_from', 'active_to', 'sort_order',
     ];
 
@@ -29,15 +28,11 @@ class Banner extends Model
         return [
             'type' => BannerTypeEnum::class,
             'content' => 'array',
+            'page_ids' => 'array',
             'is_active' => 'boolean',
             'active_from' => 'datetime',
             'active_to' => 'datetime',
         ];
-    }
-
-    public function page(): BelongsTo
-    {
-        return $this->belongsTo(Page::class);
     }
 
     public function scopeActive(Builder $query): Builder
@@ -60,7 +55,7 @@ class Banner extends Model
             if ($pageId && Str::isUuid($pageId)) {
                 $q->orWhere(function (Builder $inner) use ($pageId) {
                     $inner->where('placement', 'specific')
-                        ->where('page_id', $pageId);
+                        ->whereJsonContains('page_ids', $pageId);
                 });
             }
         });

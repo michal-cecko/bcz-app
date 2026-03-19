@@ -139,7 +139,39 @@
                         @endif
 
                         {{-- CTA Button --}}
-                        @if($remaining > 0 || ! $training->max_capacity)
+                        @php
+                            $userRegistration = auth()->check()
+                                ? $training->registrations->where('user_id', auth()->id())->whereNotIn('status', [\App\Enums\RegistrationStatusEnum::Cancelled->value])->first()
+                                : null;
+                        @endphp
+                        @if($userRegistration)
+                            @php
+                                $regIsPending = $userRegistration->status === \App\Enums\RegistrationStatusEnum::Pending;
+                                $regIsApproved = $userRegistration->status === \App\Enums\RegistrationStatusEnum::Approved;
+                                $brickIsMembershipRequired = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED;
+                                $brickIsPaid = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID;
+                                $regNeedsPayment = ($regIsPending && ($brickIsMembershipRequired || $brickIsPaid))
+                                    || ($regIsApproved && $brickIsMembershipRequired && ! auth()->user()?->hasActiveMembershipForTeam($training->team_id))
+                                    || ($regIsApproved && $brickIsPaid && $training->price_amount > 0 && $userRegistration->payments->where('status', \App\Enums\PaymentStatusEnum::COMPLETED)->isEmpty());
+                                $regNeedsApproval = $regIsPending && ! $brickIsMembershipRequired && ! $brickIsPaid;
+                            @endphp
+                            @if($regNeedsApproval)
+                                <a href="{{ route('team.training.show', [$training->team, $training]) }}" class="flex items-center justify-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold tracking-wider px-6 py-3.5 hover:bg-amber-500/20 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    {{ __('archive.pending_approval') }}
+                                </a>
+                            @elseif($regNeedsPayment)
+                                <a href="{{ route('team.training.show', [$training->team, $training]) }}" class="flex items-center justify-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold tracking-wider px-6 py-3.5 hover:bg-amber-500/20 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                    {{ __('archive.pending_payment') }}
+                                </a>
+                            @else
+                                <a href="{{ route('team.training.show', [$training->team, $training]) }}" class="flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-bold tracking-wider px-6 py-3.5 hover:bg-emerald-500/20 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                    {{ __('archive.registered') }}
+                                </a>
+                            @endif
+                        @elseif($remaining > 0 || ! $training->max_capacity)
                             <a href="{{ route('team.training.show', [$training->team, $training]) }}" class="flex items-center justify-center bg-bcz-red text-white text-xs font-bold tracking-wider px-6 py-3.5 hover:bg-red-700 transition">
                                 {{ __('bricks.latest_trainings.sign_up') }}
                             </a>

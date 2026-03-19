@@ -1,7 +1,7 @@
-@extends('layouts.public')
+@extends('layouts.public', ['hidePartners' => true])
 
-@section('title', 'Pripojiť sa k tímu | BCZ Club')
+@section('title', 'Pridaj sa | BCZ Club')
 
 @section('content')
-    @livewire('join-team')
+    @livewire('join-default-team')
 @endsection

@@ -55,6 +55,17 @@
                 </select>
             </div>
 
+            {{-- City Filter --}}
+            <div class="flex flex-col gap-3">
+                <label class="text-[#888888] text-xs">{{ __('archive.city') }}</label>
+                <select wire:model.live="cityFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                    <option value="">{{ __('archive.all_cities') }}</option>
+                    @foreach($cities as $city)
+                        <option value="{{ $city->id }}">{{ $city->getTranslation('name', app()->getLocale()) }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             {{-- Age Group Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.age_group') }}</label>
@@ -118,6 +129,17 @@
                             <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
                         </svg>
                     </button>
+                @endif
+                @if($cityFilter)
+                    @php $activeCity = $cities->firstWhere('id', $cityFilter); @endphp
+                    @if($activeCity)
+                        <button wire:click="$set('cityFilter', '')" class="inline-flex items-center gap-2 bg-bcz-red/20 text-bcz-red text-xs rounded-full px-3 py-2 hover:bg-bcz-red/30 transition-colors cursor-pointer">
+                            {{ $activeCity->getTranslation('name', app()->getLocale()) }}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                            </svg>
+                        </button>
+                    @endif
                 @endif
                 @if($ageGroupFilter)
                     <button wire:click="$set('ageGroupFilter', '')" class="inline-flex items-center gap-2 bg-bcz-red/20 text-bcz-red text-xs rounded-full px-3 py-2 hover:bg-bcz-red/30 transition-colors cursor-pointer">
@@ -233,7 +255,37 @@
                             @else
                                 <div></div>
                             @endif
-                            <span class="bg-bcz-red rounded-md px-5 py-2.5 text-sm font-semibold text-white group-hover:bg-red-700 transition-colors">Detail</span>
+                            @if($training->registrations->isNotEmpty())
+                                @php
+                                    $reg = $training->registrations->first();
+                                    $isPending = $reg->status === \App\Enums\RegistrationStatusEnum::Pending;
+                                    $isApproved = $reg->status === \App\Enums\RegistrationStatusEnum::Approved;
+                                    $isMembershipRequired = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED;
+                                    $isPaid = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID;
+                                    $needsPayment = ($isPending && ($isMembershipRequired || $isPaid))
+                                        || ($isApproved && $isMembershipRequired && ! auth()->user()?->hasActiveMembershipForTeam($training->team_id))
+                                        || ($isApproved && $isPaid && $training->price_amount > 0 && $reg->payments->where('status', \App\Enums\PaymentStatusEnum::COMPLETED)->isEmpty());
+                                    $needsApproval = $isPending && ! $isMembershipRequired && ! $isPaid;
+                                @endphp
+                                @if($needsApproval)
+                                    <span class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-md px-4 py-2.5 text-sm font-semibold text-amber-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        {{ __('archive.pending_approval') }}
+                                    </span>
+                                @elseif($needsPayment)
+                                    <span class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-md px-4 py-2.5 text-sm font-semibold text-amber-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                                        {{ __('archive.pending_payment') }}
+                                    </span>
+                                @else
+                                    <span class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md px-4 py-2.5 text-sm font-semibold text-emerald-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        {{ __('archive.registered') }}
+                                    </span>
+                                @endif
+                            @else
+                                <span class="bg-bcz-red rounded-md px-5 py-2.5 text-sm font-semibold text-white group-hover:bg-red-700 transition-colors">Detail</span>
+                            @endif
                         </div>
                     </div>
                 </a>

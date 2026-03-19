@@ -6,6 +6,15 @@ use App\Enums\GenderEnum;
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
+use App\Mason\EmailBricks\EmailButtonBrick;
+use App\Mason\EmailBricks\EmailCalloutBrick;
+use App\Mason\EmailBricks\EmailDividerBrick;
+use App\Mason\EmailBricks\EmailHeadingBrick;
+use App\Mason\EmailBricks\EmailImageBrick;
+use App\Mason\EmailBricks\EmailRichTextBrick;
+use App\Mason\EmailBricks\EmailSpacerBrick;
+use App\Models\TeamSeason;
+use Awcodes\Mason\Mason;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
@@ -27,6 +36,20 @@ use Illuminate\Support\Str;
 
 class TrainingForm
 {
+    /** @return list<class-string> */
+    private static function emailBricks(): array
+    {
+        return [
+            EmailRichTextBrick::class,
+            EmailButtonBrick::class,
+            EmailHeadingBrick::class,
+            EmailImageBrick::class,
+            EmailCalloutBrick::class,
+            EmailDividerBrick::class,
+            EmailSpacerBrick::class,
+        ];
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -265,9 +288,7 @@ class TrainingForm
                                             ->label('Registrácia sa otvorí'),
                                         DateTimePicker::make('registration_closes_at')
                                             ->label('Registrácia sa zatvorí'),
-                                    ])
-                                    ->collapsible()
-                                    ->collapsed(),
+                                    ]),
                                 Section::make('Registračný formulár')
                                     ->description('Definujte všetky polia registračného formulára. Aspoň jedno pole typu Email je povinné.')
                                     ->schema([
@@ -421,8 +442,40 @@ class TrainingForm
                                             ->cloneable()
                                             ->collapsible()
                                             ->columnSpanFull(),
-                                    ])
-                                    ->collapsible(),
+                                    ]),
+                            ]),
+
+                        Tabs\Tab::make('Potvrdzovací e-mail')
+                            ->schema([
+                                Section::make('Obsah potvrdzovacieho e-mailu')
+                                    ->description('Voliteľný obsah, ktorý sa pridá do potvrdzovacieho e-mailu po registrácii.')
+                                    ->schema([
+                                        Tabs::make('E-mail preklady')
+                                            ->tabs([
+                                                Tabs\Tab::make('SK')
+                                                    ->schema([
+                                                        Mason::make('confirmation_email_content.sk')
+                                                            ->label('Obsah e-mailu (SK)')
+                                                            ->bricks(self::emailBricks())
+                                                            ->previewLayout('mason.email-preview-layout'),
+                                                    ]),
+                                                Tabs\Tab::make('EN')
+                                                    ->schema([
+                                                        Mason::make('confirmation_email_content.en')
+                                                            ->label('Obsah e-mailu (EN)')
+                                                            ->bricks(self::emailBricks())
+                                                            ->previewLayout('mason.email-preview-layout'),
+                                                    ]),
+                                                Tabs\Tab::make('CZ')
+                                                    ->schema([
+                                                        Mason::make('confirmation_email_content.cs')
+                                                            ->label('Obsah e-mailu (CZ)')
+                                                            ->bricks(self::emailBricks())
+                                                            ->previewLayout('mason.email-preview-layout'),
+                                                    ]),
+                                            ])
+                                            ->columnSpanFull(),
+                                    ]),
                             ]),
 
                         Tabs\Tab::make('Galéria')
@@ -460,6 +513,24 @@ class TrainingForm
                                     ->placeholder('Všetky pohlavia'),
                                 Toggle::make('is_active')
                                     ->label('Aktívny')
+                                    ->inline(false)
+                                    ->default(true),
+                                Select::make('team_season_id')
+                                    ->label('Sezóna')
+                                    ->relationship(
+                                        name: 'season',
+                                        titleAttribute: 'name',
+                                        modifyQueryUsing: fn ($query) => $query->orderByDesc('starts_at'),
+                                    )
+                                    ->placeholder('Bez sezóny')
+                                    ->default(fn () => TeamSeason::query()
+                                        ->where('starts_at', '<=', now())
+                                        ->where('ends_at', '>=', now())
+                                        ->first()?->id
+                                    ),
+                                Toggle::make('is_recurring_across_seasons')
+                                    ->label('Opakovať v ďalšej sezóne')
+                                    ->helperText('Tréning bude predvolene zaškrtnutý pri kopírovaní do novej sezóny')
                                     ->inline(false)
                                     ->default(true),
                                 TextInput::make('sort_order')

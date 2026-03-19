@@ -1689,6 +1689,40 @@ class DemoDataSeeder extends Seeder
             'payment_deadline_days' => 21,
         ]);
 
+        // Link current trainings to current season
+        Training::where('team_id', $bczTeam->id)->whereNull('team_season_id')->update(['team_season_id' => $currentSeason->id]);
+
+        // Create historical trainings for past season (to demonstrate history)
+        $historicalTrainings = collect([
+            ['title' => ['sk' => 'Parkour Zaklady 2024', 'en' => 'Parkour Basics 2024'], 'sport_category_id' => $parkour->id],
+            ['title' => ['sk' => 'Street Workout Leto 2024', 'en' => 'Street Workout Summer 2024'], 'sport_category_id' => $streetWorkout->id],
+            ['title' => ['sk' => 'Freerunning Camp 2024', 'en' => 'Freerunning Camp 2024'], 'sport_category_id' => $parkour->id],
+        ]);
+
+        $historicalTrainings->each(function ($data, $index) use ($bczTeam, $pastSeason, $cadca, $coaches, $athletes) {
+            $training = Training::factory()->create(array_merge($data, [
+                'team_id' => $bczTeam->id,
+                'team_season_id' => $pastSeason->id,
+                'city_id' => $cadca->id,
+                'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+                'is_active' => true,
+                'is_recurring_across_seasons' => $index < 2,
+                'max_capacity' => 15,
+                'sort_order' => $index,
+            ]));
+
+            $training->coaches()->attach($coaches[$index % 3]->id, ['role' => CoachRoleEnum::MAIN->value]);
+
+            // Add historical registrations (all approved — these are past)
+            $athletes->take(rand(5, 10))->each(function (User $athlete) use ($training) {
+                TrainingRegistration::factory()->forTraining($training)->create([
+                    'user_id' => $athlete->id,
+                    'status' => RegistrationStatusEnum::Approved,
+                    'registered_at' => $training->season->starts_at->addDays(rand(1, 30)),
+                ]);
+            });
+        });
+
         // Historical memberships for older season (all expired/completed)
         $athletes->take(4)->each(function (User $athlete) use ($bczTeam, $olderSeason) {
             Membership::create([

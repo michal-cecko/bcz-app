@@ -42,7 +42,7 @@
 </div>
 
 <div style="height: 24px;"></div>
-<a href="mailto:{{ $inquiry->email }}" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Odpovedať na dopyt</a>
+<a href="mailto:{{ $inquiry->email }}" class="btn-cta" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Odpovedať na dopyt</a>
 <div style="height: 32px;"></div>
 <div class="divider-line" style="height: 1px; background-color: #E5E5E5; margin: 0;"></div>
 <div style="height: 24px;"></div>

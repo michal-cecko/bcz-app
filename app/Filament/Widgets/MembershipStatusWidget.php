@@ -19,7 +19,13 @@ class MembershipStatusWidget extends Widget
     {
         $membership = $this->membership;
 
-        if ($membership && $membership->status === MembershipStatusEnum::PENDING && ! $membership->is_free) {
+        if (! $membership) {
+            $team = Filament::getTenant();
+
+            return $team?->currentSeason ? 'full' : 1;
+        }
+
+        if ($membership->status === MembershipStatusEnum::PENDING && ! $membership->is_free) {
             return 'full';
         }
 
@@ -28,19 +34,51 @@ class MembershipStatusWidget extends Widget
 
     protected static ?int $sort = 1;
 
-    public string $paymentMethod = 'stripe';
+    public string $paymentMethod = '';
+
+    public function mount(): void
+    {
+        $team = Filament::getTenant();
+        $enabledMethods = $team?->payment_methods_enabled ?? ['bank_transfer', 'cash'];
+        $this->paymentMethod = $enabledMethods[0] ?? 'bank_transfer';
+    }
 
     #[Computed]
     public function membership(): ?Membership
     {
         $team = Filament::getTenant();
 
-        return Membership::query()
+        $membership = Membership::query()
             ->where('team_id', $team?->id)
             ->where('user_id', auth()->id())
+            ->whereHas('season', fn ($q) => $q->where('ends_at', '>=', now()))
             ->orderByDesc('created_at')
             ->with(['season', 'payments'])
             ->first();
+
+        // Auto-create PENDING membership if none exists and active season is available
+        if (! $membership) {
+            $season = $team?->currentSeason;
+
+            if ($season) {
+                $membership = Membership::create([
+                    'team_id' => $team->id,
+                    'user_id' => auth()->id(),
+                    'team_season_id' => $season->id,
+                    'status' => MembershipStatusEnum::PENDING,
+                    'fee_amount' => $season->proratedFee(),
+                    'fee_currency' => $season->fee_currency ?? 'EUR',
+                    'is_free' => false,
+                    'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
+                    'starts_at' => $season->starts_at,
+                    'ends_at' => $season->ends_at,
+                ]);
+
+                $membership->load(['season', 'payments']);
+            }
+        }
+
+        return $membership;
     }
 
     #[Computed]
@@ -52,16 +90,19 @@ class MembershipStatusWidget extends Widget
             return [];
         }
 
-        $payment = $membership->payments()->latest()->first();
-        if (! $payment) {
+        $team = Filament::getTenant();
+
+        if (! $team?->bank_account_iban) {
             return [];
         }
 
-        $qrService = app(QrPaymentService::class);
-
         return [
-            'sk' => $qrService->generatePayBySquareForPayment($payment),
-            'cz' => $qrService->generateQrPlatbaForPayment($payment),
+            'sk' => QrPaymentService::payBySquare(
+                iban: $team->bank_account_iban,
+                amount: (float) $membership->fee_amount,
+                currency: $membership->fee_currency ?? 'EUR',
+                variableSymbol: $membership->season?->variable_symbol ?? '',
+            ),
         ];
     }
 
@@ -73,11 +114,9 @@ class MembershipStatusWidget extends Widget
             return [];
         }
 
-        $settings = $team->settings ?? [];
-
         return [
-            'iban' => $settings['iban'] ?? null,
-            'bank_name' => $settings['bank_name'] ?? null,
+            'iban' => $team->bank_account_iban,
+            'bank_name' => $team->bank_account_name,
         ];
     }
 }

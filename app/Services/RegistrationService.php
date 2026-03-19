@@ -42,9 +42,19 @@ class RegistrationService
 
     /**
      * Send registration confirmation with magic login link.
+     *
+     * @param  array<string, list<array<string, mixed>>>|null  $customEmailContent  Locale-keyed Mason brick content
      */
-    public static function sendConfirmation(User $user, string $registrationType, string $registrationTitle, bool $isNewUser = false, ?Team $team = null): void
+    public static function sendConfirmation(User $user, string $registrationType, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null): void
     {
+        $resolvedLocale = $locale ?? $user->locale ?? app()->getLocale() ?? 'sk';
+        $bricks = $customEmailContent[$resolvedLocale] ?? $customEmailContent['sk'] ?? null;
+
+        $customHtml = null;
+        if (! empty($bricks)) {
+            $customHtml = EmailService::renderBricks($bricks);
+        }
+
         Mail::to($user->email)->queue(
             new RegistrationConfirmationMail(
                 user: $user,
@@ -52,6 +62,7 @@ class RegistrationService
                 registrationTitle: $registrationTitle,
                 isNewUser: $isNewUser,
                 team: $team,
+                customContent: $customHtml,
             ),
         );
     }

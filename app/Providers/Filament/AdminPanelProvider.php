@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\EditProfile;
+use App\Filament\Pages\Auth\SetPassword;
 use App\Filament\Resources\Settings\SettingResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Models\Team;
@@ -24,6 +25,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
 
@@ -43,6 +45,10 @@ class AdminPanelProvider extends PanelProvider
             ->profile(EditProfile::class)
             ->emailChangeVerification()
             ->passwordReset()
+            ->authenticatedRoutes(function () {
+                Route::get('/set-password', SetPassword::class)
+                    ->name('auth.set-password');
+            })
             ->tenant(Team::class, ownershipRelationship: 'teams')
             ->userMenuItems([
                 Action::make('my-team')

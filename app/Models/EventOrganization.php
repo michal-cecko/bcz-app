@@ -26,6 +26,7 @@ class EventOrganization extends Model
         'is_public_registration',
         'show_countdown',
         'external_link',
+        'confirmation_email_content',
     ];
 
     protected function casts(): array
@@ -39,6 +40,7 @@ class EventOrganization extends Model
             'registration_closes_at' => 'datetime',
             'is_public_registration' => 'boolean',
             'show_countdown' => 'boolean',
+            'confirmation_email_content' => 'json',
         ];
     }
 

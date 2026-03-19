@@ -23,7 +23,7 @@
     </div>
 
     <div style="height: 24px;"></div>
-    <a href="{{ $magicUrl ?: url('/login') }}" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prihlásiť sa a dokončiť profil</a>
+    <a href="{{ $magicUrl ?: url('/login') }}" class="btn-cta" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prihlásiť sa a dokončiť profil</a>
     <div style="height: 12px;"></div>
     <p style="font-size: 12px; color: #999999; text-align: center; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Tento odkaz je platný 7 dní.</p>
 @else
@@ -35,7 +35,14 @@
     <div style="height: 16px;"></div>
     <p class="body-text" style="font-size: 14px; color: #555555; line-height: 1.7; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prihláste sa do aplikácie pre zobrazenie detailov a správu vašich registrácií.</p>
     <div style="height: 24px;"></div>
-    <a href="{{ url('/login') }}" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prihlásiť sa</a>
+    <a href="{{ url('/login') }}" class="btn-cta" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prihlásiť sa</a>
+@endif
+
+@if(!empty($customContent))
+<div style="height: 24px;"></div>
+<div class="divider-line" style="height: 1px; background-color: #E5E5E5; margin: 0;"></div>
+<div style="height: 24px;"></div>
+{!! $customContent !!}
 @endif
 
 <div style="height: 32px;"></div>

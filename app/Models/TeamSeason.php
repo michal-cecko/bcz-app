@@ -50,6 +50,11 @@ class TeamSeason extends Model
         return $this->hasMany(Membership::class);
     }
 
+    public function trainings(): HasMany
+    {
+        return $this->hasMany(Training::class, 'team_season_id');
+    }
+
     public function isActive(): bool
     {
         return $this->starts_at->lte(now()) && $this->ends_at->gte(now());

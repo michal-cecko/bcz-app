@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Enums\GenderEnum;
+use App\Enums\RegistrationStatusEnum;
+use App\Models\City;
 use App\Models\Setting;
 use App\Models\SportCategory;
 use App\Models\Training;
@@ -29,6 +31,9 @@ class TrainingsArchive extends Component
 
     #[Url(as: 'pohlavie')]
     public string $genderFilter = '';
+
+    #[Url(as: 'mesto')]
+    public string $cityFilter = '';
 
     #[Url(as: 'hladat')]
     public string $search = '';
@@ -58,6 +63,11 @@ class TrainingsArchive extends Component
         $this->resetPage();
     }
 
+    public function updatedCityFilter(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -68,6 +78,7 @@ class TrainingsArchive extends Component
         $this->categoryFilter = '';
         $this->dayFilter = '';
         $this->locationFilter = '';
+        $this->cityFilter = '';
         $this->ageGroupFilter = '';
         $this->genderFilter = '';
         $this->search = '';
@@ -76,7 +87,7 @@ class TrainingsArchive extends Component
 
     public function hasActiveFilters(): bool
     {
-        return $this->categoryFilter !== '' || $this->dayFilter !== '' || $this->locationFilter !== '' || $this->ageGroupFilter !== '' || $this->genderFilter !== '' || $this->search !== '';
+        return $this->categoryFilter !== '' || $this->dayFilter !== '' || $this->locationFilter !== '' || $this->cityFilter !== '' || $this->ageGroupFilter !== '' || $this->genderFilter !== '' || $this->search !== '';
     }
 
     public function render(): View
@@ -87,7 +98,16 @@ class TrainingsArchive extends Component
         $query = Training::query()
             ->where('is_active', true)
             ->where('team_id', $teamId)
-            ->with(['sportCategory', 'coaches', 'team'])
+            ->current()
+            ->with(['sportCategory', 'coaches', 'team', 'city', 'registrations' => function ($q) {
+                if (auth()->check()) {
+                    $q->where('user_id', auth()->id())
+                        ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
+                        ->with('payments');
+                } else {
+                    $q->whereRaw('1 = 0');
+                }
+            }])
             ->withCount('registrations')
             ->orderBy('sort_order');
 
@@ -101,6 +121,10 @@ class TrainingsArchive extends Component
 
         if ($this->locationFilter) {
             $query->where("place_name->{$locale}", $this->locationFilter);
+        }
+
+        if ($this->cityFilter) {
+            $query->where('city_id', $this->cityFilter);
         }
 
         if ($this->ageGroupFilter) {
@@ -171,11 +195,17 @@ class TrainingsArchive extends Component
             ->sort()
             ->values();
 
+        $cities = City::query()
+            ->whereHas('trainings', fn ($q) => $q->where('is_active', true)->where('team_id', $teamId))
+            ->orderBy('sort_order')
+            ->get();
+
         return view('livewire.trainings-archive', [
             'trainings' => $trainings,
             'categories' => $categories,
             'days' => $days,
             'locations' => $locations,
+            'cities' => $cities,
             'ageGroups' => $ageGroups,
             'genders' => GenderEnum::cases(),
         ]);

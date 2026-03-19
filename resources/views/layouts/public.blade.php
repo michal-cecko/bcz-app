@@ -21,7 +21,6 @@
     @filamentStyles
     @livewireStyles
     <style>[x-cloak] { display: none !important; }</style>
-    <link rel="stylesheet" href="{{ asset('css/filament/filament/app.css') }}">
 </head>
 <body class="bg-bcz-dark text-white font-sans antialiased">
     @livewire('banner-display', ['pageId' => $page->id ?? null])
@@ -32,7 +31,7 @@
         @yield('content')
     </main>
 
-    @include('components.footer')
+    @include('components.footer', ['hidePartners' => $hidePartners ?? false])
 
     @livewireScripts
     @livewireScriptConfig

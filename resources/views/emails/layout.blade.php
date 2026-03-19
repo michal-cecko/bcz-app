@@ -39,6 +39,7 @@
             h1, h2, h3, .heading-text { color: #f9fafb !important; }
             p, .body-text { color: #AAAAAA !important; }
             a { color: #60a5fa !important; }
+            a.btn-cta { color: #FFFFFF !important; }
             .divider-line { border-top-color: #222222 !important; }
             .footer-bg { background-color: #111111 !important; border-top-color: #222222 !important; }
             .footer-team-name { color: #FFFFFF !important; }

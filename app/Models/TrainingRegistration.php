@@ -20,6 +20,7 @@ class TrainingRegistration extends Model
         'status',
         'cancellation_reason',
         'registered_at',
+        'payment_due_at',
     ];
 
     protected function casts(): array
@@ -28,7 +29,13 @@ class TrainingRegistration extends Model
             'form_data' => 'json',
             'status' => RegistrationStatusEnum::class,
             'registered_at' => 'datetime',
+            'payment_due_at' => 'datetime',
         ];
+    }
+
+    public function isPaymentOverdue(): bool
+    {
+        return $this->payment_due_at !== null && $this->payment_due_at->isPast();
     }
 
     public function training(): BelongsTo

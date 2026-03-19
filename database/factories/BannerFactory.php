@@ -20,7 +20,7 @@ class BannerFactory extends Factory
             'name' => ['sk' => fake()->words(3, true), 'en' => fake()->words(3, true)],
             'type' => fake()->randomElement(BannerTypeEnum::cases()),
             'placement' => 'all',
-            'page_id' => null,
+            'page_ids' => null,
             'content' => null,
             'is_active' => false,
             'active_from' => null,
@@ -56,11 +56,14 @@ class BannerFactory extends Factory
 
     public function global(): static
     {
-        return $this->state(fn () => ['placement' => 'all', 'page_id' => null]);
+        return $this->state(fn () => ['placement' => 'all', 'page_ids' => null]);
     }
 
-    public function forPage(Page $page): static
+    public function forPages(Page ...$pages): static
     {
-        return $this->state(fn () => ['placement' => 'specific', 'page_id' => $page->id]);
+        return $this->state(fn () => [
+            'placement' => 'specific',
+            'page_ids' => collect($pages)->pluck('id')->values()->all(),
+        ]);
     }
 }

@@ -58,7 +58,7 @@ return [
     'registration_opens_at' => 'Registrácia sa otvorí :date',
 
     'already_registered_title' => 'Už si zaregistrovaný',
-    'already_registered_message' => 'Už si zaregistrovaný na tento tréning.',
+    'already_registered_message' => 'Na tento tréning si sa už zaregistroval. Vidíme sa!',
 
     'free_approved_message' => 'Tvoja registrácia bola automaticky schválená. Tešíme sa na teba!',
     'membership_valid_message' => 'Tvoje členstvo je platné a registrácia bola schválená. Tešíme sa na teba!',

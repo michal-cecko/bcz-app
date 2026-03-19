@@ -149,6 +149,7 @@ class RegistrationsRelationManager extends RelationManager
                             registrationType: 'podujatie',
                             registrationTitle: $event->getTranslation('title', 'sk'),
                             team: $event->team,
+                            customEmailContent: $event->organization?->confirmation_email_content,
                         );
 
                         Notification::make()

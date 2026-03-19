@@ -5,6 +5,7 @@ namespace App\Filament\Pages\Auth;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -15,19 +16,17 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\SimplePage;
+use Filament\Schemas\Components\EmbeddedSchema;
+use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rules\Password;
 
 class SetPassword extends SimplePage
 {
-    protected string $view = 'filament.pages.auth.set-password';
-
     protected static bool $shouldRegisterNavigation = false;
 
     public ?array $data = [];
@@ -71,17 +70,27 @@ class SetPassword extends SimplePage
         return '2xl';
     }
 
+    public function content(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Form::make([EmbeddedSchema::make('form')])
+                    ->id('form')
+                    ->livewireSubmitHandler('save'),
+            ]);
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
             ->statePath('data')
             ->components([
                 Wizard::make($this->getWizardSteps())
-                    ->submitAction(new HtmlString(Blade::render(<<<'BLADE'
-                        <x-filament::button type="submit" size="sm">
-                            Dokončiť
-                        </x-filament::button>
-                    BLADE))),
+                    ->submitAction(
+                        Action::make('save')
+                            ->label('Dokončiť')
+                            ->submit('form')
+                    ),
             ]);
     }
 
@@ -131,6 +140,11 @@ class SetPassword extends SimplePage
                 $user->update([
                     'password' => Hash::make($state['password']),
                     'password_set_at' => now(),
+                ]);
+
+                // Re-hash session so AuthenticateSession middleware doesn't log out
+                session()->put([
+                    'password_hash_'.auth()->getDefaultDriver() => $user->fresh()->getAuthPassword(),
                 ]);
             });
     }

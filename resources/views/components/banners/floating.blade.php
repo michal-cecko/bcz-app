@@ -11,15 +11,15 @@
     ]);
     $noteText = brick_trans($note ?? []);
     $hasStats = !empty($stat1_value ?? null);
-    $isLight = $bgColor === '#FFFFFF' || $bgColor === '#ffffff';
+    $isLight = in_array(strtolower($bgColor), ['#ffffff', '#fff', '#f5f5f5']);
 @endphp
 
 @if($hasStats)
     {{-- Rich card layout (e.g. 2% z dane) --}}
     <div class="flex flex-col gap-4 rounded-2xl p-5" style="width: 280px; background-color: {{ $bgColor }}; box-shadow: 0 16px 48px rgba(0,0,0,0.25)">
         {{-- Header: icon --}}
-        <div class="w-10 h-10 rounded-lg bg-[#FF2D2D]/[0.08] flex items-center justify-center">
-            <i data-lucide="{{ $iconName }}" class="w-5 h-5 text-[#FF2D2D]"></i>
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #FF2D2D15">
+            <svg class="w-6 h-6" style="color: #FF2D2D" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </div>
 
         {{-- Title --}}
@@ -27,7 +27,7 @@
 
         {{-- Description --}}
         @if($descText)
-            <p class="text-[#666666] text-[12px] font-['DM_Sans'] leading-relaxed">{{ $descText }}</p>
+            <p class="{{ $isLight ? 'text-[#555555]' : 'text-[#666666]' }} text-[12px] font-['DM_Sans'] leading-relaxed">{{ $descText }}</p>
         @endif
 
         {{-- Stats row --}}
@@ -50,13 +50,13 @@
         @if($btnText && $btnUrl)
             <a href="{{ $btnUrl }}" class="flex items-center justify-center gap-2 w-full py-3 bg-[#FF2D2D] text-white text-[11px] font-bold font-['DM_Sans'] tracking-widest rounded-lg hover:bg-[#E02626] transition-colors">
                 {{ $btnText }}
-                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
         @endif
 
         {{-- Note --}}
         @if($noteText)
-            <p class="text-[#999999] text-[9px] font-['DM_Sans'] text-center w-full">{{ $noteText }}</p>
+            <p class="{{ $isLight ? 'text-[#888888]' : 'text-[#999999]' }} text-[9px] font-['DM_Sans'] text-center w-full">{{ $noteText }}</p>
         @endif
     </div>
 @else

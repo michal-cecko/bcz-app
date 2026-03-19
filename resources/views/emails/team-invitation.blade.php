@@ -9,7 +9,7 @@
 <div style="height: 16px;"></div>
 <p class="body-text" style="font-size: 14px; color: #555555; line-height: 1.7; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Ak ešte nemáte vytvorený účet, bude pre vás automaticky vytvorený. Po prihlásení si nastavte heslo a doplňte profil.</p>
 <div style="height: 24px;"></div>
-<a href="{{ $acceptUrl }}" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prijať pozvánku</a>
+<a href="{{ $acceptUrl }}" class="btn-cta" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prijať pozvánku</a>
 <div style="height: 12px;"></div>
 <p style="font-size: 12px; color: #999999; text-align: center; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Tento odkaz je platný do {{ $invitation->expires_at->format('d.m.Y') }}.</p>
 <div style="height: 32px;"></div>

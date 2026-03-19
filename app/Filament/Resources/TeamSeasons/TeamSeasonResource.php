@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
 
 class TeamSeasonResource extends Resource
 {
@@ -99,6 +100,9 @@ class TeamSeasonResource extends Resource
                                     ->label('Voľné miesta')
                                     ->boolean()
                                     ->state(fn (TeamSeason $record): bool => $record->hasCapacity()),
+                                TextEntry::make('trainings_count')
+                                    ->label('Tréningy')
+                                    ->state(fn (TeamSeason $record): int => $record->trainings()->count()),
                                 TextEntry::make('created_at')
                                     ->label('Vytvorená')
                                     ->dateTime(),
@@ -115,7 +119,7 @@ class TeamSeasonResource extends Resource
         ];
     }
 
-    public static function getIndexUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?\Illuminate\Database\Eloquent\Model $tenant = null, bool $shouldGuessMissingParameters = false): string
+    public static function getIndexUrl(array $parameters = [], bool $isAbsolute = true, ?string $panel = null, ?Model $tenant = null, bool $shouldGuessMissingParameters = false): string
     {
         return TeamResource::getUrl('index', $parameters, $isAbsolute, $panel, $tenant);
     }

@@ -146,7 +146,10 @@ class PaymentService
 
         if ($payment->payable instanceof TrainingRegistration) {
             $registration = $payment->payable;
-            $registration->update(['status' => RegistrationStatusEnum::Approved]);
+            $registration->update([
+                'status' => RegistrationStatusEnum::Approved,
+                'payment_due_at' => null,
+            ]);
 
             if ($registration->user) {
                 $registration->user->notify(new TrainingPaymentConfirmed($registration->training));

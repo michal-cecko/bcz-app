@@ -22,8 +22,10 @@
         <div class="toggle" id="themeToggle" onclick="toggleTheme()"></div>
         <span>Dark</span>
     </div>
-    <iframe id="previewFrame" class="preview-frame" srcdoc="{{ $emailHtml }}"></iframe>
+    <iframe id="previewFrame" class="preview-frame"></iframe>
     <script>
+        var emailHtml = @json($emailHtml);
+
         function resizeFrame() {
             var f = document.getElementById('previewFrame');
             f.style.height = (window.innerHeight - 50) + 'px';
@@ -31,13 +33,15 @@
         window.addEventListener('resize', resizeFrame);
         resizeFrame();
 
-        function toggleTheme() {
-            var toggle = document.getElementById('themeToggle');
+        var frame = document.getElementById('previewFrame');
+        var doc = frame.contentDocument || frame.contentWindow.document;
+        doc.open();
+        doc.write(emailHtml);
+        doc.close();
+
+        function applyTheme(isDark) {
             var frame = document.getElementById('previewFrame');
             var doc = frame.contentDocument || frame.contentWindow.document;
-            toggle.classList.toggle('dark');
-            var isDark = toggle.classList.contains('dark');
-
             var body = doc.querySelector('body');
             if (!body) return;
 
@@ -58,15 +62,17 @@
                 doc.querySelectorAll('.powered-brand').forEach(function(el) { el.style.color = '#666666'; });
                 doc.querySelectorAll('.bcz-logo-light').forEach(function(el) { el.style.display = 'none'; });
                 doc.querySelectorAll('.bcz-logo-dark').forEach(function(el) { el.style.display = 'inline'; });
-                // Content text colors
+                doc.querySelectorAll('.info-box').forEach(function(el) { el.style.backgroundColor = '#1A1A1A'; });
+                doc.querySelectorAll('h1, h2, h3, .heading-text').forEach(function(el) { el.style.color = '#f9fafb'; });
+                doc.querySelectorAll('p, .body-text').forEach(function(el) { el.style.color = '#AAAAAA'; });
+                doc.querySelectorAll('a').forEach(function(el) {
+                    if (el.style.color && el.style.color !== 'rgb(255, 255, 255)') el.style.color = '#60a5fa';
+                });
+                doc.querySelectorAll('ul, ol, li').forEach(function(el) { el.style.color = '#AAAAAA'; });
+                doc.querySelectorAll('hr, .divider-line').forEach(function(el) { el.style.borderTopColor = '#222222'; });
                 if (content) {
-                    content.querySelectorAll('h1, h2, h3').forEach(function(el) { el.style.color = '#f9fafb'; });
-                    content.querySelectorAll('p').forEach(function(el) { el.style.color = '#AAAAAA'; });
-                    content.querySelectorAll('div').forEach(function(el) { if (el.style.color) { el.style.color = '#AAAAAA'; } });
-                    content.querySelectorAll('a').forEach(function(el) { if (el.style.color && el.style.color !== 'rgb(255, 255, 255)') { el.style.color = '#60a5fa'; } });
-                    content.querySelectorAll('ul, ol, li').forEach(function(el) { el.style.color = '#AAAAAA'; });
-                    content.querySelectorAll('hr, .divider-line').forEach(function(el) { el.style.borderTopColor = '#222222'; });
-                    content.querySelectorAll('span').forEach(function(el) { if (el.style.color) { el.style.color = '#AAAAAA'; } });
+                    content.querySelectorAll('div').forEach(function(el) { if (el.style.color) el.style.color = '#AAAAAA'; });
+                    content.querySelectorAll('span').forEach(function(el) { if (el.style.color) el.style.color = '#AAAAAA'; });
                 }
             } else {
                 body.style.backgroundColor = '#f0f0f0';
@@ -83,18 +89,35 @@
                 doc.querySelectorAll('.powered-brand').forEach(function(el) { el.style.color = '#888888'; });
                 doc.querySelectorAll('.bcz-logo-light').forEach(function(el) { el.style.display = 'inline'; });
                 doc.querySelectorAll('.bcz-logo-dark').forEach(function(el) { el.style.display = 'none'; });
-                // Content text colors
+                doc.querySelectorAll('.info-box').forEach(function(el) { el.style.backgroundColor = '#F3F4F6'; });
+                doc.querySelectorAll('h1, h2, h3, .heading-text').forEach(function(el) { el.style.color = '#1A1A1A'; });
+                doc.querySelectorAll('p, .body-text').forEach(function(el) { el.style.color = '#555555'; });
+                doc.querySelectorAll('a').forEach(function(el) {
+                    if (el.style.color && el.style.color !== 'rgb(255, 255, 255)') el.style.color = '#2563eb';
+                });
+                doc.querySelectorAll('ul, ol, li').forEach(function(el) { el.style.color = '#555555'; });
+                doc.querySelectorAll('hr, .divider-line').forEach(function(el) { el.style.borderTopColor = '#E5E5E5'; });
                 if (content) {
-                    content.querySelectorAll('h1, h2, h3').forEach(function(el) { el.style.color = '#1A1A1A'; });
-                    content.querySelectorAll('p').forEach(function(el) { el.style.color = '#555555'; });
-                    content.querySelectorAll('div').forEach(function(el) { if (el.style.color) { el.style.color = '#555555'; } });
-                    content.querySelectorAll('a').forEach(function(el) { if (el.style.color && el.style.color !== 'rgb(255, 255, 255)') { el.style.color = '#2563eb'; } });
-                    content.querySelectorAll('ul, ol, li').forEach(function(el) { el.style.color = '#555555'; });
-                    content.querySelectorAll('hr, .divider-line').forEach(function(el) { el.style.borderTopColor = '#E5E5E5'; });
-                    content.querySelectorAll('span').forEach(function(el) { if (el.style.color) { el.style.color = '#555555'; } });
+                    content.querySelectorAll('div').forEach(function(el) { if (el.style.color) el.style.color = '#555555'; });
+                    content.querySelectorAll('span').forEach(function(el) { if (el.style.color) el.style.color = '#555555'; });
                 }
             }
         }
+
+        function toggleTheme() {
+            var toggle = document.getElementById('themeToggle');
+            toggle.classList.toggle('dark');
+            applyTheme(toggle.classList.contains('dark'));
+        }
+
+        // Auto-detect OS dark mode and apply initial theme
+        (function() {
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                document.getElementById('themeToggle').classList.add('dark');
+                applyTheme(true);
+            }
+        })();
     </script>
 </body>
 </html>

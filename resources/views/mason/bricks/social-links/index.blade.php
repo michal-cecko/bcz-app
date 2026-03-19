@@ -45,11 +45,11 @@
                         @endswitch
 
                         @if(! empty($social['name']))
-                            <span class="text-white text-base font-bold">{{ brick_trans($social['name']) }}</span>
+                            <span class="text-center text-white text-base font-bold">{{ brick_trans($social['name']) }}</span>
                         @endif
 
                         @if(! empty($social['handle']))
-                            <span class="text-bcz-red text-sm font-semibold">{{ brick_trans($social['handle']) }}</span>
+                            <span class="text-center text-bcz-red text-sm font-semibold">{{ brick_trans($social['handle']) }}</span>
                         @endif
                     </a>
                 @endforeach
