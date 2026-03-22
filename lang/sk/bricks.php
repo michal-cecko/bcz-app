@@ -45,6 +45,8 @@ return [
         'trainings-archive' => 'Archív tréningov',
         'competitions-archive' => 'Archív súťaží',
         'events-archive' => 'Archív podujatí',
+        'events-showcase' => 'Prehľad podujatí',
+        'contact-inquiry' => 'Kontaktný dopyt',
         'competition-results' => 'Výsledky súťaže',
         'competition-brackets' => 'Pavúk súťaže',
         'competition-timetable' => 'Harmonogram súťaže',
