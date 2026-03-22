@@ -5,6 +5,7 @@ namespace App\Filament\Pages\Auth;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use App\Models\User;
+use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\DatePicker;
@@ -303,36 +304,45 @@ class SetPassword extends SimplePage
             'locale' => $state['locale'] ?? 'sk',
         ], fn ($value) => $value !== null));
 
-        // Save public profile (step 4)
+        // Save public profile (step 4) using draft workflow
         if (! empty($state['has_public_profile'])) {
-            $user->update([
-                'has_public_profile' => true,
-            ]);
-
+            $service = new ProfileDraftService;
             $teamRole = $this->getUserPublicProfileRole();
 
             if ($teamRole === 'athlete') {
-                $user->athleteProfile()->updateOrCreate(
+                $profile = $user->athleteProfile()->updateOrCreate(
                     ['user_id' => $user->id],
-                    array_filter([
-                        'date_started_working_out' => $state['date_started_working_out'] ?? null,
-                        'journey_text' => ! empty($state['journey_text'])
-                            ? ['sk' => $state['journey_text']]
-                            : null,
-                    ], fn ($value) => $value !== null),
+                    [],
                 );
+                $draftData = array_filter([
+                    'date_started_working_out' => $state['date_started_working_out'] ?? null,
+                    'journey_text' => ! empty($state['journey_text'])
+                        ? ['sk' => $state['journey_text']]
+                        : null,
+                ], fn ($value) => $value !== null);
+                $service->saveDraft($profile, $draftData);
             }
 
             if ($teamRole === 'coach') {
-                $user->coachProfile()->updateOrCreate(
+                $profile = $user->coachProfile()->updateOrCreate(
                     ['user_id' => $user->id],
-                    array_filter([
-                        'date_started_coaching' => $state['date_started_coaching'] ?? null,
-                        'biography' => ! empty($state['biography'])
-                            ? ['sk' => $state['biography']]
-                            : null,
-                    ], fn ($value) => $value !== null),
+                    [],
                 );
+                $draftData = array_filter([
+                    'date_started_coaching' => $state['date_started_coaching'] ?? null,
+                    'biography' => ! empty($state['biography'])
+                        ? ['sk' => $state['biography']]
+                        : null,
+                ], fn ($value) => $value !== null);
+                $service->saveDraft($profile, $draftData);
+            }
+
+            if ($teamRole === 'judge') {
+                $profile = $user->judgeProfile()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    [],
+                );
+                $service->saveDraft($profile, []);
             }
         }
 

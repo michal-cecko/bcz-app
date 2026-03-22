@@ -4,14 +4,16 @@ return [
     'breadcrumb_home' => 'DOMOV',
     'breadcrumb_trainings' => 'TRÉNINGY',
 
-    'about_label' => 'O TRÉNEROVI',
-    'about_title' => 'BIOGRAFIA',
+    'about_label' => 'O MNE',
+    'about_title' => 'MÔJ PRÍBEH',
+    'role_subtitle' => 'Tréner :name',
 
     'coaching_since' => 'Trénuje od',
     'view_profile' => 'ZOBRAZIŤ PROFIL',
 
-    'trainings_label' => 'TRÉNINGY',
-    'trainings_title' => 'VEDIE TRÉNINGY',
+    'trainings_label' => 'MOJE SKUPINY',
+    'trainings_title' => 'TRÉNINGOVÉ SKUPINY',
+    'trainings_subtitle' => 'Pripoj sa k mojim skupinovým tréningom a trénuj s motivovanými ľuďmi',
     'trainings_empty' => 'Momentálne nevedie žiadne aktívne tréningy.',
     'training_detail' => 'Detail tréningu',
 

@@ -2,8 +2,10 @@
 
 use App\Enums\BannerTypeEnum;
 use App\Enums\CoachRoleEnum;
+use App\Enums\DraftStatusEnum;
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
+use App\Enums\ProfileTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\SponsorTagEnum;
@@ -48,5 +50,14 @@ return [
         SponsorTagEnum::MEDIAL_SPONSOR->value => 'Medialni sponzor',
         SponsorTagEnum::PARTNER->value => 'Partner',
         SponsorTagEnum::SUPPORTER->value => 'Podporovatel',
+    ],
+    DraftStatusEnum::class => [
+        DraftStatusEnum::Pending->value => 'Čeká na schválení',
+        DraftStatusEnum::Rejected->value => 'Zamítnutý',
+    ],
+    ProfileTypeEnum::class => [
+        ProfileTypeEnum::Coach->value => 'Trenér',
+        ProfileTypeEnum::Athlete->value => 'Sportovec',
+        ProfileTypeEnum::Judge->value => 'Porotce',
     ],
 ];

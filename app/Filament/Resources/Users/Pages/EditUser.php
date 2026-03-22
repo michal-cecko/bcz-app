@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
+use App\Enums\DraftStatusEnum;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
+use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
@@ -27,24 +29,57 @@ class EditUser extends EditRecord
         return [
             Impersonate::make()
                 ->record($this->getRecord()),
-            Action::make('approveProfile')
-                ->label('Schvalit profil')
+            Action::make('approveCoachProfile')
+                ->label('Schvalit profil trenera')
                 ->icon(Heroicon::OutlinedCheckCircle)
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalHeading('Schvalit verejny profil')
-                ->modalDescription('Naozaj chcete schvalit verejny profil tohto pouzivatela?')
-                ->action(fn () => $user->update(['public_profile_approved_at' => now()]))
-                ->visible(fn () => $user->has_public_profile && ! $user->public_profile_approved_at),
-            Action::make('revokeProfile')
-                ->label('Zrusit schvalenie')
+                ->action(function () use ($user): void {
+                    (new ProfileDraftService)->approveDraft($user->coachProfile, $user);
+                    Notification::make()->success()->title('Profil trenera schvaleny.')->send();
+                })
+                ->visible(fn () => $user->coachProfile?->draft_status === DraftStatusEnum::Pending),
+            Action::make('approveAthleteProfile')
+                ->label('Schvalit profil sportovca')
+                ->icon(Heroicon::OutlinedCheckCircle)
+                ->color('success')
+                ->requiresConfirmation()
+                ->action(function () use ($user): void {
+                    (new ProfileDraftService)->approveDraft($user->athleteProfile, $user);
+                    Notification::make()->success()->title('Profil sportovca schvaleny.')->send();
+                })
+                ->visible(fn () => $user->athleteProfile?->draft_status === DraftStatusEnum::Pending),
+            Action::make('approveJudgeProfile')
+                ->label('Schvalit profil porotcu')
+                ->icon(Heroicon::OutlinedCheckCircle)
+                ->color('success')
+                ->requiresConfirmation()
+                ->action(function () use ($user): void {
+                    (new ProfileDraftService)->approveDraft($user->judgeProfile, $user);
+                    Notification::make()->success()->title('Profil porotcu schvaleny.')->send();
+                })
+                ->visible(fn () => $user->judgeProfile?->draft_status === DraftStatusEnum::Pending),
+            Action::make('revokeCoachProfile')
+                ->label('Zrusit profil trenera')
                 ->icon(Heroicon::OutlinedXCircle)
                 ->color('danger')
                 ->requiresConfirmation()
-                ->modalHeading('Zrusit schvalenie profilu')
-                ->modalDescription('Profil pouzivatela bude odstraneny z verejneho zoznamu.')
-                ->action(fn () => $user->update(['public_profile_approved_at' => null]))
-                ->visible(fn () => $user->has_public_profile && $user->public_profile_approved_at),
+                ->action(fn () => $user->update(['coach_profile_approved_at' => null]))
+                ->visible(fn () => $user->coach_profile_approved_at !== null),
+            Action::make('revokeAthleteProfile')
+                ->label('Zrusit profil sportovca')
+                ->icon(Heroicon::OutlinedXCircle)
+                ->color('danger')
+                ->requiresConfirmation()
+                ->action(fn () => $user->update(['athlete_profile_approved_at' => null]))
+                ->visible(fn () => $user->athlete_profile_approved_at !== null),
+            Action::make('revokeJudgeProfile')
+                ->label('Zrusit profil porotcu')
+                ->icon(Heroicon::OutlinedXCircle)
+                ->color('danger')
+                ->requiresConfirmation()
+                ->action(fn () => $user->update(['judge_profile_approved_at' => null]))
+                ->visible(fn () => $user->judge_profile_approved_at !== null),
             Action::make('sendPasswordReset')
                 ->label('Obnovit heslo')
                 ->icon(Heroicon::OutlinedKey)

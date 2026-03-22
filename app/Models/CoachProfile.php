@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DraftStatusEnum;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,12 +24,19 @@ class CoachProfile extends Model implements HasMedia
         'biography',
         'main_background_image',
         'biography_image',
+        'draft_data',
+        'draft_status',
+        'draft_rejection_reason',
+        'draft_submitted_at',
     ];
 
     protected function casts(): array
     {
         return [
             'date_started_coaching' => 'date',
+            'draft_data' => 'json',
+            'draft_status' => DraftStatusEnum::class,
+            'draft_submitted_at' => 'datetime',
         ];
     }
 

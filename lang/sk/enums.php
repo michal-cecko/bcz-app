@@ -4,6 +4,7 @@ use App\Enums\BannerTypeEnum;
 use App\Enums\BillingPeriodEnum;
 use App\Enums\CoachRoleEnum;
 use App\Enums\ComplexityLevelEnum;
+use App\Enums\DraftStatusEnum;
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
 use App\Enums\GenderEnum;
@@ -19,6 +20,7 @@ use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PayoutStatusEnum;
 use App\Enums\PlanTierEnum;
+use App\Enums\ProfileTypeEnum;
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
@@ -215,5 +217,14 @@ return [
     TeamJoinModeEnum::class => [
         TeamJoinModeEnum::APPROVAL->value => 'So schválením',
         TeamJoinModeEnum::OPEN->value => 'Otvorený',
+    ],
+    DraftStatusEnum::class => [
+        DraftStatusEnum::Pending->value => 'Čaká na schválenie',
+        DraftStatusEnum::Rejected->value => 'Zamietnutý',
+    ],
+    ProfileTypeEnum::class => [
+        ProfileTypeEnum::Coach->value => 'Tréner',
+        ProfileTypeEnum::Athlete->value => 'Športovec',
+        ProfileTypeEnum::Judge->value => 'Porotca',
     ],
 ];

@@ -11,19 +11,18 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
-class AthleteProfile extends Model implements HasMedia
+class JudgeProfile extends Model implements HasMedia
 {
     use HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
-    public array $translatable = ['journey_text'];
+    public array $translatable = ['biography'];
 
     protected $fillable = [
         'user_id',
-        'date_started_working_out',
-        'journey_text',
-        'journey_image',
-        'main_image',
+        'biography',
+        'disciplines',
+        'date_started_judging',
         'draft_data',
         'draft_status',
         'draft_rejection_reason',
@@ -33,7 +32,8 @@ class AthleteProfile extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'date_started_working_out' => 'date',
+            'date_started_judging' => 'date',
+            'disciplines' => 'array',
             'draft_data' => 'json',
             'draft_status' => DraftStatusEnum::class,
             'draft_submitted_at' => 'datetime',
@@ -42,8 +42,7 @@ class AthleteProfile extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('journey_image')->singleFile();
-        $this->addMediaCollection('main_image')->singleFile();
+        $this->addMediaCollection('hero_image')->singleFile();
     }
 
     public function user(): BelongsTo

@@ -48,8 +48,7 @@ class AthletesArchive extends Component
         $locale = app()->getLocale();
         $teamId = Setting::get('default_team_id');
 
-        $query = User::where('has_public_profile', true)
-            ->whereNotNull('public_profile_approved_at')
+        $query = User::whereNotNull('athlete_profile_approved_at')
             ->whereHas('teams', fn ($q) => $q
                 ->where('teams.id', $teamId)
                 ->where('team_user.role', RoleEnum::ATHLETE->value)

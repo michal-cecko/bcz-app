@@ -42,6 +42,7 @@ use App\Models\ExerciseCategory;
 use App\Models\Faq;
 use App\Models\FaqCategory;
 use App\Models\Inquiry;
+use App\Models\JudgeProfile;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\RegistrationFee;
@@ -124,6 +125,11 @@ class DemoDataSeeder extends Seeder
                 ->usingFileName("coach-{$index}.jpg")
                 ->toMediaCollection('biography_image');
 
+            // Approve coach public profile
+            $user->update([
+                'coach_profile_approved_at' => now()->subDays(rand(1, 60)),
+            ]);
+
             return $user;
         });
 
@@ -135,8 +141,7 @@ class DemoDataSeeder extends Seeder
             // Give first 5 athletes a public profile (approved)
             if ($index < 5) {
                 $user->update([
-                    'has_public_profile' => true,
-                    'public_profile_approved_at' => now()->subDays(rand(1, 60)),
+                    'athlete_profile_approved_at' => now()->subDays(rand(1, 60)),
                 ]);
             }
         });
@@ -146,6 +151,9 @@ class DemoDataSeeder extends Seeder
                 'first_name' => 'Peter',
                 'last_name' => 'Novák',
                 'country_code' => 'SK',
+                'biography' => ['sk' => 'Peter Novák je skúsený porotca so 7-ročnou praxou v hodnotení street workout a freestyle súťaží. Ako bývalý aktívny atlét rozumie technickej stránke disciplín a dokáže objektívne ohodnotiť výkony súťažiacich.', 'en' => 'Peter Novák is an experienced judge with 7 years of practice in evaluating street workout and freestyle competitions. As a former active athlete, he understands the technical aspects and can objectively evaluate performances.'],
+                'disciplines' => ['freestyle', 'speed'],
+                'date_started_judging' => '2019-03-15',
                 'certifications' => [
                     ['name' => ['sk' => 'WSWCF Level A', 'en' => 'WSWCF Level A'], 'description' => ['sk' => 'Medzinárodná rozhodcovská licencia World Street Workout & Calisthenics Federation', 'en' => 'International judge license from World Street Workout & Calisthenics Federation'], 'year_of_issue' => 2021],
                     ['name' => ['sk' => 'Hlavný porotca SR', 'en' => 'Head Judge SK'], 'description' => ['sk' => 'Oprávnenie hlavného porotcu pre súťaže na Slovensku', 'en' => 'Head judge authorization for competitions in Slovakia'], 'year_of_issue' => 2023],
@@ -155,6 +163,9 @@ class DemoDataSeeder extends Seeder
                 'first_name' => 'Tomáš',
                 'last_name' => 'Horváth',
                 'country_code' => 'SK',
+                'biography' => ['sk' => 'Tomáš Horváth sa venuje hodnoteniu parkour a freestyle súťaží od roku 2020. Špecializuje sa na technickú analýzu a bezpečnostné aspekty výkonov.', 'en' => 'Tomáš Horváth has been judging parkour and freestyle competitions since 2020. He specializes in technical analysis and safety aspects of performances.'],
+                'disciplines' => ['freestyle'],
+                'date_started_judging' => '2020-06-01',
                 'certifications' => [
                     ['name' => ['sk' => 'FIG Parkour Judge', 'en' => 'FIG Parkour Judge'], 'description' => ['sk' => 'Medzinárodná rozhodcovská licencia Fédération Internationale de Gymnastique', 'en' => 'International judge license from Fédération Internationale de Gymnastique'], 'year_of_issue' => 2022],
                 ],
@@ -163,6 +174,9 @@ class DemoDataSeeder extends Seeder
                 'first_name' => 'Marek',
                 'last_name' => 'Kováč',
                 'country_code' => 'CZ',
+                'biography' => ['sk' => 'Marek Kováč je český porotca pôsobiaci na medzinárodných súťažiach. Má bohaté skúsenosti s hodnotením freestyle a endurance disciplín.', 'en' => 'Marek Kováč is a Czech judge active in international competitions. He has extensive experience in evaluating freestyle and endurance disciplines.'],
+                'disciplines' => ['freestyle', 'endurance'],
+                'date_started_judging' => '2021-01-10',
                 'certifications' => [
                     ['name' => ['sk' => 'WSWCF Level B', 'en' => 'WSWCF Level B'], 'description' => ['sk' => 'Rozhodcovská licencia World Street Workout & Calisthenics Federation', 'en' => 'Judge license from World Street Workout & Calisthenics Federation'], 'year_of_issue' => 2023],
                     ['name' => ['sk' => 'Porotca Freestyle', 'en' => 'Freestyle Judge'], 'description' => ['sk' => 'Špecializácia na hodnotenie freestyle disciplín', 'en' => 'Specialization in freestyle discipline judging'], 'year_of_issue' => 2024],
@@ -172,6 +186,9 @@ class DemoDataSeeder extends Seeder
                 'first_name' => 'Jakub',
                 'last_name' => 'Vlček',
                 'country_code' => 'SK',
+                'biography' => ['sk' => 'Jakub Vlček je najmladší člen nášho rozhodcovského tímu. Prináša svieži pohľad na hodnotenie a aktívne sa vzdeláva v oblasti medzinárodných štandardov.', 'en' => 'Jakub Vlček is the youngest member of our judging team. He brings a fresh perspective to evaluation and actively educates himself in international standards.'],
+                'disciplines' => ['strength'],
+                'date_started_judging' => '2023-09-01',
                 'certifications' => [
                     ['name' => ['sk' => 'BCZ Certified Judge', 'en' => 'BCZ Certified Judge'], 'description' => ['sk' => 'Interná rozhodcovská certifikácia BCZ Club', 'en' => 'Internal BCZ Club judge certification'], 'year_of_issue' => 2025],
                 ],
@@ -186,6 +203,18 @@ class DemoDataSeeder extends Seeder
             ]);
             $user->assignRole(RoleEnum::JUDGE);
             $user->teams()->attach($bczTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(3, 12))]);
+
+            JudgeProfile::create([
+                'user_id' => $user->id,
+                'biography' => $data['biography'],
+                'disciplines' => $data['disciplines'],
+                'date_started_judging' => $data['date_started_judging'],
+            ]);
+
+            // Approve judge public profile
+            $user->update([
+                'judge_profile_approved_at' => now()->subDays(rand(1, 60)),
+            ]);
 
             foreach ($data['certifications'] as $index => $cert) {
                 Certification::factory()->create([

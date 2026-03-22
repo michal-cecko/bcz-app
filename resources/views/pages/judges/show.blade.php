@@ -4,15 +4,21 @@
 
 @php
     $locale = app()->getLocale();
+    $judgeProfile = $user->judgeProfile;
+    $biography = $judgeProfile?->getTranslation('biography', $locale);
+    $heroImage = $judgeProfile?->getFirstMediaUrl('hero_image');
+    $disciplines = $judgeProfile?->disciplines ?? [];
     $certifications = $user->certifications->sortBy('sort_order');
-    $competitions = $user->judgedCompetitions;
+    $competitions = $user->judgedCompetitionDetails ?? collect();
+    $gallery = $user->profileGalleryItems ?? collect();
+    $yearsJudging = $judgeProfile?->date_started_judging ? (int) $judgeProfile->date_started_judging->diffInYears(now()) : null;
 @endphp
 
 @section('content')
     {{-- Hero Section --}}
     <section class="relative h-[500px] overflow-hidden">
-        @if($user->profile_image)
-            <img src="{{ Storage::url($user->profile_image) }}" alt="{{ $user->name }}" class="absolute inset-0 w-full h-full object-cover">
+        @if($heroImage)
+            <img src="{{ $heroImage }}" alt="{{ $user->name }}" class="absolute inset-0 w-full h-full object-cover">
         @else
             <div class="absolute inset-0 bg-[#1A1A1A]"></div>
         @endif
@@ -31,25 +37,20 @@
             {{-- Name --}}
             <h1 class="font-display font-bold text-[64px] tracking-[1px] leading-none">{{ mb_strtoupper($user->name) }}</h1>
 
-            {{-- Subtitle: country + certifications --}}
-            @if($certifications->isNotEmpty() || $user->country_code)
-                <p class="text-bcz-red text-base font-medium tracking-[2px]">
-                    @php
-                        $parts = [];
-                        if ($user->country_code) {
-                            $parts[] = $user->country_code;
-                        }
-                        foreach ($certifications as $cert) {
-                            $name = $cert->getTranslation('name', $locale);
-                            if (is_array($name)) {
-                                $name = $name[$locale] ?? reset($name);
-                            }
-                            $parts[] = $name;
-                        }
-                    @endphp
-                    {{ implode(' · ', $parts) }}
-                </p>
-            @endif
+            {{-- Subtitle: country + role + disciplines --}}
+            <p class="text-bcz-red text-base font-medium tracking-[2px]">
+                @php
+                    $parts = [];
+                    if ($user->country_code) {
+                        $parts[] = $user->country_code;
+                    }
+                    $parts[] = __('Porotca');
+                    if (! empty($disciplines)) {
+                        $parts[] = implode(' & ', array_map('ucfirst', $disciplines));
+                    }
+                @endphp
+                {{ implode(' · ', $parts) }}
+            </p>
         </div>
     </section>
 
@@ -60,28 +61,48 @@
             <div class="flex-1 flex flex-col gap-6">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-[2px] bg-bcz-red"></div>
-                    <span class="text-bcz-red text-xs font-bold tracking-[3px]">O ROZHODCOVI</span>
+                    <span class="text-bcz-red text-xs font-bold tracking-[3px]">{{ __('O ROZHODCOVI') }}</span>
                     <div class="w-10 h-[2px] bg-bcz-red"></div>
                 </div>
-                <h2 class="font-display font-bold text-4xl tracking-[0.5px]">MÔJ PRÍBEH</h2>
-                <p class="text-[#AAAAAA] text-base leading-[1.7]">{{ $user->name }} je skúsený rozhodca pôsobiaci v BCZ Club.</p>
+                <h2 class="font-display font-bold text-4xl tracking-[0.5px]">{{ __('MOJ PRIBEH') }}</h2>
+                @if($biography)
+                    <div class="text-[#AAAAAA] text-base leading-[1.7] space-y-4">
+                        @foreach(explode("\n", $biography) as $paragraph)
+                            @if(trim($paragraph))
+                                <p>{{ $paragraph }}</p>
+                            @endif
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Right: Info Cards --}}
             <div class="w-full lg:w-[320px] flex flex-col">
-                @if($certifications->isNotEmpty())
-                    <div class="flex justify-between items-center py-4 px-5 border-b border-[#222222]">
-                        <span class="text-[#888888] text-sm">Certifikácie</span>
-                        <span class="text-bcz-red text-sm font-semibold">{{ $certifications->pluck('name')->map(fn($n) => is_array($n) ? ($n[$locale] ?? reset($n)) : $n)->join(', ') }}</span>
+                @if($yearsJudging)
+                    <div class="flex justify-between items-center py-4 px-5 border-b border-bcz-border">
+                        <span class="text-[#888888] text-sm">{{ __('Skusenosti') }}</span>
+                        <span class="text-white text-sm">{{ $yearsJudging }} {{ __('rokov') }}</span>
                     </div>
                 @endif
-                <div class="flex justify-between items-center py-4 px-5 border-b border-[#222222]">
-                    <span class="text-[#888888] text-sm">Súťaže</span>
-                    <span class="text-white text-sm">{{ $competitions->count() }} hodnotených</span>
+                @if(! empty($disciplines))
+                    <div class="flex justify-between items-center py-4 px-5 border-b border-bcz-border">
+                        <span class="text-[#888888] text-sm">{{ __('Discipliny') }}</span>
+                        <span class="text-white text-sm">{{ implode(', ', array_map('ucfirst', $disciplines)) }}</span>
+                    </div>
+                @endif
+                @if($certifications->isNotEmpty())
+                    <div class="flex justify-between items-center py-4 px-5 border-b border-bcz-border">
+                        <span class="text-[#888888] text-sm">{{ __('Certifikacie') }}</span>
+                        <span class="text-bcz-red text-sm font-semibold">{{ $certifications->first()?->getTranslation('name', $locale) }}</span>
+                    </div>
+                @endif
+                <div class="flex justify-between items-center py-4 px-5 border-b border-bcz-border">
+                    <span class="text-[#888888] text-sm">{{ __('Sutaze') }}</span>
+                    <span class="text-white text-sm">{{ $competitions->count() }} {{ __('hodnotenych') }}</span>
                 </div>
                 @if($user->country_code)
                     <div class="flex justify-between items-center py-4 px-5">
-                        <span class="text-[#888888] text-sm">Krajina</span>
+                        <span class="text-[#888888] text-sm">{{ __('Krajina') }}</span>
                         <span class="text-white text-sm">{{ $user->country_code }}</span>
                     </div>
                 @endif
@@ -101,24 +122,22 @@
                 <h2 class="font-display font-bold text-4xl tracking-[0.5px]">HODNOTIL NA SÚŤAŽIACH</h2>
 
                 <div class="flex flex-col">
-                    @foreach($competitions as $competition)
-                        <div class="flex items-center justify-between py-5 {{ !$loop->last ? 'border-b border-[#222222]' : '' }}">
+                    @foreach($competitions as $compDetail)
+                        @php $event = $compDetail->event; @endphp
+                        <div class="flex items-center justify-between py-5 {{ ! $loop->last ? 'border-b border-bcz-border' : '' }}">
                             <div class="flex items-center gap-4">
-                                {{-- Year --}}
-                                @if($competition->date_start)
-                                    <span class="text-bcz-red text-sm font-bold">{{ $competition->date_start->format('Y') }}</span>
+                                @if($event?->date)
+                                    <span class="text-bcz-red text-sm font-bold">{{ $event->date->format('Y') }}</span>
                                 @endif
 
-                                {{-- Name + Location --}}
                                 <div class="flex flex-col gap-1">
-                                    <span class="text-white text-[15px] font-semibold">{{ $competition->getTranslation('name', $locale) }}</span>
-                                    @if($competition->place_name)
-                                        <span class="text-[#888888] text-[13px]">{{ $competition->place_name }}</span>
+                                    <span class="text-white text-[15px] font-semibold">{{ $event?->getTranslation('title', $locale) }}</span>
+                                    @if($event?->city)
+                                        <span class="text-[#888888] text-[13px]">{{ $event->city }}</span>
                                     @endif
                                 </div>
                             </div>
 
-                            {{-- Arrow --}}
                             <svg class="w-4 h-4 text-[#666666] shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                             </svg>
@@ -128,4 +147,12 @@
             </div>
         </section>
     @endif
+
+    {{-- Gallery Section --}}
+    @if($gallery->isNotEmpty())
+        <x-profile-gallery :items="$gallery" :locale="$locale" />
+    @endif
+
+    {{-- Other Judges --}}
+    <x-other-profiles :user="$user" role="judge" :locale="$locale" />
 @endsection

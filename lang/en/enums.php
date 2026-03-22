@@ -2,8 +2,10 @@
 
 use App\Enums\BannerTypeEnum;
 use App\Enums\CoachRoleEnum;
+use App\Enums\DraftStatusEnum;
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
+use App\Enums\ProfileTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\SponsorTagEnum;
@@ -48,5 +50,14 @@ return [
         SponsorTagEnum::MEDIAL_SPONSOR->value => 'Media Sponsor',
         SponsorTagEnum::PARTNER->value => 'Partner',
         SponsorTagEnum::SUPPORTER->value => 'Supporter',
+    ],
+    DraftStatusEnum::class => [
+        DraftStatusEnum::Pending->value => 'Pending Approval',
+        DraftStatusEnum::Rejected->value => 'Rejected',
+    ],
+    ProfileTypeEnum::class => [
+        ProfileTypeEnum::Coach->value => 'Coach',
+        ProfileTypeEnum::Athlete->value => 'Athlete',
+        ProfileTypeEnum::Judge->value => 'Judge',
     ],
 ];

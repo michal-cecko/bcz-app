@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
-use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -58,15 +57,43 @@ class UserForm
                     ->disk('public')
                     ->visibility('public')
                     ->label('Profilový obrázok'),
-                Section::make('Verejný profil')
-                    ->description('Nastavenia verejného profilu atléta')
+                Section::make('Verejne profily')
+                    ->description('Stav verejnych profilov podla roly')
                     ->collapsed()
                     ->components([
-                        Checkbox::make('has_public_profile')
-                            ->label('Má verejný profil'),
-                        Placeholder::make('public_profile_approved_at')
-                            ->label('Schválený dňa')
-                            ->content(fn ($record) => $record?->public_profile_approved_at?->format('d.m.Y H:i') ?? 'Neschválený'),
+                        Placeholder::make('coach_profile_status')
+                            ->label('Profil trenera')
+                            ->content(function ($record) {
+                                if (! $record) {
+                                    return '-';
+                                }
+                                $draft = $record->coachProfile?->draft_status?->getLabel();
+                                $approved = $record->coach_profile_approved_at?->format('d.m.Y H:i');
+
+                                return $draft ? "Draft: {$draft}" : ($approved ? "Schvaleny: {$approved}" : 'Neaktivny');
+                            }),
+                        Placeholder::make('athlete_profile_status')
+                            ->label('Profil sportovca')
+                            ->content(function ($record) {
+                                if (! $record) {
+                                    return '-';
+                                }
+                                $draft = $record->athleteProfile?->draft_status?->getLabel();
+                                $approved = $record->athlete_profile_approved_at?->format('d.m.Y H:i');
+
+                                return $draft ? "Draft: {$draft}" : ($approved ? "Schvaleny: {$approved}" : 'Neaktivny');
+                            }),
+                        Placeholder::make('judge_profile_status')
+                            ->label('Profil porotcu')
+                            ->content(function ($record) {
+                                if (! $record) {
+                                    return '-';
+                                }
+                                $draft = $record->judgeProfile?->draft_status?->getLabel();
+                                $approved = $record->judge_profile_approved_at?->format('d.m.Y H:i');
+
+                                return $draft ? "Draft: {$draft}" : ($approved ? "Schvaleny: {$approved}" : 'Neaktivny');
+                            }),
                     ]),
             ]);
     }

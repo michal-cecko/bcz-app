@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Contracts\Linkable;
 use App\Enums\GenderEnum;
 use App\Enums\MembershipStatusEnum;
+use App\Enums\ProfileTypeEnum;
 use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
@@ -48,8 +49,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         'contact_phone',
         'profile_image',
         'password',
-        'has_public_profile',
-        'public_profile_approved_at',
+        'coach_profile_approved_at',
+        'athlete_profile_approved_at',
+        'judge_profile_approved_at',
         'birth_date',
         'gender',
         'password_set_at',
@@ -73,8 +75,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'socials' => 'json',
-            'has_public_profile' => 'boolean',
-            'public_profile_approved_at' => 'datetime',
+            'coach_profile_approved_at' => 'datetime',
+            'athlete_profile_approved_at' => 'datetime',
+            'judge_profile_approved_at' => 'datetime',
             'birth_date' => 'date',
             'gender' => GenderEnum::class,
             'password_set_at' => 'datetime',
@@ -181,6 +184,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
     public function coachProfile(): HasOne
     {
         return $this->hasOne(CoachProfile::class);
+    }
+
+    public function judgeProfile(): HasOne
+    {
+        return $this->hasOne(JudgeProfile::class);
+    }
+
+    public function profileGalleryItems(): HasMany
+    {
+        return $this->hasMany(ProfileGalleryItem::class);
     }
 
     public function athleteExercises(): HasMany
@@ -346,6 +359,39 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         return $this->phone === null
             || $this->birth_date === null
             || $this->gender === null;
+    }
+
+    public function isProfileApproved(ProfileTypeEnum $type): bool
+    {
+        return match ($type) {
+            ProfileTypeEnum::Coach => $this->coach_profile_approved_at !== null,
+            ProfileTypeEnum::Athlete => $this->athlete_profile_approved_at !== null,
+            ProfileTypeEnum::Judge => $this->judge_profile_approved_at !== null,
+        };
+    }
+
+    /**
+     * Returns which profile types the user can have based on their roles.
+     *
+     * @return list<ProfileTypeEnum>
+     */
+    public function getProfileableRoles(): array
+    {
+        $types = [];
+
+        if ($this->hasRole(RoleEnum::JUDGE)) {
+            $types[] = ProfileTypeEnum::Judge;
+        }
+
+        if ($this->teams()->wherePivot('role', RoleEnum::COACH->value)->exists()) {
+            $types[] = ProfileTypeEnum::Coach;
+        }
+
+        if ($this->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists()) {
+            $types[] = ProfileTypeEnum::Athlete;
+        }
+
+        return $types;
     }
 
     /**

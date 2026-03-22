@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\DraftStatusEnum;
+use App\Enums\ProfileTypeEnum;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,39 +11,35 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
-class AthleteProfile extends Model implements HasMedia
+class ProfileGalleryItem extends Model implements HasMedia
 {
     use HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
-    public array $translatable = ['journey_text'];
+    public array $translatable = ['description'];
 
     protected $fillable = [
         'user_id',
-        'date_started_working_out',
-        'journey_text',
-        'journey_image',
-        'main_image',
-        'draft_data',
-        'draft_status',
-        'draft_rejection_reason',
-        'draft_submitted_at',
+        'profile_type',
+        'description',
+        'tags',
+        'sort_order',
+        'is_approved',
     ];
 
     protected function casts(): array
     {
         return [
-            'date_started_working_out' => 'date',
-            'draft_data' => 'json',
-            'draft_status' => DraftStatusEnum::class,
-            'draft_submitted_at' => 'datetime',
+            'tags' => 'array',
+            'profile_type' => ProfileTypeEnum::class,
+            'sort_order' => 'integer',
+            'is_approved' => 'boolean',
         ];
     }
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('journey_image')->singleFile();
-        $this->addMediaCollection('main_image')->singleFile();
+        $this->addMediaCollection('image')->singleFile();
     }
 
     public function user(): BelongsTo

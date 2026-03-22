@@ -49,8 +49,9 @@ class JudgesArchive extends Component
         $teamId = Setting::get('default_team_id');
 
         $query = User::role(RoleEnum::JUDGE)
+            ->whereNotNull('judge_profile_approved_at')
             ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->with(['certifications', 'judgedCompetitions']);
+            ->with(['certifications', 'judgeProfile', 'judgedCompetitionDetails']);
 
         if ($this->categoryFilter) {
             $query->whereHas('judgedCompetitions.disciplines', fn ($q) => $q->where('sport_category_id', $this->categoryFilter));
