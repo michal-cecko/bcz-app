@@ -228,6 +228,7 @@ class RegistrationsRelationManager extends RelationManager
                             isNewUser: $data['_is_new_user'] ?? false,
                             team: $training->team,
                             customEmailContent: $training->confirmation_email_content,
+                            attachments: $training->getMedia('email_attachments'),
                         );
 
                         Notification::make()

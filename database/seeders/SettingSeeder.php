@@ -41,9 +41,9 @@ class SettingSeeder extends Seeder
                 'is_exposed' => true,
             ],
             [
-                'key' => 'stripe_platform_fee_percent',
-                'label' => ['sk' => 'Poplatok platformy (Stripe)', 'en' => 'Platform Fee (Stripe)'],
-                'description' => ['sk' => 'Percentuálny poplatok z platieb cez Stripe Connect.', 'en' => 'Percentage fee from Stripe Connect payments.'],
+                'key' => 'gopay_platform_fee_percent',
+                'label' => ['sk' => 'Poplatok platformy (GoPay)', 'en' => 'Platform Fee (GoPay)'],
+                'description' => ['sk' => 'Percentuálny poplatok z platieb cez GoPay.', 'en' => 'Percentage fee from GoPay payments.'],
                 'type' => SettingTypeEnum::NUMBER,
                 'value' => 5,
                 'is_exposed' => false,

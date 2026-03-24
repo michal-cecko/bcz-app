@@ -35,7 +35,7 @@ class MembershipFactory extends Factory
     public function expired(): static
     {
         return $this->state(fn () => [
-            'status' => MembershipStatusEnum::EXPIRED,
+            'status' => MembershipStatusEnum::COMPLETED,
             'starts_at' => now()->subYear(),
             'ends_at' => now()->subMonth(),
         ]);

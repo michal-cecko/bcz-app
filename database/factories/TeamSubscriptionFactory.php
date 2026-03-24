@@ -39,7 +39,7 @@ class TeamSubscriptionFactory extends Factory
     public function expired(): static
     {
         return $this->state(fn () => [
-            'status' => SubscriptionStatusEnum::EXPIRED,
+            'status' => SubscriptionStatusEnum::COMPLETED,
             'starts_at' => now()->subYear(),
             'ends_at' => now()->subMonth(),
         ]);

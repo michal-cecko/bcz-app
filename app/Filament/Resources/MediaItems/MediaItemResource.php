@@ -108,6 +108,9 @@ class MediaItemResource extends Resource
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
             ])
+            ->emptyStateHeading('Nahrajte prvé médium')
+            ->emptyStateDescription('Kliknite na tlačidlo "Nahrať" pre nahranie prvého média.')
+            ->emptyStateIcon(Heroicon::OutlinedPhoto)
             ->defaultSort('created_at', 'desc')
             ->recordActions([
                 Action::make('copy_url')

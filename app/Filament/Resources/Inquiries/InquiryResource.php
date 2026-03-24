@@ -48,6 +48,7 @@ class InquiryResource extends Resource
         return $schema
             ->components([
                 Grid::make(4)
+                    ->columnSpanFull()
                     ->schema([
                         Section::make('Detail dopytu')
                             ->schema([

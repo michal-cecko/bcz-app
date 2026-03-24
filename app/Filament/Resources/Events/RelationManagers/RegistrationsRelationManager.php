@@ -150,6 +150,7 @@ class RegistrationsRelationManager extends RelationManager
                             registrationTitle: $event->getTranslation('title', 'sk'),
                             team: $event->team,
                             customEmailContent: $event->organization?->confirmation_email_content,
+                            attachments: $event->getMedia('email_attachments'),
                         );
 
                         Notification::make()

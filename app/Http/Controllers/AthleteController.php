@@ -17,9 +17,10 @@ class AthleteController extends Controller
 
         $user->load([
             'athleteProfile',
-            'athleteExercises.exercise',
+            'athleteExercises' => fn ($q) => $q->orderBy('sort_order')->with(['exercise', 'media']),
             'athleteGoals',
             'certifications',
+            'competitionResults.roundPart.competitionRound.competitionDetail.event',
         ]);
 
         return view('pages.athletes.show', compact('user'));

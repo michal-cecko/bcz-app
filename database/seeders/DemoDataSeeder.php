@@ -1320,8 +1320,8 @@ class DemoDataSeeder extends Seeder
             'sort_order' => 2,
         ]);
 
-        // Men Qual results — 8 competitors, scored and ranked
-        $menCompetitors = $allCompetitors->take(8);
+        // Men Qual results — 8 competitors, scored and ranked (shuffled for varied placements)
+        $menCompetitors = $allCompetitors->take(8)->shuffle()->values();
         $menScores = collect(range(0, 7))->map(fn ($i) => [
             'statics' => round(95 - ($i * 4.5) + (rand(-15, 15) / 10), 2),
             'dynamics' => round(92 - ($i * 3.8) + (rand(-20, 20) / 10), 2),
@@ -1553,7 +1553,7 @@ class DemoDataSeeder extends Seeder
             'duration_seconds' => 60,
             'sort_order' => 1,
         ]);
-        $allCompetitors->take(12)->each(function (User $athlete, $index) use ($jamPart) {
+        $allCompetitors->take(12)->shuffle()->values()->each(function (User $athlete, $index) use ($jamPart) {
             CompetitionResult::factory()->create([
                 'round_part_id' => $jamPart->id,
                 'user_id' => $athlete->id,
@@ -1758,7 +1758,7 @@ class DemoDataSeeder extends Seeder
                 'team_id' => $bczTeam->id,
                 'user_id' => $athlete->id,
                 'team_season_id' => $olderSeason->id,
-                'status' => MembershipStatusEnum::EXPIRED,
+                'status' => MembershipStatusEnum::COMPLETED,
                 'fee_amount' => 40.00,
                 'fee_currency' => 'EUR',
                 'starts_at' => $olderSeason->starts_at,
@@ -1768,7 +1768,7 @@ class DemoDataSeeder extends Seeder
 
         // Past season memberships — mix of expired and cancelled
         $athletes->take(6)->each(function (User $athlete, $index) use ($bczTeam, $pastSeason) {
-            $status = $index < 4 ? MembershipStatusEnum::EXPIRED : MembershipStatusEnum::CANCELLED;
+            $status = $index < 4 ? MembershipStatusEnum::COMPLETED : MembershipStatusEnum::CANCELLED;
 
             Membership::create([
                 'team_id' => $bczTeam->id,
@@ -1867,7 +1867,7 @@ class DemoDataSeeder extends Seeder
 
         // Payments for memberships (completed)
         $memberships->where('status', MembershipStatusEnum::ACTIVE)->each(function (Membership $membership) use ($bczTeam) {
-            $method = collect([PaymentMethodEnum::CASH, PaymentMethodEnum::BANK_TRANSFER, PaymentMethodEnum::CASH, PaymentMethodEnum::STRIPE])->random();
+            $method = collect([PaymentMethodEnum::CASH, PaymentMethodEnum::BANK_TRANSFER, PaymentMethodEnum::CASH, PaymentMethodEnum::GOPAY])->random();
 
             Payment::create([
                 'team_id' => $bczTeam->id,
@@ -1879,7 +1879,7 @@ class DemoDataSeeder extends Seeder
                 'status' => PaymentStatusEnum::COMPLETED,
                 'payment_method' => $method,
                 'variable_symbol' => $method === PaymentMethodEnum::BANK_TRANSFER ? (string) rand(1000000000, 9999999999) : null,
-                'stripe_payment_id' => $method === PaymentMethodEnum::STRIPE ? 'pi_demo_'.fake()->regexify('[a-zA-Z0-9]{16}') : null,
+                'gopay_payment_id' => $method === PaymentMethodEnum::GOPAY ? 'gp_demo_'.fake()->regexify('[a-zA-Z0-9]{16}') : null,
                 'paid_at' => $membership->starts_at->addDays(rand(0, 7)),
             ]);
         });
@@ -1891,7 +1891,7 @@ class DemoDataSeeder extends Seeder
             ->get();
 
         $paymentMethods = [
-            PaymentMethodEnum::STRIPE,
+            PaymentMethodEnum::GOPAY,
             PaymentMethodEnum::BANK_TRANSFER,
             PaymentMethodEnum::CASH,
             PaymentMethodEnum::CASH,
@@ -1914,7 +1914,7 @@ class DemoDataSeeder extends Seeder
                     'status' => PaymentStatusEnum::COMPLETED,
                     'payment_method' => $method,
                     'variable_symbol' => $method === PaymentMethodEnum::BANK_TRANSFER ? (string) rand(1000000000, 9999999999) : null,
-                    'stripe_payment_id' => $method === PaymentMethodEnum::STRIPE ? 'pi_demo_'.fake()->regexify('[a-zA-Z0-9]{16}') : null,
+                    'gopay_payment_id' => $method === PaymentMethodEnum::GOPAY ? 'gp_demo_'.fake()->regexify('[a-zA-Z0-9]{16}') : null,
                     'paid_at' => $registration->registered_at?->addHours(rand(1, 72)) ?? now()->subDays(rand(1, 30)),
                 ]);
             });
@@ -1982,8 +1982,8 @@ class DemoDataSeeder extends Seeder
                 'amount' => $cancelledRegistration->training?->price_amount ?? 15.00,
                 'currency' => 'EUR',
                 'status' => PaymentStatusEnum::REFUNDED,
-                'payment_method' => PaymentMethodEnum::STRIPE,
-                'stripe_payment_id' => 'pi_demo_refunded_'.fake()->regexify('[a-zA-Z0-9]{12}'),
+                'payment_method' => PaymentMethodEnum::GOPAY,
+                'gopay_payment_id' => 'pi_demo_refunded_'.fake()->regexify('[a-zA-Z0-9]{12}'),
                 'paid_at' => now()->subDays(45),
                 'refunded_at' => now()->subDays(30),
                 'notes' => 'Zrušená registrácia na tréning.',
@@ -2113,7 +2113,7 @@ class DemoDataSeeder extends Seeder
                     'team_id' => $secondTeam->id,
                     'user_id' => $user->id,
                     'team_season_id' => $secondTeamPastSeason->id,
-                    'status' => MembershipStatusEnum::EXPIRED,
+                    'status' => MembershipStatusEnum::COMPLETED,
                     'fee_amount' => 100.00,
                     'fee_currency' => 'EUR',
                     'starts_at' => $secondTeamPastSeason->starts_at,

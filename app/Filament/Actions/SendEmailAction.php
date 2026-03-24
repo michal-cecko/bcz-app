@@ -112,7 +112,7 @@ class SendEmailAction extends Action
         }
 
         $emails = collect($recipients)->pluck('email')->unique()->values();
-        $list = $emails->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+        $list = $emails->map(fn (string $e) => "<span class=\"inline-block px-2.5 py-0.5 m-0.5 rounded-full bg-gray-200 text-gray-700 text-sm dark:bg-gray-700 dark:text-gray-200\">{$e}</span>")->implode(' ');
 
         return Placeholder::make('recipients_info')
             ->label('Príjemcovia')

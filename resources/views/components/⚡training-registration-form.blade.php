@@ -1,11 +1,13 @@
 <?php
 
+use App\Enums\PaymentMethodEnum;
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use Livewire\Component;
 
@@ -22,6 +24,13 @@ new class extends Component
     public function mount(Training $training): void
     {
         $this->training = $training;
+
+        // Check if returning from GoPay payment success
+        if (request()->query('payment') === 'success') {
+            $this->registrationState = 'payment_success';
+
+            return;
+        }
 
         // Check registration window
         if (! $this->training->isRegistrationOpen()) {
@@ -212,6 +221,7 @@ new class extends Component
                 team: $this->training->team,
                 customEmailContent: $this->training->confirmation_email_content,
                 locale: app()->getLocale(),
+                attachments: $this->training->getMedia('email_attachments'),
             );
         }
 
@@ -230,7 +240,7 @@ new class extends Component
             return;
         }
 
-        $enabledMethods = $this->training->team?->payment_methods_enabled ?? ['stripe', 'bank_transfer', 'cash'];
+        $enabledMethods = $this->training->team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
         $this->selectedPaymentMethod = $enabledMethods[0] ?? null;
     }
 
@@ -240,20 +250,49 @@ new class extends Component
             return;
         }
 
-        if ($this->selectedPaymentMethod === 'cash') {
+        if ($this->selectedPaymentMethod === PaymentMethodEnum::CASH->value) {
             $this->registrationState = 'cash_instructions';
 
             return;
         }
 
-        if ($this->selectedPaymentMethod === 'bank_transfer') {
+        if ($this->selectedPaymentMethod === PaymentMethodEnum::BANK_TRANSFER->value) {
             $this->registrationState = 'bank_transfer_details';
 
             return;
         }
 
-        // Stripe — redirect to checkout (placeholder for now)
-        // TODO: implement PaymentService::createCheckoutSession() redirect
+        if ($this->selectedPaymentMethod === PaymentMethodEnum::GOPAY->value) {
+            $user = auth()->user();
+            if (! $user) {
+                return;
+            }
+
+            $registration = TrainingRegistration::query()
+                ->where('training_id', $this->training->id)
+                ->where('user_id', $user->id)
+                ->latest()
+                ->first();
+
+            if (! $registration || ! $this->training->price) {
+                return;
+            }
+
+            try {
+                $paymentService = app(PaymentService::class);
+                $result = $paymentService->createGoPayPayment(
+                    user: $user,
+                    team: $this->training->team,
+                    payable: $registration,
+                    amount: (float) $this->training->price,
+                    currency: $this->training->currency ?? 'EUR',
+                );
+
+                $this->redirect($result['url']);
+            } catch (\Exception $e) {
+                session()->flash('error', 'Platba sa nepodarila. Skúste to znova.');
+            }
+        }
     }
 
     protected function getEmailFieldName(array $schema): string
@@ -316,13 +355,99 @@ new class extends Component
             <p class="text-[#888888] text-base">{{ __('training_detail.training_full_message') }}</p>
         </div>
 
+    @elseif($registrationState === 'payment_success')
+        <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
+            <span class="text-[#22C55E] text-[10px] font-bold tracking-[2px]">{{ __('training_detail.state_payment_success') }}</span>
+            <div class="w-[72px] h-[72px] rounded-full bg-[#22C55E]/10 flex items-center justify-center">
+                <svg class="w-9 h-9 text-[#22C55E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            </div>
+            <h3 class="font-display font-bold text-[28px] text-white">{{ __('training_detail.payment_success_title') }}</h3>
+            <p class="text-[#888888] text-sm leading-relaxed">{{ __('training_detail.payment_success_message') }}</p>
+
+            <div class="w-full h-px bg-[#222222]"></div>
+
+            <div class="w-full flex flex-col gap-3">
+                <div class="flex justify-between w-full">
+                    <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_training') }}</span>
+                    <span class="text-white text-[13px] font-medium">{{ $training->getTranslation('title', app()->getLocale()) }}</span>
+                </div>
+                @if($training->event_date)
+                    <div class="flex justify-between w-full">
+                        <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_date') }}</span>
+                        <span class="text-white text-[13px] font-medium">{{ $training->event_date->translatedFormat('l, j. F Y') }}@if($training->start_time) — {{ $training->start_time }}@endif</span>
+                    </div>
+                @endif
+                @if($training->city)
+                    <div class="flex justify-between w-full">
+                        <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_location') }}</span>
+                        <span class="text-white text-[13px] font-medium">{{ $training->city->name }}</span>
+                    </div>
+                @endif
+                @if($training->price_amount)
+                    <div class="flex justify-between w-full">
+                        <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_amount') }}</span>
+                        <span class="text-[#22C55E] text-[13px] font-bold">{{ number_format($training->price_amount, 2, ',', ' ') }} {{ $training->currency ?? 'EUR' }}</span>
+                    </div>
+                @endif
+                <div class="flex justify-between w-full">
+                    <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_payment_method') }}</span>
+                    <span class="text-white text-[13px] font-medium">GoPay</span>
+                </div>
+            </div>
+
+            <div class="w-full h-px bg-[#222222]"></div>
+
+            <div class="w-full rounded-[10px] bg-[#22C55E]/[0.06] border border-[#22C55E]/20 p-4 flex items-center gap-2.5">
+                <svg class="w-[18px] h-[18px] text-[#22C55E] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span class="text-[#22C55E]/80 text-xs font-medium">{{ __('training_detail.payment_confirmation_email') }}</span>
+            </div>
+        </div>
+
     @elseif($registrationState === 'already_registered')
-        <div class="bg-[#111111] border border-blue-500/30 p-10 flex flex-col items-center gap-4 text-center">
-            <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            <h3 class="font-display font-bold text-2xl tracking-wide text-white">{{ __('training_detail.already_registered_title') }}</h3>
-            <p class="text-[#888888] text-base">{{ __('training_detail.already_registered_message') }}</p>
+        <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
+            <span class="text-[#22C55E] text-[10px] font-bold tracking-[2px]">{{ __('training_detail.state_registered') }}</span>
+            <div class="w-[72px] h-[72px] rounded-full bg-[#22C55E]/10 flex items-center justify-center">
+                <svg class="w-9 h-9 text-[#22C55E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            </div>
+            <h3 class="font-display font-bold text-[28px] text-white">{{ __('training_detail.already_registered_title') }}</h3>
+            <p class="text-[#888888] text-sm leading-relaxed">{{ __('training_detail.already_registered_message') }}</p>
+
+            <div class="w-full h-px bg-[#222222]"></div>
+
+            <div class="w-full flex flex-col gap-3">
+                <div class="flex justify-between w-full">
+                    <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_training') }}</span>
+                    <span class="text-white text-[13px] font-medium">{{ $training->getTranslation('title', app()->getLocale()) }}</span>
+                </div>
+                @if($training->event_date)
+                    <div class="flex justify-between w-full">
+                        <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_date') }}</span>
+                        <span class="text-white text-[13px] font-medium">{{ $training->event_date->translatedFormat('l, j. F Y') }}@if($training->start_time) — {{ $training->start_time }}@endif</span>
+                    </div>
+                @endif
+                @if($training->city)
+                    <div class="flex justify-between w-full">
+                        <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_location') }}</span>
+                        <span class="text-white text-[13px] font-medium">{{ $training->city->name }}</span>
+                    </div>
+                @endif
+                @php
+                    $user = auth()->user();
+                    $reg = $user ? \App\Models\TrainingRegistration::where('training_id', $training->id)->where('user_id', $user->id)->first() : null;
+                    $hasMembership = $user && $user->hasActiveMembershipForTeam($training->team_id);
+                @endphp
+                <div class="flex justify-between w-full">
+                    <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_membership') }}</span>
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#22C55E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span class="text-[#22C55E] text-[13px] font-medium">{{ $hasMembership ? __('training_detail.membership_active') : __('training_detail.membership_not_required') }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
     @elseif($registrationState === 'free_approved')
@@ -347,7 +472,7 @@ new class extends Component
         @php
             $team = $training->team;
             $season = $team->currentSeason;
-            $enabledMethods = $team->payment_methods_enabled ?? ['stripe', 'bank_transfer', 'cash'];
+            $enabledMethods = $team->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
             $feeLabel = $season ? number_format($season->proratedFee(), 2) . ' ' . ($season->fee_currency ?? 'EUR') : '';
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
@@ -386,7 +511,7 @@ new class extends Component
     @elseif($registrationState === 'payment_needed')
         @php
             $team = $training->team;
-            $enabledMethods = $team->payment_methods_enabled ?? ['stripe', 'bank_transfer', 'cash'];
+            $enabledMethods = $team->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
             $priceLabel = number_format($training->price_amount, 2) . ' EUR';
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">

@@ -2,9 +2,14 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
+use App\Enums\DraftStatusEnum;
+use App\Enums\RoleEnum;
 use App\Filament\Resources\Users\UserResource;
+use App\Models\User;
+use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
@@ -17,9 +22,83 @@ class ViewUser extends ViewRecord
 
     protected function getHeaderActions(): array
     {
+        /** @var User $user */
+        $user = $this->record;
+
+        /** @var User $authUser */
+        $authUser = auth()->user();
+        $canManageProfiles = $authUser->hasAnyAppRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::TEAM_ADMIN]);
+
         return [
             Impersonate::make()
                 ->record($this->getRecord()),
+            Action::make('approveProfiles')
+                ->label('Schváliť profily')
+                ->icon(Heroicon::OutlinedCheckCircle)
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Schváliť verejné profily')
+                ->modalDescription('Schváliť všetky čakajúce profily tohto používateľa?')
+                ->action(function () use ($user): void {
+                    $service = new ProfileDraftService;
+                    $approved = [];
+
+                    if ($user->coachProfile?->draft_status === DraftStatusEnum::Pending) {
+                        $service->approveDraft($user->coachProfile, $user);
+                        $approved[] = 'trénera';
+                    }
+                    if ($user->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
+                        $service->approveDraft($user->athleteProfile, $user);
+                        $approved[] = 'športovca';
+                    }
+                    if ($user->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
+                        $service->approveDraft($user->judgeProfile, $user);
+                        $approved[] = 'porotcu';
+                    }
+
+                    Notification::make()
+                        ->success()
+                        ->title('Profil '.implode(', ', $approved).' schválený.')
+                        ->send();
+                })
+                ->visible(fn () => $canManageProfiles && (
+                    $user->fresh()->coachProfile?->draft_status === DraftStatusEnum::Pending
+                    || $user->fresh()->athleteProfile?->draft_status === DraftStatusEnum::Pending
+                    || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
+                )),
+            Action::make('rejectProfiles')
+                ->label('Zamietnuť profily')
+                ->icon(Heroicon::OutlinedXCircle)
+                ->color('danger')
+                ->schema([
+                    Textarea::make('reason')
+                        ->label('Dôvod zamietnutia')
+                        ->required()
+                        ->rows(3),
+                ])
+                ->action(function (array $data) use ($user): void {
+                    $service = new ProfileDraftService;
+
+                    if ($user->coachProfile?->draft_status === DraftStatusEnum::Pending) {
+                        $service->rejectDraft($user->coachProfile, $data['reason']);
+                    }
+                    if ($user->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
+                        $service->rejectDraft($user->athleteProfile, $data['reason']);
+                    }
+                    if ($user->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
+                        $service->rejectDraft($user->judgeProfile, $data['reason']);
+                    }
+
+                    Notification::make()
+                        ->warning()
+                        ->title('Profily zamietnuté.')
+                        ->send();
+                })
+                ->visible(fn () => $canManageProfiles && (
+                    $user->fresh()->coachProfile?->draft_status === DraftStatusEnum::Pending
+                    || $user->fresh()->athleteProfile?->draft_status === DraftStatusEnum::Pending
+                    || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
+                )),
             Action::make('sendPasswordReset')
                 ->label('Obnovit heslo')
                 ->icon(Heroicon::OutlinedKey)

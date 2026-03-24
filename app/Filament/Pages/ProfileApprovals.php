@@ -6,12 +6,12 @@ use App\Enums\DraftStatusEnum;
 use App\Enums\RoleEnum;
 use App\Models\User;
 use App\Services\ProfileDraftService;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -24,15 +24,17 @@ class ProfileApprovals extends Page implements HasTable
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
-    protected static ?string $navigationLabel = 'Schvalenie profilov';
+    protected static ?string $navigationLabel = 'Schválenie profilov';
 
-    protected static ?string $title = 'Schvalenie profilov';
+    protected static ?string $title = 'Schválenie profilov';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Organizacia';
+    protected static string|\UnitEnum|null $navigationGroup = 'Organizácia';
 
     protected static ?int $navigationSort = 10;
 
     protected static bool $isScopedToTenant = false;
+
+    protected string $view = 'filament.pages.profile-approvals';
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -46,23 +48,39 @@ class ProfileApprovals extends Page implements HasTable
             || $user->hasTeamRole(RoleEnum::TEAM_ADMIN);
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        $count = User::where(function (Builder $q) {
+            $q->whereHas('coachProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
+                ->orWhereHas('athleteProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
+                ->orWhereHas('judgeProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending));
+        })->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'warning';
+    }
+
     public function table(Table $table): Table
     {
         return $table
             ->query($this->getTableQuery())
             ->columns([
                 TextColumn::make('name')
-                    ->label('Pouzivatel')
+                    ->label('Používateľ')
                     ->searchable(),
                 TextColumn::make('pending_roles')
                     ->label('Rola')
                     ->state(function (User $record): string {
                         $roles = [];
                         if ($record->coachProfile?->draft_status === DraftStatusEnum::Pending) {
-                            $roles[] = 'Trener';
+                            $roles[] = 'Tréner';
                         }
                         if ($record->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
-                            $roles[] = 'Sportovec';
+                            $roles[] = 'Športovec';
                         }
                         if ($record->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
                             $roles[] = 'Porotca';
@@ -72,7 +90,7 @@ class ProfileApprovals extends Page implements HasTable
                     })
                     ->badge(),
                 TextColumn::make('draft_submitted_at')
-                    ->label('Odoslane')
+                    ->label('Odoslané')
                     ->state(function (User $record): ?string {
                         $dates = array_filter([
                             $record->coachProfile?->draft_submitted_at,
@@ -83,19 +101,19 @@ class ProfileApprovals extends Page implements HasTable
                         return ! empty($dates) ? max($dates)->diffForHumans() : null;
                     }),
                 TextColumn::make('previously_approved')
-                    ->label('Uz schvaleny')
-                    ->state(fn (User $record): string => ($record->coach_profile_approved_at || $record->athlete_profile_approved_at || $record->judge_profile_approved_at) ? 'Ano' : 'Nie')
+                    ->label('Už schválený')
+                    ->state(fn (User $record): string => ($record->coach_profile_approved_at || $record->athlete_profile_approved_at || $record->judge_profile_approved_at) ? 'Áno' : 'Nie')
                     ->badge()
-                    ->color(fn (string $state): string => $state === 'Ano' ? 'success' : 'gray'),
+                    ->color(fn (string $state): string => $state === 'Áno' ? 'success' : 'gray'),
             ])
             ->recordActions([
                 Action::make('approve')
-                    ->label('Schvalit')
+                    ->label('Schváliť')
                     ->icon(Heroicon::OutlinedCheckCircle)
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalHeading('Schvalit profil')
-                    ->modalDescription('Schvalit vsetky cakajuce profily tohto pouzivatela?')
+                    ->modalHeading('Schváliť profil')
+                    ->modalDescription('Schváliť všetky čakajúce profily tohto používateľa?')
                     ->action(function (User $record): void {
                         $service = new ProfileDraftService;
 
@@ -111,16 +129,16 @@ class ProfileApprovals extends Page implements HasTable
 
                         Notification::make()
                             ->success()
-                            ->title("Profil {$record->name} bol schvaleny")
+                            ->title("Profil {$record->name} bol schválený")
                             ->send();
                     }),
                 Action::make('reject')
-                    ->label('Zamietnut')
+                    ->label('Zamietnuť')
                     ->icon(Heroicon::OutlinedXCircle)
                     ->color('danger')
                     ->schema([
                         Textarea::make('reason')
-                            ->label('Dovod zamietnutia')
+                            ->label('Dôvod zamietnutia')
                             ->required()
                             ->rows(3),
                     ])
@@ -139,12 +157,12 @@ class ProfileApprovals extends Page implements HasTable
 
                         Notification::make()
                             ->warning()
-                            ->title("Profil {$record->name} bol zamietnuty")
+                            ->title("Profil {$record->name} bol zamietnutý")
                             ->send();
                     }),
             ])
-            ->emptyStateHeading('Ziadne cakajuce profily')
-            ->emptyStateDescription('Vsetky profily boli spracovane.')
+            ->emptyStateHeading('Žiadne čakajúce profily')
+            ->emptyStateDescription('Všetky profily boli spracované.')
             ->emptyStateIcon(Heroicon::OutlinedCheckCircle);
     }
 
@@ -166,7 +184,6 @@ class ProfileApprovals extends Page implements HasTable
             $teamId = Filament::getTenant()?->id;
             if ($teamId) {
                 $query->whereHas('teams', fn (Builder $q) => $q->where('teams.id', $teamId));
-                // Exclude judge-only pending profiles for team admins
                 $query->where(function (Builder $q) {
                     $q->whereHas('coachProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
                         ->orWhereHas('athleteProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending));

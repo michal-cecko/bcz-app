@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Payment;
 use App\Models\Training;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -14,6 +15,7 @@ class TrainingPaymentConfirmed extends Notification implements ShouldQueue
 
     public function __construct(
         public Training $training,
+        public ?Payment $payment = null,
     ) {}
 
     /** @return list<string> */
@@ -28,19 +30,22 @@ class TrainingPaymentConfirmed extends Notification implements ShouldQueue
         $trainingTitle = $this->training->getTranslation('title', $user->locale ?? 'sk')
             ?: $this->training->getTranslation('title', 'sk');
 
+        $team = $this->training->team;
+
         return (new MailMessage)
             ->subject('Platba potvrdená — '.$trainingTitle)
             ->view('emails.training-payment-confirmed', [
                 'user' => $user,
                 'training' => $this->training,
+                'payment' => $this->payment,
                 'trainingTitle' => $trainingTitle,
                 'emailSubject' => 'Platba potvrdená',
-                'teamName' => null,
-                'teamLogoUrl' => null,
-                'teamUrl' => null,
-                'teamEmail' => null,
-                'teamPhone' => null,
-                'teamWebsite' => null,
+                'teamName' => $team?->getTranslation('name', 'sk'),
+                'teamLogoUrl' => $team?->getFirstMediaUrl('logo') ?: null,
+                'teamUrl' => $team ? url('/timy/'.$team->slug) : null,
+                'teamEmail' => $team?->contact_email,
+                'teamPhone' => $team?->contact_phone,
+                'teamWebsite' => $team?->contact_website,
             ]);
     }
 

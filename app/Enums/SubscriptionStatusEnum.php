@@ -17,7 +17,7 @@ enum SubscriptionStatusEnum: string implements HasColor, HasIcon, HasLabel
     case TRIALING = 'trialing';
     case PAST_DUE = 'past_due';
     case CANCELLED = 'cancelled';
-    case EXPIRED = 'expired';
+    case COMPLETED = 'completed';
 
     public function getColor(): string
     {
@@ -26,7 +26,7 @@ enum SubscriptionStatusEnum: string implements HasColor, HasIcon, HasLabel
             self::TRIALING => 'info',
             self::PAST_DUE => 'warning',
             self::CANCELLED => 'gray',
-            self::EXPIRED => 'danger',
+            self::COMPLETED => 'gray',
         };
     }
 
@@ -37,7 +37,7 @@ enum SubscriptionStatusEnum: string implements HasColor, HasIcon, HasLabel
             self::TRIALING => Heroicon::Clock,
             self::PAST_DUE => Heroicon::ExclamationTriangle,
             self::CANCELLED => Heroicon::NoSymbol,
-            self::EXPIRED => Heroicon::XCircle,
+            self::COMPLETED => Heroicon::CheckCircle,
         };
     }
 }

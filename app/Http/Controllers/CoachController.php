@@ -76,10 +76,10 @@ class CoachController extends Controller
 
         $user->load([
             'athleteProfile',
-            'athleteExercises' => fn ($q) => $q->orderBy('sort_order')->with('exercise'),
-            'athleteGoals' => fn ($q) => $q->orderBy('sort_order'),
+            'athleteExercises' => fn ($q) => $q->orderBy('sort_order')->with(['exercise', 'media']),
+            'athleteGoals' => fn ($q) => $q->orderBy('sort_order')->with('media'),
             'certifications',
-            'competitionResults' => fn ($q) => $q->with('competitionDetail.event'),
+            'competitionResults.roundPart.competitionRound.competitionDetail.event',
             'profileGalleryItems' => fn ($q) => $q->where('profile_type', ProfileTypeEnum::Athlete)->where('is_approved', true)->orderBy('sort_order'),
         ]);
 

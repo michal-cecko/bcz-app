@@ -18,7 +18,7 @@ class AthleteGoalFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'icon' => fake()->randomElement(['🎯', '💪', '🏆', '⭐']),
+            'icon' => fake()->randomElement(['heroicon-o-trophy', 'heroicon-o-star', 'heroicon-o-flag', 'heroicon-o-bolt', 'heroicon-o-fire', 'heroicon-o-heart']),
             'heading' => ['sk' => fake()->words(3, true), 'en' => fake()->words(3, true)],
             'description' => ['sk' => fake()->sentence(), 'en' => fake()->sentence()],
             'status' => fake()->randomElement(GoalStatusEnum::cases()),

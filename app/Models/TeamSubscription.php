@@ -22,7 +22,7 @@ class TeamSubscription extends Model
         'billing_period',
         'amount',
         'currency',
-        'stripe_subscription_id',
+        'gopay_parent_payment_id',
         'starts_at',
         'ends_at',
         'trial_ends_at',

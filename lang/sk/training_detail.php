@@ -17,6 +17,8 @@ return [
     'detail_place' => 'Miesto',
     'detail_city' => 'Mesto',
     'detail_price' => 'Cena',
+    'pricing_free' => 'Zadarmo',
+    'pricing_membership' => 'Vyžaduje členstvo',
 
     'capacity_label' => 'Aktuálna kapacita',
     'capacity_spots' => 'miest',
@@ -70,13 +72,30 @@ return [
     'payment_needed_message' => 'Tvoja registrácia bola prijatá. Pre schválenie je potrebné uhradiť :price.',
 
     // State labels
+    'state_registered' => 'STAV: ÚSPEŠNE ZAREGISTROVANÝ',
+    'state_payment_success' => 'STAV: PLATBA ÚSPEŠNÁ',
     'state_membership_needed' => 'STAV: CHÝBA AKTÍVNE ČLENSTVO',
     'state_payment_needed' => 'STAV: ČAKÁ SA NA PLATBU',
 
+    // Payment success
+    'payment_success_title' => 'Platba prijatá!',
+    'payment_success_message' => 'Tvoja platba za tréning bola úspešne spracovaná. Registrácia je potvrdená, uvidíme sa na tréningu!',
+    'payment_confirmation_email' => 'Potvrdenie o platbe bolo odoslané na váš email.',
+
+    // Detail rows
+    'dr_training' => 'Tréning',
+    'dr_date' => 'Dátum',
+    'dr_location' => 'Miesto',
+    'dr_amount' => 'Suma',
+    'dr_payment_method' => 'Spôsob platby',
+    'dr_membership' => 'Členstvo',
+    'membership_active' => 'Aktívne',
+    'membership_not_required' => 'Nevyžaduje sa',
+
     // Payment methods
     'payment_method_label' => 'Platobná metóda',
-    'payment_stripe' => 'Platba kartou',
-    'payment_stripe_desc' => 'Okamžitá platba cez Stripe',
+    'payment_gopay' => 'Platba kartou',
+    'payment_gopay_desc' => 'Okamžitá platba cez GoPay',
     'payment_bank_transfer' => 'Bankový prevod',
     'payment_bank_transfer_desc' => 'QR kód a IBAN po výbere',
     'payment_cash' => 'Hotovosť',

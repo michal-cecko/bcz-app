@@ -15,8 +15,6 @@ class SubscriptionPlanPrice extends Model
         'currency_code',
         'price_monthly',
         'price_yearly',
-        'stripe_monthly_price_id',
-        'stripe_yearly_price_id',
     ];
 
     protected function casts(): array

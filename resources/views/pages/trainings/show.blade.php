@@ -149,10 +149,16 @@
                             <span class="text-white text-sm font-semibold">{{ $training->city->getTranslation('name', $locale) ?: $training->city->getTranslation('name', 'sk') }}</span>
                         </div>
                     @endif
-                    @if($training->price_amount)
+                    @if($training->pricing_type)
                         <div class="flex items-center justify-between">
                             <span class="text-[#666666] text-sm">{{ __('training_detail.detail_price') }}</span>
-                            <span class="text-white text-sm font-semibold">{{ number_format($training->price_amount, 2) }} €@if($training->pricing_type) / {{ $training->pricing_type->getLabel() }}@endif</span>
+                            @if($training->pricing_type === \App\Enums\TrainingPricingTypeEnum::FREE)
+                                <span class="text-emerald-500 text-sm font-semibold">{{ __('training_detail.pricing_free') }}</span>
+                            @elseif($training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED)
+                                <span class="text-blue-400 text-sm font-semibold">{{ __('training_detail.pricing_membership') }}</span>
+                            @elseif($training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID && $training->price_amount)
+                                <span class="text-white text-sm font-semibold">{{ number_format($training->price_amount, 2, ',', ' ') }} {{ $training->currency ?? '€' }}</span>
+                            @endif
                         </div>
                     @endif
                 </div>

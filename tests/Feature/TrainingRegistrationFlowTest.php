@@ -255,7 +255,7 @@ class TrainingRegistrationFlowTest extends TestCase
         $this->assertTrue($user->teams()->where('teams.id', $this->team->id)->exists());
     }
 
-    public function test_stripe_payment_approves_training_registration(): void
+    public function test_gopay_payment_approves_training_registration(): void
     {
         Notification::fake();
 
@@ -275,7 +275,7 @@ class TrainingRegistrationFlowTest extends TestCase
             'registered_at' => now(),
         ]);
 
-        // Create a payment record simulating checkout session created
+        // Create a payment record simulating GoPay payment created
         $payment = Payment::create([
             'team_id' => $this->team->id,
             'user_id' => $user->id,
@@ -286,11 +286,11 @@ class TrainingRegistrationFlowTest extends TestCase
             'amount' => 25.00,
             'currency' => 'EUR',
             'status' => PaymentStatusEnum::PENDING,
-            'payment_method' => 'stripe',
-            'stripe_checkout_session_id' => 'cs_test_fake',
+            'payment_method' => 'gopay',
+            'gopay_payment_id' => '1234567890',
         ]);
 
-        // Simulate the logic from handleCheckoutCompleted without calling Stripe API
+        // Simulate the logic from handlePaymentCompleted without calling GoPay API
         $payment->update([
             'status' => PaymentStatusEnum::COMPLETED,
             'paid_at' => now(),
@@ -342,8 +342,8 @@ class TrainingRegistrationFlowTest extends TestCase
             'amount' => 50.00,
             'currency' => 'EUR',
             'status' => PaymentStatusEnum::PENDING,
-            'payment_method' => 'stripe',
-            'stripe_checkout_session_id' => 'cs_test_membership_fake',
+            'payment_method' => 'gopay',
+            'gopay_payment_id' => '9876543210',
         ]);
 
         // Simulate membership payment completion and cascade

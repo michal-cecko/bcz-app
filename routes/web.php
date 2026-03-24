@@ -4,11 +4,12 @@ use App\Http\Controllers\Admin\EmailPreviewController;
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\CompetitionController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\GoPayNotificationController;
+use App\Http\Controllers\GoPayReturnController;
 use App\Http\Controllers\MagicLoginController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PaymentPageController;
 use App\Http\Controllers\PricingController;
-use App\Http\Controllers\StripeConnectController;
-use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TrainingController;
@@ -88,7 +89,7 @@ $frontendRoutes = function () {
     Route::redirect('/tim/{any}', '/timy', 301)->where('any', '.+');
 
     Route::get('/{slug}', [PageController::class, 'show'])
-        ->where('slug', '^(?!admin|stripe|team-invitations|magic-login|en|cs|timy).*$');
+        ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|en|cs|timy).*$');
 };
 
 // Localized: /en/..., /cs/...
@@ -167,7 +168,7 @@ Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
 
 // Catch-all CMS page
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', '^(?!admin|stripe|team-invitations|magic-login|en|cs|timy).*$')
+    ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|en|cs|timy).*$')
     ->name('page.show');
 
 /*
@@ -183,6 +184,8 @@ Route::middleware('signed')->group(function () {
     Route::post('/team-invitations/{invitation}/register', [TeamInvitationController::class, 'register']);
     Route::get('/magic-login/{user}', MagicLoginController::class)
         ->name('magic-login');
+    Route::get('/payment/{payment}', PaymentPageController::class)
+        ->name('payment.page');
 });
 
 Route::get('/login', fn () => redirect('/admin/login'))->name('login');
@@ -201,12 +204,9 @@ Route::get('/admin/email-preview/{key}', [EmailPreviewController::class, 'show']
 Route::middleware('auth')->group(function () {
     Route::post('/admin/email-preview', [EmailPreviewController::class, 'store'])
         ->name('admin.email-preview.store');
-
-    Route::get('/stripe/connect/{team}/onboard', [StripeConnectController::class, 'onboard'])
-        ->name('stripe.connect.onboard');
-    Route::get('/stripe/connect/callback', [StripeConnectController::class, 'callback'])
-        ->name('stripe.connect.callback');
 });
 
-Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])
-    ->name('stripe.webhook');
+Route::get('/gopay/notify', [GoPayNotificationController::class, 'handle'])
+    ->name('gopay.notify');
+Route::get('/gopay/return', [GoPayReturnController::class, 'handle'])
+    ->name('gopay.return');

@@ -31,7 +31,7 @@
         @yield('content')
     </main>
 
-    @include('components.footer', ['hidePartners' => $hidePartners ?? false])
+    @include('components.footer')
 
     @livewireScripts
     @livewireScriptConfig

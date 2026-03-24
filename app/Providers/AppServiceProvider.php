@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\MenuLocationEnum;
+use App\Http\Responses\LogoutResponse;
 use App\Models\EventRegistration;
 use App\Models\Membership;
 use App\Models\Menu;
@@ -19,6 +20,14 @@ use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->app->bind(
+            \Filament\Auth\Http\Responses\Contracts\LogoutResponse::class,
+            LogoutResponse::class,
+        );
+    }
+
     public function boot(): void
     {
         $this->registerTeamScopedGate();

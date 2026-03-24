@@ -8,8 +8,10 @@ use App\Mail\RegistrationConfirmationMail;
 use App\Models\Team;
 use App\Models\Training;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class RegistrationService
 {
@@ -45,7 +47,10 @@ class RegistrationService
      *
      * @param  array<string, list<array<string, mixed>>>|null  $customEmailContent  Locale-keyed Mason brick content
      */
-    public static function sendConfirmation(User $user, string $registrationType, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null): void
+    /**
+     * @param  Collection<int, Media>|null  $attachments
+     */
+    public static function sendConfirmation(User $user, string $registrationType, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null, ?Collection $attachments = null): void
     {
         $resolvedLocale = $locale ?? $user->locale ?? app()->getLocale() ?? 'sk';
         $bricks = $customEmailContent[$resolvedLocale] ?? $customEmailContent['sk'] ?? null;
@@ -55,16 +60,25 @@ class RegistrationService
             $customHtml = EmailService::renderBricks($bricks);
         }
 
-        Mail::to($user->email)->queue(
-            new RegistrationConfirmationMail(
-                user: $user,
-                registrationType: $registrationType,
-                registrationTitle: $registrationTitle,
-                isNewUser: $isNewUser,
-                team: $team,
-                customContent: $customHtml,
-            ),
+        $mail = new RegistrationConfirmationMail(
+            user: $user,
+            registrationType: $registrationType,
+            registrationTitle: $registrationTitle,
+            isNewUser: $isNewUser,
+            team: $team,
+            customContent: $customHtml,
         );
+
+        if ($attachments && $attachments->isNotEmpty()) {
+            foreach ($attachments as $media) {
+                $mail->attach($media->getPath(), [
+                    'as' => $media->file_name,
+                    'mime' => $media->mime_type,
+                ]);
+            }
+        }
+
+        Mail::to($user->email)->queue($mail);
     }
 
     /**

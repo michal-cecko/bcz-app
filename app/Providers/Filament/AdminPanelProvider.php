@@ -2,10 +2,10 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\EditProfile;
-use App\Filament\Pages\Auth\SetPassword;
+use App\Filament\Pages\Auth\UserSetupWizard;
 use App\Filament\Resources\Settings\SettingResource;
 use App\Filament\Resources\Teams\TeamResource;
+use App\Filament\Resources\Users\UserResource;
 use App\Models\Team;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
@@ -42,15 +42,21 @@ class AdminPanelProvider extends PanelProvider
             ->spa()
             ->unsavedChangesAlerts()
             ->databaseTransactions()
-            ->profile(EditProfile::class)
             ->emailChangeVerification()
             ->passwordReset()
             ->authenticatedRoutes(function () {
-                Route::get('/set-password', SetPassword::class)
-                    ->name('auth.set-password');
+                Route::get('/setup-wizard', UserSetupWizard::class)
+                    ->name('auth.setup-wizard');
             })
             ->tenant(Team::class, ownershipRelationship: 'teams')
             ->userMenuItems([
+                'profile' => fn (Action $action) => $action
+                    ->label('Môj profil')
+                    ->url(fn (): string => Filament::getTenant()
+                        ? UserResource::getUrl('edit', ['record' => auth()->user()])
+                        : filament()->getUrl())
+                    ->visible(fn (): bool => Filament::getTenant() !== null)
+                    ->icon(Heroicon::OutlinedUserCircle),
                 Action::make('my-team')
                     ->label('Môj tím')
                     ->url(function (): ?string {
@@ -60,6 +66,10 @@ class AdminPanelProvider extends PanelProvider
                     })
                     ->visible(fn (): bool => Filament::getTenant() !== null && ! auth()->user()?->isMemberLevel())
                     ->icon(Heroicon::OutlinedUserGroup),
+                Action::make('complete-profile')
+                    ->label('Dokončiť profil')
+                    ->url(fn (): string => '/'.filament()->getCurrentPanel()->getPath().'/setup-wizard')
+                    ->icon(Heroicon::OutlinedPencilSquare),
                 Action::make('settings')
                     ->label('Nastavenia')
                     ->url(function (): ?string {

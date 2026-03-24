@@ -5,9 +5,11 @@ namespace App\Filament\Pages;
 use App\Enums\MembershipStatusEnum;
 use App\Models\Membership;
 use App\Models\Payment;
+use App\Services\PaymentService;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Components\EmptyState;
@@ -38,8 +40,61 @@ class MemberMembership extends Page implements HasTable
     public function mount(): void
     {
         $team = Filament::getTenant();
-        $enabledMethods = $team?->payment_methods_enabled ?? ['bank_transfer', 'cash'];
+        $enabledMethods = $team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
         $this->paymentMethod = $enabledMethods[0] ?? 'bank_transfer';
+    }
+
+    public function payWithGoPay(): void
+    {
+        $membership = $this->currentMembership;
+
+        if (! $membership || $membership->status !== MembershipStatusEnum::PENDING) {
+            // Try to find active season membership
+            $team = Filament::getTenant();
+            $season = $team?->currentSeason;
+
+            if (! $season) {
+                return;
+            }
+
+            // Auto-create membership for the season
+            $membership = Membership::create([
+                'team_id' => $team->id,
+                'user_id' => auth()->id(),
+                'team_season_id' => $season->id,
+                'status' => MembershipStatusEnum::PENDING,
+                'fee_amount' => $season->proratedFee(),
+                'fee_currency' => $season->fee_currency ?? 'EUR',
+                'is_free' => false,
+                'starts_at' => $season->starts_at,
+                'ends_at' => $season->ends_at,
+            ]);
+        }
+
+        $team = Filament::getTenant();
+        $user = auth()->user();
+
+        if (! $user || ! $team) {
+            return;
+        }
+
+        try {
+            $paymentService = app(PaymentService::class);
+            $result = $paymentService->createGoPayPayment(
+                user: $user,
+                team: $team,
+                payable: $membership,
+                amount: (float) $membership->fee_amount,
+                currency: $membership->fee_currency ?? 'EUR',
+            );
+
+            $this->redirect($result['url']);
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Platba sa nepodarila. Skúste to znova.')
+                ->danger()
+                ->send();
+        }
     }
 
     public static function shouldRegisterNavigation(): bool

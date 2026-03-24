@@ -12,20 +12,15 @@ use App\Models\Payment;
 use App\Models\Team;
 use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Notifications\PaymentConfirmed;
 use App\Notifications\TrainingPaymentConfirmed;
 use Illuminate\Database\Eloquent\Model;
-use Stripe\Checkout\Session;
-use Stripe\Refund;
-use Stripe\Stripe;
 
 class PaymentService
 {
-    public function __construct()
-    {
-        if (config('stripe.secret')) {
-            Stripe::setApiKey(config('stripe.secret'));
-        }
-    }
+    public function __construct(
+        private GoPayService $goPayService,
+    ) {}
 
     public function recordManualPayment(
         User $user,
@@ -55,93 +50,121 @@ class PaymentService
         ]);
     }
 
-    public function createCheckoutSession(
+    /**
+     * Create a GoPay payment and return the gateway URL for redirect.
+     */
+    public function createGoPayPayment(
         User $user,
         Team $team,
         Model $payable,
         float $amount,
         string $currency,
-        string $successUrl,
-        string $cancelUrl,
     ): array {
-        $sessionParams = [
-            'payment_method_types' => ['card'],
-            'line_items' => [[
-                'price_data' => [
-                    'currency' => strtolower($currency),
-                    'unit_amount' => (int) ($amount * 100),
-                    'product_data' => [
-                        'name' => class_basename($payable).' #'.$payable->getKey(),
-                    ],
-                ],
-                'quantity' => 1,
+        $orderNumber = strtoupper(substr(class_basename($payable), 0, 3)).'-'.now()->format('ymd').'-'.random_int(1000, 9999);
+        $description = class_basename($payable).' #'.$payable->getKey();
+
+        $response = $this->goPayService->createPayment([
+            'amount' => (int) round($amount * 100),
+            'currency' => $currency,
+            'order_number' => substr($orderNumber, 0, 128),
+            'description' => substr($description, 0, 256),
+            'payer_email' => $user->email,
+            'items' => [[
+                'name' => substr($description, 0, 256),
+                'amount' => (int) round($amount * 100),
             ]],
-            'mode' => 'payment',
-            'success_url' => $successUrl,
-            'cancel_url' => $cancelUrl,
-            'metadata' => [
+            'additional_params' => [
+                ['name' => 'team_id', 'value' => (string) $team->id],
+                ['name' => 'payable_type', 'value' => $payable->getMorphClass()],
+                ['name' => 'payable_id', 'value' => (string) $payable->getKey()],
+            ],
+        ]);
+
+        if ($response->hasSucceed()) {
+            $goPayId = $response->json['id'];
+
+            $payment = Payment::create([
                 'team_id' => $team->id,
                 'user_id' => $user->id,
+                'payer_name' => $user->name,
+                'payer_email' => $user->email,
                 'payable_type' => $payable->getMorphClass(),
                 'payable_id' => $payable->getKey(),
-            ],
-        ];
+                'amount' => $amount,
+                'currency' => $currency,
+                'status' => PaymentStatusEnum::PENDING,
+                'payment_method' => PaymentMethodEnum::GOPAY,
+                'gopay_payment_id' => (string) $goPayId,
+                'gopay_order_number' => $response->json['order_number'] ?? null,
+            ]);
 
-        if ($team->stripe_connect_account_id) {
-            $feePercent = (float) ($team->settings()->where('key', 'stripe_platform_fee_percent')->value('value') ?? 5);
-            $applicationFee = (int) ($amount * 100 * $feePercent / 100);
-
-            $sessionParams['payment_intent_data'] = [
-                'transfer_data' => [
-                    'destination' => $team->stripe_connect_account_id,
-                ],
-                'application_fee_amount' => $applicationFee,
+            return [
+                'url' => $response->json['gw_url'],
+                'payment' => $payment,
             ];
         }
 
-        $session = Session::create($sessionParams);
-
-        $payment = Payment::create([
-            'team_id' => $team->id,
-            'user_id' => $user->id,
-            'payer_name' => $user->name,
-            'payer_email' => $user->email,
-            'payable_type' => $payable->getMorphClass(),
-            'payable_id' => $payable->getKey(),
-            'amount' => $amount,
-            'currency' => $currency,
-            'status' => PaymentStatusEnum::PENDING,
-            'payment_method' => PaymentMethodEnum::STRIPE,
-            'stripe_checkout_session_id' => $session->id,
-        ]);
-
-        return [
-            'url' => $session->url,
-            'payment' => $payment,
-        ];
+        throw new \RuntimeException(
+            'GoPay payment creation failed: '.json_encode($response->json),
+        );
     }
 
-    public function handleCheckoutCompleted(string $sessionId): ?Payment
+    /**
+     * Handle GoPay notification — verify payment status and process business logic.
+     */
+    public function handleGoPayNotification(int $goPayId): ?Payment
     {
-        $payment = Payment::where('stripe_checkout_session_id', $sessionId)->first();
+        $payment = Payment::where('gopay_payment_id', (string) $goPayId)->first();
 
         if (! $payment) {
             return null;
         }
 
-        $session = Session::retrieve($sessionId);
+        $response = $this->goPayService->getPaymentStatus($goPayId);
 
-        $payment->update([
-            'status' => PaymentStatusEnum::COMPLETED,
-            'stripe_payment_id' => $session->payment_intent,
-            'paid_at' => now(),
-        ]);
+        if (! $response->hasSucceed()) {
+            return null;
+        }
 
+        $state = $response->json['state'] ?? null;
+
+        if ($state === 'PAID' && $payment->status !== PaymentStatusEnum::COMPLETED) {
+            $payment->update([
+                'status' => PaymentStatusEnum::COMPLETED,
+                'paid_at' => now(),
+            ]);
+
+            $this->processPaymentCompleted($payment);
+        }
+
+        if (in_array($state, ['CANCELED', 'TIMEOUTED'])) {
+            $payment->update([
+                'status' => PaymentStatusEnum::FAILED,
+            ]);
+        }
+
+        if ($state === 'REFUNDED') {
+            $payment->update([
+                'status' => PaymentStatusEnum::REFUNDED,
+                'refunded_at' => now(),
+            ]);
+        }
+
+        return $payment;
+    }
+
+    /**
+     * Process business logic after a payment is completed.
+     */
+    private function processPaymentCompleted(Payment $payment): void
+    {
         if ($payment->payable instanceof Membership) {
             $payment->payable->update(['status' => MembershipStatusEnum::ACTIVE]);
-
-            // Auto-approve pending registrations for MEMBERSHIP_REQUIRED trainings
             $this->autoApprovePendingRegistrationsForMembership($payment->payable);
+
+            if ($payment->user) {
+                $payment->user->notify(new PaymentConfirmed($payment));
+            }
         }
 
         if ($payment->payable instanceof TrainingRegistration) {
@@ -152,19 +175,16 @@ class PaymentService
             ]);
 
             if ($registration->user) {
-                $registration->user->notify(new TrainingPaymentConfirmed($registration->training));
+                $registration->user->notify(new PaymentConfirmed($payment));
             }
         }
-
-        return $payment;
     }
 
     public function refund(Payment $payment, ?string $notes = null): Payment
     {
-        if ($payment->payment_method === PaymentMethodEnum::STRIPE && $payment->stripe_payment_id) {
-            Refund::create([
-                'payment_intent' => $payment->stripe_payment_id,
-            ]);
+        if ($payment->payment_method === PaymentMethodEnum::GOPAY && $payment->gopay_payment_id) {
+            $amountInCents = (int) round($payment->amount * 100);
+            $this->goPayService->refundPayment((int) $payment->gopay_payment_id, $amountInCents);
         }
 
         $payment->update([

@@ -26,7 +26,6 @@ class SubscriptionPlan extends Model
         'description',
         'features',
         'limits',
-        'stripe_product_id',
         'is_active',
         'sort_order',
     ];

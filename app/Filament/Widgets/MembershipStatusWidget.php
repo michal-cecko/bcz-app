@@ -4,8 +4,10 @@ namespace App\Filament\Widgets;
 
 use App\Enums\MembershipStatusEnum;
 use App\Models\Membership;
+use App\Services\PaymentService;
 use App\Services\QrPaymentService;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Livewire\Attributes\Computed;
 
@@ -39,8 +41,51 @@ class MembershipStatusWidget extends Widget
     public function mount(): void
     {
         $team = Filament::getTenant();
-        $enabledMethods = $team?->payment_methods_enabled ?? ['bank_transfer', 'cash'];
+        $enabledMethods = $team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
         $this->paymentMethod = $enabledMethods[0] ?? 'bank_transfer';
+
+        // Show success notification when returning from GoPay
+        if (session('gopay_payment_success')) {
+            Notification::make()
+                ->title('Platba bola úspešne spracovaná!')
+                ->body('Vaše členstvo bolo aktivované.')
+                ->success()
+                ->send();
+        }
+    }
+
+    public function payWithGoPay(): void
+    {
+        $membership = $this->membership;
+
+        if (! $membership || $membership->status !== MembershipStatusEnum::PENDING) {
+            return;
+        }
+
+        $team = Filament::getTenant();
+        $user = auth()->user();
+
+        if (! $user || ! $team) {
+            return;
+        }
+
+        try {
+            $paymentService = app(PaymentService::class);
+            $result = $paymentService->createGoPayPayment(
+                user: $user,
+                team: $team,
+                payable: $membership,
+                amount: (float) $membership->fee_amount,
+                currency: $membership->fee_currency ?? 'EUR',
+            );
+
+            $this->redirect($result['url']);
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Platba sa nepodarila. Skúste to znova.')
+                ->danger()
+                ->send();
+        }
     }
 
     #[Computed]

@@ -6,11 +6,13 @@ use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
-class AthleteExercise extends Model
+class AthleteExercise extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, HasUuidV7;
+    use HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
     public array $translatable = ['description'];
@@ -18,6 +20,7 @@ class AthleteExercise extends Model
     protected $fillable = [
         'user_id',
         'exercise_id',
+        'custom_name',
         'duration',
         'description',
         'image',
@@ -30,6 +33,12 @@ class AthleteExercise extends Model
         return [
             'sort_order' => 'integer',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('exercise_media')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime']);
     }
 
     public function user(): BelongsTo

@@ -69,6 +69,7 @@ class Event extends Model implements HasMedia, Linkable
     {
         $this->addMediaCollection('card_image')->singleFile();
         $this->addMediaCollection('detail_image')->singleFile();
+        $this->addMediaCollection('email_attachments');
     }
 
     public function getSlugOptions(): SlugOptions

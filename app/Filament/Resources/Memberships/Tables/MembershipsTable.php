@@ -168,7 +168,7 @@ class MembershipsTable
 
                         $skQr = $qrService->generatePayBySquareForPayment($latestPayment);
                         if ($skQr) {
-                            $html .= '<div><h3 class="font-semibold mb-2">Pay by Square (SK)</h3><img src="data:image/png;base64,'.$skQr.'" alt="Pay by Square" class="w-48"></div>';
+                            $html .= '<div><h3 class="font-semibold mb-2">Pay by Square</h3><img src="data:image/png;base64,'.$skQr.'" alt="Pay by Square" class="w-48"></div>';
                         }
 
                         $czQr = $qrService->generateQrPlatbaForPayment($latestPayment);

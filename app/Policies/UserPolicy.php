@@ -16,10 +16,14 @@ class UserPolicy
     }
 
     /**
-     * Permission check + ATHLETE can only view other athletes.
+     * Self-view always allowed. Permission check + ATHLETE can only view other athletes.
      */
     public function view(User $authUser, User $user): bool
     {
+        if ($authUser->id === $user->id) {
+            return true;
+        }
+
         if (! $authUser->can('View:User')) {
             return false;
         }
@@ -39,10 +43,14 @@ class UserPolicy
     }
 
     /**
-     * Permission check + ADMIN cannot modify SUPERADMIN, self-edit allowed.
+     * Self-edit always allowed. Permission check + ADMIN cannot modify SUPERADMIN.
      */
     public function update(User $authUser, User $user): bool
     {
+        if ($authUser->id === $user->id) {
+            return true;
+        }
+
         if (! $authUser->can('Update:User')) {
             return false;
         }
@@ -52,10 +60,6 @@ class UserPolicy
         }
 
         if ($authUser->hasRole(RoleEnum::ADMIN)) {
-            if ($authUser->id === $user->id) {
-                return true;
-            }
-
             return ! $user->hasRole([RoleEnum::ADMIN, RoleEnum::SUPER_ADMIN]);
         }
 

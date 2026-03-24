@@ -196,6 +196,21 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         return $this->hasMany(ProfileGalleryItem::class);
     }
 
+    public function coachGalleryItems(): HasMany
+    {
+        return $this->profileGalleryItems()->where('profile_type', ProfileTypeEnum::Coach);
+    }
+
+    public function athleteGalleryItems(): HasMany
+    {
+        return $this->profileGalleryItems()->where('profile_type', ProfileTypeEnum::Athlete);
+    }
+
+    public function judgeGalleryItems(): HasMany
+    {
+        return $this->profileGalleryItems()->where('profile_type', ProfileTypeEnum::Judge);
+    }
+
     public function athleteExercises(): HasMany
     {
         return $this->hasMany(AthleteExercise::class);

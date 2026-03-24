@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\PageStatusEnum;
 use App\Models\Faq;
+use App\Models\FaqCategory;
 use App\Models\Page;
 use App\Models\Sponsor;
 use Illuminate\Database\Seeder;
@@ -492,7 +493,7 @@ class PageSeeder extends Seeder
             ]),
             self::brick('faq', [
                 'heading' => ['sk' => 'Najčastejšie otázky', 'en' => 'Frequently Asked Questions', 'cs' => 'Nejčastější otázky'],
-                'faq_ids' => \App\Models\Faq::query()
+                'faq_ids' => Faq::query()
                     ->where('is_published', true)
                     ->orderBy('sort_order')
                     ->limit(3)
@@ -783,11 +784,11 @@ class PageSeeder extends Seeder
     private static function ensureTaxFaqs(): array
     {
         $maxSort = Faq::query()->max('sort_order') ?? 0;
-        $generalCategoryId = \App\Models\FaqCategory::query()
+        $generalCategoryId = FaqCategory::query()
             ->whereRaw("title->>'sk' = ?", ['Všeobecné'])
             ->value('id')
-            ?? \App\Models\FaqCategory::query()->first()?->id
-            ?? \App\Models\FaqCategory::query()->create([
+            ?? FaqCategory::query()->first()?->id
+            ?? FaqCategory::query()->create([
                 'title' => ['sk' => 'Všeobecné', 'en' => 'General', 'cs' => 'Obecné'],
                 'sort_order' => 1,
             ])->id;
@@ -1251,15 +1252,15 @@ class PageSeeder extends Seeder
                 'title' => ['sk' => 'Všetko čo váš klub potrebuje', 'en' => 'Everything your club needs', 'cs' => 'Vše co váš klub potřebuje'],
                 'cards' => [
                     ['icon' => 'heroicon-o-squares-2x2', 'title' => ['sk' => 'All-in-one platforma', 'en' => 'All-in-one platform', 'cs' => 'All-in-one platforma'], 'description' => ['sk' => 'Tréningy, súťaže, platby a členstvá na jednom mieste.', 'en' => 'Trainings, competitions, payments and memberships in one place.', 'cs' => 'Tréninky, soutěže, platby a členství na jednom místě.']],
-                    ['icon' => 'heroicon-o-globe-alt', 'title' => ['sk' => 'Pre celý svet', 'en' => 'For the whole world', 'cs' => 'Pro celý svět'], 'description' => ['sk' => 'Stripe platby celosvetovo. QR platby v SK, CZ a ďalších európskych krajinách.', 'en' => 'Stripe payments worldwide. QR payments in SK, CZ and other European countries.', 'cs' => 'Stripe platby celosvětově. QR platby v SK, CZ a dalších evropských zemích.']],
-                    ['icon' => 'heroicon-o-credit-card', 'title' => ['sk' => 'Bez vlastného Stripe', 'en' => 'No own Stripe needed', 'cs' => 'Bez vlastního Stripe'], 'description' => ['sk' => 'Platforma rieši výplaty na IBAN tímu. Tímy nepotrebujú vlastný Stripe účet.', 'en' => 'Platform handles payouts to team IBAN. Teams don\'t need their own Stripe account.', 'cs' => 'Platforma řeší výplaty na IBAN týmu. Týmy nepotřebují vlastní Stripe účet.']],
+                    ['icon' => 'heroicon-o-globe-alt', 'title' => ['sk' => 'Pre celý svet', 'en' => 'For the whole world', 'cs' => 'Pro celý svět'], 'description' => ['sk' => 'GoPay platby celosvetovo. QR platby v SK, CZ a ďalších európskych krajinách.', 'en' => 'GoPay payments worldwide. QR payments in SK, CZ and other European countries.', 'cs' => 'GoPay platby celosvětově. QR platby v SK, CZ a dalších evropských zemích.']],
+                    ['icon' => 'heroicon-o-credit-card', 'title' => ['sk' => 'Jednoduché platby', 'en' => 'Simple payments', 'cs' => 'Jednoduché platby'], 'description' => ['sk' => 'Platforma rieši výplaty na IBAN tímu. Tímy nepotrebujú vlastný platobný účet.', 'en' => 'Platform handles payouts to team IBAN. Teams don\'t need their own payment account.', 'cs' => 'Platforma řeší výplaty na IBAN týmu. Týmy nepotřebují vlastní platební účet.']],
                     ['icon' => 'heroicon-o-arrow-trending-up', 'title' => ['sk' => 'Začnite free, rastite', 'en' => 'Start free, grow', 'cs' => 'Začněte zdarma, rostěte'], 'description' => ['sk' => 'Začnite zadarmo a škálujte podľa potrieb vášho klubu.', 'en' => 'Start for free and scale according to your club\'s needs.', 'cs' => 'Začněte zdarma a škálujte podle potřeb vašeho klubu.']],
                 ],
             ]),
             self::brick('faq', [
                 'heading' => ['sk' => 'Často kladené otázky', 'en' => 'Frequently asked questions', 'cs' => 'Často kladené otázky'],
                 'show_all' => false,
-                'faq_ids' => \App\Models\Faq::query()
+                'faq_ids' => Faq::query()
                     ->where('is_published', true)
                     ->orderBy('sort_order')
                     ->limit(4)

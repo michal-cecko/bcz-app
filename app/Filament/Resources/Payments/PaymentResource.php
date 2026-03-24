@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\Payments;
 
+use App\Enums\PaymentMethodEnum;
 use App\Filament\Clusters\Finances\FinancesCluster;
 use App\Filament\Resources\Payments\Pages\ListPayments;
 use App\Filament\Resources\Payments\Pages\ViewPayment;
 use App\Filament\Resources\Payments\Tables\PaymentsTable;
 use App\Models\Payment;
+use App\Services\QrPaymentService;
 use BackedEnum;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -92,23 +94,23 @@ class PaymentResource extends Resource
                                             ->dateTime(),
                                     ]),
 
-                                Section::make('Stripe')
+                                Section::make('GoPay')
                                     ->schema([
-                                        TextEntry::make('stripe_payment_id')
+                                        TextEntry::make('gopay_payment_id')
                                             ->label('Payment ID')
                                             ->placeholder('-'),
-                                        TextEntry::make('stripe_checkout_session_id')
-                                            ->label('Checkout Session')
+                                        TextEntry::make('gopay_order_number')
+                                            ->label('Order Number')
                                             ->placeholder('-'),
                                     ])
-                                    ->visible(fn ($record): bool => $record->stripe_payment_id || $record->stripe_checkout_session_id),
+                                    ->visible(fn ($record): bool => $record->gopay_payment_id || $record->gopay_order_number),
 
                                 Section::make('QR kód')
                                     ->schema([
                                         TextEntry::make('qr_pay_by_square')
-                                            ->label('Pay by Square (SK)')
+                                            ->label('Pay by Square')
                                             ->state(function ($record): ?HtmlString {
-                                                $qrService = app(\App\Services\QrPaymentService::class);
+                                                $qrService = app(QrPaymentService::class);
                                                 $qr = $qrService->generatePayBySquareForPayment($record);
 
                                                 return $qr ? new HtmlString('<img src="data:image/png;base64,'.$qr.'" alt="Pay by Square" class="w-48">') : null;
@@ -117,14 +119,14 @@ class PaymentResource extends Resource
                                         TextEntry::make('qr_platba')
                                             ->label('QR Platba (CZ)')
                                             ->state(function ($record): ?HtmlString {
-                                                $qrService = app(\App\Services\QrPaymentService::class);
+                                                $qrService = app(QrPaymentService::class);
                                                 $qr = $qrService->generateQrPlatbaForPayment($record);
 
                                                 return $qr ? new HtmlString('<img src="data:image/png;base64,'.$qr.'" alt="QR Platba" class="w-48">') : null;
                                             })
                                             ->placeholder('IBAN nie je nastavený'),
                                     ])
-                                    ->visible(fn ($record): bool => $record->payment_method === \App\Enums\PaymentMethodEnum::BANK_TRANSFER),
+                                    ->visible(fn ($record): bool => $record->payment_method === PaymentMethodEnum::BANK_TRANSFER),
                             ])
                             ->columnSpan(1),
                     ]),

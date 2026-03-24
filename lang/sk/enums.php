@@ -157,11 +157,11 @@ return [
     PaymentMethodEnum::class => [
         PaymentMethodEnum::BANK_TRANSFER->value => 'Bankový prevod',
         PaymentMethodEnum::CASH->value => 'Hotovosť',
-        PaymentMethodEnum::STRIPE->value => 'Stripe',
+        PaymentMethodEnum::GOPAY->value => 'GoPay',
     ],
     MembershipStatusEnum::class => [
         MembershipStatusEnum::ACTIVE->value => 'Aktívne',
-        MembershipStatusEnum::EXPIRED->value => 'Expirované',
+        MembershipStatusEnum::COMPLETED->value => 'Ukončené',
         MembershipStatusEnum::CANCELLED->value => 'Zrušené',
         MembershipStatusEnum::PENDING->value => 'Čakajúce',
     ],
@@ -184,7 +184,7 @@ return [
         SubscriptionStatusEnum::TRIALING->value => 'Skúšobné',
         SubscriptionStatusEnum::PAST_DUE->value => 'Po splatnosti',
         SubscriptionStatusEnum::CANCELLED->value => 'Zrušené',
-        SubscriptionStatusEnum::EXPIRED->value => 'Expirované',
+        SubscriptionStatusEnum::COMPLETED->value => 'Ukončené',
     ],
     PlanTierEnum::class => [
         PlanTierEnum::FREE->value => 'Zadarmo',

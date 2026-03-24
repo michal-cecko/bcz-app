@@ -12,15 +12,15 @@
 
 {{-- Payment method cards --}}
 <div class="w-full flex flex-col gap-3">
-    @if(in_array('stripe', $enabledMethods))
-        <button wire:click="selectPaymentMethod('stripe')" class="w-full flex items-center gap-4 px-6 py-5 rounded-xl bg-[#0A0A0A] transition {{ $selectedPaymentMethod === 'stripe' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
-            <svg class="w-[22px] h-[22px] shrink-0 {{ $selectedPaymentMethod === 'stripe' ? 'text-[#FF2D2D]' : 'text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    @if(in_array('gopay', $enabledMethods))
+        <button wire:click="selectPaymentMethod('gopay')" class="w-full flex items-center gap-4 px-6 py-5 rounded-xl bg-[#0A0A0A] transition {{ $selectedPaymentMethod === 'gopay' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
+            <svg class="w-[22px] h-[22px] shrink-0 {{ $selectedPaymentMethod === 'gopay' ? 'text-[#FF2D2D]' : 'text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             <div class="flex flex-col items-start gap-0.5 flex-1">
-                <span class="text-white text-sm font-semibold">{{ __('training_detail.payment_stripe') }}</span>
-                <span class="text-[#666666] text-xs">{{ __('training_detail.payment_stripe_desc') }}</span>
+                <span class="text-white text-sm font-semibold">{{ __('training_detail.payment_gopay') }}</span>
+                <span class="text-[#666666] text-xs">{{ __('training_detail.payment_gopay_desc') }}</span>
             </div>
-            <div class="w-5 h-5 rounded-full flex items-center justify-center {{ $selectedPaymentMethod === 'stripe' ? 'border-2 border-[#FF2D2D]' : 'border-2 border-[#333333]' }}">
-                @if($selectedPaymentMethod === 'stripe')<div class="w-2.5 h-2.5 rounded-full bg-[#FF2D2D]"></div>@endif
+            <div class="w-5 h-5 rounded-full flex items-center justify-center {{ $selectedPaymentMethod === 'gopay' ? 'border-2 border-[#FF2D2D]' : 'border-2 border-[#333333]' }}">
+                @if($selectedPaymentMethod === 'gopay')<div class="w-2.5 h-2.5 rounded-full bg-[#FF2D2D]"></div>@endif
             </div>
         </button>
     @endif
@@ -50,8 +50,8 @@
     @endif
 </div>
 
-{{-- Stripe: show pay button --}}
-@if($selectedPaymentMethod === 'stripe')
+{{-- GoPay: show pay button --}}
+@if($selectedPaymentMethod === 'gopay')
     <button wire:click="handlePayment" class="w-full h-[50px] rounded-xl bg-[#FF2D2D] hover:bg-red-700 transition flex items-center justify-center gap-2">
         <svg class="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         <span class="text-white text-sm font-bold">{{ __('training_detail.pay_button', ['price' => $feeLabel]) }}</span>

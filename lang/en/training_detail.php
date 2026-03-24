@@ -17,6 +17,8 @@ return [
     'detail_place' => 'Location',
     'detail_city' => 'City',
     'detail_price' => 'Price',
+    'pricing_free' => 'Free',
+    'pricing_membership' => 'Membership required',
 
     'capacity_label' => 'Current capacity',
     'capacity_spots' => 'spots',
@@ -69,13 +71,28 @@ return [
     'payment_needed_message' => 'Your registration has been received. Payment of :price is required for approval.',
 
     // State labels
+    'state_registered' => 'STATUS: SUCCESSFULLY REGISTERED',
+    'state_payment_success' => 'STATUS: PAYMENT SUCCESSFUL',
     'state_membership_needed' => 'STATUS: NO ACTIVE MEMBERSHIP',
     'state_payment_needed' => 'STATUS: PAYMENT PENDING',
 
+    'payment_success_title' => 'Payment received!',
+    'payment_success_message' => 'Your payment for the training has been successfully processed. Registration is confirmed, see you at the training!',
+    'payment_confirmation_email' => 'Payment confirmation has been sent to your email.',
+
+    'dr_training' => 'Training',
+    'dr_date' => 'Date',
+    'dr_location' => 'Location',
+    'dr_amount' => 'Amount',
+    'dr_payment_method' => 'Payment method',
+    'dr_membership' => 'Membership',
+    'membership_active' => 'Active',
+    'membership_not_required' => 'Not required',
+
     // Payment methods
     'payment_method_label' => 'Payment method',
-    'payment_stripe' => 'Card payment',
-    'payment_stripe_desc' => 'Instant payment via Stripe',
+    'payment_gopay' => 'Card payment',
+    'payment_gopay_desc' => 'Instant payment via GoPay',
     'payment_bank_transfer' => 'Bank transfer',
     'payment_bank_transfer_desc' => 'QR code and IBAN after selection',
     'payment_cash' => 'Cash',

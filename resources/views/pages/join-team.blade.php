@@ -1,4 +1,4 @@
-@extends('layouts.public', ['hidePartners' => true])
+@extends('layouts.public')
 
 @section('title', 'Pridaj sa | BCZ Club')
 

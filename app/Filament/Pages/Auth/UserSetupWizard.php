@@ -3,22 +3,25 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Enums\GenderEnum;
-use App\Enums\RoleEnum;
+use App\Enums\ProfileTypeEnum;
+use App\Filament\Schemas\PublicProfileSchema;
+use App\Models\AthleteProfile;
+use App\Models\CoachProfile;
+use App\Models\JudgeProfile;
 use App\Models\User;
 use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Component;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\SimplePage;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -26,22 +29,26 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
-class SetPassword extends SimplePage
+class UserSetupWizard extends SimplePage
 {
     protected static bool $shouldRegisterNavigation = false;
 
     public ?array $data = [];
+
+    public bool $isRevisit = false;
 
     public function mount(): void
     {
         /** @var User|null $user */
         $user = auth()->user();
 
-        if (! $user || $user->password_set_at !== null) {
+        if (! $user) {
             redirect('/admin');
 
             return;
         }
+
+        $this->isRevisit = $user->password_set_at !== null;
 
         $this->form->fill([
             'phone' => $user->phone,
@@ -53,22 +60,24 @@ class SetPassword extends SimplePage
 
     public function getTitle(): string
     {
-        return 'Vitajte v BCZ';
+        return $this->isRevisit ? 'Upraviť profil' : 'Vitajte v BCZ';
     }
 
     public function getHeading(): string
     {
-        return 'Vitajte v BCZ';
+        return $this->isRevisit ? 'Upraviť profil' : 'Vitajte v BCZ';
     }
 
     public function getSubheading(): ?string
     {
-        return 'Váš účet bol vytvorený pri registrácii. Dokončite nastavenie profilu.';
+        return $this->isRevisit
+            ? 'Aktualizujte vaše osobné údaje a verejný profil.'
+            : 'Váš účet bol vytvorený pri registrácii. Dokončite nastavenie profilu.';
     }
 
     public function getMaxWidth(): string
     {
-        return '2xl';
+        return '5xl';
     }
 
     public function content(Schema $schema): Schema
@@ -87,6 +96,12 @@ class SetPassword extends SimplePage
             ->statePath('data')
             ->components([
                 Wizard::make($this->getWizardSteps())
+                    ->cancelAction(
+                        Action::make('cancel')
+                            ->label('Zrušiť')
+                            ->url('/admin')
+                            ->color('gray')
+                    )
                     ->submitAction(
                         Action::make('save')
                             ->label('Dokončiť')
@@ -98,14 +113,20 @@ class SetPassword extends SimplePage
     /** @return list<Step> */
     protected function getWizardSteps(): array
     {
-        $steps = [
-            $this->getPasswordStep(),
-            $this->getPersonalInfoStep(),
-            $this->getProfileStep(),
-        ];
+        $steps = [];
 
-        if ($this->shouldShowPublicProfileStep()) {
-            $steps[] = $this->getPublicProfileStep();
+        if (! $this->isRevisit) {
+            $steps[] = $this->getPasswordStep();
+        }
+
+        $steps[] = $this->getPersonalInfoStep();
+        $steps[] = $this->getProfileStep();
+
+        /** @var User $user */
+        $user = auth()->user();
+
+        foreach ($user->getProfileableRoles() as $profileType) {
+            $steps[] = $this->getPublicProfileStep($profileType);
         }
 
         return $steps;
@@ -143,7 +164,6 @@ class SetPassword extends SimplePage
                     'password_set_at' => now(),
                 ]);
 
-                // Re-hash session so AuthenticateSession middleware doesn't log out
                 session()->put([
                     'password_hash_'.auth()->getDefaultDriver() => $user->fresh()->getAuthPassword(),
                 ]);
@@ -194,99 +214,48 @@ class SetPassword extends SimplePage
             ]);
     }
 
-    protected function getPublicProfileStep(): Step
+    protected function getPublicProfileStep(ProfileTypeEnum $profileType): Step
     {
+        $roleKey = $profileType->value;
+        $toggleKey = "has_public_profile_{$roleKey}";
+
+        $label = match ($profileType) {
+            ProfileTypeEnum::Coach => 'Profil trénera',
+            ProfileTypeEnum::Athlete => 'Profil športovca',
+            ProfileTypeEnum::Judge => 'Profil porotcu',
+        };
+
+        $description = match ($profileType) {
+            ProfileTypeEnum::Coach => 'Nastavte si verejný profil trénera',
+            ProfileTypeEnum::Athlete => 'Nastavte si verejný profil športovca',
+            ProfileTypeEnum::Judge => 'Nastavte si verejný profil porotcu',
+        };
+
         /** @var User $user */
         $user = auth()->user();
-        $teamRole = $this->getUserPublicProfileRole();
+        $profile = $this->getOrCreateProfile($user, $profileType);
 
-        return Step::make('Verejný profil')
-            ->description('Nastavte si verejný profil')
+        // Build sub-tabs using shared schema (no ->relationship(), wizard saves manually)
+        $subtabs = PublicProfileSchema::roleSubTabs($roleKey, $profile);
+
+        return Step::make($label)
+            ->description($description)
             ->icon('heroicon-o-globe-alt')
             ->schema([
-                Toggle::make('has_public_profile')
+                Toggle::make($toggleKey)
                     ->label('Chcem mať verejný profil')
                     ->live(),
 
-                ...$this->getPublicProfileFields($teamRole),
+                Tabs::make("{$roleKey}_wizard_subtabs")
+                    ->visible(fn (Get $get): bool => (bool) $get($toggleKey))
+                    ->tabs($subtabs)
+                    ->persistTabInQueryString("{$roleKey}-wizard-tab"),
 
-                Placeholder::make('approval_info')
+                Placeholder::make("approval_info_{$roleKey}")
+                    ->label('')
                     ->content('Po odoslaní bude váš profil čakať na schválenie administrátorom.')
-                    ->visible(fn (Get $get): bool => (bool) $get('has_public_profile')),
+                    ->visible(fn (Get $get): bool => (bool) $get($toggleKey)),
             ]);
-    }
-
-    /** @return list<Component> */
-    protected function getPublicProfileFields(?string $teamRole): array
-    {
-        if ($teamRole === 'athlete') {
-            return [
-                DatePicker::make('date_started_working_out')
-                    ->label('Začiatok cvičenia')
-                    ->native(false)
-                    ->maxDate(now())
-                    ->visible(fn (Get $get): bool => (bool) $get('has_public_profile')),
-                Textarea::make('journey_text')
-                    ->label('Vaša cesta (SK)')
-                    ->rows(4)
-                    ->visible(fn (Get $get): bool => (bool) $get('has_public_profile')),
-            ];
-        }
-
-        if ($teamRole === 'coach') {
-            return [
-                DatePicker::make('date_started_coaching')
-                    ->label('Začiatok trénerskej kariéry')
-                    ->native(false)
-                    ->maxDate(now())
-                    ->visible(fn (Get $get): bool => (bool) $get('has_public_profile')),
-                Textarea::make('biography')
-                    ->label('Biografia (SK)')
-                    ->rows(4)
-                    ->visible(fn (Get $get): bool => (bool) $get('has_public_profile')),
-            ];
-        }
-
-        // Judge — no extra fields
-        return [];
-    }
-
-    protected function shouldShowPublicProfileStep(): bool
-    {
-        return $this->getUserPublicProfileRole() !== null;
-    }
-
-    /**
-     * Determine which public-profile-eligible role the user has.
-     * Returns 'athlete', 'coach', or 'judge', or null.
-     */
-    protected function getUserPublicProfileRole(): ?string
-    {
-        /** @var User $user */
-        $user = auth()->user();
-
-        if ($user->hasRole(RoleEnum::JUDGE)) {
-            return 'judge';
-        }
-
-        // Check team-scoped roles across all teams
-        $hasCoach = $user->teams()
-            ->wherePivot('role', RoleEnum::COACH->value)
-            ->exists();
-
-        if ($hasCoach) {
-            return 'coach';
-        }
-
-        $hasAthlete = $user->teams()
-            ->wherePivot('role', RoleEnum::ATHLETE->value)
-            ->exists();
-
-        if ($hasAthlete) {
-            return 'athlete';
-        }
-
-        return null;
     }
 
     public function save(): void
@@ -296,7 +265,6 @@ class SetPassword extends SimplePage
         /** @var User $user */
         $user = auth()->user();
 
-        // Save personal info (step 2)
         $user->update(array_filter([
             'phone' => $state['phone'] ?? null,
             'birth_date' => $state['birth_date'] ?? null,
@@ -304,46 +272,35 @@ class SetPassword extends SimplePage
             'locale' => $state['locale'] ?? 'sk',
         ], fn ($value) => $value !== null));
 
-        // Save public profile (step 4) using draft workflow
-        if (! empty($state['has_public_profile'])) {
-            $service = new ProfileDraftService;
-            $teamRole = $this->getUserPublicProfileRole();
+        // Save public profiles as drafts (wizard uses flat state, no ->relationship())
+        $service = new ProfileDraftService;
 
-            if ($teamRole === 'athlete') {
-                $profile = $user->athleteProfile()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    [],
-                );
-                $draftData = array_filter([
-                    'date_started_working_out' => $state['date_started_working_out'] ?? null,
-                    'journey_text' => ! empty($state['journey_text'])
-                        ? ['sk' => $state['journey_text']]
-                        : null,
-                ], fn ($value) => $value !== null);
-                $service->saveDraft($profile, $draftData);
-            }
+        if (! empty($state['has_public_profile_coach'])) {
+            $profile = $this->getOrCreateProfile($user, ProfileTypeEnum::Coach);
+            $draftData = array_filter([
+                'date_started_coaching' => $state['date_started_coaching'] ?? null,
+                'biography' => $this->collectTranslations($state, 'biography'),
+            ], fn ($value) => $value !== null);
+            $service->saveDraft($profile, $draftData);
+        }
 
-            if ($teamRole === 'coach') {
-                $profile = $user->coachProfile()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    [],
-                );
-                $draftData = array_filter([
-                    'date_started_coaching' => $state['date_started_coaching'] ?? null,
-                    'biography' => ! empty($state['biography'])
-                        ? ['sk' => $state['biography']]
-                        : null,
-                ], fn ($value) => $value !== null);
-                $service->saveDraft($profile, $draftData);
-            }
+        if (! empty($state['has_public_profile_athlete'])) {
+            $profile = $this->getOrCreateProfile($user, ProfileTypeEnum::Athlete);
+            $draftData = array_filter([
+                'date_started_working_out' => $state['date_started_working_out'] ?? null,
+                'journey_text' => $this->collectTranslations($state, 'journey_text'),
+            ], fn ($value) => $value !== null);
+            $service->saveDraft($profile, $draftData);
+        }
 
-            if ($teamRole === 'judge') {
-                $profile = $user->judgeProfile()->updateOrCreate(
-                    ['user_id' => $user->id],
-                    [],
-                );
-                $service->saveDraft($profile, []);
-            }
+        if (! empty($state['has_public_profile_judge'])) {
+            $profile = $this->getOrCreateProfile($user, ProfileTypeEnum::Judge);
+            $draftData = array_filter([
+                'date_started_judging' => $state['date_started_judging'] ?? null,
+                'disciplines' => $state['disciplines'] ?? null,
+                'biography' => $this->collectTranslations($state, 'biography'),
+            ], fn ($value) => $value !== null);
+            $service->saveDraft($profile, $draftData);
         }
 
         Notification::make()
@@ -352,5 +309,30 @@ class SetPassword extends SimplePage
             ->send();
 
         redirect('/admin');
+    }
+
+    /**
+     * Collect SK/EN/CS translations from nested dot-notation state into a translatable array.
+     *
+     * @return array<string, string>|null
+     */
+    protected function collectTranslations(array $state, string $field): ?array
+    {
+        $translations = array_filter([
+            'sk' => $state[$field]['sk'] ?? null,
+            'en' => $state[$field]['en'] ?? null,
+            'cs' => $state[$field]['cs'] ?? null,
+        ], fn ($value) => ! empty($value));
+
+        return ! empty($translations) ? $translations : null;
+    }
+
+    protected function getOrCreateProfile(User $user, ProfileTypeEnum $type): CoachProfile|AthleteProfile|JudgeProfile
+    {
+        return match ($type) {
+            ProfileTypeEnum::Coach => $user->coachProfile ?? $user->coachProfile()->create(['user_id' => $user->id]),
+            ProfileTypeEnum::Athlete => $user->athleteProfile ?? $user->athleteProfile()->create(['user_id' => $user->id]),
+            ProfileTypeEnum::Judge => $user->judgeProfile ?? $user->judgeProfile()->create(['user_id' => $user->id]),
+        };
     }
 }

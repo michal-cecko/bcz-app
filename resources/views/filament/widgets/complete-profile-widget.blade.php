@@ -11,7 +11,7 @@
                 </p>
             </div>
             <x-filament::button
-                :href="filament()->getProfileUrl()"
+                :href="\App\Filament\Resources\Users\UserResource::getUrl('edit', ['record' => auth()->user()])"
                 tag="a"
                 size="sm"
                 color="warning"

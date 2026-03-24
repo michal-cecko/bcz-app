@@ -60,7 +60,10 @@ class TrainingsTable
                     ->placeholder('-'),
                 TextColumn::make('registrations_count')
                     ->counts('registrations')
-                    ->label('Registrácie')
+                    ->label('Registrovaní')
+                    ->state(fn ($record): string => $record->max_capacity
+                        ? "{$record->registrations_count}/{$record->max_capacity}"
+                        : (string) $record->registrations_count)
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->label('Aktívny')

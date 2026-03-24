@@ -6,8 +6,10 @@ use App\Filament\Clusters\Finances\FinancesCluster;
 use App\Filament\Resources\TeamPayouts\Pages\ListTeamPayouts;
 use App\Filament\Resources\TeamPayouts\Pages\ViewTeamPayout;
 use App\Filament\Resources\TeamPayouts\Tables\TeamPayoutsTable;
+use App\Models\Setting;
 use App\Models\TeamPayout;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -36,7 +38,18 @@ class TeamPayoutResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return ! auth()->user()?->isMemberLevel();
+        if (auth()->user()?->isMemberLevel()) {
+            return false;
+        }
+
+        $currentTeam = Filament::getTenant();
+        $defaultTeamId = Setting::get('default_team_id');
+
+        if ($currentTeam && $defaultTeamId && $currentTeam->id === $defaultTeamId) {
+            return false;
+        }
+
+        return true;
     }
 
     public static function infolist(Schema $schema): Schema

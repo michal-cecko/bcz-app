@@ -15,13 +15,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
-class Training extends Model implements Linkable
+class Training extends Model implements HasMedia, Linkable
 {
-    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, SoftDeletes;
+    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'description', 'place_name', 'gathering_place'];
@@ -117,6 +119,11 @@ class Training extends Model implements Linkable
         }
 
         return 'open';
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('email_attachments');
     }
 
     public function getSlugOptions(): SlugOptions

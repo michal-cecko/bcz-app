@@ -51,7 +51,9 @@
             .powered-brand { color: #666666 !important; }
             .bcz-logo-light { display: none !important; }
             .bcz-logo-dark { display: inline !important; }
-            .info-box { background-color: #1A1A1A !important; }
+            .info-box { background-color: #1A1A1A !important; border-color: rgba(34, 197, 94, 0.15) !important; }
+            .info-box-title { color: #4ADE80 !important; }
+            .info-box-amount { color: #4ADE80 !important; }
         }
 
         @media only screen and (max-width: 600px) {

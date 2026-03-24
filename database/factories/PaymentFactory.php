@@ -31,12 +31,12 @@ class PaymentFactory extends Factory
         ];
     }
 
-    public function stripe(): static
+    public function gopay(): static
     {
         return $this->state(fn () => [
-            'payment_method' => PaymentMethodEnum::STRIPE,
-            'stripe_payment_id' => 'pi_'.fake()->regexify('[a-zA-Z0-9]{24}'),
-            'stripe_checkout_session_id' => 'cs_'.fake()->regexify('[a-zA-Z0-9]{24}'),
+            'payment_method' => PaymentMethodEnum::GOPAY,
+            'gopay_payment_id' => (string) fake()->numerify('##########'),
+            'gopay_order_number' => 'ORD-'.fake()->regexify('[a-zA-Z0-9]{12}'),
         ]);
     }
 

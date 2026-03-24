@@ -14,7 +14,7 @@ enum MembershipStatusEnum: string implements HasColor, HasIcon, HasLabel
     use EnumHelper;
 
     case ACTIVE = 'active';
-    case EXPIRED = 'expired';
+    case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
     case PENDING = 'pending';
 
@@ -22,7 +22,7 @@ enum MembershipStatusEnum: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::ACTIVE => 'success',
-            self::EXPIRED => 'danger',
+            self::COMPLETED => 'gray',
             self::CANCELLED => 'gray',
             self::PENDING => 'warning',
         };
@@ -32,7 +32,7 @@ enum MembershipStatusEnum: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::ACTIVE => Heroicon::CheckCircle,
-            self::EXPIRED => Heroicon::XCircle,
+            self::COMPLETED => Heroicon::CheckCircle,
             self::CANCELLED => Heroicon::NoSymbol,
             self::PENDING => Heroicon::Clock,
         };

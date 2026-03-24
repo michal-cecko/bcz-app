@@ -369,6 +369,25 @@ class EventForm
                         ])
                         ->columnSpanFull(),
                 ]),
+            Section::make('Prílohy e-mailu')
+                ->description('Súbory, ktoré budú priložené k potvrdzujúcemu e-mailu (napr. pravidlá, pokyny, mapa).')
+                ->schema([
+                    SpatieMediaLibraryFileUpload::make('email_attachments')
+                        ->label('Prílohy')
+                        ->collection('email_attachments')
+                        ->multiple()
+                        ->reorderable()
+                        ->maxSize(10240)
+                        ->helperText('Max. 10 MB na súbor. Podporované formáty: PDF, DOC, DOCX, JPG, PNG.')
+                        ->acceptedFileTypes([
+                            'application/pdf',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'image/jpeg',
+                            'image/png',
+                        ])
+                        ->columnSpanFull(),
+                ]),
         ];
     }
 

@@ -15,14 +15,14 @@ enum PaymentMethodEnum: string implements HasColor, HasIcon, HasLabel
 
     case BANK_TRANSFER = 'bank_transfer';
     case CASH = 'cash';
-    case STRIPE = 'stripe';
+    case GOPAY = 'gopay';
 
     public function getColor(): string
     {
         return match ($this) {
             self::BANK_TRANSFER => 'info',
             self::CASH => 'warning',
-            self::STRIPE => 'primary',
+            self::GOPAY => 'primary',
         };
     }
 
@@ -31,7 +31,7 @@ enum PaymentMethodEnum: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::BANK_TRANSFER => Heroicon::BuildingLibrary,
             self::CASH => Heroicon::CurrencyEuro,
-            self::STRIPE => Heroicon::CreditCard,
+            self::GOPAY => Heroicon::CreditCard,
         };
     }
 }

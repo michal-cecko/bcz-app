@@ -110,19 +110,14 @@ class TeamForm
                             ->placeholder('SK89 7500 0000 0000 1234 5678'),
                         TextInput::make('bank_account_name')
                             ->label('Meno príjemcu'),
-                        TextInput::make('stripe_connect_account_id')
-                            ->label('Stripe Connect účet')
-                            ->disabled()
-                            ->dehydrated()
-                            ->placeholder('Nepripojený'),
                         CheckboxList::make('payment_methods_enabled')
                             ->label('Povolené platobné metódy')
                             ->options([
-                                'stripe' => 'Platba kartou (Stripe)',
+                                'gopay' => 'Platba kartou (GoPay)',
                                 'bank_transfer' => 'Bankový prevod',
                                 'cash' => 'Hotovosť',
                             ])
-                            ->default(['stripe', 'bank_transfer', 'cash'])
+                            ->default(['gopay', 'bank_transfer', 'cash'])
                             ->helperText('Platobné metódy zobrazené pri registrácii na tréningy a platbe členstva.'),
                     ])
                     ->collapsible()

@@ -42,7 +42,6 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         'membership_description',
         'bank_account_iban',
         'bank_account_name',
-        'stripe_connect_account_id',
         'default_locale',
         'contact_email',
         'contact_phone',

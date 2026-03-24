@@ -112,9 +112,6 @@ class SubscriptionPlanForm
                     ->numeric()
                     ->default(0),
 
-                TextInput::make('stripe_product_id')
-                    ->label('Stripe Product ID')
-                    ->placeholder('Voliteľné'),
             ]);
     }
 }

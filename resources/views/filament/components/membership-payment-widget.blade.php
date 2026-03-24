@@ -1,6 +1,6 @@
 @php
     $team = \Filament\Facades\Filament::getTenant();
-    $enabledMethods = $team?->payment_methods_enabled ?? ['bank_transfer', 'cash'];
+    $enabledMethods = $team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
     $feeAmount = $season->proratedFee();
     $feeCurrency = $season->fee_currency ?? 'EUR';
 @endphp
@@ -9,12 +9,12 @@
     <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Spôsob platby:</p>
 
     <div class="space-y-2">
-        @if(in_array('stripe', $enabledMethods))
+        @if(in_array('gopay', $enabledMethods))
             <label class="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition
-                {{ $paymentMethod === 'stripe' ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-gray-700' }}">
-                <input type="radio" wire:model.live="paymentMethod" value="stripe" class="text-primary-600">
+                {{ $paymentMethod === 'gopay' ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-gray-700' }}">
+                <input type="radio" wire:model.live="paymentMethod" value="gopay" class="text-primary-600">
                 <x-filament::icon icon="heroicon-o-credit-card" class="h-5 w-5 text-gray-500" />
-                <span class="text-sm font-medium text-gray-900 dark:text-white">Kartou (Stripe)</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white">Kartou (GoPay)</span>
             </label>
         @endif
 
@@ -110,9 +110,9 @@
         </p>
     </div>
 
-    @if($paymentMethod === 'stripe' && in_array('stripe', $enabledMethods))
+    @if($paymentMethod === 'gopay' && in_array('gopay', $enabledMethods))
         <div class="mt-4 flex justify-end">
-            <x-filament::button color="danger" icon="heroicon-m-credit-card">
+            <x-filament::button wire:click="payWithGoPay" color="danger" icon="heroicon-m-credit-card">
                 Zaplatiť {{ number_format((float) $feeAmount, 2) }} {{ $feeCurrency }}
             </x-filament::button>
         </div>
