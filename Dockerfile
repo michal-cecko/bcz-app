@@ -1,5 +1,5 @@
-# ---- Build stage ----
-FROM bcz-app-base:build AS build
+# ---- Build stage (uses base image from "base" service) ----
+FROM app-index-1080p-port-neufzg:latest AS build
 
 WORKDIR /var/www
 
@@ -17,11 +17,39 @@ RUN git config --global --add safe.directory /var/www \
     && php artisan storage:link || true \
     && vendor/bin/rr get-binary --location /usr/local/bin
 
-# ---- Production stage ----
-FROM bcz-app-base:runtime
+# ---- Production stage (lean runtime) ----
+FROM php:8.4-cli-alpine
 
 WORKDIR /var/www
 
+RUN apk add --no-cache \
+    bash curl libpng oniguruma libxml2 libpq \
+    icu-libs libzip xz
+
+# Copy compiled PHP extensions from build stage
+COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
+# OPcache
+RUN echo "[opcache]" > /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.interned_strings_buffer=64" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=32531" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.jit=1255" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.jit_buffer_size=128M" >> /usr/local/etc/php/conf.d/opcache.ini
+
+# PHP settings
+RUN echo "upload_max_filesize = 128M" > /usr/local/etc/php/conf.d/php.ini \
+    && echo "post_max_size = 128M" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "realpath_cache_size = 4096K" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "realpath_cache_ttl = 600" >> /usr/local/etc/php/conf.d/php.ini
+
+# Copy RoadRunner + application from build stage
 COPY --from=build /usr/local/bin/rr /usr/local/bin/rr
 COPY --from=build --chown=www-data:www-data /var/www /var/www
 
