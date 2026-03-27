@@ -1,0 +1,50 @@
+# bcz-app base images
+# Build: docker build --target build -t bcz-app-base:build -f Dockerfile.base .
+#        docker build --target runtime -t bcz-app-base:runtime -f Dockerfile.base .
+
+# ---- Build base: PHP extensions + Composer + Node ----
+FROM php:8.4-cli-alpine AS build
+
+WORKDIR /var/www
+
+RUN apk add --no-cache \
+    bash git curl nodejs npm \
+    libpng-dev oniguruma-dev libxml2-dev postgresql-dev \
+    icu-dev libzip-dev xz linux-headers \
+    autoconf gcc g++ make \
+    && pecl install redis && docker-php-ext-enable redis \
+    && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring exif pcntl bcmath gd intl zip opcache sockets \
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# ---- Runtime base: lean image with extensions + bash ----
+FROM php:8.4-cli-alpine AS runtime
+
+WORKDIR /var/www
+
+RUN apk add --no-cache \
+    bash curl libpng oniguruma libxml2 libpq \
+    icu-libs libzip xz
+
+COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
+# OPcache
+RUN echo "[opcache]" > /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.interned_strings_buffer=64" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=32531" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.jit=1255" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.jit_buffer_size=128M" >> /usr/local/etc/php/conf.d/opcache.ini
+
+# PHP settings
+RUN echo "upload_max_filesize = 128M" > /usr/local/etc/php/conf.d/php.ini \
+    && echo "post_max_size = 128M" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "realpath_cache_size = 4096K" >> /usr/local/etc/php/conf.d/php.ini \
+    && echo "realpath_cache_ttl = 600" >> /usr/local/etc/php/conf.d/php.ini
