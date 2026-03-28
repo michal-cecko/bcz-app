@@ -18,9 +18,10 @@ RUN git config --global --add safe.directory /var/www \
     && vendor/bin/rr get-binary --location /usr/local/bin
 
 # Install dev deps, run parallel tests, strip dev deps — build fails if tests fail
-RUN composer install --no-scripts --no-interaction --no-plugins \
+RUN composer install --no-scripts --no-interaction \
+    && php artisan package:discover --ansi \
     && php artisan test --parallel \
-    && composer install --optimize-autoloader --no-dev --no-scripts --no-interaction --no-plugins
+    && composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
 
 # ---- Production stage (lean runtime) ----
 FROM php:8.4-cli-alpine
