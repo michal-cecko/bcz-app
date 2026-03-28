@@ -60,4 +60,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/up || exit 1
 
-CMD ["bash", "-c", "chown -R www-data:www-data /var/www/storage && php artisan optimize && php artisan octane:start --server=roadrunner --host=0.0.0.0 --port=8000 --workers=auto --max-requests=500"]
+ENV LOG_CHANNEL=single
+
+CMD ["bash", "-c", "chown -R www-data:www-data /var/www/storage && php artisan optimize && touch storage/logs/laravel.log && tail -f storage/logs/laravel.log & php artisan octane:start --server=roadrunner --host=0.0.0.0 --port=8000 --workers=auto --max-requests=500"]
