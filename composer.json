@@ -21,9 +21,9 @@
         "filament/spatie-laravel-media-library-plugin": "^5.3",
         "gopay/payments-sdk-php": "^1.10",
         "guava/filament-icon-picker": "^4.0",
-        "laravel/framework": "^12.0",
+        "laravel/framework": "^13.0",
         "laravel/octane": "^2.15",
-        "laravel/tinker": "^2.10.1",
+        "laravel/tinker": "^3.0",
         "leandrocfe/filament-apex-charts": "^5.0",
         "livewire/blaze": "^1.0",
         "spatie/laravel-medialibrary": "^11.21",
@@ -44,7 +44,7 @@
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^11.5.3",
+        "phpunit/phpunit": "^12.0",
         "brianium/paratest": "^7.0"
     },
     "autoload": {
