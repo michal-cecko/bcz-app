@@ -39,6 +39,18 @@ jobs:
           DB_DATABASE: database/database.sqlite
         run: php artisan test --parallel
 
+      - name: Redeploy worker
+        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Wait for Dokploy app deploy to finish (triggered by GitHub webhook)
+          sleep 90
+          # Trigger worker redeploy (uses same image as app)
+          curl -s -X POST \
+            -H "x-api-key: ${{ secrets.DOKPLOY_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"json":{"applicationId":"OsY6WzDMyF2x2YXXD_2W1"}}' \
+            "${{ secrets.DOKPLOY_URL }}/api/trpc/application.deploy"
+
       - name: Notify Telegram on failure
         if: failure()
         uses: appleboy/telegram-action@master
