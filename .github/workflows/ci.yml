@@ -1,3 +1,4 @@
+# CI pipeline: tests, lint, and worker redeploy
 name: CI
 
 on:
