@@ -53,12 +53,20 @@ return new class extends Migration
         DB::table('competition_judges')->whereNull('competition_detail_id')->delete();
 
         // Make competition_detail_id NOT NULL now that competition_id is gone
-        DB::statement('ALTER TABLE timetable_entries ALTER COLUMN competition_detail_id SET NOT NULL');
-        DB::statement('ALTER TABLE competition_rounds ALTER COLUMN competition_detail_id SET NOT NULL');
-        DB::statement('ALTER TABLE registration_fees ALTER COLUMN competition_detail_id SET NOT NULL');
-        DB::statement('ALTER TABLE competition_athlete_category ALTER COLUMN competition_detail_id SET NOT NULL');
-        DB::statement('ALTER TABLE competition_discipline ALTER COLUMN competition_detail_id SET NOT NULL');
-        DB::statement('ALTER TABLE competition_judges ALTER COLUMN competition_detail_id SET NOT NULL');
+        $tables = [
+            'timetable_entries',
+            'competition_rounds',
+            'registration_fees',
+            'competition_athlete_category',
+            'competition_discipline',
+            'competition_judges',
+        ];
+
+        foreach ($tables as $tableName) {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->uuid('competition_detail_id')->nullable(false)->change();
+            });
+        }
 
         // Add new unique constraints on competition_detail_id
         Schema::table('competition_athlete_category', function (Blueprint $table) {
