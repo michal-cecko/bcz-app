@@ -1,0 +1,30 @@
+name: Uptime Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check sites
+        run: |
+          FAILED=""
+          for site in "https://bcz-club.com" "https://adminka.synapps.sk" "https://synapps.sk"; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$site" || echo "000")
+            if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
+              FAILED="${FAILED}- ${site} (HTTP ${STATUS})\n"
+            fi
+          done
+
+          if [ -n "$FAILED" ]; then
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+              -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+              -d parse_mode=Markdown \
+              -d text="$(printf '🔴 *Site(s) DOWN*\n%b' "$FAILED")"
+            exit 1
+          fi
+
+          echo "All sites OK"
