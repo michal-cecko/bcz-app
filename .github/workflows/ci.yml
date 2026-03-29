@@ -11,6 +11,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - uses: actions/checkout@v4
 
@@ -18,7 +33,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: pdo_sqlite, mbstring, xml, gd, zip, intl, bcmath, pcntl, exif
+          extensions: pdo_pgsql, pgsql, mbstring, xml, gd, zip, intl, bcmath, pcntl, exif
           coverage: none
 
       - name: Install Composer dependencies
@@ -29,15 +44,18 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan package:discover --ansi
-          touch database/database.sqlite
 
       - name: Run Pint
         run: vendor/bin/pint --test
 
       - name: Run tests
         env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: database/database.sqlite
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: testing
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
         run: php artisan test --parallel
 
       - name: Redeploy worker
