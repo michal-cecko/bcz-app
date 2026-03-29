@@ -20,6 +20,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class PaymentsRelationManager extends RelationManager
 {
@@ -31,7 +32,7 @@ class PaymentsRelationManager extends RelationManager
 
     protected static ?string $pluralModelLabel = 'Platby';
 
-    public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         /** @var Training $ownerRecord */
         return $ownerRecord->pricing_type === TrainingPricingTypeEnum::PAID;

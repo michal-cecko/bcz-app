@@ -6,6 +6,7 @@ use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Blade;
 
 class TeamsArchiveBrick extends Brick
 {
@@ -26,7 +27,7 @@ class TeamsArchiveBrick extends Brick
 
     public static function toHtml(array $config, ?array $data = null): ?string
     {
-        return \Illuminate\Support\Facades\Blade::render(
+        return Blade::render(
             '<section class="bg-bcz-dark py-20"><div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20"><livewire:teams-archive /></div></section>'
         );
     }

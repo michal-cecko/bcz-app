@@ -9,11 +9,14 @@ use App\Services\EmailService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Placeholder;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 
 class WaitlistRelationManager extends RelationManager
 {
@@ -25,7 +28,7 @@ class WaitlistRelationManager extends RelationManager
 
     protected static ?string $pluralModelLabel = 'Čakací zoznam';
 
-    public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         /** @var Training $ownerRecord */
         return (bool) $ownerRecord->notify_on_available;
@@ -70,7 +73,7 @@ class WaitlistRelationManager extends RelationManager
             ->slideOver()
             ->schema(fn (): array => array_merge(
                 [$this->buildWaitlistRecipientsPlaceholder()],
-                (new \App\Filament\Actions\SendEmailAction('temp'))
+                (new SendEmailAction('temp'))
                     ->contextVariables(['nazov_treningu', 'miesto', 'cas', 'kapacita'])
                     ->getEmailFormSchema(),
             ))
@@ -107,7 +110,7 @@ class WaitlistRelationManager extends RelationManager
             });
     }
 
-    protected function buildWaitlistRecipientsPlaceholder(): \Filament\Forms\Components\Placeholder
+    protected function buildWaitlistRecipientsPlaceholder(): Placeholder
     {
         $emails = collect();
         foreach ($this->getOwnerRecord()->waitlistEntries()->with('user')->get() as $entry) {
@@ -118,9 +121,9 @@ class WaitlistRelationManager extends RelationManager
         $unique = $emails->unique()->values();
         $list = $unique->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
 
-        return \Filament\Forms\Components\Placeholder::make('recipients_info')
+        return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$unique->count().')')
-            ->content(new \Illuminate\Support\HtmlString($unique->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
+            ->content(new HtmlString($unique->isEmpty() ? '<span style="color:#9ca3af;">Žiadni príjemcovia</span>' : $list));
     }
 
     public function table(Table $table): Table

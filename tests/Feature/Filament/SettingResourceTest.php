@@ -5,6 +5,7 @@ namespace Tests\Feature\Filament;
 use App\Enums\RoleEnum;
 use App\Filament\Resources\Settings\Pages\EditSetting;
 use App\Filament\Resources\Settings\Pages\ListSettings;
+use App\Filament\Resources\Settings\SettingResource;
 use App\Models\Setting;
 use App\Models\Team;
 use App\Models\User;
@@ -69,6 +70,6 @@ class SettingResourceTest extends TestCase
 
     public function test_cannot_create_settings(): void
     {
-        $this->assertFalse(\App\Filament\Resources\Settings\SettingResource::canCreate());
+        $this->assertFalse(SettingResource::canCreate());
     }
 }

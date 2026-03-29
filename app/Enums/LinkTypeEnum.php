@@ -2,12 +2,14 @@
 
 namespace App\Enums;
 
+use App\Contracts\Linkable;
 use App\Models\Event;
 use App\Models\MediaItem;
 use App\Models\Page;
 use App\Models\Team;
 use App\Models\Training;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 
 enum LinkTypeEnum: string
 {
@@ -39,7 +41,7 @@ enum LinkTypeEnum: string
     }
 
     /**
-     * @return class-string<\Illuminate\Database\Eloquent\Model&\App\Contracts\Linkable>|null
+     * @return class-string<Model&Linkable>|null
      */
     public function getModelClass(): ?string
     {

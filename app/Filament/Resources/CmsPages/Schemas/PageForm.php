@@ -54,6 +54,7 @@ use App\Mason\Bricks\TrainingCategoriesBrick;
 use App\Mason\Bricks\TrainingsArchiveBrick;
 use App\Mason\Bricks\VerticalTimelineBrick;
 use App\Mason\Bricks\VideoSectionBrick;
+use Awcodes\Mason\Brick;
 use Awcodes\Mason\Mason;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -171,7 +172,7 @@ class PageForm
             ]);
     }
 
-    /** @return list<class-string<\Awcodes\Mason\Brick>> */
+    /** @return list<class-string<Brick>> */
     private static function bricks(): array
     {
         return [

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Inquiries\Pages;
 
 use App\Enums\InquiryStatusEnum;
+use App\Filament\Actions\SendEmailAction;
 use App\Filament\Resources\Inquiries\InquiryResource;
 use App\Filament\Resources\Inquiries\Tables\InquiriesTable;
 use App\Models\Inquiry;
@@ -56,7 +57,7 @@ class ListInquiries extends ListRecords
             ->slideOver()
             ->schema(fn (): array => array_merge(
                 [$this->buildInquiriesRecipientsPlaceholder()],
-                (new \App\Filament\Actions\SendEmailAction('temp'))->getEmailFormSchema(),
+                (new SendEmailAction('temp'))->getEmailFormSchema(),
             ))
             ->modalSubmitActionLabel('Odoslať e-mail')
             ->modalSubmitAction(fn ($action) => $action->requiresConfirmation()

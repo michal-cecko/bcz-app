@@ -5,6 +5,7 @@ namespace App\Mason\Bricks;
 use App\Mason\Support\LinkPickerField;
 use App\Mason\Support\TranslatableBrickFields;
 use App\Models\Faq;
+use App\Models\FaqCategory;
 use Awcodes\Mason\Brick;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -120,7 +121,7 @@ class FaqBrick extends Brick
                             ->columnSpanFull(),
                         Select::make('faq_category_id')
                             ->label('Kategória')
-                            ->options(fn () => \App\Models\FaqCategory::query()
+                            ->options(fn () => FaqCategory::query()
                                 ->get()
                                 ->mapWithKeys(fn ($c) => [$c->id => $c->getTranslation('title', app()->getLocale())]))
                             ->searchable(),

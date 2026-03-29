@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Trainings\RelationManagers;
 
 use App\Enums\CoachRoleEnum;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
 use Filament\Actions\EditAction;
@@ -62,7 +63,7 @@ class CoachesRelationManager extends RelationManager
                     ->color(fn (string $state): string => CoachRoleEnum::tryFrom($state)?->getColor() ?? 'gray'),
             ])
             ->headerActions([
-                \Filament\Actions\Action::make('attach')
+                Action::make('attach')
                     ->label('Priradiť trénera')
                     ->modalHeading('Priradiť trénera k tréningu')
                     ->schema([

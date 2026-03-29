@@ -4,10 +4,11 @@ namespace Database\Factories;
 
 use App\Enums\JoinRequestStatusEnum;
 use App\Models\Team;
+use App\Models\TeamJoinRequest;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TeamJoinRequest>
+ * @extends Factory<TeamJoinRequest>
  */
 class TeamJoinRequestFactory extends Factory
 {
