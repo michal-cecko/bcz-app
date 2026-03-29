@@ -36,8 +36,17 @@ jobs:
           extensions: pdo_pgsql, pgsql, mbstring, xml, gd, zip, intl, bcmath, pcntl, exif
           coverage: none
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
       - name: Install Composer dependencies
         run: composer install --no-scripts --no-interaction --prefer-dist
+
+      - name: Install NPM dependencies and build assets
+        run: npm ci && npm run build
 
       - name: Prepare application
         run: |
