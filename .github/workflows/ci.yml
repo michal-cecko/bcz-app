@@ -87,7 +87,7 @@ jobs:
 
   notify:
     needs: [test, deploy-worker]
-    if: failure()
+    if: always() && contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
 
     steps:
