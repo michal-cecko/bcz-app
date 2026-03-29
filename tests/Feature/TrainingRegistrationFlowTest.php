@@ -69,7 +69,9 @@ class TrainingRegistrationFlowTest extends TestCase
     public function test_logged_in_user_sees_already_registered(): void
     {
         $user = User::factory()->create();
-        $training = $this->createTraining();
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::FREE,
+        ]);
 
         TrainingRegistration::create([
             'training_id' => $training->id,
