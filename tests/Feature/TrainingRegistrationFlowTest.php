@@ -75,7 +75,7 @@ class TrainingRegistrationFlowTest extends TestCase
             'training_id' => $training->id,
             'user_id' => $user->id,
             'form_data' => [],
-            'status' => RegistrationStatusEnum::Pending->value,
+            'status' => RegistrationStatusEnum::Approved->value,
             'registered_at' => now(),
         ]);
 

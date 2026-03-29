@@ -21,12 +21,11 @@ class RegisterTeamTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_register_team_page_loads(): void
+    public function test_register_team_page_redirects_to_join(): void
     {
         $response = $this->get('/registracia');
 
-        $response->assertOk();
-        $response->assertSeeLivewire('register-team');
+        $response->assertRedirect('/pridaj-sa');
     }
 
     public function test_step1_validates_required_fields(): void
@@ -430,11 +429,11 @@ class RegisterTeamTest extends TestCase
         $this->assertNull(session('pending_invite_code'));
     }
 
-    public function test_localized_route_works(): void
+    public function test_localized_route_redirects(): void
     {
         $response = $this->get('/en/registracia');
 
-        $response->assertOk();
+        $response->assertRedirect();
     }
 
     public function test_join_team_localized_route_works(): void

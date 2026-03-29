@@ -23,13 +23,13 @@ class JoinTeamTest extends TestCase
         $response = $this->get('/pridaj-sa');
 
         $response->assertOk();
-        $response->assertSeeLivewire('join-team');
+        $response->assertSeeLivewire('join-default-team');
     }
 
     public function test_team_search_returns_matching_teams(): void
     {
-        $team = Team::factory()->create(['name' => ['sk' => 'BCZ Bratislava'], 'is_active' => true]);
-        Team::factory()->create(['name' => ['sk' => 'Workout Žilina'], 'is_active' => true]);
+        $team = Team::factory()->create(['name' => ['sk' => 'BCZ Bratislava', 'en' => 'BCZ Bratislava'], 'is_active' => true]);
+        Team::factory()->create(['name' => ['sk' => 'Workout Žilina', 'en' => 'Workout Žilina'], 'is_active' => true]);
 
         Livewire::test(JoinTeam::class)
             ->set('search', 'BCZ')
@@ -320,7 +320,8 @@ class JoinTeamTest extends TestCase
     public function test_autofills_user_data_when_authenticated(): void
     {
         $user = User::factory()->create([
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
         ]);
 

@@ -9,6 +9,7 @@ use App\Filament\Resources\Trainings\Pages\EditTraining;
 use App\Filament\Resources\Trainings\Pages\ListTrainings;
 use App\Filament\Resources\Trainings\RelationManagers\CoachesRelationManager;
 use App\Filament\Resources\Trainings\RelationManagers\RegistrationsRelationManager;
+use App\Models\City;
 use App\Models\SportCategory;
 use App\Models\Team;
 use App\Models\Training;
@@ -63,11 +64,13 @@ class TrainingResourceTest extends TestCase
     public function test_can_create_training(): void
     {
         $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $city = City::factory()->create();
 
         Livewire::test(CreateTraining::class)
             ->fillForm([
                 'title.sk' => 'Nový Tréning',
                 'sport_category_id' => $sportCategory->id,
+                'city_id' => $city->id,
                 'pricing_type' => TrainingPricingTypeEnum::FREE->value,
                 'is_active' => true,
                 'registration_form_schema' => [
