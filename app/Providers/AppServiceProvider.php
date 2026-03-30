@@ -12,7 +12,6 @@ use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Observers\TrainingObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -43,24 +42,12 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         View::composer('components.header', function ($view) {
-            $view->with('headerMenu', Cache::remember('menu_header', 3600, function () {
-                return Menu::query()->where('location', MenuLocationEnum::Header)->first();
-            }));
+            $view->with('headerMenu', Menu::query()->where('location', MenuLocationEnum::Header)->first());
         });
 
         View::composer('components.footer', function ($view) {
-            $view->with('footerDiscoverMenu', Cache::remember('menu_footer_discover', 3600, function () {
-                return Menu::query()->where('location', MenuLocationEnum::FooterDiscover)->first();
-            }));
-            $view->with('footerProgramsMenu', Cache::remember('menu_footer_programs', 3600, function () {
-                return Menu::query()->where('location', MenuLocationEnum::FooterPrograms)->first();
-            }));
-        });
-
-        Menu::saved(function () {
-            Cache::forget('menu_header');
-            Cache::forget('menu_footer_discover');
-            Cache::forget('menu_footer_programs');
+            $view->with('footerDiscoverMenu', Menu::query()->where('location', MenuLocationEnum::FooterDiscover)->first());
+            $view->with('footerProgramsMenu', Menu::query()->where('location', MenuLocationEnum::FooterPrograms)->first());
         });
     }
 
