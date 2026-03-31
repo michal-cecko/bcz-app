@@ -24,19 +24,24 @@ jobs:
           ALL_OK=true
           for site in "https://bcz-club.com" "https://adminka.synapps.sk" "https://synapps.sk"; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$site" || echo "000")
+            echo "Site: $site → HTTP $STATUS"
             if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
               FAILED="${FAILED}- ${site} (HTTP ${STATUS})\n"
               ALL_OK=false
             fi
           done
 
+          echo "ALL_OK=$ALL_OK"
+
           # ── Read previous state ────────────────────────────────────────
           PREV=$(curl -s \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/$REPO/actions/variables/UPTIME_STATE")
+          echo "PREV raw: $PREV"
           PREV_STATE=$(echo "$PREV" | grep -o '"value":"[^"]*"' | cut -d'"' -f4)
           [ -z "$PREV_STATE" ] && PREV_STATE="UP"
+          echo "PREV_STATE=$PREV_STATE"
 
           # ── Notify + determine new state ───────────────────────────────
           if [ "$ALL_OK" = "false" ]; then
@@ -47,6 +52,7 @@ jobs:
             NEW_STATE="DOWN"
           else
             if [ "$PREV_STATE" = "DOWN" ]; then
+              echo "Sending RECOVERED notification..."
               curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
                 -d "chat_id=$TELEGRAM_CHAT_ID" \
                 -d "parse_mode=Markdown" \
@@ -55,8 +61,11 @@ jobs:
             NEW_STATE="UP"
           fi
 
+          echo "NEW_STATE=$NEW_STATE"
+
           # ── Persist state if changed ───────────────────────────────────
           if [ "$NEW_STATE" != "$PREV_STATE" ]; then
+            echo "State changed: $PREV_STATE → $NEW_STATE, updating variable..."
             HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
               -X PATCH \
               -H "Authorization: Bearer $GH_TOKEN" \
@@ -64,7 +73,9 @@ jobs:
               -H "Content-Type: application/json" \
               "https://api.github.com/repos/$REPO/actions/variables/UPTIME_STATE" \
               -d "{\"name\":\"UPTIME_STATE\",\"value\":\"$NEW_STATE\"}")
+            echo "PATCH response: HTTP $HTTP"
             if [ "$HTTP" = "404" ]; then
+              echo "Variable not found, creating..."
               curl -s -X POST \
                 -H "Authorization: Bearer $GH_TOKEN" \
                 -H "Accept: application/vnd.github+json" \
@@ -72,6 +83,8 @@ jobs:
                 "https://api.github.com/repos/$REPO/actions/variables" \
                 -d "{\"name\":\"UPTIME_STATE\",\"value\":\"$NEW_STATE\"}"
             fi
+          else
+            echo "State unchanged ($NEW_STATE), skipping variable update"
           fi
 
           # ── Exit code keeps CI badge accurate ──────────────────────────
