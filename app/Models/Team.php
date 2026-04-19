@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Contracts\Linkable;
+use App\Enums\PaymentMethodEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TeamJoinModeEnum;
 use App\Models\Concerns\HasCreator;
@@ -46,7 +47,6 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
         'contact_email',
         'contact_phone',
         'contact_website',
-        'payment_methods_enabled',
     ];
 
     protected function casts(): array
@@ -56,7 +56,6 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
             'is_active' => 'boolean',
             'join_mode' => TeamJoinModeEnum::class,
             'membership_enabled' => 'boolean',
-            'payment_methods_enabled' => 'array',
         ];
     }
 
@@ -193,6 +192,33 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     public function payouts(): HasMany
     {
         return $this->hasMany(TeamPayout::class);
+    }
+
+    public function paymentMethods(): BelongsToMany
+    {
+        return $this->belongsToMany(PaymentMethod::class)
+            ->withPivot('is_enabled', 'sort_order')
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
+    }
+
+    public function enabledPaymentMethods(): BelongsToMany
+    {
+        return $this->paymentMethods()
+            ->wherePivot('is_enabled', true)
+            ->where('is_active', true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getEnabledPaymentMethodKeys(): array
+    {
+        return $this->enabledPaymentMethods
+            ->pluck('method')
+            ->map(fn ($m) => $m instanceof PaymentMethodEnum ? $m->value : $m)
+            ->values()
+            ->toArray();
     }
 
     public function joinRequests(): HasMany

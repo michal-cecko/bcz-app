@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call(TeamSeeder::class);
         $this->call(SportCategorySeeder::class);
         $this->call(SettingSeeder::class);
+        $this->call(PaymentMethodSeeder::class);
         $this->call(CurrencySeeder::class);
         $this->call(SubscriptionPlanSeeder::class);
         $this->call(PageSeeder::class);

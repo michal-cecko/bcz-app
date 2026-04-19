@@ -44,7 +44,7 @@ class LatestTrainingsBrick extends Brick
                 ->where('is_active', true)
                 ->where('team_id', $teamId)
                 ->current()
-                ->with(['sportCategory', 'coaches', 'registrations.payments', 'team', 'city'])
+                ->with(['sportCategory', 'coaches', 'registrations.payments', 'team', 'city', 'schedules'])
                 ->orderBy('sort_order')
                 ->get();
         } elseif (! empty($trainingIds)) {
@@ -52,7 +52,7 @@ class LatestTrainingsBrick extends Brick
                 ->whereIn('id', $trainingIds)
                 ->where('is_active', true)
                 ->current()
-                ->with(['sportCategory', 'coaches', 'registrations.payments', 'team', 'city'])
+                ->with(['sportCategory', 'coaches', 'registrations.payments', 'team', 'city', 'schedules'])
                 ->get()
                 ->sortBy(fn (Training $t) => array_search($t->id, $trainingIds))
                 ->values();

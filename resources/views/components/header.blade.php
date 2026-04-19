@@ -41,7 +41,7 @@
                         <svg class="w-3.5 h-3.5 text-bcz-muted transition-transform" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <a href="/admin" class="bg-bcz-red text-white text-[11px] font-bold tracking-widest px-5 py-2.5 hover:bg-red-700 transition-colors">
-                        POUŽÍVATEĽSKÁ ZÓNA
+                        {{ __('layout.user_zone') }}
                     </a>
 
                     {{-- Dropdown --}}
@@ -61,9 +61,9 @@
                             <p class="text-white text-[13px] font-medium leading-tight truncate">{{ auth()->user()->name }}</p>
                             <p class="text-bcz-dim text-[11px] leading-tight truncate">{{ auth()->user()->email }}</p>
                         </div>
-                        <a href="/admin/profile" class="flex items-center gap-2 px-5 py-3 text-bcz-muted text-[13px] font-medium hover:bg-white/10 hover:text-white transition-all">
+                        <a href="{{ \App\Filament\Resources\Users\UserResource::getUrl('edit', ['record' => auth()->user(), 'tenant' => auth()->user()->teams->first()]) }}" class="flex items-center gap-2 px-5 py-3 text-bcz-muted text-[13px] font-medium hover:bg-white/10 hover:text-white transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                            Profil
+                            {{ __('layout.profile') }}
                         </a>
                         <div class="h-px bg-bcz-border"></div>
                         <form method="POST" action="{{ route('logout') }}">
@@ -71,17 +71,17 @@
                             <input type="hidden" name="redirect" value="{{ url()->current() }}">
                             <button type="submit" class="flex items-center gap-2 px-5 py-3 w-full text-bcz-muted text-[13px] font-medium hover:bg-white/10 hover:text-bcz-red transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                Odhlásiť sa
+                                {{ __('layout.sign_out') }}
                             </button>
                         </form>
                     </div>
                 </div>
             @else
                 <a href="/admin/login" class="hidden md:block text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">
-                    Prihlásiť sa
+                    {{ __('layout.sign_in') }}
                 </a>
                 <a href="{{ locale_url('/pridaj-sa') }}" class="hidden md:block bg-bcz-red text-white text-[11px] font-bold tracking-widest px-5 py-2.5 hover:bg-red-700 transition-colors">
-                    PRIDAJ SA
+                    {{ __('layout.join_us') }}
                 </a>
             @endauth
 
@@ -127,23 +127,23 @@
                     </div>
                 </div>
                 <a href="/admin" class="bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center w-full block">
-                    POUŽÍVATEĽSKÁ ZÓNA
+                    {{ __('layout.user_zone') }}
                 </a>
-                <a href="/admin/profile" class="flex items-center gap-2 text-bcz-muted text-sm font-medium tracking-widest uppercase hover:text-white transition-colors py-1 mt-2">
+                <a href="{{ \App\Filament\Resources\Users\UserResource::getUrl('edit', ['record' => auth()->user(), 'tenant' => auth()->user()->teams->first()]) }}" class="flex items-center gap-2 text-bcz-muted text-sm font-medium tracking-widest uppercase hover:text-white transition-colors py-1 mt-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    Profil
+                    {{ __('layout.profile') }}
                 </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <input type="hidden" name="redirect" value="{{ url()->current() }}">
                     <button type="submit" class="flex items-center gap-2 text-bcz-red text-sm font-medium tracking-widest uppercase hover:text-red-400 transition-colors py-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        Odhlásiť sa
+                        {{ __('layout.sign_out') }}
                     </button>
                 </form>
             @else
                 <a href="{{ locale_url('/pridaj-sa') }}" class="md:hidden bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center mt-2 w-full block">
-                    PRIDAJ SA
+                    {{ __('layout.join_us') }}
                 </a>
             @endauth
             <div class="xl:hidden pt-2">

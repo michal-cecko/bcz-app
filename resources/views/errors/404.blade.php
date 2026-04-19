@@ -1,4 +1,4 @@
-@extends('layouts.public')
+@extends('layouts.error')
 
 @section('title', '404 — Stránka nenájdená | BCZ Club')
 

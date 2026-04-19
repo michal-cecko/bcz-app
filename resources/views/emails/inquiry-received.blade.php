@@ -46,5 +46,5 @@
 <div style="height: 32px;"></div>
 <div class="divider-line" style="height: 1px; background-color: #E5E5E5; margin: 0;"></div>
 <div style="height: 24px;"></div>
-<p style="font-size: 14px; font-weight: 500; color: #999999; line-height: 1.5; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">BCZ App — Automatické oznámenie</p>
+<p style="font-size: 14px; font-weight: 500; color: #999999; line-height: 1.5; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">BCZ Club — Automatické oznámenie</p>
 @endsection

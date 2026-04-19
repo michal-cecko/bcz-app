@@ -5,7 +5,7 @@
             {{-- Search --}}
             <div class="relative">
                 <span class="absolute left-5 top-1/2 -translate-y-1/2 text-[#666666]"><svg class="w-5 h-5 text-[#666666]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg></span>
-                <input wire:model.live.debounce.300ms="search" type="text" placeholder="{{ __('teams_archive.search_placeholder') }}" class="bg-[#111111] border border-[#222222] text-white text-[15px] rounded-lg pl-12 pr-5 py-4 focus:border-bcz-red focus:ring-0 outline-none w-full placeholder-[#666666]">
+                <input wire:model.live.debounce.300ms="search" type="text" placeholder="{{ __('teams_archive.search_placeholder') }}" class="bg-[#111111] border border-[#222222] text-white text-[15px] pl-12 pr-5 py-4 focus:border-bcz-red focus:ring-0 outline-none w-full placeholder-[#666666]">
             </div>
 
             @if($this->hasActiveFilters())
@@ -61,9 +61,7 @@
         </div>
 
         @if($teams->hasPages())
-            <div class="mt-12">
-                {{ $teams->links() }}
-            </div>
+            {{ $teams->links() }}
         @endif
     @else
         <div class="text-center py-20">

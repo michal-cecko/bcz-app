@@ -28,7 +28,6 @@ class TrainingFactory extends Factory
             'max_age' => fake()->randomElement([null, 10, 14, 18, 25]),
             'duration_minutes' => fake()->randomElement([60, 90, 120]),
             'start_time' => fake()->time('H:i'),
-            'schedule_days' => fake()->randomElements(['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], 2),
             'place_name' => ['sk' => fake()->company(), 'en' => fake()->company()],
             'place_address' => fake()->address(),
             'latitude' => fake()->latitude(48.0, 49.5),
@@ -43,9 +42,10 @@ class TrainingFactory extends Factory
             'registration_closes_at' => null,
             'sort_order' => fake()->numberBetween(0, 10),
             'registration_form_schema' => [
-                ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
-                ['label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'name' => 'priezvisko', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
-                ['label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'full', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'first_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'name' => 'priezvisko', 'type' => 'last_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'half', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Telefón', 'en' => 'Phone', 'cs' => 'Telefon'], 'name' => 'telefon', 'type' => 'phone', 'width' => 'half', 'required' => true, 'has_condition' => false],
             ],
         ];
     }
@@ -68,7 +68,6 @@ class TrainingFactory extends Factory
         return $this->state(fn () => [
             'is_recurring' => false,
             'event_date' => fake()->dateTimeBetween('+1 week', '+3 months'),
-            'schedule_days' => null,
             'pricing_type' => fake()->randomElement([TrainingPricingTypeEnum::FREE, TrainingPricingTypeEnum::PAID]),
             'price_amount' => fake()->randomFloat(2, 5, 50),
         ]);

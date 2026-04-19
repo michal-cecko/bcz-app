@@ -3,8 +3,11 @@
 namespace App\Filament\Resources\Events\RelationManagers;
 
 use App\Enums\EventTypeEnum;
+use App\Enums\PairingStrategyEnum;
 use App\Enums\RoundAdvancementTypeEnum;
 use App\Enums\ScoringFormatEnum;
+use App\Filament\Resources\Events\Concerns\HasScoringActions;
+use App\Models\CompetitionRound;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -13,12 +16,15 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 
 class RoundsRelationManager extends RelationManager
 {
+    use HasScoringActions;
+
     protected static string $relationship = 'competitionDetail';
 
     protected static ?string $title = 'Kolá';
@@ -30,6 +36,16 @@ class RoundsRelationManager extends RelationManager
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
         return $ownerRecord->event_type === EventTypeEnum::Competition;
+    }
+
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
+    protected function getRoundFromRecord(mixed $record): ?CompetitionRound
+    {
+        return $record instanceof CompetitionRound ? $record : null;
     }
 
     public function form(Schema $schema): Schema
@@ -47,7 +63,8 @@ class RoundsRelationManager extends RelationManager
                 ->relationship('athleteCategory')
                 ->getOptionLabelFromRecordUsing(fn (Model $record): string => $record->getTranslation('name', 'sk'))
                 ->preload()
-                ->searchable(),
+                ->searchable()
+                ->live(),
             Select::make('scoring_format')
                 ->label('Formát hodnotenia')
                 ->options(ScoringFormatEnum::class),
@@ -56,14 +73,52 @@ class RoundsRelationManager extends RelationManager
                 ->options(RoundAdvancementTypeEnum::class)
                 ->required()
                 ->live(),
-            TextInput::make('advance_count')
-                ->label('Počet postupujúcich')
+            TextInput::make('competitor_count')
+                ->label('Počet súťažiacich v tomto kole')
                 ->numeric()
-                ->visible(fn (Get $get): bool => $get('advancement_type') === RoundAdvancementTypeEnum::TOP_BY_POINTS->value),
-            TextInput::make('battle_size')
-                ->label('Veľkosť battle')
+                ->minValue(1)
+                ->rules([
+                    function (Get $get) {
+                        return function (string $attribute, $value, \Closure $fail) use ($get) {
+                            if ($get('advancement_type') !== RoundAdvancementTypeEnum::BATTLE_WINNER->value) {
+                                return;
+                            }
+                            if ($value === null || $value === '') {
+                                return;
+                            }
+                            $teamSize = max(1, (int) ($get('team_size') ?: 1));
+                            $slots = $teamSize * 2;
+                            if (((int) $value) % $slots !== 0) {
+                                $fail("Počet súťažiacich musí byť deliteľný dvojnásobkom veľkosti tímu ({$slots}).");
+                            }
+                        };
+                    },
+                ]),
+            TextInput::make('team_size')
+                ->label('Veľkosť tímu (1 pre 1v1, 2 pre 2v2, …)')
                 ->numeric()
+                ->minValue(1)
+                ->default(1)
                 ->visible(fn (Get $get): bool => $get('advancement_type') === RoundAdvancementTypeEnum::BATTLE_WINNER->value),
+            Select::make('pairing_strategy')
+                ->label('Stratégia párovania')
+                ->options(PairingStrategyEnum::class)
+                ->default(PairingStrategyEnum::RANDOM->value)
+                ->visible(fn (Get $get): bool => $get('advancement_type') === RoundAdvancementTypeEnum::BATTLE_WINNER->value),
+            Select::make('next_round_id')
+                ->label('Nadväzujúce kolo')
+                ->placeholder('Žiadne — toto je finálové kolo')
+                ->options(function (Get $get, ?CompetitionRound $record): array {
+                    return CompetitionRound::query()
+                        ->where('competition_detail_id', $this->getOwnerRecord()->competitionDetail?->id)
+                        ->when($get('athlete_category_id'), fn ($q, $catId) => $q->where('athlete_category_id', $catId))
+                        ->when($record?->id, fn ($q, $id) => $q->where('id', '!=', $id))
+                        ->orderBy('sort_order')
+                        ->orderBy('round_number')
+                        ->pluck('name', 'id')
+                        ->toArray();
+                })
+                ->searchable(),
             TextInput::make('sort_order')
                 ->label('Poradie')
                 ->numeric()
@@ -103,12 +158,20 @@ class RoundsRelationManager extends RelationManager
                 TextColumn::make('battles_count')
                     ->label('Battle')
                     ->counts('battles'),
+                IconColumn::make('scores_published')
+                    ->label('Body')
+                    ->boolean(),
             ])
             ->headerActions([
+                $this->makePublishAllScoresAction(),
+                $this->makeHideAllScoresAction(),
                 CreateAction::make()
                     ->modalHeading('Vytvoriť kolo'),
             ])
             ->recordActions([
+                $this->makeScoringAction(),
+                $this->makeCompetitorOrderAction(),
+                $this->makePublishScoresAction(),
                 EditAction::make()
                     ->modalHeading('Upraviť kolo'),
                 DeleteAction::make()

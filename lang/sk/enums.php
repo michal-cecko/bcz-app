@@ -15,6 +15,7 @@ use App\Enums\InvitationStatusEnum;
 use App\Enums\MembershipStatusEnum;
 use App\Enums\MenuLocationEnum;
 use App\Enums\PageStatusEnum;
+use App\Enums\PairingStrategyEnum;
 use App\Enums\PayableTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
@@ -88,6 +89,10 @@ return [
         PaymentStatusEnum::COMPLETED->value => 'Zaplatené',
         PaymentStatusEnum::FAILED->value => 'Zlyhalo',
         PaymentStatusEnum::REFUNDED->value => 'Vrátené',
+    ],
+    PairingStrategyEnum::class => [
+        PairingStrategyEnum::RANDOM->value => 'Náhodne',
+        PairingStrategyEnum::SEEDED->value => 'Nasadené (1 vs N, 2 vs N-1)',
     ],
     RoundAdvancementTypeEnum::class => [
         RoundAdvancementTypeEnum::TOP_BY_POINTS->value => 'Najlepší podľa bodov',

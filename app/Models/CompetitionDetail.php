@@ -15,11 +15,17 @@ class CompetitionDetail extends Model
 
     protected $fillable = [
         'event_id',
+        'manager_id',
     ];
 
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_id');
     }
 
     public function athleteCategories(): BelongsToMany

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ProfileTypeEnum;
 use App\Enums\RoleEnum;
 use App\Models\Setting;
 use App\Models\User;
@@ -32,9 +31,9 @@ class CoachController extends Controller
 
         $user->load([
             'coachProfile',
-            'coachedTrainings' => fn ($query) => $query->where('is_active', true)->with(['sportCategory', 'team']),
+            'coachedTrainings' => fn ($query) => $query->where('is_active', true)->with(['sportCategory', 'team', 'schedules']),
             'certifications',
-            'profileGalleryItems' => fn ($q) => $q->where('profile_type', ProfileTypeEnum::Coach)->where('is_approved', true)->orderBy('sort_order'),
+            'coachProfile.media',
         ]);
 
         // Check if user also has an approved athlete profile for cross-link
@@ -80,7 +79,7 @@ class CoachController extends Controller
             'athleteGoals' => fn ($q) => $q->orderBy('sort_order')->with('media'),
             'certifications',
             'competitionResults.roundPart.competitionRound.competitionDetail.event',
-            'profileGalleryItems' => fn ($q) => $q->where('profile_type', ProfileTypeEnum::Athlete)->where('is_approved', true)->orderBy('sort_order'),
+            'athleteProfile.media',
         ]);
 
         $hasCoachProfile = $user->coach_profile_approved_at !== null;
@@ -100,7 +99,7 @@ class CoachController extends Controller
             'judgeProfile',
             'certifications',
             'judgedCompetitionDetails' => fn ($q) => $q->with('event'),
-            'profileGalleryItems' => fn ($q) => $q->where('profile_type', ProfileTypeEnum::Judge)->where('is_approved', true)->orderBy('sort_order'),
+            'judgeProfile.media',
         ]);
 
         return view('pages.judges.show', compact('user'));

@@ -165,8 +165,8 @@
                                                 <span class="powered-text" style="font-family: 'DM Sans', sans-serif; font-size: 10px; color: #AAAAAA;">Odoslané cez</span>
                                                 &nbsp;
                                                 <a href="{{ config('app.url') }}" target="_blank" style="text-decoration: none; vertical-align: middle;">
-                                                    <img class="bcz-logo-light" src="{{ asset('images/bcz-logo.png') }}" alt="BCZ App" height="14" style="height: 14px; width: auto; vertical-align: middle; display: inline;" />
-                                                    <img class="bcz-logo-dark" src="{{ asset('images/bcz-logo-white.png') }}" alt="BCZ App" height="14" style="height: 14px; width: auto; vertical-align: middle; display: none;" />
+                                                    <img class="bcz-logo-light" src="{{ asset('images/bcz-logo.png') }}" alt="BCZ Club" height="14" style="height: 14px; width: auto; vertical-align: middle; display: inline;" />
+                                                    <img class="bcz-logo-dark" src="{{ asset('images/bcz-logo-white.png') }}" alt="BCZ Club" height="14" style="height: 14px; width: auto; vertical-align: middle; display: none;" />
                                                 </a>
                                             </td>
                                         </tr>

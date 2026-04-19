@@ -6,9 +6,12 @@ use App\Enums\PageStatusEnum;
 use App\Mason\Bricks\AboutPreviewBrick;
 use App\Mason\Bricks\AchievementCardsBrick;
 use App\Mason\Bricks\AthletesArchiveBrick;
+use App\Mason\Bricks\AthletesShowcaseBrick;
 use App\Mason\Bricks\CenteredHeroBrick;
 use App\Mason\Bricks\CoachesArchiveBrick;
 use App\Mason\Bricks\CompetitionBracketsBrick;
+use App\Mason\Bricks\CompetitionCtaBrick;
+use App\Mason\Bricks\CompetitionHeroBrick;
 use App\Mason\Bricks\CompetitionResultsBrick;
 use App\Mason\Bricks\CompetitionsArchiveBrick;
 use App\Mason\Bricks\CompetitionTimetableBrick;
@@ -22,6 +25,7 @@ use App\Mason\Bricks\EventsArchiveBrick;
 use App\Mason\Bricks\EventsShowcaseBrick;
 use App\Mason\Bricks\FaqBrick;
 use App\Mason\Bricks\FeatureCardsBrick;
+use App\Mason\Bricks\FinishedCompetitionsBrick;
 use App\Mason\Bricks\FounderSpotlightBrick;
 use App\Mason\Bricks\GalleryBrick;
 use App\Mason\Bricks\GuideCardsBrick;
@@ -227,6 +231,10 @@ class PageForm
             CompetitionResultsBrick::class,
             CompetitionBracketsBrick::class,
             CompetitionTimetableBrick::class,
+            CompetitionHeroBrick::class,
+            FinishedCompetitionsBrick::class,
+            AthletesShowcaseBrick::class,
+            CompetitionCtaBrick::class,
         ];
     }
 }

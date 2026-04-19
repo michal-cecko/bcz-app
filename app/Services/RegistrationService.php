@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Mail\RegistrationConfirmationMail;
+use App\Models\Payment;
 use App\Models\Team;
 use App\Models\Training;
 use App\Models\User;
@@ -50,7 +51,7 @@ class RegistrationService
     /**
      * @param  Collection<int, Media>|null  $attachments
      */
-    public static function sendConfirmation(User $user, string $registrationType, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null, ?Collection $attachments = null): void
+    public static function sendConfirmation(User $user, string $registrationType, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null, ?Collection $attachments = null, ?Payment $payment = null): void
     {
         $resolvedLocale = $locale ?? $user->locale ?? app()->getLocale() ?? 'sk';
         $bricks = $customEmailContent[$resolvedLocale] ?? $customEmailContent['sk'] ?? null;
@@ -67,6 +68,7 @@ class RegistrationService
             isNewUser: $isNewUser,
             team: $team,
             customContent: $customHtml,
+            payment: $payment,
         );
 
         if ($attachments && $attachments->isNotEmpty()) {
@@ -90,8 +92,8 @@ class RegistrationService
     public static function extractEmailFromFormData(array $formData, array $schema): ?string
     {
         foreach ($schema as $field) {
-            if (($field['type'] ?? '') === 'email' && ! empty($formData[$field['name']] ?? null)) {
-                return $formData[$field['name']];
+            if (($field['type'] ?? '') === 'email' && ! empty($formData[($field['name'] ?? $field['key'] ?? '')] ?? null)) {
+                return $formData[($field['name'] ?? $field['key'] ?? '')];
             }
         }
 
@@ -111,7 +113,7 @@ class RegistrationService
 
         foreach ($schema as $field) {
             $type = $field['type'] ?? '';
-            $value = $formData[$field['name']] ?? null;
+            $value = $formData[($field['name'] ?? $field['key'] ?? '')] ?? null;
 
             if (! empty($value)) {
                 if ($type === 'full_name') {
@@ -132,8 +134,8 @@ class RegistrationService
 
         // Fallback: first text_input field
         foreach ($schema as $field) {
-            if (($field['type'] ?? '') === 'text_input' && ! empty($formData[$field['name']] ?? null)) {
-                return $formData[$field['name']];
+            if (($field['type'] ?? '') === 'text_input' && ! empty($formData[($field['name'] ?? $field['key'] ?? '')] ?? null)) {
+                return $formData[($field['name'] ?? $field['key'] ?? '')];
             }
         }
 
@@ -149,8 +151,8 @@ class RegistrationService
     public static function extractPhoneFromFormData(array $formData, array $schema): ?string
     {
         foreach ($schema as $field) {
-            if (($field['type'] ?? '') === 'phone' && ! empty($formData[$field['name']] ?? null)) {
-                return $formData[$field['name']];
+            if (($field['type'] ?? '') === 'phone' && ! empty($formData[($field['name'] ?? $field['key'] ?? '')] ?? null)) {
+                return $formData[($field['name'] ?? $field['key'] ?? '')];
             }
         }
 
@@ -166,8 +168,8 @@ class RegistrationService
     public static function extractBirthDateFromFormData(array $formData, array $schema): ?string
     {
         foreach ($schema as $field) {
-            if (($field['type'] ?? '') === 'birth_date' && ! empty($formData[$field['name']] ?? null)) {
-                return $formData[$field['name']];
+            if (($field['type'] ?? '') === 'birth_date' && ! empty($formData[($field['name'] ?? $field['key'] ?? '')] ?? null)) {
+                return $formData[($field['name'] ?? $field['key'] ?? '')];
             }
         }
 
@@ -183,8 +185,8 @@ class RegistrationService
     public static function extractGenderFromFormData(array $formData, array $schema): ?string
     {
         foreach ($schema as $field) {
-            if (($field['type'] ?? '') === 'gender' && ! empty($formData[$field['name']] ?? null)) {
-                return $formData[$field['name']];
+            if (($field['type'] ?? '') === 'gender' && ! empty($formData[($field['name'] ?? $field['key'] ?? '')] ?? null)) {
+                return $formData[($field['name'] ?? $field['key'] ?? '')];
             }
         }
 

@@ -204,12 +204,7 @@
                             <div class="w-full h-px bg-[#222222]"></div>
 
                             {{-- GDPR Checkbox --}}
-                            <div class="flex items-start gap-3">
-                                <input type="checkbox" id="gdpr" name="gdpr" class="mt-1 w-4 h-4 rounded border-[#333333] bg-bcz-dark text-bcz-red focus:ring-bcz-red focus:ring-offset-0 shrink-0">
-                                <label for="gdpr" class="text-[#888888] text-[13px] leading-[1.6]">
-                                    Súhlasím so spracovaním osobných údajov v súlade s <a href="#" class="text-bcz-red hover:underline">GDPR</a> a <a href="#" class="text-bcz-red hover:underline">podmienkami súťaže</a>. Vaše údaje budú použité výhradne na účely registrácie a organizácie súťaže. <span class="text-bcz-red">*</span>
-                                </label>
-                            </div>
+                            <x-gdpr-checkbox model="gdpr" />
 
                             {{-- Buttons --}}
                             <div class="flex flex-col sm:flex-row gap-4">

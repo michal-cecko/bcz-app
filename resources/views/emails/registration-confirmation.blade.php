@@ -38,6 +38,30 @@
     <a href="{{ url('/login') }}" class="btn-cta" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Prihlásiť sa</a>
 @endif
 
+@if(!empty($paymentAmount) && !empty($paymentUrl))
+<div style="height: 24px;"></div>
+<div class="divider-line" style="height: 1px; background-color: #E5E5E5; margin: 0;"></div>
+<div style="height: 24px;"></div>
+
+<div class="info-box" style="background-color: #F5F5F5; border-radius: 12px; padding: 24px; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <p class="heading-text" style="font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 6px;">Platba za registráciu</p>
+    <p class="body-text" style="font-size: 13px; color: #555555; line-height: 1.6; margin-bottom: 16px;">Pre dokončenie registrácie je potrebné uhradiť platbu:</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #E0E0E0;">
+                <span class="body-text" style="font-size: 13px; color: #888888; font-family: 'DM Sans', sans-serif;">Suma na úhradu</span>
+            </td>
+            <td align="right" style="padding: 8px 0; border-bottom: 1px solid #E0E0E0;">
+                <span class="info-box-amount" style="font-size: 18px; font-weight: 700; color: #22C55E; font-family: 'DM Sans', sans-serif;">{{ $paymentAmount }}</span>
+            </td>
+        </tr>
+    </table>
+    <a href="{{ $paymentUrl }}" class="btn-cta" style="display: block; text-align: center; background-color: #FF2D2D; color: #FFFFFF; font-size: 14px; font-weight: 700; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Zaplatiť {{ $paymentAmount }}</a>
+    <div style="height: 8px;"></div>
+    <p style="font-size: 11px; color: #999999; text-align: center; font-family: 'DM Sans', sans-serif;">Kliknutím na tlačidlo budete presmerovaný na zabezpečenú platobnú stránku.</p>
+</div>
+@endif
+
 @if(!empty($customContent))
 <div style="height: 24px;"></div>
 <div class="divider-line" style="height: 1px; background-color: #E5E5E5; margin: 0;"></div>
@@ -48,5 +72,5 @@
 <div style="height: 32px;"></div>
 <div class="divider-line" style="height: 1px; background-color: #E5E5E5; margin: 0;"></div>
 <div style="height: 24px;"></div>
-<p style="font-size: 14px; font-weight: 500; color: #999999; line-height: 1.5; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Ďakujeme,<br>BCZ App</p>
+<p style="font-size: 14px; font-weight: 500; color: #999999; line-height: 1.5; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Ďakujeme,<br>BCZ Club</p>
 @endsection

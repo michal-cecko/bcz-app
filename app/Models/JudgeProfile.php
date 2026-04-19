@@ -43,6 +43,7 @@ class JudgeProfile extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('hero_image')->singleFile();
+        $this->addMediaCollection('gallery');
     }
 
     public function user(): BelongsTo

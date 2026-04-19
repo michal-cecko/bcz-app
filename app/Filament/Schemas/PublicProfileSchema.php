@@ -15,7 +15,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
@@ -184,25 +183,41 @@ class PublicProfileSchema
     public static function certificationsRepeater(): Repeater
     {
         return Repeater::make('certifications')
-            ->label('')
+            ->label('Certifikáty')
             ->itemLabel(fn (array $state): ?string => $state['name']['sk'] ?? null)
             ->schema([
-                Grid::make(2)->schema([
-                    TextInput::make('name.sk')
-                        ->label('Názov (SK)')
-                        ->required()
-                        ->live(onBlur: true),
-                    TextInput::make('name.en')
-                        ->label('Name (EN)'),
-                ]),
-                Textarea::make('description.sk')
-                    ->label('Popis (SK)')
-                    ->rows(2),
                 TextInput::make('year_of_issue')
                     ->label('Rok vydania')
                     ->numeric()
                     ->minValue(1990)
                     ->maxValue(date('Y')),
+                Tabs::make('cert_locale_tabs')
+                    ->tabs([
+                        Tab::make('SK')->schema([
+                            TextInput::make('name.sk')
+                                ->label('Názov')
+                                ->required()
+                                ->live(onBlur: true),
+                            Textarea::make('description.sk')
+                                ->label('Popis')
+                                ->rows(2),
+                        ]),
+                        Tab::make('EN')->schema([
+                            TextInput::make('name.en')
+                                ->label('Name'),
+                            Textarea::make('description.en')
+                                ->label('Description')
+                                ->rows(2),
+                        ]),
+                        Tab::make('CS')->schema([
+                            TextInput::make('name.cs')
+                                ->label('Název'),
+                            Textarea::make('description.cs')
+                                ->label('Popis')
+                                ->rows(2),
+                        ]),
+                    ])
+                    ->columnSpanFull(),
             ])
             ->orderColumn('sort_order')
             ->addActionLabel('Pridať certifikát')
@@ -322,33 +337,18 @@ class PublicProfileSchema
             ->defaultItems(0);
     }
 
-    public static function galleryRepeater(string $role): Repeater
+    public static function galleryUpload(?Model $mediaModel = null): SpatieMediaLibraryFileUpload
     {
-        $relation = match ($role) {
-            'coach' => 'coachGalleryItems',
-            'athlete' => 'athleteGalleryItems',
-            'judge' => 'judgeGalleryItems',
-        };
-
-        return Repeater::make($relation)
-            ->label('')
-            ->itemLabel(fn (array $state): ?string => $state['description']['sk'] ?? null)
-            ->schema([
-                Textarea::make('description.sk')
-                    ->label('Popis (SK)')
-                    ->rows(2)
-                    ->live(onBlur: true),
-                TagsInput::make('tags')
-                    ->label('Tagy'),
-            ])
-            ->orderColumn('sort_order')
-            ->addActionLabel('Pridať obrázok')
+        return SpatieMediaLibraryFileUpload::make('gallery')
+            ->collection('gallery')
+            ->label('Fotografie')
+            ->multiple()
             ->reorderable()
-            ->reorderableWithButtons()
-            ->cloneable()
-            ->collapsible()
-            ->deleteAction(fn ($action) => $action->requiresConfirmation())
-            ->defaultItems(0);
+            ->image()
+            ->disk('public')
+            ->visibility('public')
+            ->panelLayout('grid')
+            ->when($mediaModel, fn ($c) => $c->model($mediaModel));
     }
 
     /**
@@ -393,9 +393,7 @@ class PublicProfileSchema
         $tabs[] = Tab::make('Galéria')
             ->icon('heroicon-o-photo')
             ->schema([
-                Section::make()
-                    ->description('Nové obrázky budú schválené spolu s profilom')
-                    ->schema([self::galleryRepeater($role)]),
+                self::galleryUpload($mediaModel),
             ]);
 
         return $tabs;

@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Contracts\Payable;
 use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
+use App\Models\EventRegistration;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Team;
@@ -61,7 +63,9 @@ class PaymentService
         string $currency,
     ): array {
         $orderNumber = strtoupper(substr(class_basename($payable), 0, 3)).'-'.now()->format('ymd').'-'.random_int(1000, 9999);
-        $description = class_basename($payable).' #'.$payable->getKey();
+        $description = $payable instanceof Payable
+            ? $payable->getPaymentDescription()
+            : class_basename($payable).' #'.$payable->getKey();
 
         $response = $this->goPayService->createPayment([
             'amount' => (int) round($amount * 100),
@@ -178,6 +182,14 @@ class PaymentService
                 $registration->user->notify(new PaymentConfirmed($payment));
             }
         }
+
+        if ($payment->payable instanceof EventRegistration) {
+            $payment->payable->update(['status' => RegistrationStatusEnum::Approved]);
+
+            if ($payment->user) {
+                $payment->user->notify(new PaymentConfirmed($payment));
+            }
+        }
     }
 
     public function refund(Payment $payment, ?string $notes = null): Payment
@@ -219,6 +231,29 @@ class PaymentService
                 $registration->user->notify(new TrainingPaymentConfirmed($registration->training));
             }
         }
+    }
+
+    /**
+     * Create a pending payment record for a registration that requires payment.
+     */
+    public function createPendingPayment(
+        User $user,
+        Team $team,
+        Model $payable,
+        float $amount,
+        string $currency = 'EUR',
+    ): Payment {
+        return Payment::create([
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+            'payer_name' => $user->name,
+            'payer_email' => $user->email,
+            'payable_type' => $payable->getMorphClass(),
+            'payable_id' => $payable->getKey(),
+            'amount' => $amount,
+            'currency' => $currency,
+            'status' => PaymentStatusEnum::PENDING,
+        ]);
     }
 
     public function generateVariableSymbol(): string

@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Contracts\Linkable;
 use App\Enums\EventTypeEnum;
+use App\Enums\TimetableEntryStatusEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +27,7 @@ class Event extends Model implements HasMedia, Linkable
     use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
-    public array $translatable = ['title', 'card_description', 'content'];
+    public array $translatable = ['title', 'card_description', 'content', 'report_content'];
 
     protected $fillable = [
         'event_type',
@@ -43,8 +45,10 @@ class Event extends Model implements HasMedia, Linkable
         'place_address',
         'latitude',
         'longitude',
+        'timezone',
         'detail_image',
         'content',
+        'report_content',
         'attendee_count',
         'client',
         'is_published',
@@ -91,11 +95,22 @@ class Event extends Model implements HasMedia, Linkable
 
             $now = now();
 
-            if ($this->date_end && $now->greaterThan($this->date_end)) {
+            // Finished: past the end date, or past the start date if no end date
+            $endDate = $this->date_end ?? $this->date;
+            if ($endDate && $now->greaterThan($endDate)) {
                 return 'finished';
             }
 
-            if ($this->date && $now->greaterThanOrEqualTo($this->date)) {
+            // Competition: finished when all timetable entries are done
+            if ($this->event_type === EventTypeEnum::Competition && $this->competitionDetail) {
+                $entries = $this->competitionDetail->timetableEntries;
+                if ($entries->isNotEmpty() && $entries->every(fn (TimetableEntry $e) => $e->status === TimetableEntryStatusEnum::FINISHED)) {
+                    return 'finished';
+                }
+            }
+
+            // In progress: started but not yet finished (only when date_end exists)
+            if ($this->date_end && $this->date && $now->greaterThanOrEqualTo($this->date) && $now->lessThanOrEqualTo($this->date_end)) {
                 return 'in_progress';
             }
 
@@ -115,6 +130,22 @@ class Event extends Model implements HasMedia, Linkable
 
             return 'upcoming';
         });
+    }
+
+    /**
+     * Get the event's timezone identifier.
+     */
+    public function getTimezone(): string
+    {
+        return $this->timezone ?? 'Europe/Bratislava';
+    }
+
+    /**
+     * Convert a UTC datetime to the event's local timezone.
+     */
+    public function toLocalTime(?Carbon $utcTime): ?Carbon
+    {
+        return $utcTime?->copy()->setTimezone($this->getTimezone());
     }
 
     public function getLinkUrl(): string

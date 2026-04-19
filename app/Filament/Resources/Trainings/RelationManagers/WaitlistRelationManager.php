@@ -17,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class WaitlistRelationManager extends RelationManager
 {
@@ -57,7 +58,7 @@ class WaitlistRelationManager extends RelationManager
                     'nazov_timu' => $teamName,
                     'nazov_treningu' => $training->getTranslation('title', 'sk'),
                     'miesto' => $training->getTranslation('place_name', 'sk') ?? '',
-                    'cas' => $training->start_time ?? '',
+                    'cas' => $training->schedules->map(fn ($s) => ucfirst(mb_substr($s->day, 0, 2)).' '.($s->start_time ? Str::substr($s->start_time, 0, 5) : ''))->join(', ') ?: ($training->start_time ?? ''),
                     'kapacita' => (string) ($training->max_capacity ?? ''),
                 ],
             ],

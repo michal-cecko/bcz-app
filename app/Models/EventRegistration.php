@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Contracts\Payable;
+use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class EventRegistration extends Model
+class EventRegistration extends Model implements Payable
 {
     use HasFactory, HasUuidV7;
 
@@ -26,6 +28,7 @@ class EventRegistration extends Model
     protected function casts(): array
     {
         return [
+            'status' => RegistrationStatusEnum::class,
             'registered_at' => 'datetime',
             'weight_in' => 'decimal:2',
         ];
@@ -59,5 +62,13 @@ class EventRegistration extends Model
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function getPaymentDescription(): string
+    {
+        $userName = trim(($this->user?->first_name ?? '').' '.($this->user?->last_name ?? ''));
+        $title = $this->event?->getTranslation('title', app()->getLocale()) ?? 'Podujatie';
+
+        return $userName ? "{$userName} - {$title}" : $title;
     }
 }

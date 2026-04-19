@@ -10,7 +10,7 @@
     $biographyImage = $profile?->getFirstMediaUrl('biography_image');
     $trainings = $user->coachedTrainings;
     $certifications = $user->certifications->sortBy('sort_order');
-    $gallery = $user->profileGalleryItems ?? collect();
+    $gallery = $profile?->getMedia('gallery') ?? collect();
     $hasAthleteProfile = $hasAthleteProfile ?? false;
 @endphp
 
@@ -60,7 +60,7 @@
                         <h2 class="font-display font-bold text-4xl tracking-[0.5px]">{{ __('coach_detail.about_title') }}</h2>
                     </div>
 
-                    <div class="text-[#AAAAAA] text-base leading-[1.8] space-y-4">
+                    <div class="text-[#AAAAAA] text-base leading-relaxed space-y-4">
                         @foreach(explode("\n", $biography) as $paragraph)
                             @if(trim($paragraph))
                                 <p>{{ $paragraph }}</p>
@@ -162,14 +162,15 @@
                                 <h3 class="text-white text-xl font-semibold">{{ $training->getTranslation('title', $locale) }}</h3>
 
                                 <div class="flex flex-col gap-2 flex-1">
-                                    @if($training->schedule_days)
+                                    @if($training->schedules->isNotEmpty())
                                         <div class="flex items-center gap-2 text-[#888888] text-sm">
                                             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
                                             </svg>
                                             <span>
-                                                {{ collect($training->schedule_days)->map(fn ($d) => __('coach_detail.days.' . $d))->join(', ') }}@if($training->start_time), {{ \Illuminate\Support\Str::substr($training->start_time, 0, 5) }}@if($training->duration_minutes) - {{ \Carbon\Carbon::createFromFormat('H:i:s', $training->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}@endif
-                                                @endif
+                                                @foreach($training->schedules as $schedule)
+                                                    {{ __('coach_detail.days.' . $schedule->day) }} {{ $schedule->start_time ? \Illuminate\Support\Str::substr($schedule->start_time, 0, 5) : '' }}@if($schedule->start_time && $training->duration_minutes) - {{ \Carbon\Carbon::createFromFormat('H:i:s', $schedule->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}@endif@if(!$loop->last), @endif
+                                                @endforeach
                                             </span>
                                         </div>
                                     @endif
@@ -208,7 +209,7 @@
                         <h2 class="font-display font-bold text-4xl tracking-[0.5px]">{{ __('AKTÍVNY ATLÉT') }}</h2>
                     </div>
 
-                    <p class="text-[#AAAAAA] text-base leading-[1.8]">
+                    <p class="text-[#AAAAAA] text-base leading-relaxed">
                         {{ __('Okrem trénerskej činnosti som aj aktívnym súťažiacim športovcom.') }}
                     </p>
 
@@ -225,7 +226,7 @@
 
     {{-- Gallery Section --}}
     @if($gallery->isNotEmpty())
-        <x-profile-gallery :items="$gallery" :locale="$locale" />
+        <x-profile-gallery :media="$gallery" />
     @endif
 
     {{-- Other Coaches --}}

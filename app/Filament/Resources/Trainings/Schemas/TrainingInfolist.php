@@ -6,7 +6,9 @@ use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Training;
 use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\SpatieMediaLibraryImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -29,6 +31,10 @@ class TrainingInfolist
                             ->schema(self::scheduleTab()),
                         Tabs\Tab::make('Registrácia')
                             ->schema(self::registrationTab()),
+                        Tabs\Tab::make('Potvrdzovací e-mail')
+                            ->schema(self::confirmationEmailTab()),
+                        Tabs\Tab::make('Galéria')
+                            ->schema(self::galleryTab()),
                         Tabs\Tab::make('Nastavenia')
                             ->schema(self::settingsTab()),
                     ])
@@ -112,21 +118,30 @@ class TrainingInfolist
                                 ->placeholder('-'),
                             TextEntry::make('start_time')
                                 ->label('Čas začiatku')
-                                ->placeholder('-'),
-                            TextEntry::make('schedule_days')
-                                ->label('Dni v týždni')
-                                ->badge()
-                                ->formatStateUsing(fn (string $state): string => match ($state) {
-                                    'monday' => 'Po',
-                                    'tuesday' => 'Ut',
-                                    'wednesday' => 'St',
-                                    'thursday' => 'Št',
-                                    'friday' => 'Pi',
-                                    'saturday' => 'So',
-                                    'sunday' => 'Ne',
-                                    default => $state,
-                                })
-                                ->color('primary')
+                                ->placeholder('-')
+                                ->visible(fn ($record): bool => ! $record->is_recurring),
+                            RepeatableEntry::make('schedules')
+                                ->label('Rozvrh')
+                                ->schema([
+                                    TextEntry::make('day')
+                                        ->label('Deň')
+                                        ->badge()
+                                        ->formatStateUsing(fn (string $state): string => match ($state) {
+                                            'monday' => 'Pondelok',
+                                            'tuesday' => 'Utorok',
+                                            'wednesday' => 'Streda',
+                                            'thursday' => 'Štvrtok',
+                                            'friday' => 'Piatok',
+                                            'saturday' => 'Sobota',
+                                            'sunday' => 'Nedeľa',
+                                            default => $state,
+                                        })
+                                        ->color('primary'),
+                                    TextEntry::make('start_time')
+                                        ->label('Čas')
+                                        ->placeholder('-'),
+                                ])
+                                ->columns(2)
                                 ->visible(fn ($record): bool => (bool) $record->is_recurring),
                             TextEntry::make('event_date')
                                 ->label('Dátum')
@@ -204,6 +219,58 @@ class TrainingInfolist
         ];
     }
 
+    private static function confirmationEmailTab(): array
+    {
+        return [
+            Section::make('Obsah potvrdzovacieho e-mailu')
+                ->schema([
+                    TextEntry::make('confirmation_email_content')
+                        ->label('Obsah e-mailu')
+                        ->placeholder('Žiadny vlastný obsah e-mailu')
+                        ->formatStateUsing(function ($state): string {
+                            if (empty($state)) {
+                                return '';
+                            }
+
+                            $locales = [];
+                            $content = is_string($state) ? json_decode($state, true) : $state;
+                            if (is_array($content)) {
+                                foreach ($content as $locale => $bricks) {
+                                    if (! empty($bricks)) {
+                                        $locales[] = strtoupper($locale);
+                                    }
+                                }
+                            }
+
+                            return $locales ? 'Nakonfigurované pre: '.implode(', ', $locales) : '';
+                        })
+                        ->columnSpanFull(),
+                ]),
+            Section::make('Prílohy e-mailu')
+                ->schema([
+                    SpatieMediaLibraryImageEntry::make('email_attachments')
+                        ->label('Prílohy')
+                        ->collection('email_attachments')
+                        ->placeholder('Žiadne prílohy')
+                        ->columnSpanFull(),
+                ]),
+        ];
+    }
+
+    private static function galleryTab(): array
+    {
+        return [
+            Section::make('Galéria')
+                ->schema([
+                    ImageEntry::make('gallery_images')
+                        ->label('Fotky')
+                        ->disk('public')
+                        ->placeholder('Žiadne fotky')
+                        ->columnSpanFull(),
+                ]),
+        ];
+    }
+
     private static function settingsTab(): array
     {
         return [
@@ -231,6 +298,12 @@ class TrainingInfolist
                         ->placeholder('Všetky'),
                     IconEntry::make('is_active')
                         ->label('Aktívny')
+                        ->boolean(),
+                    TextEntry::make('season.name')
+                        ->label('Sezóna')
+                        ->placeholder('Bez sezóny'),
+                    IconEntry::make('is_recurring_across_seasons')
+                        ->label('Opakovať v ďalšej sezóne')
                         ->boolean(),
                     TextEntry::make('sort_order')
                         ->label('Poradie'),

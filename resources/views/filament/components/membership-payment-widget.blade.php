@@ -1,6 +1,6 @@
 @php
     $team = \Filament\Facades\Filament::getTenant();
-    $enabledMethods = $team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
+    $enabledMethods = $team?->getEnabledPaymentMethodKeys() ?? [];
     $feeAmount = $season->proratedFee();
     $feeCurrency = $season->fee_currency ?? 'EUR';
 @endphp

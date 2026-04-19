@@ -38,7 +38,7 @@
             {{-- Search Section --}}
             <div class="space-y-4">
                 <label class="text-bcz-lighter text-[13px] font-semibold">Hľadať tím</label>
-                <div class="flex items-center gap-3 bg-[#111111] border border-bcz-border rounded-lg h-12 px-4">
+                <div class="flex items-center gap-3 bg-[#111111] border border-bcz-border h-12 px-4">
                     <svg class="w-[18px] h-[18px] text-bcz-dim flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input
                         type="text"
@@ -73,7 +73,7 @@
                             @else
                                 <button
                                     wire:click="selectTeam('{{ $team->id }}')"
-                                    class="px-5 py-2.5 rounded-lg text-xs font-bold {{ $selectedTeamId === $team->id ? 'bg-bcz-red text-white' : 'border border-bcz-faint text-bcz-lighter hover:border-bcz-muted' }} transition-colors"
+                                    class="px-5 py-2.5 text-xs font-bold {{ $selectedTeamId === $team->id ? 'bg-bcz-red text-white' : 'border border-bcz-faint text-bcz-lighter hover:border-bcz-muted' }} transition-colors"
                                 >
                                     {{ $team->join_mode?->value === 'open' ? 'Pripojiť sa' : 'Požiadať' }}
                                 </button>
@@ -92,7 +92,7 @@
                             type="text"
                             wire:model="requestName"
                             placeholder="Vaše meno"
-                            class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                            class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                         >
                         @error('requestName') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
 
@@ -100,13 +100,15 @@
                             type="email"
                             wire:model="requestEmail"
                             placeholder="Váš email"
-                            class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                            class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                         >
                         @error('requestEmail') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                     </div>
+                    <x-gdpr-checkbox />
+
                     <button
                         wire:click="submitGuestRequest"
-                        class="w-full bg-bcz-red text-white text-sm font-bold rounded-lg h-11 hover:bg-red-700 transition-colors"
+                        class="w-full bg-bcz-red text-white text-sm font-bold h-11 hover:bg-red-700 transition-colors"
                     >
                         Odoslať žiadosť
                     </button>
@@ -137,7 +139,7 @@
             <div class="space-y-3">
                 <label class="text-bcz-lighter text-[13px] font-semibold">Pozývací kód</label>
                 <div class="flex items-center gap-3">
-                    <div class="flex-1 flex items-center gap-3 bg-[#111111] border border-bcz-border rounded-lg h-12 px-4">
+                    <div class="flex-1 flex items-center gap-3 bg-[#111111] border border-bcz-border h-12 px-4">
                         <svg class="w-[18px] h-[18px] text-bcz-dim flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                         <input
                             type="text"
@@ -148,7 +150,7 @@
                     </div>
                     <button
                         wire:click="redeemCode"
-                        class="bg-bcz-red text-white text-[13px] font-bold rounded-lg h-12 px-7 hover:bg-red-700 transition-colors flex-shrink-0"
+                        class="bg-bcz-red text-white text-[13px] font-bold h-12 px-7 hover:bg-red-700 transition-colors flex-shrink-0"
                     >
                         Pripojiť sa
                     </button>

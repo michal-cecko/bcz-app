@@ -170,6 +170,7 @@ class MembersRelationManager extends RelationManager
                     ->label('Pridať členstvo')
                     ->modalHeading('Pridať členstvo')
                     ->icon('heroicon-o-identification')
+                    ->visible(fn (User $record): bool => $record->hasRole(RoleEnum::CUSTOMER->value))
                     ->schema([
                         Select::make('team_season_id')
                             ->label('Sezóna')

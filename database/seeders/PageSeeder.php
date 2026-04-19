@@ -246,6 +246,26 @@ class PageSeeder extends Seeder
                 'sort_order' => 15,
                 'content' => fn () => self::pricingContent(),
             ],
+            [
+                'system_key' => 'privacy_policy',
+                'title' => ['sk' => 'Ochrana osobných údajov', 'en' => 'Privacy Policy', 'cs' => 'Ochrana osobních údajů'],
+                'slug' => 'ochrana-osobnych-udajov',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 16,
+                'content' => fn () => self::privacyPolicyContent(),
+            ],
+            [
+                'system_key' => 'terms_of_use',
+                'title' => ['sk' => 'Podmienky používania', 'en' => 'Terms of Use', 'cs' => 'Podmínky používání'],
+                'slug' => 'podmienky-pouzivania',
+                'status' => PageStatusEnum::Published,
+                'is_system' => true,
+                'published_at' => now(),
+                'sort_order' => 17,
+                'content' => fn () => self::termsOfUseContent(),
+            ],
         ];
 
         Page::query()->where('is_system', true)->forceDelete();
@@ -411,16 +431,11 @@ class PageSeeder extends Seeder
                     ['year' => '2024', 'title' => ['sk' => 'Dnes a ďalej', 'en' => 'Today and Beyond', 'cs' => 'Dnes a dále'], 'description' => ['sk' => 'Medzinárodné súťaže, profesionálne tréningy, vystúpenia po celej krajine. Cesta pokračuje.', 'en' => 'International competitions, professional training, performances across the country. The journey continues.', 'cs' => 'Mezinárodní soutěže, profesionální tréninky, vystoupení po celé zemi. Cesta pokračuje.']],
                 ],
             ]),
-            self::brick('person-cards', [
+            self::brick('athletes-showcase', [
                 'label' => ['sk' => 'ĽUDIA', 'en' => 'PEOPLE', 'cs' => 'LIDÉ'],
                 'title' => ['sk' => 'SPOZNAJTE NAŠICH ŠPORTOVCOV', 'en' => 'MEET OUR ATHLETES', 'cs' => 'POZNEJTE NAŠE SPORTOVCE'],
-                'subtitle' => ['sk' => 'Talentovaní jednotlivci, ktorí reprezentujú BCZ Club na súťažiach po celom svete.', 'en' => 'Talented individuals who represent BCZ Club in competitions around the world.', 'cs' => 'Talentovaní jednotlivci, kteří reprezentují BCZ Club na soutěžích po celém světě.'],
-                'people' => [
-                    ['image' => self::media('person-dominik'), 'name' => ['sk' => 'DOMINIK KLIMEK', 'en' => 'DOMINIK KLIMEK', 'cs' => 'DOMINIK KLIMEK'], 'role' => ['sk' => 'Zakladateľ & Športovec', 'en' => 'Founder & Athlete', 'cs' => 'Zakladatel & Sportovec'], 'description' => ['sk' => '10+ rokov v parkour. Viaceré medaily z národných majstrovstiev. Špecializuje sa na freestyle a flow.', 'en' => '10+ years in parkour. Multiple medals from national championships. Specializes in freestyle and flow.', 'cs' => '10+ let v parkouru. Několik medailí z národních mistrovství. Specializuje se na freestyle a flow.']],
-                    ['image' => self::media('person-michal'), 'name' => ['sk' => 'MICHAL ČEČKO', 'en' => 'MICHAL ČEČKO', 'cs' => 'MICHAL ČEČKO'], 'role' => ['sk' => 'Spoluzakladateľ & Športovec', 'en' => 'Co-founder & Athlete', 'cs' => 'Spoluzakladatel & Sportovec'], 'description' => ['sk' => 'Freerunning špecialista s medzinárodnými skúsenosťami zo súťaží. Známy kreatívnymi a technickými pohybmi.', 'en' => 'Freerunning specialist with international competition experience. Known for creative and technical movements.', 'cs' => 'Freerunning specialista s mezinárodními zkušenostmi ze soutěží. Známý kreativními a technickými pohyby.']],
-                    ['image' => self::media('person-member1'), 'name' => ['sk' => 'ČLEN TÍMU', 'en' => 'TEAM MEMBER', 'cs' => 'ČLEN TÝMU'], 'role' => ['sk' => 'Súťažný športovec', 'en' => 'Competitive Athlete', 'cs' => 'Soutěžní sportovec'], 'description' => ['sk' => 'Stúpajúci talent na kalistenickej scéne. Súťaží na národných aj medzinárodných podujatiach.', 'en' => 'Rising talent on the calisthenics scene. Competes at national and international events.', 'cs' => 'Stoupající talent na kalistenické scéně. Soutěží na národních i mezinárodních akcích.']],
-                    ['image' => self::media('person-member2'), 'name' => ['sk' => 'ČLEN TÍMU', 'en' => 'TEAM MEMBER', 'cs' => 'ČLEN TÝMU'], 'role' => ['sk' => 'Súťažný športovec', 'en' => 'Competitive Athlete', 'cs' => 'Soutěžní sportovec'], 'description' => ['sk' => 'Prináša silu a eleganciu do nášho tímu. Zameriava sa na freestyle a akrobatické pohyby.', 'en' => 'Brings strength and elegance to our team. Focuses on freestyle and acrobatic movements.', 'cs' => 'Přináší sílu a eleganci do našeho týmu. Zaměřuje se na freestyle a akrobatické pohyby.']],
-                ],
+                'description' => ['sk' => 'Talentovaní jednotlivci, ktorí reprezentujú BCZ Club na súťažiach po celom svete.', 'en' => 'Talented individuals who represent BCZ Club in competitions around the world.', 'cs' => 'Talentovaní jednotlivci, kteří reprezentují BCZ Club na soutěžích po celém světě.'],
+                'random' => true,
             ]),
             self::brick('person-cards', [
                 'label' => ['sk' => 'UČ SA OD NAJLEPŠÍCH', 'en' => 'LEARN FROM THE BEST', 'cs' => 'UČ SE OD NEJLEPŠÍCH'],
@@ -478,6 +493,7 @@ class PageSeeder extends Seeder
         return [
             self::brick('hero', [
                 'layout' => 'left',
+                'background_image' => 'https://picsum.photos/seed/contact-hero/1440/800',
                 'badge' => ['sk' => 'KONTAKT', 'en' => 'CONTACT', 'cs' => 'KONTAKT'],
                 'title' => ['sk' => 'Napíšte nám', 'en' => 'Write to us', 'cs' => 'Napište nám'],
                 'subtitle' => ['sk' => 'Máte otázku, chcete si dohodnúť tréning alebo spoluprácu? Sme tu pre vás.', 'en' => 'Have a question, want to arrange a training or collaboration? We are here for you.', 'cs' => 'Máte otázku, chcete si dohodnout trénink nebo spolupráci? Jsme tu pro vás.'],
@@ -1367,16 +1383,50 @@ class PageSeeder extends Seeder
     private static function competitionsArchiveContent(): array
     {
         return [
-            self::brick('hero', [
-                'layout' => 'centered',
-                'title' => ['sk' => 'SÚŤAŽE', 'en' => 'COMPETITIONS', 'cs' => 'SOUTĚŽE'],
-                'subtitle' => ['sk' => 'Prehľad všetkých súťaží na platforme BCZ', 'en' => 'Overview of all competitions on the BCZ platform', 'cs' => 'Přehled všech soutěží na platformě BCZ'],
-                'breadcrumb' => [
-                    ['text' => ['sk' => 'DOMOV', 'en' => 'HOME', 'cs' => 'DOMŮ'], 'url' => '/'],
-                    ['text' => ['sk' => 'SÚŤAŽE', 'en' => 'COMPETITIONS', 'cs' => 'SOUTĚŽE'], 'url' => ''],
+            self::brick('competition-hero', [
+                'headline1' => ['sk' => 'BOJUJEME', 'en' => 'WE FIGHT', 'cs' => 'BOJUJEME'],
+                'headline2' => ['sk' => 'ZA VÍŤAZSTVO', 'en' => 'FOR VICTORY', 'cs' => 'ZA VÍTĚZSTVÍ'],
+                'subtitle' => ['sk' => 'Reprezentujeme Slovensko na medzinárodných súťažiach v parkour freestyle, speed a skill competition.', 'en' => 'We represent Slovakia in international parkour freestyle, speed and skill competitions.', 'cs' => 'Reprezentujeme Slovensko na mezinárodních soutěžích v parkour freestyle, speed a skill competition.'],
+                'badge' => ['sk' => 'SÚŤAŽNÝ TÍM BCZ', 'en' => 'BCZ COMPETITION TEAM', 'cs' => 'SOUTĚŽNÍ TÝM BCZ'],
+                'cta_link_type' => 'url',
+                'cta_link_url' => ['sk' => '#upcoming', 'en' => '#upcoming', 'cs' => '#upcoming'],
+                'cta_text' => ['sk' => 'Najbližšie súťaže', 'en' => 'Upcoming competitions', 'cs' => 'Nejbližší soutěže'],
+                'secondary_cta_link_type' => 'url',
+                'secondary_cta_link_url' => ['sk' => '/kontakt', 'en' => '/en/kontakt', 'cs' => '/cs/kontakt'],
+                'secondary_cta_text' => ['sk' => 'Kontaktujte nás', 'en' => 'Contact us', 'cs' => 'Kontaktujte nás'],
+                'stats' => [
+                    ['number' => '15+', 'label' => ['sk' => 'Súťaží', 'en' => 'Competitions', 'cs' => 'Soutěží']],
+                    ['number' => '20+', 'label' => ['sk' => 'Atlétov', 'en' => 'Athletes', 'cs' => 'Atletů']],
+                    ['number' => '5+', 'label' => ['sk' => 'Krajín', 'en' => 'Countries', 'cs' => 'Zemí']],
                 ],
             ]),
-            self::brick('competitions-archive', []),
+            self::brick('competitions-archive', [
+                'label' => ['sk' => 'NADCHÁDZAJÚCE', 'en' => 'UPCOMING', 'cs' => 'NADCHÁZEJÍCÍ'],
+                'title' => ['sk' => 'NAJBLIŽŠIE SÚŤAŽE', 'en' => 'UPCOMING COMPETITIONS', 'cs' => 'NEJBLIŽŠÍ SOUTĚŽE'],
+                'description' => ['sk' => 'Sledujte náš kalendár súťaží a príďte nás povzbudiť.', 'en' => 'Follow our competition calendar and come cheer us on.', 'cs' => 'Sledujte náš kalendář soutěží a přijďte nás povzbudit.'],
+            ]),
+            self::brick('finished-competitions', [
+                'label' => ['sk' => 'NAŠE ÚSPECHY', 'en' => 'OUR ACHIEVEMENTS', 'cs' => 'NAŠE ÚSPĚCHY'],
+                'title' => ['sk' => 'VÝSLEDKY ZO SÚŤAŽÍ', 'en' => 'COMPETITION RESULTS', 'cs' => 'VÝSLEDKY ZE SOUTĚŽÍ'],
+                'description' => ['sk' => 'Najnovšie umiestnenia a medaily našich atlétov.', 'en' => 'Latest placements and medals of our athletes.', 'cs' => 'Nejnovější umístění a medaile našich atletů.'],
+            ]),
+            self::brick('athletes-showcase', [
+                'label' => ['sk' => 'NÁŠ TÍM', 'en' => 'OUR TEAM', 'cs' => 'NÁŠ TÝM'],
+                'title' => ['sk' => 'SÚŤAŽIACI ATLÉTI', 'en' => 'COMPETING ATHLETES', 'cs' => 'SOUTĚŽÍCÍ ATLETI'],
+                'description' => ['sk' => 'Spoznajte našich reprezentantov, ktorí bojujú o medaily na domácich aj medzinárodných súťažiach.', 'en' => 'Meet our representatives who fight for medals at domestic and international competitions.', 'cs' => 'Poznejte naše reprezentanty, kteří bojují o medaile na domácích i mezinárodních soutěžích.'],
+                'random' => true,
+            ]),
+            self::brick('competition-cta', [
+                'title' => ['sk' => 'CHCEŠ SÚŤAŽIŤ S NAMI?', 'en' => 'WANT TO COMPETE WITH US?', 'cs' => 'CHCEŠ SOUTĚŽIT S NÁMI?'],
+                'description' => ['sk' => 'Pridaj sa k nášmu tímu a reprezentuj Slovensko na medzinárodných súťažiach v parkour a freerunning.', 'en' => 'Join our team and represent Slovakia in international parkour and freerunning competitions.', 'cs' => 'Přidej se k našemu týmu a reprezentuj Slovensko na mezinárodních soutěžích v parkour a freerunning.'],
+                'background_color' => '#FF2D2D',
+                'button_link_type' => 'url',
+                'button_link_url' => ['sk' => '/kontakt', 'en' => '/en/kontakt', 'cs' => '/cs/kontakt'],
+                'button_text' => ['sk' => 'Pridať sa do tímu', 'en' => 'Join the team', 'cs' => 'Přidat se do týmu'],
+                'secondary_link_type' => 'url',
+                'secondary_link_url' => ['sk' => '/kontakt', 'en' => '/en/kontakt', 'cs' => '/cs/kontakt'],
+                'secondary_text' => ['sk' => 'Kontaktovať', 'en' => 'Contact', 'cs' => 'Kontaktovat'],
+            ]),
         ];
     }
 
@@ -1525,6 +1575,42 @@ class PageSeeder extends Seeder
         Storage::disk('public')->put($path, $response->body());
 
         return $path;
+    }
+
+    /** @return list<array{type: string, attrs: array}> */
+    private static function privacyPolicyContent(): array
+    {
+        return [
+            self::brick('heading', [
+                'title' => ['sk' => 'OCHRANA OSOBNÝCH ÚDAJOV', 'en' => 'PRIVACY POLICY', 'cs' => 'OCHRANA OSOBNÍCH ÚDAJŮ'],
+                'subtitle' => ['sk' => 'Informácie o spracovaní osobných údajov podľa čl. 13 GDPR', 'en' => 'Information on personal data processing under Art. 13 GDPR', 'cs' => 'Informace o zpracování osobních údajů podle čl. 13 GDPR'],
+            ]),
+            self::brick('rich-text', [
+                'content' => [
+                    'sk' => '<h3>1. Prevádzkovateľ</h3><p>Street Workout Kysuce, o.z., IČO: 54 188 440, sídlo: Kukučínova 1322/36, 022 01 Čadca (ďalej len „prevádzkovateľ"). Kontakt: info@bczclub.sk</p><h3>2. Aké osobné údaje spracovávame</h3><p>Spracovávame nasledovné kategórie osobných údajov:</p><ul><li><strong>Identifikačné údaje:</strong> meno, priezvisko, dátum narodenia, pohlavie</li><li><strong>Kontaktné údaje:</strong> e-mailová adresa, telefónne číslo</li><li><strong>Údaje o členstve:</strong> typ členstva, platobné údaje, história registrácií</li><li><strong>Údaje z formulárov:</strong> údaje zadané v registračných formulároch na tréningy, súťaže a podujatia</li><li><strong>Technické údaje:</strong> cookies, IP adresa (spracované cez Cookiebot)</li></ul><h3>3. Účel a právny základ spracovania</h3><ul><li><strong>Registrácia a členstvo:</strong> plnenie zmluvy (čl. 6 ods. 1 písm. b) GDPR)</li><li><strong>Organizácia tréningov a podujatí:</strong> oprávnený záujem (čl. 6 ods. 1 písm. f) GDPR)</li><li><strong>Komunikácia a dopyty:</strong> súhlas (čl. 6 ods. 1 písm. a) GDPR)</li><li><strong>Účtovné a daňové povinnosti:</strong> zákonná povinnosť (čl. 6 ods. 1 písm. c) GDPR)</li><li><strong>Verejné profily trénerov/atlétov:</strong> súhlas (čl. 6 ods. 1 písm. a) GDPR)</li></ul><h3>4. Doba uchovávania údajov</h3><p>Osobné údaje uchovávame počas trvania členstva a 3 roky po jeho ukončení. Účtovné doklady uchovávame 10 rokov v súlade so zákonom o účtovníctve. Údaje spracované na základe súhlasu uchovávame do odvolania súhlasu.</p><h3>5. Príjemcovia osobných údajov</h3><p>Vaše údaje môžu byť poskytnuté nasledovným príjemcom:</p><ul><li>GoPay s.r.o. — spracovanie platieb</li><li>Poskytovateľ hostingu a e-mailových služieb</li><li>Orgány verejnej moci — ak to vyžaduje zákon</li></ul><h3>6. Vaše práva</h3><p>Máte právo na:</p><ul><li><strong>Prístup</strong> k vašim osobným údajom</li><li><strong>Opravu</strong> nesprávnych údajov</li><li><strong>Vymazanie</strong> údajov (právo na zabudnutie)</li><li><strong>Obmedzenie</strong> spracovania</li><li><strong>Prenosnosť</strong> údajov</li><li><strong>Námietku</strong> proti spracovaniu</li><li><strong>Odvolanie súhlasu</strong> kedykoľvek</li></ul><p>Svoje práva môžete uplatniť zaslaním e-mailu na info@bczclub.sk. Máte tiež právo podať sťažnosť na Úrad na ochranu osobných údajov SR (www.dataprotection.gov.sk).</p><h3>7. Cookies</h3><p>Táto webová stránka používa cookies. Podrobné informácie o používaných cookies a možnostiach ich nastavenia nájdete v našom Cookiebot paneli, ktorý sa zobrazí pri prvej návšteve stránky.</p><p><em>Posledná aktualizácia: apríl 2026</em></p>',
+                    'en' => '<h3>1. Data Controller</h3><p>Street Workout Kysuce, o.z., ID: 54 188 440, registered at: Kukučínova 1322/36, 022 01 Čadca, Slovakia (hereinafter "controller"). Contact: info@bczclub.sk</p><h3>2. Personal Data We Process</h3><p>We process the following categories of personal data:</p><ul><li><strong>Identification data:</strong> name, surname, date of birth, gender</li><li><strong>Contact data:</strong> email address, phone number</li><li><strong>Membership data:</strong> membership type, payment details, registration history</li><li><strong>Form data:</strong> data entered in registration forms for trainings, competitions and events</li><li><strong>Technical data:</strong> cookies, IP address (processed via Cookiebot)</li></ul><h3>3. Purpose and Legal Basis</h3><ul><li><strong>Registration and membership:</strong> performance of contract (Art. 6(1)(b) GDPR)</li><li><strong>Organization of trainings and events:</strong> legitimate interest (Art. 6(1)(f) GDPR)</li><li><strong>Communication and inquiries:</strong> consent (Art. 6(1)(a) GDPR)</li><li><strong>Accounting and tax obligations:</strong> legal obligation (Art. 6(1)(c) GDPR)</li><li><strong>Public profiles of coaches/athletes:</strong> consent (Art. 6(1)(a) GDPR)</li></ul><h3>4. Data Retention Period</h3><p>We retain personal data for the duration of membership and 3 years after its termination. Accounting documents are retained for 10 years in accordance with accounting legislation. Data processed on the basis of consent is retained until consent is withdrawn.</p><h3>5. Recipients of Personal Data</h3><p>Your data may be provided to the following recipients:</p><ul><li>GoPay s.r.o. — payment processing</li><li>Hosting and email service provider</li><li>Public authorities — if required by law</li></ul><h3>6. Your Rights</h3><p>You have the right to:</p><ul><li><strong>Access</strong> your personal data</li><li><strong>Rectification</strong> of inaccurate data</li><li><strong>Erasure</strong> of data (right to be forgotten)</li><li><strong>Restriction</strong> of processing</li><li><strong>Data portability</strong></li><li><strong>Object</strong> to processing</li><li><strong>Withdraw consent</strong> at any time</li></ul><p>You can exercise your rights by sending an email to info@bczclub.sk. You also have the right to lodge a complaint with the Slovak Data Protection Authority (www.dataprotection.gov.sk).</p><h3>7. Cookies</h3><p>This website uses cookies. Detailed information about cookies used and their settings can be found in our Cookiebot panel, which is displayed on your first visit.</p><p><em>Last updated: April 2026</em></p>',
+                    'cs' => '<h3>1. Správce údajů</h3><p>Street Workout Kysuce, o.z., IČO: 54 188 440, sídlo: Kukučínova 1322/36, 022 01 Čadca, Slovensko (dále jen „správce"). Kontakt: info@bczclub.sk</p><h3>2. Jaké osobní údaje zpracováváme</h3><p>Zpracováváme následující kategorie osobních údajů:</p><ul><li><strong>Identifikační údaje:</strong> jméno, příjmení, datum narození, pohlaví</li><li><strong>Kontaktní údaje:</strong> e-mailová adresa, telefonní číslo</li><li><strong>Údaje o členství:</strong> typ členství, platební údaje, historie registrací</li><li><strong>Údaje z formulářů:</strong> údaje zadané v registračních formulářích na tréninky, soutěže a akce</li><li><strong>Technické údaje:</strong> cookies, IP adresa (zpracované přes Cookiebot)</li></ul><h3>3. Účel a právní základ zpracování</h3><ul><li><strong>Registrace a členství:</strong> plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR)</li><li><strong>Organizace tréninků a akcí:</strong> oprávněný zájem (čl. 6 odst. 1 písm. f) GDPR)</li><li><strong>Komunikace a dotazy:</strong> souhlas (čl. 6 odst. 1 písm. a) GDPR)</li><li><strong>Účetní a daňové povinnosti:</strong> zákonná povinnost (čl. 6 odst. 1 písm. c) GDPR)</li><li><strong>Veřejné profily trenérů/atletů:</strong> souhlas (čl. 6 odst. 1 písm. a) GDPR)</li></ul><h3>4. Doba uchovávání údajů</h3><p>Osobní údaje uchováváme po dobu trvání členství a 3 roky po jeho ukončení. Účetní doklady uchováváme 10 let v souladu se zákonem o účetnictví. Údaje zpracované na základě souhlasu uchováváme do odvolání souhlasu.</p><h3>5. Příjemci osobních údajů</h3><p>Vaše údaje mohou být poskytnuty následujícím příjemcům:</p><ul><li>GoPay s.r.o. — zpracování plateb</li><li>Poskytovatel hostingu a e-mailových služeb</li><li>Orgány veřejné moci — pokud to vyžaduje zákon</li></ul><h3>6. Vaše práva</h3><p>Máte právo na:</p><ul><li><strong>Přístup</strong> k vašim osobním údajům</li><li><strong>Opravu</strong> nesprávných údajů</li><li><strong>Výmaz</strong> údajů (právo být zapomenut)</li><li><strong>Omezení</strong> zpracování</li><li><strong>Přenositelnost</strong> údajů</li><li><strong>Námitku</strong> proti zpracování</li><li><strong>Odvolání souhlasu</strong> kdykoliv</li></ul><p>Svá práva můžete uplatnit zasláním e-mailu na info@bczclub.sk. Máte také právo podat stížnost u slovenského Úřadu na ochranu osobních údajů (www.dataprotection.gov.sk).</p><h3>7. Cookies</h3><p>Tato webová stránka používá cookies. Podrobné informace o používaných cookies a možnostech jejich nastavení najdete v našem Cookiebot panelu, který se zobrazí při první návštěvě stránky.</p><p><em>Poslední aktualizace: duben 2026</em></p>',
+                ],
+            ]),
+        ];
+    }
+
+    /** @return list<array{type: string, attrs: array}> */
+    private static function termsOfUseContent(): array
+    {
+        return [
+            self::brick('heading', [
+                'title' => ['sk' => 'PODMIENKY POUŽÍVANIA', 'en' => 'TERMS OF USE', 'cs' => 'PODMÍNKY POUŽÍVÁNÍ'],
+                'subtitle' => ['sk' => 'Pravidlá používania webovej stránky BCZ Club', 'en' => 'Rules for using the BCZ Club website', 'cs' => 'Pravidla používání webové stránky BCZ Club'],
+            ]),
+            self::brick('rich-text', [
+                'content' => [
+                    'sk' => '<h3>1. Prevádzkovateľ</h3><p>Prevádzkovateľom webovej stránky bczclub.sk je Street Workout Kysuce, o.z., IČO: 54 188 440, sídlo: Kukučínova 1322/36, 022 01 Čadca.</p><h3>2. Všeobecné ustanovenia</h3><p>Tieto podmienky upravujú pravidlá používania webovej stránky bczclub.sk a všetkých jej súčastí. Prístupom na stránku a jej používaním vyjadrujete súhlas s týmito podmienkami.</p><h3>3. Registrácia a používateľský účet</h3><p>Pre využívanie niektorých služieb (registrácia na tréningy, súťaže, členstvo) je potrebné vytvorenie používateľského účtu. Používateľ je povinný uviesť pravdivé a aktuálne údaje. Za bezpečnosť prihlasovacích údajov zodpovedá používateľ.</p><h3>4. Pravidlá správania</h3><p>Používateľ sa zaväzuje:</p><ul><li>Nepoužívať stránku na nelegálne účely</li><li>Neuverejňovať nevhodný, urážlivý alebo zavádzajúci obsah</li><li>Nezasahovať do technického fungovania stránky</li><li>Rešpektovať práva ostatných používateľov</li></ul><h3>5. Duševné vlastníctvo</h3><p>Všetok obsah na stránke (texty, grafika, logá, fotografie, videá) je chránený autorským právom. Akékoľvek kopírovanie, distribúcia alebo úprava obsahu bez písomného súhlasu prevádzkovateľa je zakázaná.</p><h3>6. Členstvo a platby</h3><p>Členstvo v združení je dobrovoľné. Členské príspevky sú považované za dar v prospech občianskeho združenia v súlade so zákonom č. 83/1990 Zb. o združovaní občanov. Prevádzkovateľ si vyhradzuje právo zmeniť výšku členských príspevkov s predchádzajúcim upozornením.</p><h3>7. Zodpovednosť</h3><p>Prevádzkovateľ nenesie zodpovednosť za:</p><ul><li>Škody vzniknuté v dôsledku nesprávneho používania stránky</li><li>Dočasnú nedostupnosť stránky z technických dôvodov</li><li>Obsah externých stránok, na ktoré vedú odkazy z tejto stránky</li></ul><h3>8. Zmeny podmienok</h3><p>Prevádzkovateľ si vyhradzuje právo tieto podmienky kedykoľvek zmeniť. O zmenách budú používatelia informovaní prostredníctvom webovej stránky.</p><h3>9. Záverečné ustanovenia</h3><p>Tieto podmienky sa riadia právnym poriadkom Slovenskej republiky. Prípadné spory budú riešené príslušnými súdmi Slovenskej republiky.</p><p><em>Posledná aktualizácia: apríl 2026</em></p>',
+                    'en' => '<h3>1. Operator</h3><p>The operator of the website bczclub.sk is Street Workout Kysuce, o.z., ID: 54 188 440, registered at: Kukučínova 1322/36, 022 01 Čadca, Slovakia.</p><h3>2. General Provisions</h3><p>These terms govern the rules for using the website bczclub.sk and all its components. By accessing and using the site, you agree to these terms.</p><h3>3. Registration and User Account</h3><p>To use certain services (registration for trainings, competitions, membership), it is necessary to create a user account. The user is obliged to provide truthful and current information. The user is responsible for the security of their login credentials.</p><h3>4. Code of Conduct</h3><p>The user agrees to:</p><ul><li>Not use the site for illegal purposes</li><li>Not publish inappropriate, offensive or misleading content</li><li>Not interfere with the technical operation of the site</li><li>Respect the rights of other users</li></ul><h3>5. Intellectual Property</h3><p>All content on the site (texts, graphics, logos, photographs, videos) is protected by copyright. Any copying, distribution or modification of content without the written consent of the operator is prohibited.</p><h3>6. Membership and Payments</h3><p>Membership in the association is voluntary. Membership fees are considered as donations to the civic association in accordance with Act No. 83/1990 Coll. on the association of citizens. The operator reserves the right to change membership fees with prior notice.</p><h3>7. Liability</h3><p>The operator is not liable for:</p><ul><li>Damages resulting from improper use of the site</li><li>Temporary unavailability of the site for technical reasons</li><li>Content of external sites linked from this site</li></ul><h3>8. Changes to Terms</h3><p>The operator reserves the right to change these terms at any time. Users will be informed of changes through the website.</p><h3>9. Final Provisions</h3><p>These terms are governed by the laws of the Slovak Republic. Any disputes will be resolved by the competent courts of the Slovak Republic.</p><p><em>Last updated: April 2026</em></p>',
+                    'cs' => '<h3>1. Provozovatel</h3><p>Provozovatelem webové stránky bczclub.sk je Street Workout Kysuce, o.z., IČO: 54 188 440, sídlo: Kukučínova 1322/36, 022 01 Čadca, Slovensko.</p><h3>2. Obecná ustanovení</h3><p>Tyto podmínky upravují pravidla používání webové stránky bczclub.sk a všech jejích součástí. Přístupem na stránku a jejím používáním vyjadřujete souhlas s těmito podmínkami.</p><h3>3. Registrace a uživatelský účet</h3><p>Pro využívání některých služeb (registrace na tréninky, soutěže, členství) je nutné vytvoření uživatelského účtu. Uživatel je povinen uvést pravdivé a aktuální údaje. Za bezpečnost přihlašovacích údajů odpovídá uživatel.</p><h3>4. Pravidla chování</h3><p>Uživatel se zavazuje:</p><ul><li>Nepoužívat stránku k nelegálním účelům</li><li>Nezveřejňovat nevhodný, urážlivý nebo zavádějící obsah</li><li>Nezasahovat do technického fungování stránky</li><li>Respektovat práva ostatních uživatelů</li></ul><h3>5. Duševní vlastnictví</h3><p>Veškerý obsah na stránce (texty, grafika, loga, fotografie, videa) je chráněn autorským právem. Jakékoli kopírování, distribuce nebo úprava obsahu bez písemného souhlasu provozovatele je zakázána.</p><h3>6. Členství a platby</h3><p>Členství ve sdružení je dobrovolné. Členské příspěvky jsou považovány za dar ve prospěch občanského sdružení v souladu se zákonem č. 83/1990 Sb. o sdružování občanů. Provozovatel si vyhrazuje právo změnit výši členských příspěvků s předchozím upozorněním.</p><h3>7. Odpovědnost</h3><p>Provozovatel nenese odpovědnost za:</p><ul><li>Škody vzniklé v důsledku nesprávného používání stránky</li><li>Dočasnou nedostupnost stránky z technických důvodů</li><li>Obsah externích stránek, na které vedou odkazy z této stránky</li></ul><h3>8. Změny podmínek</h3><p>Provozovatel si vyhrazuje právo tyto podmínky kdykoliv změnit. O změnách budou uživatelé informováni prostřednictvím webové stránky.</p><h3>9. Závěrečná ustanovení</h3><p>Tyto podmínky se řídí právním řádem Slovenské republiky. Případné spory budou řešeny příslušnými soudy Slovenské republiky.</p><p><em>Poslední aktualizace: duben 2026</em></p>',
+                ],
+            ]),
+        ];
     }
 
     private static function media(string $key): ?string

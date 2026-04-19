@@ -9,7 +9,9 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use STS\FilamentImpersonate\Actions\Impersonate;
 
 class UsersTable
@@ -57,7 +59,33 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('global_role')
+                    ->label('Globálna rola')
+                    ->options(collect(RoleEnum::globalCases())
+                        ->reject(fn (RoleEnum $r) => $r === RoleEnum::SUPER_ADMIN)
+                        ->mapWithKeys(fn (RoleEnum $r) => [$r->value => $r->getLabel()])
+                        ->all())
+                    ->query(fn (Builder $query, array $data): Builder => $data['value']
+                        ? $query->whereHas('roles', fn (Builder $q) => $q->where('name', $data['value']))
+                        : $query),
+                SelectFilter::make('team_role')
+                    ->label('Tímová rola')
+                    ->options(collect(RoleEnum::teamScopedCases())
+                        ->mapWithKeys(fn (RoleEnum $r) => [$r->value => $r->getLabel()])
+                        ->all())
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (! $data['value']) {
+                            return $query;
+                        }
+
+                        $tenant = filament()->getTenant();
+
+                        return $tenant
+                            ? $query->whereHas('teams', fn (Builder $q) => $q
+                                ->where('teams.id', $tenant->id)
+                                ->where('team_user.role', $data['value']))
+                            : $query;
+                    }),
             ])
             ->recordActions([
                 Impersonate::make(),

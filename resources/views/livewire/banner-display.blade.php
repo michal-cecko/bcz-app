@@ -5,7 +5,7 @@
             {!! $topbarHtml !!}
             <button
                 wire:click="dismissTopbar"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors z-10"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors z-10 cursor-pointer"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -33,7 +33,7 @@
                 <button
                     wire:click="dismissFloating"
                     @click="show = false"
-                    class="absolute right-3 top-3 z-10 transition-colors {{ $floatingIsLight ? 'w-8 h-8 flex items-center justify-center rounded-lg bg-[#F5F5F5] text-[#888888] hover:text-[#333333]' : 'text-[#555555] hover:text-white' }}"
+                    class="absolute right-3 top-3 z-10 transition-colors cursor-pointer {{ $floatingIsLight ? 'w-8 h-8 flex items-center justify-center bg-[#F5F5F5] text-[#888888] hover:text-[#333333]' : 'text-[#555555] hover:text-white' }}"
                 >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -71,12 +71,12 @@
                         x-transition:leave="transition ease-in duration-200"
                         x-transition:leave-start="opacity-100 scale-100"
                         x-transition:leave-end="opacity-0 scale-95"
-                        class="bg-[#111111] border border-[#222222] rounded-[20px] overflow-hidden w-[460px] max-w-full relative"
+                        class="bg-[#111111] border border-[#222222] overflow-hidden w-[460px] max-w-full relative"
                     >
                         {{-- Close button --}}
                         <button
                             @click="open = false; $wire.dismissPopup()"
-                            class="absolute right-4 top-4 text-[#666666] hover:text-white transition-colors z-10"
+                            class="absolute right-4 top-4 text-[#666666] hover:text-white transition-colors z-10 cursor-pointer"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>

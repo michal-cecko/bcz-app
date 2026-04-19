@@ -25,7 +25,7 @@
                                     :class="selected === '{{ $reasonOption->value }}'
                                         ? 'border-bcz-red bg-[#FF2D2D15] text-white'
                                         : 'border-[#333333] bg-[#111111] text-[#CCCCCC] hover:border-bcz-red'"
-                                    class="rounded-lg border px-4 py-2.5 text-sm cursor-pointer transition"
+                                    class="border px-4 py-2.5 text-sm cursor-pointer transition"
                                 >
                                     {{ $reasonOption->getLabel() }}
                                 </button>
@@ -38,12 +38,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="flex flex-col gap-2">
                         <label class="text-white text-sm font-semibold">Meno a priezvisko</label>
-                        <input wire:model="name" type="text" class="bg-[#111111] border border-[#333333] rounded-lg px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="Meno a priezvisko">
+                        <input wire:model="name" type="text" class="bg-[#111111] border border-[#333333] px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="Meno a priezvisko">
                         @error('name') <p class="text-bcz-red text-sm">{{ $message }}</p> @enderror
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-white text-sm font-semibold">E-mail</label>
-                        <input wire:model="email" type="email" class="bg-[#111111] border border-[#333333] rounded-lg px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="E-mail">
+                        <input wire:model="email" type="email" class="bg-[#111111] border border-[#333333] px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="E-mail">
                         @error('email') <p class="text-bcz-red text-sm">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -52,7 +52,7 @@
                 @if($showPhone)
                     <div class="flex flex-col gap-2">
                         <label class="text-white text-sm font-semibold">Telefón (voliteľné)</label>
-                        <input wire:model="phone" type="tel" class="bg-[#111111] border border-[#333333] rounded-lg px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="+421">
+                        <input wire:model="phone" type="tel" class="bg-[#111111] border border-[#333333] px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="+421">
                         @error('phone') <p class="text-bcz-red text-sm">{{ $message }}</p> @enderror
                     </div>
                 @endif
@@ -60,12 +60,14 @@
                 {{-- Message --}}
                 <div class="flex flex-col gap-2">
                     <label class="text-white text-sm font-semibold">Správa</label>
-                    <textarea wire:model="message" class="bg-[#111111] border border-[#333333] rounded-lg px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full h-40 resize-none focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="Vaša správa..."></textarea>
+                    <textarea wire:model="message" class="bg-[#111111] border border-[#333333] px-4 py-3.5 text-white text-[15px] placeholder-[#666666] w-full h-40 resize-none focus:border-bcz-red focus:ring-0 focus:outline-none" placeholder="Vaša správa..."></textarea>
                     @error('message') <p class="text-bcz-red text-sm">{{ $message }}</p> @enderror
                 </div>
 
+                <x-gdpr-checkbox />
+
                 {{-- Submit --}}
-                <button type="submit" wire:loading.attr="disabled" wire:target="submit" class="bg-bcz-red text-white rounded-lg px-8 py-4 font-semibold flex items-center justify-center gap-2.5 w-fit hover:bg-red-700 transition disabled:opacity-50">
+                <button type="submit" wire:loading.attr="disabled" wire:target="submit" class="bg-bcz-red text-white px-8 py-4 font-semibold flex items-center justify-center gap-2.5 w-fit hover:bg-red-700 transition disabled:opacity-50">
                     <span wire:loading.remove wire:target="submit">Odoslať správu &rarr;</span>
                     <span wire:loading wire:target="submit">Odosielam...</span>
                 </button>

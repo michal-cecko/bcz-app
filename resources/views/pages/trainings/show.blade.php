@@ -10,9 +10,9 @@
     $placeName = $training->getTranslation('place_name', $locale);
     $gatheringPlace = $training->getTranslation('gathering_place', $locale);
     $heroImage = $training->sportCategory?->getFirstMediaUrl('hero_image');
-    $scheduleDays = collect($training->schedule_days ?? [])->map(fn ($d) => __('training_detail.days.' . $d))->join(', ');
+    $schedules = $training->schedules;
     $timeRange = '';
-    if ($training->start_time) {
+    if (!$training->is_recurring && $training->start_time) {
         $timeRange = \Illuminate\Support\Str::substr($training->start_time, 0, 5);
         if ($training->duration_minutes) {
             $timeRange .= ' - ' . \Carbon\Carbon::createFromFormat('H:i:s', $training->start_time)->addMinutes($training->duration_minutes)->format('H:i');
@@ -125,13 +125,21 @@
                             @endif
                         </span>
                     </div>
-                    @if($scheduleDays)
-                        <div class="flex items-center justify-between">
-                            <span class="text-[#666666] text-sm">{{ __('training_detail.detail_day') }}</span>
-                            <span class="text-white text-sm font-semibold">{{ $scheduleDays }}</span>
-                        </div>
-                    @endif
-                    @if($timeRange)
+                    @if($schedules->isNotEmpty())
+                        @foreach($schedules as $schedule)
+                            <div class="flex items-center justify-between">
+                                <span class="text-[#666666] text-sm">{{ __('training_detail.days.' . $schedule->day) }}</span>
+                                <span class="text-white text-sm font-semibold">
+                                    @if($schedule->start_time)
+                                        {{ \Illuminate\Support\Str::substr($schedule->start_time, 0, 5) }}
+                                        @if($training->duration_minutes)
+                                            - {{ \Carbon\Carbon::createFromFormat('H:i:s', $schedule->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}
+                                        @endif
+                                    @endif
+                                </span>
+                            </div>
+                        @endforeach
+                    @elseif($timeRange)
                         <div class="flex items-center justify-between">
                             <span class="text-[#666666] text-sm">{{ __('training_detail.detail_time') }}</span>
                             <span class="text-white text-sm font-semibold">{{ $timeRange }}</span>
@@ -365,16 +373,18 @@
 
                 {{-- Masonry Grid --}}
                 @php
-                    $mediaItems = collect($galleryImages)->map(fn ($img) => (object) array_merge(
-                        (array) brick_media($img['media'] ?? null),
-                        ['type' => $img['type'] ?? 'image']
-                    ))->values();
+                    $mediaItems = collect($galleryImages)->map(fn ($path) => (object) [
+                        'url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path),
+                        'alt' => '',
+                        'caption' => '',
+                        'type' => 'image',
+                    ])->filter(fn ($m) => $m->url)->values();
                     $colMediaItems = [[], [], []];
                     foreach ($mediaItems as $i => $item) {
                         $colMediaItems[$i % 3][] = $item;
                     }
                     $ratios = [[7, 5], [5, 7], [6, 6]];
-                    $jsData = $mediaItems->filter(fn ($m) => $m->url)->values()->map(fn ($m) => ['url' => $m->url, 'alt' => $m->alt ?? '', 'caption' => $m->caption ?? '']);
+                    $jsData = $mediaItems->map(fn ($m) => ['url' => $m->url, 'alt' => $m->alt, 'caption' => $m->caption]);
                 @endphp
                 <div
                     x-data="{ lightbox: false, current: 0, items: {{ Js::from($jsData) }} }"

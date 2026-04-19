@@ -89,10 +89,10 @@
             {{-- O sutazi --}}
             <div class="flex flex-col gap-6">
                 <h2 class="font-display font-bold text-[32px] tracking-wide text-white">O sutazi</h2>
-                <p class="text-[#CCCCCC] text-base leading-[1.8]">
+                <p class="text-[#CCCCCC] text-base leading-relaxed">
                     World Freerunning Championship 2026 je najvacsie medzinarodne podujatie v oblasti freeruningu a parkouru na Slovensku. Sutaz prinasa unikatny kombinovany format, ktory spaja kvalifikacne kola s priamymi battle suveniami. Ucastnici z celej Europy sa stretnu v Bratislave, aby predviedli svoje najlepsie triky, kreativitu a atletickost.
                 </p>
-                <p class="text-[#CCCCCC] text-base leading-[1.8]">
+                <p class="text-[#CCCCCC] text-base leading-relaxed">
                     Podujatie organizuje BCZ Club v spolupraci s medzinarodnou parkourovou federaciou. Sutaz sa kona v modernom sportovom komplexe s profesionalnym zabezpecenim, rozhodcami svetoveho formatu a zivym prenosom pre fanusikov po celom svete. Kazdy ucastnik ma moznost kvalifikovat sa do medzinarodneho rebricka.
                 </p>
             </div>

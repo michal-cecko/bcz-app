@@ -76,7 +76,7 @@
                     <h2 class="font-display font-bold text-4xl tracking-wide">AKO TO VŠETKO ZAČALO</h2>
                 </div>
 
-                <div class="text-[#AAAAAA] text-base leading-[1.8] flex flex-col gap-6">
+                <div class="text-[#AAAAAA] text-base leading-relaxed flex flex-col gap-6">
                     <p>Všetko sa začalo v roku 2016, keď som prvýkrát videl parkour video na YouTube. Okamžite som vedel, že toto je to, čo chcem robiť. Začínal som úplne od nuly - prvé saltá, prvé preskoky, prvé pády.</p>
                     <p>Prvé 2 roky som trénoval sám, učil sa z videí a pomaly budoval základy. V roku 2018 som sa pripojil k BCZ Club a začala sa nová kapitola - systematický tréning, prvé súťaže a neustály posun vpred.</p>
                     <p>Dnes, po 8 rokoch, môžem povedať, že parkour mi dal viac ako len fyzickú kondíciu. Dal mi komunitu, disciplínu a neustálu motiváciu prekonávať vlastné limity.</p>

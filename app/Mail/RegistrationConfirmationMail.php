@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use App\Enums\PaymentStatusEnum;
+use App\Models\Payment;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -32,6 +34,12 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
 
     public ?string $teamWebsite;
 
+    public ?string $paymentAmount = null;
+
+    public ?string $paymentCurrency = null;
+
+    public ?string $paymentUrl = null;
+
     public function __construct(
         public User $user,
         public string $registrationType,
@@ -39,6 +47,7 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
         public bool $isNewUser = false,
         public ?Team $team = null,
         public ?string $customContent = null,
+        public ?Payment $payment = null,
     ) {
         $this->magicUrl = $isNewUser
             ? URL::temporarySignedRoute('magic-login', now()->addDays(7), ['user' => $user->id])
@@ -55,6 +64,13 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
         $this->teamEmail = $this->team?->contact_email;
         $this->teamPhone = $this->team?->contact_phone;
         $this->teamWebsite = $this->team?->contact_website;
+
+        if ($this->payment && $this->payment->status === PaymentStatusEnum::PENDING) {
+            $symbol = $this->payment->currency === 'CZK' ? 'Kč' : '€';
+            $this->paymentAmount = number_format((float) $this->payment->amount, 2, ',', ' ').' '.$symbol;
+            $this->paymentCurrency = $this->payment->currency;
+            $this->paymentUrl = URL::signedRoute('payment.page', ['payment' => $this->payment->id]);
+        }
     }
 
     public function envelope(): Envelope

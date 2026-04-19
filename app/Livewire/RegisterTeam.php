@@ -58,6 +58,8 @@ class RegisterTeam extends Component
 
     public ?string $selectedPlanId = null;
 
+    public bool $gdprAgreed = false;
+
     // Step 4: Success data
     public ?string $createdTeamName = null;
 
@@ -78,6 +80,7 @@ class RegisterTeam extends Component
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
             'passwordConfirmation' => ['required', 'same:password'],
+            'gdprAgreed' => ['accepted'],
         ];
     }
 
@@ -94,6 +97,7 @@ class RegisterTeam extends Component
             'password.min' => 'Heslo musí mať aspoň 8 znakov.',
             'passwordConfirmation.required' => 'Potvrdenie hesla je povinné.',
             'passwordConfirmation.same' => 'Heslá sa nezhodujú.',
+            'gdprAgreed.accepted' => 'Musíte súhlasiť so spracovaním osobných údajov.',
         ];
     }
 

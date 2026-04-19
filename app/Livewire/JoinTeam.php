@@ -29,6 +29,9 @@ class JoinTeam extends Component
     #[Validate('required|email|max:255')]
     public string $requestEmail = '';
 
+    #[Validate('accepted')]
+    public bool $gdprAgreed = false;
+
     public bool $showRequestForm = false;
 
     public bool $requestSent = false;

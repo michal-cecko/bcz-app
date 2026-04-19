@@ -15,6 +15,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Number;
 
 class TrainingsTable
 {
@@ -52,12 +53,15 @@ class TrainingsTable
                         return $record->min_age.'-'.$record->max_age;
                     }),
                 TextColumn::make('pricing_type')
-                    ->label('Typ ceny')
-                    ->badge(),
-                TextColumn::make('price_amount')
                     ->label('Cena')
-                    ->money('EUR')
-                    ->placeholder('-'),
+                    ->badge()
+                    ->formatStateUsing(function (Training $record): string {
+                        if ($record->pricing_type === TrainingPricingTypeEnum::PAID && $record->price_amount) {
+                            return Number::currency($record->price_amount, 'EUR');
+                        }
+
+                        return $record->pricing_type->getLabel();
+                    }),
                 TextColumn::make('registrations_count')
                     ->counts('registrations')
                     ->label('Registrovaní')

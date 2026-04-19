@@ -6,6 +6,7 @@ use App\Enums\EventTypeEnum;
 use App\Models\Discipline;
 use Filament\Actions\AttachAction;
 use Filament\Actions\DetachAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -28,9 +29,20 @@ class JudgesRelationManager extends RelationManager
         return $ownerRecord->event_type === EventTypeEnum::Competition;
     }
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Schema $schema): Schema
     {
-        return $schema->components([]);
+        return $schema->components([
+            Select::make('discipline_id')
+                ->label('Disciplína')
+                ->options(Discipline::all()->mapWithKeys(fn (Discipline $d) => [$d->id => $d->getTranslation('name', 'sk')]))
+                ->required()
+                ->searchable(),
+        ]);
     }
 
     public function table(Table $table): Table
@@ -74,7 +86,20 @@ class JudgesRelationManager extends RelationManager
                     ]),
             ])
             ->recordActions([
-                DetachAction::make(),
+                EditAction::make()
+                    ->modalHeading('Upraviť rozhodcu')
+                    ->fillForm(fn (Model $record): array => [
+                        'discipline_id' => $record->pivot->discipline_id,
+                    ])
+                    ->using(function (Model $record, array $data) use ($detail): Model {
+                        $detail->judges()->updateExistingPivot($record->id, [
+                            'discipline_id' => $data['discipline_id'],
+                        ]);
+
+                        return $record;
+                    }),
+                DetachAction::make()
+                    ->modalHeading('Odstrániť rozhodcu'),
             ]);
     }
 }

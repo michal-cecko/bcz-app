@@ -26,6 +26,8 @@ class InquiryForm extends Component
 
     public string $reason = '';
 
+    public bool $gdprAgreed = false;
+
     public function mount(): void
     {
         if (Auth::check()) {
@@ -45,6 +47,7 @@ class InquiryForm extends Component
             'phone' => ['nullable', 'string', 'max:50'],
             'message' => ['required', 'string', 'max:5000'],
             'reason' => ['nullable', 'string'],
+            'gdprAgreed' => ['accepted'],
         ];
     }
 

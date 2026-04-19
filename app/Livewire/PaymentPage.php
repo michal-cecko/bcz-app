@@ -2,9 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Contracts\Payable;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Models\EventRegistration;
 use App\Models\Payment;
+use App\Models\TrainingRegistration;
 use App\Services\GoPayService;
 use App\Services\PaymentService;
 use App\Services\QrPaymentService;
@@ -35,7 +38,7 @@ class PaymentPage extends Component
         ]);
 
         if (! $this->isCompleted) {
-            $enabledMethods = $this->payment->team?->payment_methods_enabled ?? [];
+            $enabledMethods = $this->payment->team?->getEnabledPaymentMethodKeys() ?? [];
 
             if (count($enabledMethods) > 0) {
                 $this->selectedMethod = $enabledMethods[0];
@@ -89,7 +92,9 @@ class PaymentPage extends Component
         $goPayService = app(GoPayService::class);
 
         $orderNumber = strtoupper(substr(class_basename($payment->payable), 0, 3)).'-'.now()->format('ymd').'-'.random_int(1000, 9999);
-        $description = class_basename($payment->payable).' #'.$payment->payable?->getKey();
+        $description = $payment->payable instanceof Payable
+            ? $payment->payable->getPaymentDescription()
+            : class_basename($payment->payable).' #'.$payment->payable?->getKey();
 
         $response = $goPayService->createPayment([
             'amount' => (int) round((float) $payment->amount * 100),
@@ -169,16 +174,15 @@ class PaymentPage extends Component
      */
     public function getEnabledMethodsProperty(): array
     {
-        return $this->payment->team?->payment_methods_enabled ?? [];
+        return $this->payment->team?->getEnabledPaymentMethodKeys() ?? [];
     }
 
     public function getPayableTypeLabelProperty(): string
     {
         return match ($this->payment->payable_type) {
-            'membership' => 'Členstvo',
+            'membership' => __('event_detail.dr_membership', [], 'sk') !== 'event_detail.dr_membership' ? __('event_detail.dr_membership') : 'Členstvo',
             'training_registration' => 'Tréning',
-            'competition_registration' => 'Súťaž',
-            'event_registration' => 'Podujatie',
+            'competition_registration', 'event_registration' => 'Podujatie',
             default => 'Platba',
         };
     }
@@ -188,10 +192,28 @@ class PaymentPage extends Component
         return match ($this->payment->payable_type) {
             'membership' => 'Uhradiť členské',
             'training_registration' => 'Uhradiť tréning',
-            'competition_registration' => 'Uhradiť súťaž',
-            'event_registration' => 'Uhradiť podujatie',
+            'competition_registration', 'event_registration' => 'Uhradiť podujatie',
             default => 'Uhradiť platbu',
         };
+    }
+
+    public function getPayableNameProperty(): ?string
+    {
+        $payable = $this->payment->payable;
+
+        if (! $payable) {
+            return null;
+        }
+
+        if ($payable instanceof EventRegistration) {
+            return $payable->event?->getTranslation('title', app()->getLocale());
+        }
+
+        if ($payable instanceof TrainingRegistration) {
+            return $payable->training?->getTranslation('title', app()->getLocale());
+        }
+
+        return null;
     }
 
     public function getFormattedAmountProperty(): string

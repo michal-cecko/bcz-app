@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\Events\Tables;
 
 use App\Enums\EventTypeEnum;
+use App\Filament\Resources\Events\EventResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -80,7 +82,9 @@ class EventsTable
                 TernaryFilter::make('is_published')
                     ->label('Publikované'),
             ])
+            ->recordUrl(fn (Model $record): string => EventResource::getUrl('view', ['record' => $record]))
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

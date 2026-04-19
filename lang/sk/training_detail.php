@@ -120,6 +120,7 @@ return [
     'bank_instruction_1' => '1. Naskenuj QR kód alebo zadaj údaje v internet bankingu',
     'bank_instruction_2' => '2. Uveď správny variabilný symbol pre identifikáciu platby',
     'bank_instruction_3' => '3. Členstvo bude aktivované po pripísaní (1–3 prac. dni)',
+    'bank_instruction_3_registration' => '3. Registrácia bude potvrdená po pripísaní platby (1–3 prac. dni)',
     'bank_scan_qr' => 'Naskenuj QR',
 
     // Cash payment details
@@ -128,7 +129,11 @@ return [
     'cash_step_1' => 'Príďte na najbližší tréning s hotovosťou',
     'cash_step_2' => 'Odovzdajte platbu trénerovi pred alebo po tréningu',
     'cash_step_3' => 'Tréner potvrdí prijatie a členstvo bude aktivované',
+    'cash_step_1_registration' => 'Pripravte si hotovosť v danej sume',
+    'cash_step_2_registration' => 'Platbu odovzdajte organizátorovi na mieste',
+    'cash_step_3_registration' => 'Po prijatí platby bude vaša registrácia potvrdená',
     'cash_warning' => 'Členstvo bude aktívne až po potvrdení platby trénerom.',
+    'cash_warning_registration' => 'Registrácia bude potvrdená až po prijatí platby.',
 
     // Season info
     'season_remaining' => 'za zvyšok sezóny',

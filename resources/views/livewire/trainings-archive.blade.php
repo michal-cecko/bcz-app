@@ -25,7 +25,7 @@
             {{-- Category Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.category') }}</label>
-                <select wire:model.live="categoryFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                <select wire:model.live="categoryFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
                     <option value="">{{ __('archive.all_categories') }}</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->getTranslation('name', app()->getLocale()) }}</option>
@@ -36,7 +36,7 @@
             {{-- Day Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.day') }}</label>
-                <select wire:model.live="dayFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                <select wire:model.live="dayFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
                     <option value="">{{ __('archive.all_days') }}</option>
                     @foreach($days as $day)
                         <option value="{{ $day }}">{{ __('archive.days.' . $day) }}</option>
@@ -47,7 +47,7 @@
             {{-- Location Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.location') }}</label>
-                <select wire:model.live="locationFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                <select wire:model.live="locationFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
                     <option value="">{{ __('archive.all_locations') }}</option>
                     @foreach($locations as $location)
                         <option value="{{ $location }}">{{ $location }}</option>
@@ -58,7 +58,7 @@
             {{-- City Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.city') }}</label>
-                <select wire:model.live="cityFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                <select wire:model.live="cityFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
                     <option value="">{{ __('archive.all_cities') }}</option>
                     @foreach($cities as $city)
                         <option value="{{ $city->id }}">{{ $city->getTranslation('name', app()->getLocale()) }}</option>
@@ -69,7 +69,7 @@
             {{-- Age Group Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.age_group') }}</label>
-                <select wire:model.live="ageGroupFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                <select wire:model.live="ageGroupFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
                     <option value="">{{ __('archive.all_age_groups') }}</option>
                     @foreach($ageGroups as $ageGroup)
                         <option value="{{ $ageGroup }}">{{ $ageGroup }}</option>
@@ -80,7 +80,7 @@
             {{-- Gender Filter --}}
             <div class="flex flex-col gap-3">
                 <label class="text-[#888888] text-xs">{{ __('archive.gender') }}</label>
-                <select wire:model.live="genderFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
+                <select wire:model.live="genderFilter" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full appearance-none cursor-pointer">
                     <option value="">{{ __('archive.all_genders') }}</option>
                     @foreach($genders as $gender)
                         <option value="{{ $gender->value }}">{{ $gender->getLabel() }}</option>
@@ -95,7 +95,7 @@
                     <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888888] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
                     </svg>
-                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="{{ __('archive.search_placeholder') }}" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm rounded-lg pl-10 pr-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full placeholder-[#555555]">
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="{{ __('archive.search_placeholder') }}" class="bg-[#0A0A0A] border border-[#333333] text-white text-sm pl-10 pr-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full placeholder-[#555555]">
                 </div>
             </div>
         </div>
@@ -212,14 +212,15 @@
 
                         {{-- Info Rows --}}
                         <div class="flex flex-col gap-2 flex-1">
-                            @if($training->schedule_days)
+                            @if($training->schedules->isNotEmpty())
                                 <div class="flex items-center gap-2 text-[#888888] text-sm">
                                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
                                     </svg>
                                     <span>
-                                        {{ collect($training->schedule_days)->map(fn ($d) => __('archive.days.' . $d))->join(', ') }}@if($training->start_time), {{ \Illuminate\Support\Str::substr($training->start_time, 0, 5) }}@if($training->duration_minutes) - {{ \Carbon\Carbon::createFromFormat('H:i:s', $training->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}@endif
-                                        @endif
+                                        @foreach($training->schedules as $schedule)
+                                            {{ __('archive.days.' . $schedule->day) }} {{ $schedule->start_time ? \Illuminate\Support\Str::substr($schedule->start_time, 0, 5) : '' }}@if($schedule->start_time && $training->duration_minutes) - {{ \Carbon\Carbon::createFromFormat('H:i:s', $schedule->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}@endif@if(!$loop->last), @endif
+                                        @endforeach
                                     </span>
                                 </div>
                             @endif
@@ -293,9 +294,7 @@
         </div>
 
         @if($trainings->hasPages())
-            <div class="flex justify-center pt-10">
-                {{ $trainings->links() }}
-            </div>
+            {{ $trainings->links() }}
         @endif
     @endif
 </div>

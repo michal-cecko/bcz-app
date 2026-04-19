@@ -143,7 +143,7 @@ class UserResource extends Resource
                 'rel' => 'athleteProfile',
                 'route' => 'athlete.show',
                 'fields' => ['journey_text' => 'Môj príbeh', 'date_started_working_out' => 'Začiatok cvičenia'],
-                'visibleFn' => fn (User $r) => $r->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists(),
+                'visibleFn' => fn (User $r) => $r->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists() && ! $r->hasRole(RoleEnum::JUDGE->value),
             ],
             'judge' => [
                 'title' => 'Profil porotcu',
@@ -213,7 +213,7 @@ class UserResource extends Resource
                             $url = route($config['route'], $record);
 
                             return new HtmlString(
-                                "<a href='{$url}' target='_blank' class='fi-btn fi-btn-size-sm fi-color-gray inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold shadow-sm bg-white/5 text-white ring-1 ring-white/10 hover:bg-white/10 transition'>".
+                                "<a href='{$url}' target='_blank' class='fi-btn fi-btn-size-sm fi-color-gray inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold shadow-sm bg-gray-100 text-gray-700 ring-1 ring-gray-300 hover:bg-gray-200 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:hover:bg-white/10 transition'>".
                                 "<svg class='w-4 h-4' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' d='M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25' /></svg>".
                                 'Zobraziť verejný profil</a>'
                             );

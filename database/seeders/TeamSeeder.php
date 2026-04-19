@@ -24,7 +24,6 @@ class TeamSeeder extends Seeder
                 ],
                 'is_active' => true,
                 'default_locale' => 'sk',
-                'payment_methods_enabled' => ['gopay', 'bank_transfer', 'cash'],
             ],
         );
     }

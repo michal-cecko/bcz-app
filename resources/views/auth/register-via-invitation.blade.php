@@ -14,7 +14,7 @@
 </head>
 <body class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
     <div class="w-full max-w-md">
-        <div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-950/5 p-8">
+        <div class="bg-white shadow-sm ring-1 ring-gray-950/5 p-8">
             <div class="text-center mb-6">
                 <h1 class="text-2xl font-bold text-gray-950">Registrácia</h1>
                 <p class="mt-2 text-sm text-gray-500">
@@ -32,7 +32,7 @@
                         id="email"
                         value="{{ $invitation->email }}"
                         disabled
-                        class="w-full rounded-lg border-gray-300 bg-gray-50 text-gray-500 shadow-sm text-sm"
+                        class="w-full border-gray-300 bg-gray-50 text-gray-500 shadow-sm text-sm"
                     >
                 </div>
 
@@ -45,7 +45,7 @@
                         value="{{ old('first_name') }}"
                         required
                         autofocus
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
+                        class="w-full border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
                     >
                     @error('first_name')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -60,7 +60,7 @@
                         name="last_name"
                         value="{{ old('last_name') }}"
                         required
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
+                        class="w-full border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
                     >
                     @error('last_name')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -74,7 +74,7 @@
                         id="password"
                         name="password"
                         required
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
+                        class="w-full border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
                     >
                     @error('password')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -88,13 +88,13 @@
                         id="password_confirmation"
                         name="password_confirmation"
                         required
-                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
+                        class="w-full border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
                     >
                 </div>
 
                 <button
                     type="submit"
-                    class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 transition"
+                    class="w-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 transition"
                 >
                     Vytvoriť účet a prijať pozvánku
                 </button>

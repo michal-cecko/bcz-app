@@ -17,6 +17,8 @@ new class extends Component
 
     public array $fields = [];
 
+    public bool $gdprAgreed = false;
+
     public string $registrationState = 'form';
 
     public ?string $selectedPaymentMethod = null;
@@ -133,6 +135,9 @@ new class extends Component
             $attributes[$key] = $label;
         }
 
+        $rules['gdprAgreed'] = 'accepted';
+        $attributes['gdprAgreed'] = __('consent.privacy_policy');
+
         $this->validate($rules, [], $attributes);
 
         $schema = $this->training->registration_form_schema ?? [];
@@ -203,7 +208,7 @@ new class extends Component
 
         $paymentDueAt = $status === RegistrationStatusEnum::Pending ? now()->addDays(7) : null;
 
-        TrainingRegistration::create([
+        $registration = TrainingRegistration::create([
             'training_id' => $this->training->id,
             'user_id' => $user?->id,
             'form_data' => $this->fields,
@@ -211,6 +216,18 @@ new class extends Component
             'registered_at' => now(),
             'payment_due_at' => $paymentDueAt,
         ]);
+
+        $payment = null;
+        if ($user && $status === RegistrationStatusEnum::Pending && $this->training->price_amount) {
+            $paymentService = app(PaymentService::class);
+            $payment = $paymentService->createPendingPayment(
+                user: $user,
+                team: $this->training->team,
+                payable: $registration,
+                amount: (float) $this->training->price_amount,
+                currency: 'EUR',
+            );
+        }
 
         if ($user) {
             RegistrationService::sendConfirmation(
@@ -222,6 +239,7 @@ new class extends Component
                 customEmailContent: $this->training->confirmation_email_content,
                 locale: app()->getLocale(),
                 attachments: $this->training->getMedia('email_attachments'),
+                payment: $payment,
             );
         }
 
@@ -240,7 +258,7 @@ new class extends Component
             return;
         }
 
-        $enabledMethods = $this->training->team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
+        $enabledMethods = $this->training->team?->getEnabledPaymentMethodKeys() ?? [];
         $this->selectedPaymentMethod = $enabledMethods[0] ?? null;
     }
 
@@ -472,7 +490,7 @@ new class extends Component
         @php
             $team = $training->team;
             $season = $team->currentSeason;
-            $enabledMethods = $team->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
+            $enabledMethods = $team->getEnabledPaymentMethodKeys();
             $feeLabel = $season ? number_format($season->proratedFee(), 2) . ' ' . ($season->fee_currency ?? 'EUR') : '';
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
@@ -511,7 +529,7 @@ new class extends Component
     @elseif($registrationState === 'payment_needed')
         @php
             $team = $training->team;
-            $enabledMethods = $team->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
+            $enabledMethods = $team->getEnabledPaymentMethodKeys();
             $priceLabel = number_format($training->price_amount, 2) . ' EUR';
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
@@ -536,6 +554,7 @@ new class extends Component
                 'season' => null,
                 'variableSymbol' => $training->variable_symbol ?? null,
                 'paymentNote' => $training->payment_note ?? null,
+                'context' => 'registration',
             ])
         </div>
 
@@ -656,13 +675,13 @@ new class extends Component
 
             <div class="h-px bg-[#222222]"></div>
 
+            <x-gdpr-checkbox />
+
             {{-- Submit --}}
             <button type="submit" wire:loading.attr="disabled" class="flex items-center justify-center bg-bcz-red text-white text-sm font-bold tracking-wider px-6 py-[18px] hover:bg-red-700 transition w-full disabled:opacity-50">
                 <span wire:loading.remove>{{ __('training_detail.form_submit') }}</span>
                 <span wire:loading>{{ __('training_detail.form_submitting') }}</span>
             </button>
-
-            <p class="text-[#555555] text-xs text-center">{{ __('training_detail.form_consent') }}</p>
         </form>
     @endif
 </div>

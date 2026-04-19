@@ -17,6 +17,8 @@
     <link rel="alternate" hreflang="x-default" href="{{ url(locale_switch_url('sk')) }}">
     <link rel="canonical" href="{{ url(request()->getPathInfo()) }}">
 
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="67151dcd-4381-4ae0-8093-31caf51a32b1" data-blockingmode="auto" type="text/javascript"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @filamentStyles
     @livewireStyles

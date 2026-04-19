@@ -8,6 +8,7 @@ use App\Models\City;
 use App\Models\SportCategory;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
+use App\Models\TrainingSchedule;
 use App\Services\TrainingFilterService;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Placeholder;
@@ -26,6 +27,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
 
 class MyTrainings extends Page implements HasTable
@@ -97,13 +99,12 @@ class MyTrainings extends Page implements HasTable
                     ->formatStateUsing(fn ($record): string => $record->training->getTranslation('title', app()->getLocale()) ?: $record->training->getTranslation('title', 'sk'))
                     ->description(fn ($record): ?string => $record->training->sportCategory?->getTranslation('name', app()->getLocale()))
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('training', fn ($q) => $q->where('title', 'ilike', "%{$search}%"))),
-                TextColumn::make('training.schedule_days')
+                TextColumn::make('training.id')
                     ->label('Rozvrh')
                     ->formatStateUsing(function ($record): string {
-                        $days = $record->training->schedule_days ? implode(', ', $record->training->schedule_days) : '';
-                        $time = $record->training->start_time ?? '';
-
-                        return trim("{$days} {$time}");
+                        return $record->training->schedules
+                            ->map(fn ($s) => ucfirst(mb_substr($s->day, 0, 2)).' '.($s->start_time ? Str::substr($s->start_time, 0, 5) : ''))
+                            ->join(', ') ?: ($record->training->start_time ?? '-');
                     }),
                 TextColumn::make('training.coaches')
                     ->label('Trener')
@@ -249,13 +250,10 @@ class MyTrainings extends Page implements HasTable
             ->orderBy('name')
             ->get();
 
-        $days = Training::query()
-            ->where('is_active', true)
-            ->where('team_id', $team?->id)
-            ->whereNotNull('schedule_days')
-            ->pluck('schedule_days')
-            ->flatten()
-            ->unique()
+        $days = TrainingSchedule::query()
+            ->whereHas('training', fn ($q) => $q->where('is_active', true)->where('team_id', $team?->id))
+            ->distinct()
+            ->pluck('day')
             ->sort()
             ->values();
 
@@ -342,7 +340,7 @@ class MyTrainings extends Page implements HasTable
         }
 
         if ($this->dayFilter) {
-            $query->whereJsonContains('schedule_days', $this->dayFilter);
+            $query->whereHas('schedules', fn ($q) => $q->where('day', $this->dayFilter));
         }
 
         if ($this->cityFilter) {

@@ -42,8 +42,10 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class EventForm
 {
@@ -59,21 +61,19 @@ class EventForm
                         Tabs\Tab::make('Organizácia')
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema(self::organizationTab())
-                            ->visible(fn (Get $get): bool => in_array($get('event_type'), [
-                                EventTypeEnum::Organized->value,
-                                EventTypeEnum::Competition->value,
-                            ])),
+                            ->visible(fn (Get $get): bool => self::isOrganizedOrCompetition($get('event_type'))),
                         Tabs\Tab::make('Potvrdzovací e-mail')
                             ->icon('heroicon-o-envelope')
                             ->schema(self::confirmationEmailTab())
-                            ->visible(fn (Get $get): bool => in_array($get('event_type'), [
-                                EventTypeEnum::Organized->value,
-                                EventTypeEnum::Competition->value,
-                            ])),
+                            ->visible(fn (Get $get): bool => self::isOrganizedOrCompetition($get('event_type'))),
                         Tabs\Tab::make('Súťaž')
                             ->icon('heroicon-o-trophy')
                             ->schema(self::competitionTab())
-                            ->visible(fn (Get $get): bool => $get('event_type') === EventTypeEnum::Competition->value),
+                            ->visible(fn (Get $get): bool => self::isCompetition($get('event_type'))),
+                        Tabs\Tab::make('Report (po ukončení)')
+                            ->icon('heroicon-o-newspaper')
+                            ->schema(self::reportContentTab())
+                            ->visible(fn (Get $get): bool => self::isCompetition($get('event_type'))),
                     ])
                     ->columnSpanFull()
                     ->persistTabInQueryString(),
@@ -192,13 +192,19 @@ class EventForm
                                     TextInput::make('longitude')
                                         ->label('Zemepisná dĺžka')
                                         ->numeric(),
+                                    Select::make('timezone')
+                                        ->label('Časová zóna')
+                                        ->options(collect(timezone_identifiers_list())->mapWithKeys(fn (string $tz) => [$tz => $tz]))
+                                        ->default('Europe/Bratislava')
+                                        ->searchable()
+                                        ->visible(fn (Get $get): bool => self::isOrganizedOrCompetition($get('event_type'))),
                                     TextInput::make('attendee_count')
                                         ->label('Počet účastníkov')
                                         ->numeric()
-                                        ->visible(fn (Get $get): bool => $get('event_type') === EventTypeEnum::Report->value),
+                                        ->visible(fn (Get $get): bool => self::resolveEventType($get('event_type')) === EventTypeEnum::Report),
                                     TextInput::make('client')
                                         ->label('Klient')
-                                        ->visible(fn (Get $get): bool => $get('event_type') === EventTypeEnum::Report->value),
+                                        ->visible(fn (Get $get): bool => self::resolveEventType($get('event_type')) === EventTypeEnum::Report),
                                     SpatieMediaLibraryFileUpload::make('card_image')
                                         ->collection('card_image')
                                         ->disk('public')
@@ -276,6 +282,25 @@ class EventForm
                 ->schema([
                     Repeater::make('registration_form_schema')
                         ->label('Polia formulára')
+                        ->rule(function (): \Closure {
+                            return function (string $attribute, mixed $value, \Closure $fail): void {
+                                if (! is_array($value)) {
+                                    return;
+                                }
+                                $types = collect($value)->pluck('type')->filter()->toArray();
+                                $required = [
+                                    RegistrationFieldTypeEnum::FIRST_NAME->value => 'Meno',
+                                    RegistrationFieldTypeEnum::LAST_NAME->value => 'Priezvisko',
+                                    RegistrationFieldTypeEnum::EMAIL->value => 'Email',
+                                    RegistrationFieldTypeEnum::PHONE->value => 'Telefón',
+                                ];
+                                foreach ($required as $type => $label) {
+                                    if (! in_array($type, $types)) {
+                                        $fail("Formulár musí obsahovať pole typu {$label}.");
+                                    }
+                                }
+                            };
+                        })
                         ->table([
                             TableColumn::make('Kľúč'),
                             TableColumn::make('Typ'),
@@ -286,26 +311,70 @@ class EventForm
                             TextInput::make('key')
                                 ->label('Kľúč')
                                 ->required()
-                                ->alphaNum(),
+                                ->disabled()
+                                ->dehydrated(),
                             Select::make('type')
                                 ->label('Typ')
                                 ->options(RegistrationFieldTypeEnum::class)
-                                ->required(),
+                                ->required()
+                                ->live()
+                                ->disabled(fn (Get $get): bool => in_array($get('type'), [
+                                    RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                    RegistrationFieldTypeEnum::LAST_NAME->value,
+                                    RegistrationFieldTypeEnum::EMAIL->value,
+                                    RegistrationFieldTypeEnum::PHONE->value,
+                                ]))
+                                ->dehydrated()
+                                ->afterStateUpdated(function (Get $get, Set $set, mixed $state): void {
+                                    $label = $get('label');
+                                    if ($label) {
+                                        $set('key', Str::slug($label, '_'));
+                                    } elseif ($state) {
+                                        $set('key', $state instanceof RegistrationFieldTypeEnum ? $state->value : $state);
+                                    }
+                                }),
                             TextInput::make('label')
                                 ->label('Označenie')
-                                ->required(),
+                                ->required()
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(fn (Set $set, ?string $state) => $set('key', Str::slug($state ?? '', '_'))),
                             Toggle::make('required')
                                 ->label('Povinné')
-                                ->default(false),
+                                ->default(fn (Get $get): bool => in_array($get('type'), [
+                                    RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                    RegistrationFieldTypeEnum::LAST_NAME->value,
+                                    RegistrationFieldTypeEnum::EMAIL->value,
+                                    RegistrationFieldTypeEnum::PHONE->value,
+                                ]))
+                                ->disabled(fn (Get $get): bool => in_array($get('type'), [
+                                    RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                    RegistrationFieldTypeEnum::LAST_NAME->value,
+                                    RegistrationFieldTypeEnum::EMAIL->value,
+                                    RegistrationFieldTypeEnum::PHONE->value,
+                                ]))
+                                ->dehydrated(),
                             Textarea::make('options')
                                 ->label('Možnosti (jedna na riadok)')
                                 ->rows(3)
                                 ->helperText('Pre select/multi_select')
                                 ->visible(fn (Get $get): bool => in_array($get('type'), [
-                                    RegistrationFieldTypeEnum::Select->value,
-                                    RegistrationFieldTypeEnum::MultiSelect->value,
+                                    RegistrationFieldTypeEnum::SELECT->value,
+                                    RegistrationFieldTypeEnum::MULTI_SELECT->value,
                                 ])),
                         ])
+                        ->deleteAction(fn ($action) => $action
+                            ->requiresConfirmation()
+                            ->hidden(function (array $arguments, Repeater $component): bool {
+                                $items = $component->getState();
+                                $type = $items[$arguments['item']]['type'] ?? null;
+
+                                return in_array($type, [
+                                    RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                    RegistrationFieldTypeEnum::LAST_NAME->value,
+                                    RegistrationFieldTypeEnum::EMAIL->value,
+                                    RegistrationFieldTypeEnum::PHONE->value,
+                                ]);
+                            }))
                         ->defaultItems(0)
                         ->columnSpanFull(),
                 ]),
@@ -315,6 +384,26 @@ class EventForm
     private static function competitionTab(): array
     {
         return [
+            Section::make('Manažér súťaže')
+                ->description('Osoba zodpovedná za riadenie súťaže počas dňa konania.')
+                ->relationship('competitionDetail')
+                ->schema([
+                    Select::make('manager_id')
+                        ->label('Manažér')
+                        ->relationship(
+                            name: 'manager',
+                            modifyQueryUsing: fn ($query, Get $get) => $query->whereHas('teams', function ($q) use ($get) {
+                                $teamId = $get('../../team_id');
+                                if ($teamId) {
+                                    $q->where('teams.id', $teamId);
+                                }
+                            }),
+                        )
+                        ->getOptionLabelFromRecordUsing(fn (Model $record): string => "{$record->name} ({$record->email})")
+                        ->searchable(['first_name', 'last_name', 'email'])
+                        ->preload()
+                        ->placeholder('Vyberte manažéra súťaže'),
+                ]),
             Section::make('Kategórie a disciplíny')
                 ->relationship('competitionDetail')
                 ->schema([
@@ -402,6 +491,63 @@ class EventForm
             EmailCalloutBrick::class,
             EmailDividerBrick::class,
             EmailSpacerBrick::class,
+        ];
+    }
+
+    private static function resolveEventType(mixed $value): ?EventTypeEnum
+    {
+        if ($value instanceof EventTypeEnum) {
+            return $value;
+        }
+
+        return EventTypeEnum::tryFrom((string) $value);
+    }
+
+    private static function isOrganizedOrCompetition(mixed $value): bool
+    {
+        return in_array(self::resolveEventType($value), [
+            EventTypeEnum::Organized,
+            EventTypeEnum::Competition,
+        ], true);
+    }
+
+    private static function isCompetition(mixed $value): bool
+    {
+        return self::resolveEventType($value) === EventTypeEnum::Competition;
+    }
+
+    private static function reportContentTab(): array
+    {
+        return [
+            Section::make('Obsah reportu')
+                ->description('Tento obsah sa zobrazí na stránke súťaže po jej ukončení — ako report/zhrnutie podujatia.')
+                ->schema([
+                    Tabs::make('Report preklady')
+                        ->tabs([
+                            Tabs\Tab::make('SK')
+                                ->schema([
+                                    Mason::make('report_content.sk')
+                                        ->label('Report obsah (SK)')
+                                        ->bricks(self::bricks())
+                                        ->columnSpanFull(),
+                                ]),
+                            Tabs\Tab::make('EN')
+                                ->schema([
+                                    Mason::make('report_content.en')
+                                        ->label('Report obsah (EN)')
+                                        ->bricks(self::bricks())
+                                        ->columnSpanFull(),
+                                ]),
+                            Tabs\Tab::make('CZ')
+                                ->schema([
+                                    Mason::make('report_content.cs')
+                                        ->label('Report obsah (CZ)')
+                                        ->bricks(self::bricks())
+                                        ->columnSpanFull(),
+                                ]),
+                        ])
+                        ->columnSpanFull(),
+                ]),
         ];
     }
 

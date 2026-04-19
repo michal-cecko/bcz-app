@@ -39,7 +39,7 @@
                     <h2 class="font-display font-bold text-4xl tracking-wide">MÔJ PRÍBEH</h2>
                 </div>
 
-                <div class="text-[#AAAAAA] text-base leading-[1.8] flex flex-col gap-6">
+                <div class="text-[#AAAAAA] text-base leading-relaxed flex flex-col gap-6">
                     <p>S parkourom a street workoutom som začal v roku 2016. Od tej doby som prešiel dlhú cestu od začiatočníka až po certifikovaného trénera a aktívneho súťažiaceho športovca.</p>
                     <p>Moja filozofia je jednoduchá: bezpečnosť na prvom mieste, ale bez strachu skúšať nové veci. Verím, že každý môže prekonať svoje limity, ak má správneho sprievodcu na tejto ceste.</p>
                     <p>Trénujem všetky vekové kategórie - od detí cez teenagerov až po dospelých. Každá skupina má svoje špecifiká a ja sa snažím prispôsobiť tréning individuálnym potrebám.</p>
@@ -266,7 +266,7 @@
                     <h2 class="font-display font-bold text-4xl tracking-wide">AKTÍVNY ATLÉT</h2>
                 </div>
 
-                <div class="text-[#AAAAAA] text-base leading-[1.8] flex flex-col gap-6">
+                <div class="text-[#AAAAAA] text-base leading-relaxed flex flex-col gap-6">
                     <p>Okrem trénerskej činnosti som aj aktívnym súťažiacim športovcom. Pravidelne sa zúčastňujem domácich aj medzinárodných súťaží v parkour a street workout disciplínach.</p>
                     <p>Moje skúsenosti zo súťaží prenášam priamo do tréningov - viem, čo funguje pod tlakom a ako sa pripraviť na podanie maximálneho výkonu.</p>
                 </div>

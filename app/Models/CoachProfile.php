@@ -44,6 +44,7 @@ class CoachProfile extends Model implements HasMedia
     {
         $this->addMediaCollection('main_background_image')->singleFile();
         $this->addMediaCollection('biography_image')->singleFile();
+        $this->addMediaCollection('gallery');
     }
 
     public function user(): BelongsTo

@@ -11,6 +11,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class UpcomingTrainingsWidget extends TableWidget
 {
@@ -48,13 +49,12 @@ class UpcomingTrainingsWidget extends TableWidget
                     ->label('Tréning')
                     ->formatStateUsing(fn ($record): string => $record->training->getTranslation('title', app()->getLocale()) ?: $record->training->getTranslation('title', 'sk'))
                     ->description(fn ($record): ?string => $record->training->sportCategory?->getTranslation('name', app()->getLocale())),
-                TextColumn::make('training.schedule_days')
+                TextColumn::make('training.id')
                     ->label('Rozvrh')
                     ->formatStateUsing(function ($record): string {
-                        $days = $record->training->schedule_days ? implode(', ', $record->training->schedule_days) : '';
-                        $time = $record->training->start_time ?? '';
-
-                        return trim("{$days} {$time}");
+                        return $record->training->schedules
+                            ->map(fn ($s) => ucfirst(mb_substr($s->day, 0, 2)).' '.($s->start_time ? Str::substr($s->start_time, 0, 5) : ''))
+                            ->join(', ') ?: ($record->training->start_time ?? '-');
                     }),
                 TextColumn::make('status')
                     ->label('Stav')

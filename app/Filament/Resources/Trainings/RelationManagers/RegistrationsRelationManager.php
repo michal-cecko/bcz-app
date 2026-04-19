@@ -10,6 +10,7 @@ use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
+use App\Filament\Resources\TrainingRegistrations\TrainingRegistrationResource;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Training;
@@ -45,6 +46,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class RegistrationsRelationManager extends RelationManager
 {
@@ -207,7 +209,7 @@ class RegistrationsRelationManager extends RelationManager
 
                         return $data;
                     })
-                    ->after(function (array $data) {
+                    ->after(function (array $data, TrainingRegistration $record) {
                         $sendNotification = $data['send_notification'] ?? false;
                         if (! $sendNotification || empty($data['user_id'])) {
                             return;
@@ -221,6 +223,18 @@ class RegistrationsRelationManager extends RelationManager
                         /** @var Training $training */
                         $training = $this->getOwnerRecord();
 
+                        $payment = null;
+                        if ($training->pricing_type === TrainingPricingTypeEnum::PAID && $training->price_amount) {
+                            $paymentService = app(PaymentService::class);
+                            $payment = $paymentService->createPendingPayment(
+                                user: $user,
+                                team: $training->team,
+                                payable: $record,
+                                amount: (float) $training->price_amount,
+                                currency: 'EUR',
+                            );
+                        }
+
                         RegistrationService::sendConfirmation(
                             user: $user,
                             registrationType: 'tréning',
@@ -229,6 +243,7 @@ class RegistrationsRelationManager extends RelationManager
                             team: $training->team,
                             customEmailContent: $training->confirmation_email_content,
                             attachments: $training->getMedia('email_attachments'),
+                            payment: $payment,
                         );
 
                         Notification::make()
@@ -259,10 +274,13 @@ class RegistrationsRelationManager extends RelationManager
                             ->prefix('€'),
                         Select::make('payment_method')
                             ->label('Metóda platby')
-                            ->options(PaymentMethodEnum::class)
+                            ->options([
+                                PaymentMethodEnum::BANK_TRANSFER->value => PaymentMethodEnum::BANK_TRANSFER->getLabel(),
+                                PaymentMethodEnum::CASH->value => PaymentMethodEnum::CASH->getLabel(),
+                            ])
                             ->required()
                             ->default(PaymentMethodEnum::CASH),
-                        Select::make('status')
+                        Select::make('payment_status')
                             ->label('Stav')
                             ->options(PaymentStatusEnum::class)
                             ->required()
@@ -270,17 +288,13 @@ class RegistrationsRelationManager extends RelationManager
                         Textarea::make('notes')
                             ->label('Poznámka')
                             ->rows(2),
-                        Toggle::make('send_notification')
-                            ->label('Odoslať notifikáciu zákazníkovi')
-                            ->inline(false)
-                            ->default(true)
-                            ->dehydrated(false),
                     ])
                     ->action(function (array $data, $record): void {
                         $training = $this->getOwnerRecord();
-                        $sendNotification = $data['send_notification'] ?? false;
-
                         $user = $record->user;
+                        $paymentStatus = $data['payment_status'] instanceof PaymentStatusEnum
+                            ? $data['payment_status']
+                            : PaymentStatusEnum::from($data['payment_status']);
 
                         Payment::create([
                             'team_id' => $training->team_id,
@@ -291,14 +305,13 @@ class RegistrationsRelationManager extends RelationManager
                             'payable_id' => $record->id,
                             'amount' => $data['amount'],
                             'currency' => 'EUR',
-                            'status' => $data['status'],
+                            'status' => $paymentStatus,
                             'payment_method' => $data['payment_method'],
                             'paid_at' => now(),
                             'notes' => $data['notes'] ?? null,
                         ]);
 
-                        // Auto-approve registration on completed payment
-                        if (PaymentStatusEnum::tryFrom($data['status']) === PaymentStatusEnum::COMPLETED) {
+                        if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
                             $record->update([
                                 'status' => RegistrationStatusEnum::Approved,
                                 'payment_due_at' => null,
@@ -361,7 +374,10 @@ class RegistrationsRelationManager extends RelationManager
                                 ->required(),
                             Select::make('payment_method')
                                 ->label('Spôsob platby')
-                                ->options(PaymentMethodEnum::class)
+                                ->options([
+                                    PaymentMethodEnum::BANK_TRANSFER->value => PaymentMethodEnum::BANK_TRANSFER->getLabel(),
+                                    PaymentMethodEnum::CASH->value => PaymentMethodEnum::CASH->getLabel(),
+                                ])
                                 ->required()
                                 ->default(PaymentMethodEnum::CASH),
                             Textarea::make('notes')
@@ -440,7 +456,7 @@ class RegistrationsRelationManager extends RelationManager
                             ->send();
                     }),
                 ViewAction::make()
-                    ->modalHeading('Zobraziť registráciu'),
+                    ->url(fn ($record): string => TrainingRegistrationResource::getUrl('view', ['record' => $record])),
                 EditAction::make()
                     ->modalHeading('Upraviť registráciu')
                     ->mutateFormDataUsing(function (array $data): array {
@@ -661,7 +677,7 @@ class RegistrationsRelationManager extends RelationManager
                     'nazov_timu' => $teamName,
                     'nazov_treningu' => $training->getTranslation('title', 'sk'),
                     'miesto' => $training->getTranslation('place_name', 'sk') ?? '',
-                    'cas' => $training->start_time ?? '',
+                    'cas' => $training->schedules->map(fn ($s) => ucfirst(mb_substr($s->day, 0, 2)).' '.($s->start_time ? Str::substr($s->start_time, 0, 5) : ''))->join(', ') ?: ($training->start_time ?? ''),
                     'kapacita' => (string) ($training->max_capacity ?? ''),
                 ],
             ],

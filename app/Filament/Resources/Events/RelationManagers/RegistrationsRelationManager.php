@@ -2,12 +2,20 @@
 
 namespace App\Filament\Resources\Events\RelationManagers;
 
+use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\RegistrationStatusEnum;
 use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
+use App\Filament\Resources\EventRegistrations\EventRegistrationResource;
 use App\Models\Event;
+use App\Models\EventRegistration;
+use App\Models\Payment;
 use App\Models\User;
 use App\Services\EmailService;
+use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -18,6 +26,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -45,6 +54,11 @@ class RegistrationsRelationManager extends RelationManager
         return in_array($ownerRecord->event_type, [EventTypeEnum::Organized, EventTypeEnum::Competition]);
     }
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -61,12 +75,8 @@ class RegistrationsRelationManager extends RelationManager
                             ->placeholder('Bez priradenia k účtu'),
                         Select::make('status')
                             ->label('Stav')
-                            ->options([
-                                'pending' => 'Čakajúci',
-                                'confirmed' => 'Potvrdený',
-                                'cancelled' => 'Zrušený',
-                            ])
-                            ->default('confirmed')
+                            ->options(RegistrationStatusEnum::class)
+                            ->default(RegistrationStatusEnum::Approved)
                             ->required(),
                         Toggle::make('send_notification')
                             ->label('Odoslať notifikáciu')
@@ -109,13 +119,7 @@ class RegistrationsRelationManager extends RelationManager
                     ->visible(fn (): bool => $this->getOwnerRecord()->event_type === EventTypeEnum::Competition),
                 TextColumn::make('status')
                     ->label('Stav')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'confirmed' => 'success',
-                        'pending' => 'warning',
-                        'cancelled' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->badge(),
                 TextColumn::make('weight_in')
                     ->label('Váha')
                     ->suffix(' kg')
@@ -131,7 +135,7 @@ class RegistrationsRelationManager extends RelationManager
                 CreateAction::make()
                     ->label('Zaregistrovať')
                     ->modalHeading('Pridať zákazníka do podujatia')
-                    ->after(function (array $data) {
+                    ->after(function (array $data, EventRegistration $record) {
                         $sendNotification = $data['send_notification'] ?? false;
                         if (! $sendNotification || empty($data['user_id'])) {
                             return;
@@ -142,15 +146,30 @@ class RegistrationsRelationManager extends RelationManager
                             return;
                         }
 
+                        /** @var Event $event */
                         $event = $this->getOwnerRecord();
+                        $org = $event->organization;
+
+                        $payment = null;
+                        if ($org?->pricing_type === EventPricingTypeEnum::Paid && $org->price_amount) {
+                            $paymentService = app(PaymentService::class);
+                            $payment = $paymentService->createPendingPayment(
+                                user: $user,
+                                team: $event->team,
+                                payable: $record,
+                                amount: (float) $org->price_amount,
+                                currency: $org->price_currency ?? 'EUR',
+                            );
+                        }
 
                         RegistrationService::sendConfirmation(
                             user: $user,
                             registrationType: 'podujatie',
                             registrationTitle: $event->getTranslation('title', 'sk'),
                             team: $event->team,
-                            customEmailContent: $event->organization?->confirmation_email_content,
+                            customEmailContent: $org?->confirmation_email_content,
                             attachments: $event->getMedia('email_attachments'),
+                            payment: $payment,
                         );
 
                         Notification::make()
@@ -166,8 +185,83 @@ class RegistrationsRelationManager extends RelationManager
                     ->resolveRecipients(function ($record) {
                         return $this->resolveEventRegistrationRecipient($record);
                     }),
+                Action::make('record_payment')
+                    ->label('Platba')
+                    ->icon(Heroicon::CurrencyEuro)
+                    ->color('success')
+                    ->visible(function () {
+                        /** @var Event $event */
+                        $event = $this->getOwnerRecord();
+                        $org = $event->organization;
+
+                        return $org?->pricing_type === EventPricingTypeEnum::Paid && $org->price_amount > 0;
+                    })
+                    ->modalHeading('Zaznamenať platbu')
+                    ->schema(function () {
+                        /** @var Event $event */
+                        $event = $this->getOwnerRecord();
+                        $org = $event->organization;
+
+                        return [
+                            TextInput::make('amount')
+                                ->label('Suma')
+                                ->numeric()
+                                ->required()
+                                ->default($org?->price_amount)
+                                ->prefix($org?->price_currency ?? '€'),
+                            Select::make('payment_method')
+                                ->label('Metóda platby')
+                                ->options([
+                                    PaymentMethodEnum::BANK_TRANSFER->value => PaymentMethodEnum::BANK_TRANSFER->getLabel(),
+                                    PaymentMethodEnum::CASH->value => PaymentMethodEnum::CASH->getLabel(),
+                                ])
+                                ->required()
+                                ->default(PaymentMethodEnum::CASH),
+                            Select::make('payment_status')
+                                ->label('Stav')
+                                ->options(PaymentStatusEnum::class)
+                                ->required()
+                                ->default(PaymentStatusEnum::COMPLETED),
+                            Textarea::make('notes')
+                                ->label('Poznámka')
+                                ->rows(2),
+                        ];
+                    })
+                    ->action(function (array $data, EventRegistration $record): void {
+                        /** @var Event $event */
+                        $event = $this->getOwnerRecord();
+                        $org = $event->organization;
+                        $user = $record->user;
+                        $paymentStatus = $data['payment_status'] instanceof PaymentStatusEnum
+                            ? $data['payment_status']
+                            : PaymentStatusEnum::from($data['payment_status']);
+
+                        Payment::create([
+                            'team_id' => $event->team_id,
+                            'user_id' => $record->user_id,
+                            'payer_name' => $user?->name,
+                            'payer_email' => $user?->email,
+                            'payable_type' => $record->getMorphClass(),
+                            'payable_id' => $record->id,
+                            'amount' => $data['amount'],
+                            'currency' => $org?->price_currency ?? 'EUR',
+                            'status' => $paymentStatus,
+                            'payment_method' => $data['payment_method'],
+                            'paid_at' => now(),
+                            'notes' => $data['notes'] ?? null,
+                        ]);
+
+                        if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
+                            $record->update(['status' => RegistrationStatusEnum::Approved]);
+                        }
+
+                        Notification::make()
+                            ->success()
+                            ->title('Platba bola zaznamenaná.')
+                            ->send();
+                    }),
                 ViewAction::make()
-                    ->modalHeading('Zobraziť registráciu'),
+                    ->url(fn ($record): string => EventRegistrationResource::getUrl('view', ['record' => $record])),
                 EditAction::make()
                     ->modalHeading('Upraviť registráciu'),
                 DeleteAction::make()

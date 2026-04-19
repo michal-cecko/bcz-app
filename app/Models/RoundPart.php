@@ -40,4 +40,9 @@ class RoundPart extends Model
     {
         return $this->hasMany(CompetitionResult::class, 'round_part_id');
     }
+
+    public function battlePartScores(): HasMany
+    {
+        return $this->hasMany(BattlePartScore::class, 'round_part_id');
+    }
 }

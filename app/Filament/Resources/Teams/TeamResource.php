@@ -9,6 +9,7 @@ use App\Filament\Resources\Teams\Pages\ViewTeam;
 use App\Filament\Resources\Teams\RelationManagers\InvitationsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\JoinRequestsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\MembersRelationManager;
+use App\Filament\Resources\Teams\RelationManagers\PaymentMethodsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\PayoutsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\SeasonsRelationManager;
@@ -170,6 +171,7 @@ class TeamResource extends Resource
         return [
             MembersRelationManager::class,
             SeasonsRelationManager::class,
+            PaymentMethodsRelationManager::class,
             PaymentsRelationManager::class,
             PayoutsRelationManager::class,
             InvitationsRelationManager::class,

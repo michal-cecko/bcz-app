@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\Users\RelationManagers;
 
 use App\Enums\MembershipStatusEnum;
+use App\Enums\RoleEnum;
+use App\Models\User;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class MembershipsRelationManager extends RelationManager
 {
@@ -18,6 +21,11 @@ class MembershipsRelationManager extends RelationManager
     protected static ?string $modelLabel = 'členstvo';
 
     protected static ?string $pluralModelLabel = 'Členstvá';
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return $ownerRecord instanceof User && $ownerRecord->hasRole(RoleEnum::CUSTOMER->value);
+    }
 
     public function form(Schema $schema): Schema
     {

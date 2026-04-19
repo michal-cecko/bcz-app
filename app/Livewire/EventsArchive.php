@@ -37,7 +37,7 @@ class EventsArchive extends Component
         $query = Event::query()
             ->where('is_published', true)
             ->where('team_id', $teamId)
-            ->with(['eventCategory', 'team', 'organization'])
+            ->with(['eventCategory', 'team', 'organization', 'media'])
             ->latest('date');
 
         if ($this->categoryFilter) {

@@ -41,6 +41,9 @@ return [
     'no_events' => 'No events are currently available.',
     'training_count' => 'training|trainings|trainings',
     'event_count' => 'event|events|events',
+    'pagination_showing' => 'Showing',
+    'pagination_from' => 'from',
+    'pagination_results' => 'results',
     'days' => [
         'monday' => 'Monday',
         'tuesday' => 'Tuesday',

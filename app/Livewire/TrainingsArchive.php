@@ -8,6 +8,7 @@ use App\Models\City;
 use App\Models\Setting;
 use App\Models\SportCategory;
 use App\Models\Training;
+use App\Models\TrainingSchedule;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -99,7 +100,7 @@ class TrainingsArchive extends Component
             ->where('is_active', true)
             ->where('team_id', $teamId)
             ->current()
-            ->with(['sportCategory', 'coaches', 'team', 'city', 'registrations' => function ($q) {
+            ->with(['sportCategory', 'coaches', 'team', 'city', 'schedules', 'registrations' => function ($q) {
                 if (auth()->check()) {
                     $q->where('user_id', auth()->id())
                         ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
@@ -116,7 +117,7 @@ class TrainingsArchive extends Component
         }
 
         if ($this->dayFilter) {
-            $query->whereJsonContains('schedule_days', $this->dayFilter);
+            $query->whereHas('schedules', fn ($q) => $q->where('day', $this->dayFilter));
         }
 
         if ($this->locationFilter) {
@@ -155,13 +156,10 @@ class TrainingsArchive extends Component
             ->orderBy('sort_order')
             ->get();
 
-        $days = Training::query()
-            ->where('is_active', true)
-            ->where('team_id', $teamId)
-            ->whereNotNull('schedule_days')
-            ->pluck('schedule_days')
-            ->flatten()
-            ->unique()
+        $days = TrainingSchedule::query()
+            ->whereHas('training', fn ($q) => $q->where('is_active', true)->where('team_id', $teamId))
+            ->distinct()
+            ->pluck('day')
             ->sort()
             ->values();
 

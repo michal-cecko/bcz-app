@@ -38,6 +38,8 @@ class ContactForm extends Component
 
     public string $reason = '';
 
+    public bool $gdprAgreed = false;
+
     public function mount(
         bool $showReason = true,
         bool $showPhone = true,
@@ -70,6 +72,7 @@ class ContactForm extends Component
             'phone' => ['nullable', 'string', 'max:50'],
             'message' => ['required', 'string', 'max:5000'],
             'reason' => ['nullable', 'string'],
+            'gdprAgreed' => ['accepted'],
         ];
     }
 

@@ -16,9 +16,11 @@ use App\Enums\PayoutStatusEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\RoundAdvancementTypeEnum;
+use App\Enums\ScoringFormatEnum;
 use App\Enums\SponsorTagEnum;
 use App\Enums\SubscriptionStatusEnum;
 use App\Enums\TimetableEntryStatusEnum;
+use App\Enums\TimetableEntryTypeEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\AthleteCategory;
 use App\Models\AthleteExercise;
@@ -26,6 +28,7 @@ use App\Models\AthleteGoal;
 use App\Models\AthleteProfile;
 use App\Models\Banner;
 use App\Models\Battle;
+use App\Models\BattleCompetitor;
 use App\Models\Certification;
 use App\Models\City;
 use App\Models\CoachProfile;
@@ -64,6 +67,28 @@ use Illuminate\Support\Str;
 
 class DemoDataSeeder extends Seeder
 {
+    /**
+     * Convert flat brick arrays to Mason's expected storage format.
+     *
+     * Flat: [['type' => 'rich-text', 'content' => ['sk' => '...']]]
+     * Mason: [['type' => 'masonBrick', 'attrs' => ['id' => 'rich-text', 'config' => ['content' => ['sk' => '...']]]]]
+     */
+    private static function masonBricks(array $flatBricks): array
+    {
+        return array_map(function (array $brick) {
+            $brickType = $brick['type'];
+            unset($brick['type']);
+
+            return [
+                'type' => 'masonBrick',
+                'attrs' => [
+                    'id' => $brickType,
+                    'config' => $brick,
+                ],
+            ];
+        }, $flatBricks);
+    }
+
     public function run(): void
     {
         $bczTeam = Team::query()->where('slug', 'bcz-club')->firstOrFail();
@@ -138,11 +163,13 @@ class DemoDataSeeder extends Seeder
             $user->teams()->attach($bczTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(1, 24))]);
             AthleteProfile::factory()->create(['user_id' => $user->id]);
 
-            // Give first 5 athletes a public profile (approved)
+            // Give first 5 athletes a public profile (approved) with photo
             if ($index < 5) {
                 $user->update([
                     'athlete_profile_approved_at' => now()->subDays(rand(1, 60)),
                 ]);
+                $user->addMediaFromUrl("https://picsum.photos/seed/athlete-{$index}/400/500")
+                    ->toMediaCollection('profile_image');
             }
         });
 
@@ -211,10 +238,12 @@ class DemoDataSeeder extends Seeder
                 'date_started_judging' => $data['date_started_judging'],
             ]);
 
-            // Approve judge public profile
+            // Approve judge public profile + add profile photo
             $user->update([
                 'judge_profile_approved_at' => now()->subDays(rand(1, 60)),
             ]);
+            $user->addMediaFromUrl('https://i.pravatar.cc/300?u='.$user->email)
+                ->toMediaCollection('profile_image');
 
             foreach ($data['certifications'] as $index => $cert) {
                 Certification::factory()->create([
@@ -302,12 +331,17 @@ class DemoDataSeeder extends Seeder
 
         // --- Registration form schemas for trainings ---
         $mandatoryFields = [
-            ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
-            ['label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'name' => 'priezvisko', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
-            ['label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'full', 'required' => true, 'placeholder' => ['sk' => 'tvoj@email.sk', 'en' => 'your@email.com', 'cs' => 'tvuj@email.cz'], 'has_condition' => false],
+            ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'first_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'name' => 'priezvisko', 'type' => 'last_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'half', 'required' => true, 'placeholder' => ['sk' => 'tvoj@email.sk', 'en' => 'your@email.com', 'cs' => 'tvuj@email.cz'], 'has_condition' => false],
+            ['label' => ['sk' => 'Telefón', 'en' => 'Phone', 'cs' => 'Telefon'], 'name' => 'telefon', 'type' => 'phone', 'width' => 'half', 'required' => true, 'placeholder' => ['sk' => '+421 XXX XXX XXX', 'en' => '+421 XXX XXX XXX', 'cs' => '+420 XXX XXX XXX'], 'has_condition' => false],
         ];
 
         $parentFields = [
+            ['label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'name' => 'meno', 'type' => 'first_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'name' => 'priezvisko', 'type' => 'last_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ['label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'half', 'required' => true, 'placeholder' => ['sk' => 'tvoj@email.sk', 'en' => 'your@email.com', 'cs' => 'tvuj@email.cz'], 'has_condition' => false],
+            ['label' => ['sk' => 'Telefón', 'en' => 'Phone', 'cs' => 'Telefon'], 'name' => 'telefon', 'type' => 'phone', 'width' => 'half', 'required' => true, 'placeholder' => ['sk' => '+421 XXX XXX XXX', 'en' => '+421 XXX XXX XXX', 'cs' => '+420 XXX XXX XXX'], 'has_condition' => false],
             ['label' => ['sk' => 'Meno rodiča', 'en' => 'Parent name', 'cs' => 'Jméno rodiče'], 'name' => 'meno_rodica', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
             ['label' => ['sk' => 'Priezvisko rodiča', 'en' => 'Parent last name', 'cs' => 'Příjmení rodiče'], 'name' => 'priezvisko_rodica', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => false],
             ['label' => ['sk' => 'Email rodiča', 'en' => 'Parent email', 'cs' => 'Email rodiče'], 'name' => 'email_rodica', 'type' => 'email', 'width' => 'full', 'required' => true, 'placeholder' => ['sk' => 'rodic@email.sk', 'en' => 'parent@email.com', 'cs' => 'rodic@email.cz'], 'has_condition' => false],
@@ -325,24 +359,24 @@ class DemoDataSeeder extends Seeder
         $extraInsuranceDetail = ['label' => ['sk' => 'Číslo poistky', 'en' => 'Insurance number', 'cs' => 'Číslo pojistky'], 'name' => 'cislo_poistky', 'type' => 'text_input', 'width' => 'half', 'required' => true, 'has_condition' => true, 'condition_field' => 'poistenie', 'condition_value' => 'Áno'];
 
         $registrationSchemas = [
-            // 0: Parkour Teens (kids → parent fields + age + phone + note)
-            array_merge($parentFields, [$extraAge, $extraPhone, $extraNote]),
+            // 0: Parkour Teens (kids → parent fields + age + note)
+            array_merge($parentFields, [$extraAge, $extraNote]),
             // 1: Street Workout Advanced (standard + experience + note)
-            array_merge($mandatoryFields, [$extraPhone, $extraExperience, $extraNote]),
+            array_merge($mandatoryFields, [$extraExperience, $extraNote]),
             // 2: Parkour pre pokročilých (standard + experience + year + insurance)
-            array_merge($mandatoryFields, [$extraPhone, $extraExperience, $extraYear, $extraInsurance, $extraInsuranceDetail]),
+            array_merge($mandatoryFields, [$extraExperience, $extraYear, $extraInsurance, $extraInsuranceDetail]),
             // 3: Kalistenické základy (kids → parent fields + age)
-            array_merge($parentFields, [$extraAge, $extraPhone]),
+            array_merge($parentFields, [$extraAge]),
             // 4: Street Workout pre deti (kids → parent fields + age + tshirt + note)
-            array_merge($parentFields, [$extraAge, $extraTshirt, $extraPhone, $extraNote]),
+            array_merge($parentFields, [$extraAge, $extraTshirt, $extraNote]),
             // 5: Parkour & Freerunning Mix (standard + experience)
-            array_merge($mandatoryFields, [$extraPhone, $extraExperience]),
+            array_merge($mandatoryFields, [$extraExperience]),
             // 6: Open Gym (standard only, minimal)
-            array_merge($mandatoryFields, [$extraPhone]),
+            $mandatoryFields,
             // 7: Tricking Workshop (standard + experience + year + tshirt + note)
-            array_merge($mandatoryFields, [$extraPhone, $extraYear, $extraExperience, $extraTshirt, $extraNote]),
+            array_merge($mandatoryFields, [$extraYear, $extraExperience, $extraTshirt, $extraNote]),
             // 8: (if more trainings exist, fallback)
-            array_merge($mandatoryFields, [$extraPhone, $extraNote]),
+            array_merge($mandatoryFields, [$extraNote]),
         ];
 
         // --- Cities ---
@@ -368,8 +402,7 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 13,
                 'max_age' => 17,
                 'max_capacity' => 12,
-                'schedule_days' => ['monday', 'wednesday'],
-                'start_time' => '17:00',
+                '_schedules' => [['day' => 'monday', 'start_time' => '17:00'], ['day' => 'wednesday', 'start_time' => '17:00']],
                 'duration_minutes' => 90,
                 'place_name' => ['sk' => 'Športová hala Čadca', 'en' => 'Sports Hall Čadca'],
                 'place_address' => 'Športovcov 1, 022 01 Čadca',
@@ -388,8 +421,7 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 16,
                 'max_age' => null,
                 'max_capacity' => 15,
-                'schedule_days' => ['tuesday', 'thursday'],
-                'start_time' => '18:00',
+                '_schedules' => [['day' => 'tuesday', 'start_time' => '18:00'], ['day' => 'thursday', 'start_time' => '18:00']],
                 'duration_minutes' => 90,
                 'place_name' => ['sk' => 'Workout Park Bratislava', 'en' => 'Workout Park Bratislava'],
                 'place_address' => 'Tyršovo nábrežie, 851 01 Bratislava',
@@ -408,8 +440,7 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 14,
                 'max_age' => 25,
                 'max_capacity' => 20,
-                'schedule_days' => ['wednesday', 'friday'],
-                'start_time' => '17:30',
+                '_schedules' => [['day' => 'wednesday', 'start_time' => '17:30'], ['day' => 'friday', 'start_time' => '17:30']],
                 'duration_minutes' => 90,
                 'place_name' => ['sk' => 'BCZ Gym Košice', 'en' => 'BCZ Gym Košice'],
                 'place_address' => 'Hlavná 1, 040 01 Košice',
@@ -428,8 +459,7 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 16,
                 'max_age' => null,
                 'max_capacity' => 10,
-                'schedule_days' => ['saturday'],
-                'start_time' => '10:00',
+                '_schedules' => [['day' => 'saturday', 'start_time' => '10:00']],
                 'duration_minutes' => 120,
                 'place_name' => ['sk' => 'Outdoor spot Petržalka', 'en' => 'Outdoor spot Petržalka'],
                 'place_address' => 'Námestie hraničiarov, 851 03 Bratislava',
@@ -448,8 +478,7 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 10,
                 'max_age' => 16,
                 'max_capacity' => 20,
-                'schedule_days' => ['monday', 'thursday'],
-                'start_time' => '16:00',
+                '_schedules' => [['day' => 'monday', 'start_time' => '16:00'], ['day' => 'thursday', 'start_time' => '16:00']],
                 'duration_minutes' => 60,
                 'place_name' => ['sk' => 'Workout Park Čadca', 'en' => 'Workout Park Čadca'],
                 'place_address' => 'Mestský park, 022 01 Čadca',
@@ -467,8 +496,7 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 8,
                 'max_age' => 14,
                 'max_capacity' => 18,
-                'schedule_days' => ['tuesday', 'friday'],
-                'start_time' => '15:30',
+                '_schedules' => [['day' => 'tuesday', 'start_time' => '15:30'], ['day' => 'friday', 'start_time' => '15:30']],
                 'duration_minutes' => 60,
                 'place_name' => ['sk' => 'Telocvičňa ZŠ Komenského', 'en' => 'Komenského Elementary School Gym'],
                 'place_address' => 'Komenského 12, 022 01 Čadca',
@@ -487,8 +515,7 @@ class DemoDataSeeder extends Seeder
                 'min_age' => 14,
                 'max_age' => 25,
                 'max_capacity' => 16,
-                'schedule_days' => ['monday', 'wednesday', 'friday'],
-                'start_time' => '19:00',
+                '_schedules' => [['day' => 'monday', 'start_time' => '19:00'], ['day' => 'wednesday', 'start_time' => '19:00'], ['day' => 'friday', 'start_time' => '19:00']],
                 'duration_minutes' => 90,
                 'place_name' => ['sk' => 'BCZ Gym Bratislava', 'en' => 'BCZ Gym Bratislava'],
                 'place_address' => 'Stará Vajnorská 37, 831 04 Bratislava',
@@ -508,8 +535,7 @@ class DemoDataSeeder extends Seeder
                 'max_age' => null,
                 'max_capacity' => 30,
                 'notify_on_available' => true,
-                'schedule_days' => ['saturday', 'sunday'],
-                'start_time' => '09:00',
+                '_schedules' => [['day' => 'saturday', 'start_time' => '09:00'], ['day' => 'sunday', 'start_time' => '09:00']],
                 'duration_minutes' => 180,
                 'place_name' => ['sk' => 'BCZ Gym Bratislava', 'en' => 'BCZ Gym Bratislava'],
                 'place_address' => 'Stará Vajnorská 37, 831 04 Bratislava',
@@ -531,7 +557,6 @@ class DemoDataSeeder extends Seeder
                 'is_recurring' => false,
                 'event_date' => now()->addWeeks(3)->format('Y-m-d'),
                 'notify_on_available' => true,
-                'schedule_days' => null,
                 'start_time' => '14:00',
                 'duration_minutes' => 120,
                 'place_name' => ['sk' => 'BCZ Gym Bratislava', 'en' => 'BCZ Gym Bratislava'],
@@ -545,12 +570,21 @@ class DemoDataSeeder extends Seeder
             // Banská Bystrica: Freerunning Kreativita (2), Parkour pre pokročilých (3)
             $cityMap = [0 => $cadca->id, 2 => $banskaBystrica->id, 3 => $banskaBystrica->id, 4 => $cadca->id, 5 => $cadca->id];
 
-            return Training::factory()->create(array_merge($data, [
+            $schedules = $data['_schedules'] ?? [];
+            unset($data['_schedules']);
+
+            $training = Training::factory()->create(array_merge($data, [
                 'team_id' => $bczTeam->id,
                 'city_id' => $cityMap[$index] ?? $cadca->id,
                 'sort_order' => $index,
                 'registration_form_schema' => $registrationSchemas[$index] ?? $registrationSchemas[count($registrationSchemas) - 1],
             ]));
+
+            foreach ($schedules as $order => $schedule) {
+                $training->schedules()->create(array_merge($schedule, ['sort_order' => $order]));
+            }
+
+            return $training;
         });
 
         // Attach coaches to trainings
@@ -658,7 +692,7 @@ class DemoDataSeeder extends Seeder
         // === REPORT events — "Where we were" portfolio items ===
 
         // 1. Past exhibition at corporate event
-        Event::factory()->create([
+        $tedxEvent = Event::factory()->create([
             'event_type' => 'report',
             'event_category_id' => $eventCategories[0]->id, // Vystupenia
             'team_id' => $bczTeam->id,
@@ -671,10 +705,44 @@ class DemoDataSeeder extends Seeder
             'client' => 'TEDx Bratislava',
             'is_published' => true,
             'published_at' => now()->subMonths(6)->addDays(3),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O vystúpení']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Naše vystúpenie na konferencii TEDx Bratislava 2025 bolo jedným z vrcholov programu. Pred publikom 800 divákov sme predviedli 15-minútovú choreografiu prepájajúcu parkour s príbehovým vystúpením o prekonávaní prekážok — fyzických aj mentálnych.</p><p>Spolupráca s organizátormi TEDx bola inšpiratívna. Celý koncept sme navrhli tak, aby korešpondoval s témou konferencie "Breaking Barriers". Atléti BCZ Club predviedli synchronizované sekvencie, ktoré symbolizovali rôzne životné výzvy.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Čo bolo súčasťou vystúpenia']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Príbehová parkour choreografia (4 atléti)</li><li>Synchronizované precision jumpy</li><li>Solo tricking performance s narrative voiceoverom</li><li>Záverečná akrobatická pyramída</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Vystúpenie BCZ Club bolo najsilnejším vizuálnym momentom celej konferencie. Dokonale prepojili fyzický výkon s myšlienkou prekonávania bariér.</p>'], 'attribution' => ['sk' => '— Mgr. Jana Kováčová, organizátorka TEDx Bratislava']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Technické parametre']],
+                    ['type' => 'table', 'headers' => [['label' => ['sk' => 'Parameter']], ['label' => ['sk' => 'Hodnota']]], 'rows' => [
+                        ['cells' => [['value' => ['sk' => 'Trvanie show']], ['value' => ['sk' => '15 minút']]]],
+                        ['cells' => [['value' => ['sk' => 'Počet účinkujúcich']], ['value' => ['sk' => '4 atléti']]]],
+                        ['cells' => [['value' => ['sk' => 'Typ']], ['value' => ['sk' => 'Indoor / Konferenčná scéna']]]],
+                        ['cells' => [['value' => ['sk' => 'Priestor']], ['value' => ['sk' => 'Stará tržnica, Bratislava']]]],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Show']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Our performance at TEDx Bratislava 2025 was one of the highlights of the program. In front of 800 spectators, we delivered a 15-minute choreography combining parkour with a narrative performance about overcoming obstacles — both physical and mental.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'What Was Part of the Show']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Narrative parkour choreography (4 athletes)</li><li>Synchronized precision jumps</li><li>Solo tricking performance with narrative voiceover</li><li>Final acrobatic pyramid</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>The BCZ Club performance was the strongest visual moment of the entire conference. They perfectly connected physical performance with the idea of breaking barriers.</p>'], 'attribution' => ['en' => '— Mgr. Jana Kováčová, TEDx Bratislava organizer']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Technical Parameters']],
+                    ['type' => 'table', 'headers' => [['label' => ['en' => 'Parameter']], ['label' => ['en' => 'Value']]], 'rows' => [
+                        ['cells' => [['value' => ['en' => 'Show duration']], ['value' => ['en' => '15 minutes']]]],
+                        ['cells' => [['value' => ['en' => 'Performers']], ['value' => ['en' => '4 athletes']]]],
+                        ['cells' => [['value' => ['en' => 'Type']], ['value' => ['en' => 'Indoor / Conference stage']]]],
+                        ['cells' => [['value' => ['en' => 'Venue']], ['value' => ['en' => 'Stará tržnica, Bratislava']]]],
+                    ]],
+                ]),
+            ],
         ]);
+        $tedxEvent->addMediaFromUrl('https://picsum.photos/seed/event-tedx-card/800/450')
+            ->toMediaCollection('card_image');
+        $tedxEvent->addMediaFromUrl('https://picsum.photos/seed/event-tedx-hero/1440/500')
+            ->toMediaCollection('detail_image');
 
         // 2. Past corporate show
-        Event::factory()->create([
+        $redbullEvent = Event::factory()->create([
             'event_type' => 'report',
             'event_category_id' => $eventCategories[0]->id, // Vystupenia
             'team_id' => $bczTeam->id,
@@ -687,10 +755,44 @@ class DemoDataSeeder extends Seeder
             'client' => 'Red Bull Slovakia',
             'is_published' => true,
             'published_at' => now()->subMonths(4)->addDays(5),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O vystúpení']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Pre spoločnosť Red Bull Slovakia sme pripravili exkluzívny firemný teambuilding kombinujúci vystúpenie našich top atlétov s interaktívnym workshopom pre zamestnancov. Celý program trval 3 hodiny a bol rozdelený do troch blokov.</p><p>Prvá časť bola ukážková — naši atléti predviedli parkour a tricking performance. Druhá časť bola interaktívna — zamestnanci si pod vedením trénerov vyskúšali základné parkourové techniky. Tretia časť bola teamová výzva s prvkami spolupráce.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Čo bolo súčasťou programu']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>20-minútová parkour a tricking show</li><li>Interaktívny workshop základov pohybu (90 min)</li><li>Tímová výzva — parkourová štafeta (45 min)</li><li>Záverečný debrief a spoločné foto</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Najlepší teambuilding, aký sme kedy mali. Zamestnanci boli nadšení a ešte týždne po evente sa o tom rozprávali. BCZ Club dodal profesionálny a zároveň zábavný program.</p>'], 'attribution' => ['sk' => '— Ing. Martin Horváth, HR Manager, Red Bull Slovakia']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Technické parametre']],
+                    ['type' => 'table', 'headers' => [['label' => ['sk' => 'Parameter']], ['label' => ['sk' => 'Hodnota']]], 'rows' => [
+                        ['cells' => [['value' => ['sk' => 'Trvanie programu']], ['value' => ['sk' => '3 hodiny']]]],
+                        ['cells' => [['value' => ['sk' => 'Počet účinkujúcich']], ['value' => ['sk' => '6 atlétov + 2 tréneri']]]],
+                        ['cells' => [['value' => ['sk' => 'Typ']], ['value' => ['sk' => 'Indoor / Firemný event']]]],
+                        ['cells' => [['value' => ['sk' => 'Priestor']], ['value' => ['sk' => 'Red Bull HQ, Bratislava']]]],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Show']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>We prepared an exclusive corporate teambuilding for Red Bull Slovakia combining a performance by our top athletes with an interactive workshop for employees. The 3-hour program was divided into three blocks: a showcase performance, hands-on training, and a team challenge.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Program Highlights']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>20-minute parkour and tricking show</li><li>Interactive movement basics workshop (90 min)</li><li>Team challenge — parkour relay (45 min)</li><li>Final debrief and group photo</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>The best teambuilding we ever had. Employees were thrilled and talked about it for weeks. BCZ Club delivered a professional yet fun program.</p>'], 'attribution' => ['en' => '— Ing. Martin Horváth, HR Manager, Red Bull Slovakia']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Technical Parameters']],
+                    ['type' => 'table', 'headers' => [['label' => ['en' => 'Parameter']], ['label' => ['en' => 'Value']]], 'rows' => [
+                        ['cells' => [['value' => ['en' => 'Program duration']], ['value' => ['en' => '3 hours']]]],
+                        ['cells' => [['value' => ['en' => 'Performers']], ['value' => ['en' => '6 athletes + 2 coaches']]]],
+                        ['cells' => [['value' => ['en' => 'Type']], ['value' => ['en' => 'Indoor / Corporate event']]]],
+                        ['cells' => [['value' => ['en' => 'Venue']], ['value' => ['en' => 'Red Bull HQ, Bratislava']]]],
+                    ]],
+                ]),
+            ],
         ]);
+        $redbullEvent->addMediaFromUrl('https://picsum.photos/seed/event-redbull-card/800/450')
+            ->toMediaCollection('card_image');
+        $redbullEvent->addMediaFromUrl('https://picsum.photos/seed/event-redbull-hero/1440/500')
+            ->toMediaCollection('detail_image');
 
         // 3. Past lecture
-        Event::factory()->create([
+        $prednaskaEvent = Event::factory()->create([
             'event_type' => 'report',
             'event_category_id' => $eventCategories[1]->id, // Prednasky
             'team_id' => $bczTeam->id,
@@ -703,10 +805,44 @@ class DemoDataSeeder extends Seeder
             'client' => 'Gymnazium Grösslingova',
             'is_published' => true,
             'published_at' => now()->subMonths(2)->addDay(),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O prednáške']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Na Gymnáziu Grösslingová sme pre 250 študentov pripravili motivačnú prednášku o disciplíne, cieľavedomosti a zdravom životnom štýle. Prednáška bola interaktívna — kombinovali sme osobné príbehy našich atlétov s praktickými ukážkami.</p><p>Študenti mali možnosť vidieť, ako vyzerá cesta od úplného začiatočníka po profesionálneho atléta. Zdôraznili sme dôležitosť konzistentnosti, trpezlivosti a správneho okolia.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Témy prednášky']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Disciplína ako základ úspechu — nielen v športe</li><li>Ako si vybudovať zdravé návyky od mladého veku</li><li>Prekonávanie strachu a vystúpenie z komfortnej zóny</li><li>Praktické ukážky parkourových techník</li><li>Q&A s atlétmi BCZ Club</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Prednáška BCZ Club zaujala aj tých študentov, ktorí bežne na prednáškach nespolupracujú. Autentické príbehy a živé ukážky urobili obrovský dojem.</p>'], 'attribution' => ['sk' => '— PhDr. Eva Šimková, riaditeľka Gymnázia Grösslingová']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Technické parametre']],
+                    ['type' => 'table', 'headers' => [['label' => ['sk' => 'Parameter']], ['label' => ['sk' => 'Hodnota']]], 'rows' => [
+                        ['cells' => [['value' => ['sk' => 'Trvanie prednášky']], ['value' => ['sk' => '90 minút']]]],
+                        ['cells' => [['value' => ['sk' => 'Počet prednášajúcich']], ['value' => ['sk' => '3 atléti']]]],
+                        ['cells' => [['value' => ['sk' => 'Typ']], ['value' => ['sk' => 'Motivačná prednáška + ukážky']]]],
+                        ['cells' => [['value' => ['sk' => 'Priestor']], ['value' => ['sk' => 'Aula Gymnázia Grösslingová, Bratislava']]]],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Talk']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>At Grösslingová High School, we delivered a motivational talk for 250 students about discipline, determination, and healthy lifestyle. The talk was interactive — combining personal stories from our athletes with practical demonstrations.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Talk Topics']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Discipline as the foundation of success — not just in sports</li><li>Building healthy habits from a young age</li><li>Overcoming fear and stepping out of your comfort zone</li><li>Practical parkour technique demonstrations</li><li>Q&A with BCZ Club athletes</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>The BCZ Club talk engaged even those students who usually don\'t participate in lectures. Authentic stories and live demonstrations made a huge impression.</p>'], 'attribution' => ['en' => '— PhDr. Eva Šimková, Principal of Grösslingová High School']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Technical Parameters']],
+                    ['type' => 'table', 'headers' => [['label' => ['en' => 'Parameter']], ['label' => ['en' => 'Value']]], 'rows' => [
+                        ['cells' => [['value' => ['en' => 'Talk duration']], ['value' => ['en' => '90 minutes']]]],
+                        ['cells' => [['value' => ['en' => 'Speakers']], ['value' => ['en' => '3 athletes']]]],
+                        ['cells' => [['value' => ['en' => 'Type']], ['value' => ['en' => 'Motivational talk + demonstrations']]]],
+                        ['cells' => [['value' => ['en' => 'Venue']], ['value' => ['en' => 'Grösslingová High School Auditorium, Bratislava']]]],
+                    ]],
+                ]),
+            ],
         ]);
+        $prednaskaEvent->addMediaFromUrl('https://picsum.photos/seed/event-prednaska-card/800/450')
+            ->toMediaCollection('card_image');
+        $prednaskaEvent->addMediaFromUrl('https://picsum.photos/seed/event-prednaska-hero/1440/500')
+            ->toMediaCollection('detail_image');
 
         // 4. Past international workshop report
-        Event::factory()->create([
+        $prahaEvent = Event::factory()->create([
             'event_type' => 'report',
             'event_category_id' => $eventCategories[2]->id, // Workshopy
             'team_id' => $bczTeam->id,
@@ -719,10 +855,44 @@ class DemoDataSeeder extends Seeder
             'attendee_count' => 60,
             'is_published' => true,
             'published_at' => now()->subMonths(8)->addDays(5),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O workshope']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Spoločný medzinárodný workshop s českou parkour komunitou v Prahe bol dvojdňovým maratónom tréningov, prednášok a networkingu. Zúčastnilo sa 60 atlétov zo Slovenska, Česka a Poľska.</p><p>Workshop viedli skúsení tréneri z BCZ Club a českého PK Letná. Program bol rozdelený do levelov — od začiatočníkov po pokročilých. Každý si našiel niečo pre seba.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Program workshopu']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Deň 1: Parkour fundamentals a flow tréning (4 hodiny)</li><li>Deň 1: Večerná prednáška o bezpečnosti a progresii</li><li>Deň 2: Tricking a akrobacia workshop (4 hodiny)</li><li>Deň 2: Spoločný jam a voľný tréning</li><li>Networking a plánovanie budúcej spolupráce</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Spolupráca so slovenským BCZ Club bola fantastická. Ich prístup k tréningu a profesionalita sú na vysokej úrovni. Tešíme sa na ďalšie spoločné akcie.</p>'], 'attribution' => ['sk' => '— Tomáš Dvořák, vedúci tréner PK Letná, Praha']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Technické parametre']],
+                    ['type' => 'table', 'headers' => [['label' => ['sk' => 'Parameter']], ['label' => ['sk' => 'Hodnota']]], 'rows' => [
+                        ['cells' => [['value' => ['sk' => 'Trvanie']], ['value' => ['sk' => '2 dni']]]],
+                        ['cells' => [['value' => ['sk' => 'Počet trénerov']], ['value' => ['sk' => '8 (4 SK + 4 CZ)']]]],
+                        ['cells' => [['value' => ['sk' => 'Typ']], ['value' => ['sk' => 'Indoor + Outdoor workshop']]]],
+                        ['cells' => [['value' => ['sk' => 'Priestor']], ['value' => ['sk' => 'PK Letná Gym + Letná Park, Praha']]]],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Workshop']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>A joint international workshop with the Czech parkour community in Prague was a two-day marathon of training, talks, and networking. 60 athletes from Slovakia, Czech Republic, and Poland participated.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Workshop Program']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Day 1: Parkour fundamentals and flow training (4 hours)</li><li>Day 1: Evening talk on safety and progression</li><li>Day 2: Tricking and acrobatics workshop (4 hours)</li><li>Day 2: Community jam and free training</li><li>Networking and future collaboration planning</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>The collaboration with Slovak BCZ Club was fantastic. Their approach to training and professionalism are top-notch. We look forward to more joint events.</p>'], 'attribution' => ['en' => '— Tomáš Dvořák, Head Coach PK Letná, Prague']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Technical Parameters']],
+                    ['type' => 'table', 'headers' => [['label' => ['en' => 'Parameter']], ['label' => ['en' => 'Value']]], 'rows' => [
+                        ['cells' => [['value' => ['en' => 'Duration']], ['value' => ['en' => '2 days']]]],
+                        ['cells' => [['value' => ['en' => 'Coaches']], ['value' => ['en' => '8 (4 SK + 4 CZ)']]]],
+                        ['cells' => [['value' => ['en' => 'Type']], ['value' => ['en' => 'Indoor + Outdoor workshop']]]],
+                        ['cells' => [['value' => ['en' => 'Venue']], ['value' => ['en' => 'PK Letná Gym + Letná Park, Prague']]]],
+                    ]],
+                ]),
+            ],
         ]);
+        $prahaEvent->addMediaFromUrl('https://picsum.photos/seed/event-praha-card/800/450')
+            ->toMediaCollection('card_image');
+        $prahaEvent->addMediaFromUrl('https://picsum.photos/seed/event-praha-hero/1440/500')
+            ->toMediaCollection('detail_image');
 
         // 5. Recent report — outdoor showcase
-        Event::factory()->create([
+        $kosiceEvent = Event::factory()->create([
             'event_type' => 'report',
             'event_category_id' => $eventCategories[0]->id,
             'team_id' => $bczTeam->id,
@@ -735,7 +905,41 @@ class DemoDataSeeder extends Seeder
             'client' => 'Mesto Kosice',
             'is_published' => true,
             'published_at' => now()->subWeeks(2),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O vystúpení']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Naše vystúpenie na Hlavnej ulici v Košiciach počas Dňa mesta bolo jedným z najväčších podujatí sezóny. Pred viac ako 2000 divákmi sme predviedli 30-minútovú show kombinujúcu parkour, kalisteniku a tricking.</p><p>Spolupráca s mestom Košice bola bezproblémová. Tím BCZ pripravil choreografiu špeciálne pre tento outdoorový event s využitím mestského mobiliáru — lavičiek, múrov a zábradlí.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Čo bolo súčasťou vystúpenia']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Synchronizovaná parkour choreografia (5 atlétov)</li><li>Solo tricking performance</li><li>Interaktívna časť s publikom</li><li>Wall-flipy a precision jumps na mestskom mobiliári</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>BCZ Club priniesol na Deň mesta Košice niečo úplne nové. Energia a profesionalita ich vystúpenia nadchla celé publikum od detí po seniorov.</p>'], 'attribution' => ['sk' => '— Ing. Peter Novák, vedúci oddelenia kultúry mesta Košice']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Technické parametre']],
+                    ['type' => 'table', 'headers' => [['label' => ['sk' => 'Parameter']], ['label' => ['sk' => 'Hodnota']]], 'rows' => [
+                        ['cells' => [['value' => ['sk' => 'Trvanie show']], ['value' => ['sk' => '30 minút']]]],
+                        ['cells' => [['value' => ['sk' => 'Počet účinkujúcich']], ['value' => ['sk' => '5 atlétov']]]],
+                        ['cells' => [['value' => ['sk' => 'Typ']], ['value' => ['sk' => 'Outdoor / Street']]]],
+                        ['cells' => [['value' => ['sk' => 'Priestor']], ['value' => ['sk' => 'Hlavná ulica, Košice']]]],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Show']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Our performance on Main Street in Košice during City Day was one of the biggest events of the season. In front of over 2,000 spectators, we delivered a 30-minute show combining parkour, calisthenics, and tricking using urban furniture.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'What Was Part of the Show']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Synchronized parkour choreography (5 athletes)</li><li>Solo tricking performance</li><li>Interactive audience section</li><li>Wall-flips and precision jumps on urban furniture</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>BCZ Club brought something completely new to Košice City Day. The energy and professionalism of their performance thrilled the entire audience.</p>'], 'attribution' => ['en' => '— Ing. Peter Novák, Head of Culture Department, City of Košice']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Technical Parameters']],
+                    ['type' => 'table', 'headers' => [['label' => ['en' => 'Parameter']], ['label' => ['en' => 'Value']]], 'rows' => [
+                        ['cells' => [['value' => ['en' => 'Show duration']], ['value' => ['en' => '30 minutes']]]],
+                        ['cells' => [['value' => ['en' => 'Performers']], ['value' => ['en' => '5 athletes']]]],
+                        ['cells' => [['value' => ['en' => 'Type']], ['value' => ['en' => 'Outdoor / Street']]]],
+                        ['cells' => [['value' => ['en' => 'Venue']], ['value' => ['en' => 'Main Street, Košice']]]],
+                    ]],
+                ]),
+            ],
         ]);
+        $kosiceEvent->addMediaFromUrl('https://picsum.photos/seed/event-kosice-card/800/450')
+            ->toMediaCollection('card_image');
+        $kosiceEvent->addMediaFromUrl('https://picsum.photos/seed/event-kosice-hero/1440/500')
+            ->toMediaCollection('detail_image');
 
         // === ORGANIZED events — camps, workshops, public trainings with registration ===
 
@@ -752,7 +956,27 @@ class DemoDataSeeder extends Seeder
             'place_address' => 'Junacka 6, 831 04 Bratislava',
             'is_published' => true,
             'published_at' => now()->subMonths(3),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O podujatí']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Bezplatný parkour workshop pre deti vo veku 8-14 rokov. Pod vedením certifikovaných trénerov BCZ Club sa deti naučia základy bezpečného pohybu, správne techniky pádov a jednoduché preskoky.</p><p>Workshop je vhodný pre úplných začiatočníkov. Všetky aktivity sú prispôsobené veku a schopnostiam detí. Bezpečnosť je naša priorita — používame žinenky a postupujeme od najjednoduchších cvičení.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Čo ťa čaká']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Zahrievanie a príprava tela formou hier (20 min)</li><li>Základy bezpečných pádov — roll forward, roll backward (30 min)</li><li>Jednoduché preskoky a prekonávanie prekážok (30 min)</li><li>Mini parkour dráha a záverečná hra (20 min)</li><li>Spoločné foto a odovzdanie diplomov</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Syn sa z workshopu vrátil nadšený a hneď chcel chodiť na pravidelné tréningy. Tréneri boli úžasní — trpezliví, profesionálni a deti sa s nimi cítili bezpečne.</p>'], 'attribution' => ['sk' => '— Katarína M., mama účastníka']],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Event']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Free parkour workshop for kids aged 8-14. Under the guidance of certified BCZ Club coaches, children learn the basics of safe movement, proper falling techniques, and simple vaults. Suitable for complete beginners.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'What to Expect']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Warm-up through games (20 min)</li><li>Safe falling basics — forward and backward rolls (30 min)</li><li>Simple vaults and obstacle navigation (30 min)</li><li>Mini parkour course and final game (20 min)</li><li>Group photo and certificate handout</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>My son came back from the workshop thrilled and immediately wanted to attend regular training. The coaches were amazing — patient, professional, and the kids felt safe.</p>'], 'attribution' => ['en' => '— Katarína M., participant\'s mother']],
+                ]),
+            ],
         ]);
+        $pastWorkshop->addMediaFromUrl('https://picsum.photos/seed/event-deti-card/800/450')
+            ->toMediaCollection('card_image');
+        $pastWorkshop->addMediaFromUrl('https://picsum.photos/seed/event-deti-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->create([
             'event_id' => $pastWorkshop->id,
             'max_capacity' => 30,
@@ -766,7 +990,7 @@ class DemoDataSeeder extends Seeder
             EventRegistration::factory()->create([
                 'event_id' => $pastWorkshop->id,
                 'user_id' => User::factory()->create()->id,
-                'status' => 'confirmed',
+                'status' => 'approved',
                 'registered_at' => now()->subMonths(2)->addDays($i),
             ]);
         }
@@ -787,7 +1011,27 @@ class DemoDataSeeder extends Seeder
             'longitude' => 18.7878,
             'is_published' => true,
             'published_at' => now()->subWeeks(2),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O podujatí']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>BCZ Letný tábor 2026 je 5-dňový pobytový tábor plný parkouru, kalisteniky, hier a zábavy. Tábor je určený pre všetky úrovne od 12 rokov — či už si úplný začiatočník alebo pokročilý atléta.</p><p>Každý deň je rozdelený do blokov — ranný tréning, poobedné workshopy a večerné aktivity. Tréneri BCZ Club pripravia program prispôsobený jednotlivým skupinám podľa úrovne skúseností.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Program']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Deň 1: Príchod, rozdelenie do skupín, úvodný tréning</li><li>Deň 2: Parkour fundamentals + kalistenika workshop</li><li>Deň 3: Tricking a akrobacia + výlet do prírody</li><li>Deň 4: Freestyle session + videoshoot</li><li>Deň 5: Záverečná show pre rodičov, vyhodnotenie, odchod</li><li>Večerné aktivity: filmový večer, táborák, nočná hra</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Minuloročný tábor bol najlepší zážitok leta. Naučil som sa veci, o ktorých som si myslel, že nikdy nezvládnem. A kamaráti, ktorých som tam získal, sú najlepší.</p>'], 'attribution' => ['sk' => '— Jakub, 14 rokov, účastník BCZ Letného tábora 2025']],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Event']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>BCZ Summer Camp 2026 is a 5-day residential camp full of parkour, calisthenics, games, and fun. The camp is designed for all levels from age 12 — whether you are a complete beginner or an advanced athlete.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Program']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Day 1: Arrival, group assignment, introductory training</li><li>Day 2: Parkour fundamentals + calisthenics workshop</li><li>Day 3: Tricking and acrobatics + nature trip</li><li>Day 4: Freestyle session + video shoot</li><li>Day 5: Final show for parents, awards, departure</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>Last year\'s camp was the best experience of the summer. I learned things I thought I\'d never manage. And the friends I made there are the best.</p>'], 'attribution' => ['en' => '— Jakub, 14 years old, BCZ Summer Camp 2025 participant']],
+                ]),
+            ],
         ]);
+        $summerCamp->addMediaFromUrl('https://picsum.photos/seed/event-tabor-card/800/450')
+            ->toMediaCollection('card_image');
+        $summerCamp->addMediaFromUrl('https://picsum.photos/seed/event-tabor-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->paid(89.00)->create([
             'event_id' => $summerCamp->id,
             'max_capacity' => 40,
@@ -801,7 +1045,7 @@ class DemoDataSeeder extends Seeder
             EventRegistration::factory()->create([
                 'event_id' => $summerCamp->id,
                 'user_id' => User::factory()->create()->id,
-                'status' => $i < 15 ? 'confirmed' : 'pending',
+                'status' => $i < 15 ? 'approved' : 'pending',
                 'registered_at' => now()->subDays(14 - $i),
             ]);
         }
@@ -821,7 +1065,27 @@ class DemoDataSeeder extends Seeder
             'longitude' => 17.1070,
             'is_published' => true,
             'published_at' => now()->subDays(3),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O podujatí']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Bezplatný otvorený tréning v Sade Janka Kráľa pre kohokoľvek, kto sa chce hýbať. Príď a vyskúšaj si parkour, kalisteniku alebo jednoducho trénuj s nami vonku. Vítaní sú všetci — od úplných začiatočníkov po skúsených atlétov.</p><p>Tréneri BCZ Club budú k dispozícii po celý čas a pomôžu ti s technikou. Stačí prísť v športovom oblečení a s fľašou vody.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Čo ťa čaká']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Spoločné zahrievanie a mobility (15 min)</li><li>Rozdelenie do skupín podľa úrovne</li><li>Tréningové stanice — parkour, kalistenika, flexibility (60 min)</li><li>Voľný jam a spoločný tréning (30 min)</li><li>Cool down a stretching</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Outdoor tréningy BCZ sú skvelá príležitosť vyskúšať si niečo nové v bezpečnom prostredí. Atmosféra je priateľská a tréneri sú vždy ochotní pomôcť.</p>'], 'attribution' => ['sk' => '— Lucia, pravidelná účastníčka verejných tréningov']],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Event']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Free open training in Sad Janka Kráľa park for anyone who wants to move. Come try parkour, calisthenics, or simply train with us outside. Everyone is welcome — from complete beginners to experienced athletes.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'What to Expect']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Group warm-up and mobility (15 min)</li><li>Division into groups by level</li><li>Training stations — parkour, calisthenics, flexibility (60 min)</li><li>Free jam and group training (30 min)</li><li>Cool down and stretching</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>BCZ outdoor trainings are a great opportunity to try something new in a safe environment. The atmosphere is friendly and coaches are always willing to help.</p>'], 'attribution' => ['en' => '— Lucia, regular participant of public trainings']],
+                ]),
+            ],
         ]);
+        $publicTraining->addMediaFromUrl('https://picsum.photos/seed/event-park-card/800/450')
+            ->toMediaCollection('card_image');
+        $publicTraining->addMediaFromUrl('https://picsum.photos/seed/event-park-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->create([
             'event_id' => $publicTraining->id,
             'max_capacity' => 50,
@@ -845,7 +1109,27 @@ class DemoDataSeeder extends Seeder
             'place_address' => 'Stara Vajnorska 37, 831 04 Bratislava',
             'is_published' => true,
             'published_at' => now()->subMonths(4),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O podujatí']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Exkluzívny 4-hodinový tricking masterclass s medzinárodne uznávaným atlétom Loic Landre. Workshop bol zameraný na pokročilé tricking techniky — od základných kickov a twistov po komplexné kombinácie.</p><p>Loic osobne koučoval každého účastníka a zdieľal svoje skúsenosti z medzinárodných súťaží. Kapacita bola limitovaná na 20 miest pre maximálnu kvalitu.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Program']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Zahrievanie a mobility špeciálne pre tricking (30 min)</li><li>Technika kickov — tornado kick, hook kick, butterfly kick (60 min)</li><li>Twisty a flipy — cork, b-twist, gainer (90 min)</li><li>Kombinácie a vlastný štýl (45 min)</li><li>Q&A a individuálny coaching (15 min)</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Workshop s Loicom bol neuveriteľný. Za 4 hodiny som sa naučil viac ako za posledné 3 mesiace sám. Jeho spôsob vysvetľovania je jedinečný.</p>'], 'attribution' => ['sk' => '— Matej K., účastník masterclass']],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Event']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Exclusive 4-hour tricking masterclass with internationally recognized athlete Loic Landre. The workshop focused on advanced tricking techniques — from basic kicks and twists to complex combinations. Limited to 20 spots for maximum quality.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Program']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Warm-up and mobility specific to tricking (30 min)</li><li>Kick technique — tornado, hook, butterfly kick (60 min)</li><li>Twists and flips — cork, b-twist, gainer (90 min)</li><li>Combinations and personal style (45 min)</li><li>Q&A and individual coaching (15 min)</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['en' => '<p>The workshop with Loic was incredible. I learned more in 4 hours than in the last 3 months on my own.</p>'], 'attribution' => ['en' => '— Matej K., masterclass participant']],
+                ]),
+            ],
         ]);
+        $pastPaidWorkshop->addMediaFromUrl('https://picsum.photos/seed/event-tricking-card/800/450')
+            ->toMediaCollection('card_image');
+        $pastPaidWorkshop->addMediaFromUrl('https://picsum.photos/seed/event-tricking-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->paid(45.00)->create([
             'event_id' => $pastPaidWorkshop->id,
             'max_capacity' => 20,
@@ -858,7 +1142,7 @@ class DemoDataSeeder extends Seeder
             EventRegistration::factory()->create([
                 'event_id' => $pastPaidWorkshop->id,
                 'user_id' => User::factory()->create()->id,
-                'status' => 'confirmed',
+                'status' => 'approved',
                 'registered_at' => now()->subMonths(3)->addDays($i),
             ]);
         }
@@ -872,7 +1156,25 @@ class DemoDataSeeder extends Seeder
             'date' => now()->addMonths(4),
             'country' => 'Slovensko',
             'city' => 'Bratislava',
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O podujatí']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Deň otvorených dverí v BCZ Gym je príležitosť nahliadnuť do sveta parkouru, kalisteniky a trickingu. Pripravili sme celodenný program plný ukážok, otvorených tréningov a malých súťaží pre návštevníkov.</p><p>Či už si nikdy nepočul o parkour alebo trénuješ roky — BCZ Open Day je pre teba. Príď s rodinou, kamarátmi alebo sám a zažijem atmosféru nášho gymu.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Čo ťa čaká']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>10:00 — Otvorenie dverí, prehliadka gymu</li><li>11:00 — Ukážkové vystúpenie atlétov BCZ</li><li>12:00 — Otvorený tréning pre verejnosť (začiatočníci)</li><li>14:00 — Otvorený tréning pre verejnosť (pokročilí)</li><li>15:00 — Mini súťaž pre návštevníkov</li><li>16:00 — Záverečný jam a spoločné foto</li></ul>']],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Event']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Open Day at BCZ Gym is your chance to discover the world of parkour, calisthenics, and tricking. We\'ve prepared a full-day program with demonstrations, open trainings, and mini competitions for visitors.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'What to Expect']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>10:00 — Doors open, gym tour</li><li>11:00 — BCZ athletes demo performance</li><li>12:00 — Open training for public (beginners)</li><li>14:00 — Open training for public (advanced)</li><li>15:00 — Mini competition for visitors</li><li>16:00 — Final jam and group photo</li></ul>']],
+                ]),
+            ],
         ]);
+        $draftEvent->addMediaFromUrl('https://picsum.photos/seed/event-openday-card/800/450')
+            ->toMediaCollection('card_image');
+        $draftEvent->addMediaFromUrl('https://picsum.photos/seed/event-openday-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->create([
             'event_id' => $draftEvent->id,
             'max_capacity' => 100,
@@ -958,7 +1260,52 @@ class DemoDataSeeder extends Seeder
             'longitude' => 17.1350,
             'is_published' => true,
             'published_at' => now()->subMonths(5),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O súťaži']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>BCZ Championship 2025 je hlavná súťaž sezóny organizovaná BCZ Club. Súťažiaci sa predvedú v disciplínach statika, dynamika a kombinácie pred panelom 5 rozhodcov. Súťaží sa v troch vekových kategóriách — juniori, muži a ženy.</p><p>Bodovací systém je transparentný — každý rozhodca hodnotí techniku, kreativitu a obtiažnosť. Výsledky sa zverejňujú priebežne počas celej súťaže.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Formát súťaže']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Súťaž prebieha v dvoch kolách. V kvalifikácii má každý súťažiaci 90 sekúnd na predvedenie zostavy. Top 8 z každej kategórie postupujú do finále, kde majú 120 sekúnd. Hodnotí sa technika (40%), kreativita (30%) a obtiažnosť (30%).</p>']],
+                    ['type' => 'stats', 'badge' => ['sk' => 'Štatistiky'], 'badge_color' => 'primary', 'title' => ['sk' => 'Championship v číslach'], 'items' => [
+                        ['number' => '80', 'label' => ['sk' => 'Súťažiacich'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '3', 'label' => ['sk' => 'Kategórie'], 'color' => 'success', 'icon' => 'heroicon-o-trophy'],
+                        ['number' => '5', 'label' => ['sk' => 'Disciplín'], 'color' => 'warning', 'icon' => 'heroicon-o-fire'],
+                        ['number' => '5', 'label' => ['sk' => 'Rozhodcov'], 'color' => 'danger', 'icon' => 'heroicon-o-clipboard-document-check'],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Competition']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>BCZ Championship 2025 is the main competition of the season organized by BCZ Club. Competitors perform in statics, dynamics, and combos disciplines in front of a panel of 5 judges across three age categories.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Competition Format']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>The competition has two rounds. In qualification, each competitor has 90 seconds to perform a routine. Top 8 from each category advance to finals with 120 seconds. Scoring: technique (40%), creativity (30%), difficulty (30%).</p>']],
+                    ['type' => 'stats', 'badge' => ['en' => 'Statistics'], 'badge_color' => 'primary', 'title' => ['en' => 'Championship in Numbers'], 'items' => [
+                        ['number' => '80', 'label' => ['en' => 'Competitors'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '3', 'label' => ['en' => 'Categories'], 'color' => 'success', 'icon' => 'heroicon-o-trophy'],
+                        ['number' => '5', 'label' => ['en' => 'Disciplines'], 'color' => 'warning', 'icon' => 'heroicon-o-fire'],
+                        ['number' => '5', 'label' => ['en' => 'Judges'], 'color' => 'danger', 'icon' => 'heroicon-o-clipboard-document-check'],
+                    ]],
+                ]),
+            ],
+            'report_content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'Report z BCZ Championship 2025']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>BCZ Championship 2025 sa uskutočnil 1. januára 2026 v Športovej hale Pasienky v Bratislave. Zúčastnilo sa 60 atletov z 3 krajín v kategóriách juniori, muži a ženy. Súťaž prebiehala v disciplínach statika, dynamika a kombinácie.</p><p>Atmosféra bola elektrizujúca — plná hala fanúšikov podporovala súťažiacich od kvalifikácie až po finálové zostavy. Rozhodcovský panel sa skladal z 5 medzinárodne certifikovaných porotcov.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Najlepšie momenty']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<ul><li>Dominik Klimek obhájil titul v kategórii mužov s rekordným skóre 94.5 bodu</li><li>V juniorskej kategórii sa predstavili aj úplní nováčikovia — najnižší vek 14 rokov</li><li>Ženská kategória zaznamenala najväčší nárast účasti — o 40% viac súťažiacich oproti minulému roku</li><li>Prvýkrát sa predstavila disciplína kombinácie s live hudbou</li></ul>']],
+                    ['type' => 'quote', 'quote' => ['sk' => '<p>Championship 2025 ukázal, že slovenská kalistenická scéna rastie neuveriteľným tempom. Úroveň výkonov sa rok od roku zvyšuje a my sme hrdí, že môžeme byť súčasťou tejto cesty.</p>'], 'attribution' => ['sk' => '— Dominik Klimek, zakladateľ BCZ Club']],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'BCZ Championship 2025 Report']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>BCZ Championship 2025 took place on January 1, 2026 at Sportova hala Pasienky in Bratislava. 60 athletes from 3 countries competed in juniors, men, and women categories across statics, dynamics, and combos disciplines.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Highlights']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<ul><li>Dominik Klimek defended his title in the men\'s category with a record score of 94.5 points</li><li>The junior category featured complete beginners — youngest age 14</li><li>Women\'s category saw the biggest growth — 40% more competitors than last year</li></ul>']],
+                ]),
+            ],
         ]);
+        $pastCompetition->addMediaFromUrl('https://picsum.photos/seed/event-championship-card/800/450')
+            ->toMediaCollection('card_image');
+        $pastCompetition->addMediaFromUrl('https://picsum.photos/seed/event-championship-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->paid(25.00)->create([
             'event_id' => $pastCompetition->id,
             'max_capacity' => 80,
@@ -983,7 +1330,37 @@ class DemoDataSeeder extends Seeder
             'longitude' => 21.2611,
             'is_published' => true,
             'published_at' => now()->subMonths(3),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O súťaži']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Street Workout Battle Košice je adrenalínová 1v1 battle súťaž v čistom street workout štýle. 16 atlétov sa stretne v eliminačných kolách — od osemfinále až po veľké finále na outdoor workout parku v centre Košíc.</p><p>Každý battle trvá 2x45 sekúnd. Rozhodcovia hodnotia techniku, silu, kreativitu a showmanship. Atmosféra je elektrická — publikum je súčasťou zážitku.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Pravidlá']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Battle formát: 1v1 eliminácia. Každý atléta má dve 45-sekundové kolá. Rozhodcovia (3) hodnotia zdvihnutím karty. Víťaz postupuje do ďalšieho kola. Zakázané sú nebezpečné prvky mimo matrace a kontakt s protivníkom.</p>']],
+                    ['type' => 'stats', 'badge' => ['sk' => 'Štatistiky'], 'badge_color' => 'warning', 'title' => ['sk' => 'Battle v číslach'], 'items' => [
+                        ['number' => '16', 'label' => ['sk' => 'Súťažiacich'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '4', 'label' => ['sk' => 'Kolá'], 'color' => 'success', 'icon' => 'heroicon-o-arrow-path'],
+                        ['number' => '3', 'label' => ['sk' => 'Rozhodcov'], 'color' => 'warning', 'icon' => 'heroicon-o-clipboard-document-check'],
+                        ['number' => '1', 'label' => ['sk' => 'Šampión'], 'color' => 'danger', 'icon' => 'heroicon-o-trophy'],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Competition']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Street Workout Battle Košice is an adrenaline-fueled 1v1 battle competition in pure street workout style. 16 athletes meet in elimination rounds from round of 16 to the grand final at an outdoor workout park in Košice city center.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Rules']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Battle format: 1v1 elimination. Each athlete has two 45-second rounds. Judges (3) score by raising cards. Winner advances. Dangerous elements off mats and contact with opponent are prohibited.</p>']],
+                    ['type' => 'stats', 'badge' => ['en' => 'Statistics'], 'badge_color' => 'warning', 'title' => ['en' => 'Battle in Numbers'], 'items' => [
+                        ['number' => '16', 'label' => ['en' => 'Competitors'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '4', 'label' => ['en' => 'Rounds'], 'color' => 'success', 'icon' => 'heroicon-o-arrow-path'],
+                        ['number' => '3', 'label' => ['en' => 'Judges'], 'color' => 'warning', 'icon' => 'heroicon-o-clipboard-document-check'],
+                        ['number' => '1', 'label' => ['en' => 'Champion'], 'color' => 'danger', 'icon' => 'heroicon-o-trophy'],
+                    ]],
+                ]),
+            ],
         ]);
+        $battleCompetition->addMediaFromUrl('https://picsum.photos/seed/event-battle-card/800/450')
+            ->toMediaCollection('card_image');
+        $battleCompetition->addMediaFromUrl('https://picsum.photos/seed/event-battle-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->paid(15.00)->create([
             'event_id' => $battleCompetition->id,
             'max_capacity' => 32,
@@ -1009,7 +1386,41 @@ class DemoDataSeeder extends Seeder
             'longitude' => 21.2611,
             'is_published' => true,
             'published_at' => now()->subWeek(),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O súťaži']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>BCZ Spring Cup 2026 je jarná súťaž pre všetky vekové kategórie. Kombinuje bodovací systém v kvalifikácii s battle finále pre top 4 atlétov z každej kategórie. Súťaží sa outdoorovo v Košiciach.</p><p>Registrácia je otvorená pre všetkých atlétov bez ohľadu na klubovú príslušnosť. Cena zahŕňa štartovné, tričko a obed.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Formát súťaže']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Kvalifikácia: bodovací systém, každý súťažiaci má 90 sekúnd. Top 4 z každej kategórie postupujú do battle finále. Battle finále: semifinále a finále v 1v1 formáte. Celkový víťaz získava titul BCZ Spring Cup Champion.</p>']],
+                    ['type' => 'stats', 'badge' => ['sk' => 'Štatistiky'], 'badge_color' => 'success', 'title' => ['sk' => 'Spring Cup v číslach'], 'items' => [
+                        ['number' => '60', 'label' => ['sk' => 'Max. kapacita'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '3', 'label' => ['sk' => 'Kategórie'], 'color' => 'success', 'icon' => 'heroicon-o-trophy'],
+                        ['number' => '2', 'label' => ['sk' => 'Dni'], 'color' => 'warning', 'icon' => 'heroicon-o-calendar'],
+                        ['number' => '25 EUR', 'label' => ['sk' => 'Štartovné'], 'color' => 'danger', 'icon' => 'heroicon-o-currency-euro'],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Competition']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>BCZ Spring Cup 2026 is a spring competition for all age categories combining a points-based qualification with battle finals for top 4 athletes from each category. Outdoor venue in Košice.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Competition Format']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Qualification: points system, 90 seconds per competitor. Top 4 advance to battle finals. Battle finals: semi-finals and finals in 1v1 format. Overall winner earns the BCZ Spring Cup Champion title.</p>']],
+                    ['type' => 'stats', 'badge' => ['en' => 'Statistics'], 'badge_color' => 'success', 'title' => ['en' => 'Spring Cup in Numbers'], 'items' => [
+                        ['number' => '60', 'label' => ['en' => 'Max. capacity'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '3', 'label' => ['en' => 'Categories'], 'color' => 'success', 'icon' => 'heroicon-o-trophy'],
+                        ['number' => '2', 'label' => ['en' => 'Days'], 'color' => 'warning', 'icon' => 'heroicon-o-calendar'],
+                        ['number' => '25 EUR', 'label' => ['en' => 'Entry fee'], 'color' => 'danger', 'icon' => 'heroicon-o-currency-euro'],
+                    ]],
+                ]),
+            ],
         ]);
+        $upcomingCompetition->addMediaFromUrl('https://picsum.photos/seed/event-springcup-card/800/450')
+            ->toMediaCollection('card_image');
+        $upcomingCompetition->addMediaFromUrl('https://picsum.photos/seed/event-springcup-hero/1440/500')
+            ->toMediaCollection('detail_image');
+        for ($g = 1; $g <= 8; $g++) {
+            $upcomingCompetition->addMediaFromUrl("https://picsum.photos/seed/springcup-gallery-{$g}/800/600")
+                ->toMediaCollection('gallery');
+        }
         EventOrganization::factory()->paid(25.00)->create([
             'event_id' => $upcomingCompetition->id,
             'max_capacity' => 60,
@@ -1017,8 +1428,48 @@ class DemoDataSeeder extends Seeder
             'registration_closes_at' => now()->addMonth(),
             'is_public_registration' => true,
             'show_countdown' => true,
+            'registration_form_schema' => [
+                ['key' => 'first_name', 'type' => 'first_name', 'label' => 'Meno', 'required' => true],
+                ['key' => 'last_name', 'type' => 'last_name', 'label' => 'Priezvisko', 'required' => true],
+                ['key' => 'email', 'type' => 'email', 'label' => 'E-mail', 'required' => true],
+                ['key' => 'phone', 'type' => 'phone', 'label' => 'Telefón', 'required' => true],
+                ['key' => 'birth_date', 'type' => 'birth_date', 'label' => 'Dátum narodenia', 'required' => true],
+                ['key' => 'gender', 'type' => 'gender', 'label' => 'Pohlavie', 'required' => true],
+                ['key' => 'club', 'type' => 'text_input', 'label' => 'Klub / Tím', 'required' => false],
+                ['key' => 'weight', 'type' => 'number_input', 'label' => 'Váha (kg)', 'required' => false],
+                ['key' => 'experience', 'type' => 'select', 'label' => 'Úroveň skúseností', 'required' => true, 'options' => "Začiatočník\nMierne pokročilý\nPokročilý\nProfesionál"],
+                ['key' => 'notes', 'type' => 'textarea', 'label' => 'Poznámka', 'required' => false],
+            ],
         ]);
         $upcomingCompDetail = CompetitionDetail::factory()->create(['event_id' => $upcomingCompetition->id]);
+
+        // Rounds for upcoming BCZ Spring Cup
+        $springQualRound = CompetitionRound::factory()->create([
+            'competition_detail_id' => $upcomingCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 1,
+            'name' => 'Kvalifikácia',
+            'scoring_format' => 'points',
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'sort_order' => 1,
+        ]);
+        foreach (['Technika', 'Kreativita', 'Obtiažnosť'] as $i => $name) {
+            RoundPart::factory()->create([
+                'competition_round_id' => $springQualRound->id,
+                'name' => ['sk' => $name, 'en' => $name, 'cs' => $name],
+                'duration_seconds' => 90,
+                'sort_order' => $i + 1,
+            ]);
+        }
+        CompetitionRound::factory()->create([
+            'competition_detail_id' => $upcomingCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 2,
+            'name' => 'Battle finále',
+            'scoring_format' => 'points',
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'sort_order' => 2,
+        ]);
 
         // ===== COMPETITION 4: Past — Free community comp (free entry, points only, no battles) =====
         $freeCompetition = Event::factory()->competition()->create([
@@ -1035,7 +1486,37 @@ class DemoDataSeeder extends Seeder
             'longitude' => 18.7863,
             'is_published' => true,
             'published_at' => now()->subMonths(7),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O súťaži']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>BCZ Community Jam je neformálna komunitná súťaž určená pre všetkých — od začiatočníkov po pokročilých. Žiadne štartovné, žiadny stres, len čistá radosť z pohybu a priateľská súťaživosť.</p><p>Cieľom Community Jamu nie je nájsť najlepšieho atléta, ale motivovať každého účastníka k osobnému posunu. Každý, kto súťaží, dostane spätnú väzbu od rozhodcov.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Formát súťaže']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Jednoduchý bodovací systém. Každý súťažiaci má 60 sekúnd na svoju zostavu. Rozhodcovia hodnotia snahu, kreativitu a pokrok. Žiadne eliminácie — každý súťaží a každý dostane hodnotenie. Ocenenie pre Top 3 a špeciálne ceny za najlepší pokrok.</p>']],
+                    ['type' => 'stats', 'badge' => ['sk' => 'Štatistiky'], 'badge_color' => 'info', 'title' => ['sk' => 'Community Jam v číslach'], 'items' => [
+                        ['number' => '20', 'label' => ['sk' => 'Súťažiacich'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '0 EUR', 'label' => ['sk' => 'Štartovné'], 'color' => 'success', 'icon' => 'heroicon-o-currency-euro'],
+                        ['number' => '1', 'label' => ['sk' => 'Deň'], 'color' => 'warning', 'icon' => 'heroicon-o-calendar'],
+                        ['number' => '100%', 'label' => ['sk' => 'Zábava'], 'color' => 'danger', 'icon' => 'heroicon-o-face-smile'],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Competition']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>BCZ Community Jam is an informal community competition for everyone — from beginners to advanced athletes. No entry fee, no stress, just pure joy of movement and friendly competition.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Competition Format']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Simple points system. Each competitor has 60 seconds for their routine. Judges score effort, creativity, and progress. No eliminations — everyone competes and receives feedback. Awards for Top 3 and special prizes for best improvement.</p>']],
+                    ['type' => 'stats', 'badge' => ['en' => 'Statistics'], 'badge_color' => 'info', 'title' => ['en' => 'Community Jam in Numbers'], 'items' => [
+                        ['number' => '20', 'label' => ['en' => 'Competitors'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '0 EUR', 'label' => ['en' => 'Entry fee'], 'color' => 'success', 'icon' => 'heroicon-o-currency-euro'],
+                        ['number' => '1', 'label' => ['en' => 'Day'], 'color' => 'warning', 'icon' => 'heroicon-o-calendar'],
+                        ['number' => '100%', 'label' => ['en' => 'Fun'], 'color' => 'danger', 'icon' => 'heroicon-o-face-smile'],
+                    ]],
+                ]),
+            ],
         ]);
+        $freeCompetition->addMediaFromUrl('https://picsum.photos/seed/event-jam-card/800/450')
+            ->toMediaCollection('card_image');
+        $freeCompetition->addMediaFromUrl('https://picsum.photos/seed/event-jam-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->create([
             'event_id' => $freeCompetition->id,
             'max_capacity' => 20,
@@ -1062,7 +1543,37 @@ class DemoDataSeeder extends Seeder
             'longitude' => 17.3089,
             'is_published' => true,
             'published_at' => now()->subDays(5),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O súťaži']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Central European Calisthenics Open je medzinárodná súťaž pre krajiny strednej Európy — Slovensko, Česko, Poľsko, Maďarsko a Rakúsko. Tri dni intenzívnej súťaže v prestížnom X-Bionic Sphere v Šamoríne.</p><p>Súťaž kombinuje bodovací systém v kvalifikáciách s battle finále. Najlepší atléti z každej krajiny sa stretnú v boji o titul Central European Champion. Súčasťou programu sú aj workshopy a networking.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Formát súťaže']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>Deň 1: Registrácia a otvorené tréningy. Deň 2: Kvalifikačné kolá vo všetkých disciplínach (bodovací systém). Deň 3: Battle finále Top 8 v každej kategórii + vyhlásenie výsledkov a afterparty. Medzinárodný panel 7 rozhodcov.</p>']],
+                    ['type' => 'stats', 'badge' => ['sk' => 'Štatistiky'], 'badge_color' => 'danger', 'title' => ['sk' => 'Central European Open v číslach'], 'items' => [
+                        ['number' => '120', 'label' => ['sk' => 'Max. kapacita'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '5', 'label' => ['sk' => 'Krajín'], 'color' => 'success', 'icon' => 'heroicon-o-globe-alt'],
+                        ['number' => '3', 'label' => ['sk' => 'Dni'], 'color' => 'warning', 'icon' => 'heroicon-o-calendar'],
+                        ['number' => '7', 'label' => ['sk' => 'Rozhodcov'], 'color' => 'danger', 'icon' => 'heroicon-o-clipboard-document-check'],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Competition']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Central European Calisthenics Open is an international competition for Central European countries — Slovakia, Czech Republic, Poland, Hungary, and Austria. Three days of intense competition at the prestigious X-Bionic Sphere in Šamorín.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Competition Format']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>Day 1: Registration and open training. Day 2: Qualification rounds in all disciplines (points system). Day 3: Battle finals Top 8 per category + awards ceremony and afterparty. International panel of 7 judges.</p>']],
+                    ['type' => 'stats', 'badge' => ['en' => 'Statistics'], 'badge_color' => 'danger', 'title' => ['en' => 'Central European Open in Numbers'], 'items' => [
+                        ['number' => '120', 'label' => ['en' => 'Max. capacity'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '5', 'label' => ['en' => 'Countries'], 'color' => 'success', 'icon' => 'heroicon-o-globe-alt'],
+                        ['number' => '3', 'label' => ['en' => 'Days'], 'color' => 'warning', 'icon' => 'heroicon-o-calendar'],
+                        ['number' => '7', 'label' => ['en' => 'Judges'], 'color' => 'danger', 'icon' => 'heroicon-o-clipboard-document-check'],
+                    ]],
+                ]),
+            ],
         ]);
+        $futureCompetition->addMediaFromUrl('https://picsum.photos/seed/event-ceco-card/800/450')
+            ->toMediaCollection('card_image');
+        $futureCompetition->addMediaFromUrl('https://picsum.photos/seed/event-ceco-hero/1440/500')
+            ->toMediaCollection('detail_image');
         EventOrganization::factory()->paid(40.00)->create([
             'event_id' => $futureCompetition->id,
             'max_capacity' => 120,
@@ -1073,23 +1584,252 @@ class DemoDataSeeder extends Seeder
         ]);
         $futureCompDetail = CompetitionDetail::factory()->create(['event_id' => $futureCompetition->id]);
 
-        $allCompDetails = collect([$pastCompDetail, $battleCompDetail, $upcomingCompDetail, $freeCompDetail, $futureCompDetail]);
+        // ===== COMPETITION 6: TODAY — BCZ Live Cup 2026 (IN PROGRESS, registration + weigh-in phase) =====
+        $todayCompetition = Event::factory()->competition()->create([
+            'title' => ['sk' => 'BCZ Live Cup 2026', 'en' => 'BCZ Live Cup 2026', 'cs' => 'BCZ Live Cup 2026'],
+            'card_description' => [
+                'sk' => 'Celodenná súťaž s kvalifikáciou aj battle finále. Tri kategórie, päť disciplín, medzinárodný panel rozhodcov.',
+                'en' => 'Full-day competition with qualification and battle finals. Three categories, five disciplines, international judging panel.',
+                'cs' => 'Celodenní soutěž s kvalifikací a battle finále. Tři kategorie, pět disciplín, mezinárodní panel rozhodčích.',
+            ],
+            'team_id' => $bczTeam->id,
+            'event_category_id' => $eventCategories[0]->id,
+            'date' => today(),
+            'date_end' => today()->addDay(),
+            'place_name' => 'NTC Bratislava',
+            'place_address' => 'Príkopova 6, 831 03 Bratislava',
+            'country' => 'Slovensko',
+            'city' => 'Bratislava',
+            'latitude' => 48.1530,
+            'longitude' => 17.1312,
+            'is_published' => true,
+            'published_at' => now()->subMonth(),
+            'content' => [
+                'sk' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['sk' => 'O súťaži']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p>BCZ Live Cup 2026 je celodenná kalistenická súťaž kombinujúca bodovací systém v kvalifikáciách s battle finále. Súťaží sa v troch kategóriách — muži, ženy a juniori — v piatich disciplínach pred panelom 5 rozhodcov.</p><p>Kvalifikácia prebieha bodovacím systémom (technika, kreativita, obtiažnosť). Top 4 z každej kategórie postupujú do battle finále v 1v1 formáte.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['sk' => 'Bodovací systém']],
+                    ['type' => 'rich-text', 'content' => ['sk' => '<p><strong>Kvalifikácia:</strong> Každý súťažiaci má 90 sekúnd. Hodnotí sa technika (40%), kreativita (30%) a obtiažnosť (30%). Maximum 100 bodov.<br><strong>Battle finále:</strong> 1v1 eliminácia, 2x45 sekúnd. Rozhodcovia hlasujú zdvihnutím karty — väčšina rozhoduje.</p>']],
+                    ['type' => 'stats', 'badge' => ['sk' => 'Dnes'], 'badge_color' => 'warning', 'title' => ['sk' => 'Live Cup v číslach'], 'items' => [
+                        ['number' => '30', 'label' => ['sk' => 'Súťažiacich'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '3', 'label' => ['sk' => 'Kategórie'], 'color' => 'success', 'icon' => 'heroicon-o-trophy'],
+                        ['number' => '5', 'label' => ['sk' => 'Disciplín'], 'color' => 'warning', 'icon' => 'heroicon-o-fire'],
+                        ['number' => '5', 'label' => ['sk' => 'Rozhodcov'], 'color' => 'danger', 'icon' => 'heroicon-o-clipboard-document-check'],
+                    ]],
+                ]),
+                'en' => self::masonBricks([
+                    ['type' => 'heading', 'level' => 'h2', 'text' => ['en' => 'About the Competition']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p>BCZ Live Cup 2026 is a full-day calisthenics competition combining a points-based qualification with battle finals. Three categories — men, women, and juniors — compete across five disciplines in front of a 5-judge panel.</p>']],
+                    ['type' => 'heading', 'level' => 'h3', 'text' => ['en' => 'Scoring System']],
+                    ['type' => 'rich-text', 'content' => ['en' => '<p><strong>Qualification:</strong> 90 seconds per competitor. Technique (40%), creativity (30%), difficulty (30%). Max 100 points.<br><strong>Battle finals:</strong> 1v1 elimination, 2x45 seconds. Judges vote by card — majority decides.</p>']],
+                    ['type' => 'stats', 'badge' => ['en' => 'Today'], 'badge_color' => 'warning', 'title' => ['en' => 'Live Cup in Numbers'], 'items' => [
+                        ['number' => '30', 'label' => ['en' => 'Competitors'], 'color' => 'primary', 'icon' => 'heroicon-o-users'],
+                        ['number' => '3', 'label' => ['en' => 'Categories'], 'color' => 'success', 'icon' => 'heroicon-o-trophy'],
+                        ['number' => '5', 'label' => ['en' => 'Disciplines'], 'color' => 'warning', 'icon' => 'heroicon-o-fire'],
+                        ['number' => '5', 'label' => ['en' => 'Judges'], 'color' => 'danger', 'icon' => 'heroicon-o-clipboard-document-check'],
+                    ]],
+                ]),
+            ],
+        ]);
+        $todayCompetition->addMediaFromUrl('https://picsum.photos/seed/event-livecup-card/800/450')
+            ->toMediaCollection('card_image');
+        $todayCompetition->addMediaFromUrl('https://picsum.photos/seed/event-livecup-hero/1440/500')
+            ->toMediaCollection('detail_image');
+        EventOrganization::factory()->paid(30.00)->create([
+            'event_id' => $todayCompetition->id,
+            'max_capacity' => 40,
+            'registration_opens_at' => now()->subMonth(),
+            'registration_closes_at' => now()->subDay(),
+            'is_public_registration' => true,
+        ]);
+        $todayCompDetail = CompetitionDetail::factory()->create(['event_id' => $todayCompetition->id]);
 
-        // Attach disciplines, categories, judges to all competitions
+        // Today's competition: Rounds (created BEFORE timetable so we can link them)
+        // Men: Qualification
+        $todayMenQual = CompetitionRound::factory()->create([
+            'competition_detail_id' => $todayCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 1,
+            'name' => 'Kvalifikácia - Muži',
+            'scoring_format' => ScoringFormatEnum::POINTS,
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'sort_order' => 1,
+        ]);
+        RoundPart::factory()->create([
+            'competition_round_id' => $todayMenQual->id,
+            'name' => ['sk' => 'Statika', 'en' => 'Statics', 'cs' => 'Statika'],
+            'duration_seconds' => 90,
+            'sort_order' => 1,
+        ]);
+        RoundPart::factory()->create([
+            'competition_round_id' => $todayMenQual->id,
+            'name' => ['sk' => 'Dynamika', 'en' => 'Dynamics', 'cs' => 'Dynamika'],
+            'duration_seconds' => 90,
+            'sort_order' => 2,
+        ]);
+        // Men: Battle Semifinals
+        $todayMenSemifinal = CompetitionRound::factory()->create([
+            'competition_detail_id' => $todayCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 2,
+            'name' => 'Semifinále - Muži',
+            'scoring_format' => ScoringFormatEnum::COACH_DECISION,
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'sort_order' => 2,
+        ]);
+        foreach (['Toprock', 'Footwork', 'Power Moves', 'Freeze'] as $i => $name) {
+            RoundPart::factory()->create([
+                'competition_round_id' => $todayMenSemifinal->id,
+                'name' => ['sk' => $name, 'en' => $name, 'cs' => $name],
+                'duration_seconds' => 45,
+                'sort_order' => $i + 1,
+            ]);
+        }
+        // Men: Battle Finals
+        $todayMenBattle = CompetitionRound::factory()->create([
+            'competition_detail_id' => $todayCompDetail->id,
+            'athlete_category_id' => $menCategory->id,
+            'round_number' => 3,
+            'name' => 'Finále - Muži',
+            'scoring_format' => ScoringFormatEnum::COACH_DECISION,
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'sort_order' => 3,
+        ]);
+        foreach (['Toprock', 'Footwork', 'Power Moves', 'Freeze'] as $i => $name) {
+            RoundPart::factory()->create([
+                'competition_round_id' => $todayMenBattle->id,
+                'name' => ['sk' => $name, 'en' => $name, 'cs' => $name],
+                'duration_seconds' => 45,
+                'sort_order' => $i + 1,
+            ]);
+        }
+
+        // Women: Qualification
+        $todayWomenQual = CompetitionRound::factory()->create([
+            'competition_detail_id' => $todayCompDetail->id,
+            'athlete_category_id' => $womenCategory->id,
+            'round_number' => 1,
+            'name' => 'Kvalifikácia - Ženy',
+            'scoring_format' => ScoringFormatEnum::POINTS,
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'sort_order' => 4,
+        ]);
+        RoundPart::factory()->create([
+            'competition_round_id' => $todayWomenQual->id,
+            'name' => ['sk' => 'Statika', 'en' => 'Statics', 'cs' => 'Statika'],
+            'duration_seconds' => 90,
+            'sort_order' => 1,
+        ]);
+        RoundPart::factory()->create([
+            'competition_round_id' => $todayWomenQual->id,
+            'name' => ['sk' => 'Dynamika', 'en' => 'Dynamics', 'cs' => 'Dynamika'],
+            'duration_seconds' => 90,
+            'sort_order' => 2,
+        ]);
+        // Women: Battle Semifinals
+        $todayWomenSemifinal = CompetitionRound::factory()->create([
+            'competition_detail_id' => $todayCompDetail->id,
+            'athlete_category_id' => $womenCategory->id,
+            'round_number' => 2,
+            'name' => 'Semifinále - Ženy',
+            'scoring_format' => ScoringFormatEnum::COACH_DECISION,
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'sort_order' => 5,
+        ]);
+        foreach (['Toprock', 'Footwork', 'Flexibility', 'Musicality'] as $i => $name) {
+            RoundPart::factory()->create([
+                'competition_round_id' => $todayWomenSemifinal->id,
+                'name' => ['sk' => $name, 'en' => $name, 'cs' => $name],
+                'duration_seconds' => 45,
+                'sort_order' => $i + 1,
+            ]);
+        }
+        // Women: Battle Finals
+        $todayWomenBattle = CompetitionRound::factory()->create([
+            'competition_detail_id' => $todayCompDetail->id,
+            'athlete_category_id' => $womenCategory->id,
+            'round_number' => 3,
+            'name' => 'Finále - Ženy',
+            'scoring_format' => ScoringFormatEnum::COACH_DECISION,
+            'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
+            'sort_order' => 6,
+        ]);
+        foreach (['Toprock', 'Footwork', 'Flexibility', 'Musicality'] as $i => $name) {
+            RoundPart::factory()->create([
+                'competition_round_id' => $todayWomenBattle->id,
+                'name' => ['sk' => $name, 'en' => $name, 'cs' => $name],
+                'duration_seconds' => 45,
+                'sort_order' => $i + 1,
+            ]);
+        }
+
+        // Juniors: Qualification only (single round, no battle)
+        $todayJuniorsQual = CompetitionRound::factory()->create([
+            'competition_detail_id' => $todayCompDetail->id,
+            'athlete_category_id' => $youthCategory->id,
+            'round_number' => 1,
+            'name' => 'Kvalifikácia - Juniori',
+            'scoring_format' => ScoringFormatEnum::POINTS,
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'sort_order' => 7,
+        ]);
+        RoundPart::factory()->create([
+            'competition_round_id' => $todayJuniorsQual->id,
+            'name' => ['sk' => 'Freestyle', 'en' => 'Freestyle', 'cs' => 'Freestyle'],
+            'duration_seconds' => 60,
+            'sort_order' => 1,
+        ]);
+
+        // Today's competition: Timetable with types and round links
+        $todayTimetable = [
+            ['title' => ['sk' => 'Registrácia a váženie', 'en' => 'Registration & Weigh-in', 'cs' => 'Registrace a vážení'], 'desc' => ['sk' => 'Overenie dokladov, váženie', 'en' => 'ID verification, weigh-in', 'cs' => 'Ověření dokladů, vážení'], 'time' => [8, 0], 'status' => TimetableEntryStatusEnum::IN_PROGRESS, 'type' => null, 'round_id' => null],
+            ['title' => ['sk' => 'Otvorenie súťaže', 'en' => 'Opening Ceremony', 'cs' => 'Zahájení soutěže'], 'desc' => ['sk' => 'Privítanie, predstavenie rozhodcov', 'en' => 'Welcome, judges introduction', 'cs' => 'Přivítání, představení rozhodčích'], 'time' => [9, 30], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => null, 'round_id' => null],
+            ['title' => ['sk' => 'Kvalifikácia - Statika (Muži)', 'en' => 'Qualification - Statics (Men)', 'cs' => 'Kvalifikace - Statika (Muži)'], 'desc' => ['sk' => 'Statika, dynamika, kombá', 'en' => 'Statics, dynamics, combos', 'cs' => 'Statika, dynamika, komba'], 'time' => [10, 0], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayMenQual->id],
+            ['title' => ['sk' => 'Kvalifikácia - Statika (Ženy)', 'en' => 'Qualification - Statics (Women)', 'cs' => 'Kvalifikace - Statika (Ženy)'], 'desc' => ['sk' => 'Statika, dynamika, kombá', 'en' => 'Statics, dynamics, combos', 'cs' => 'Statika, dynamika, komba'], 'time' => [10, 45], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayWomenQual->id],
+            ['title' => ['sk' => 'Kvalifikácia - Dynamika (Muži)', 'en' => 'Qualification - Dynamics (Men)', 'cs' => 'Kvalifikace - Dynamika (Muži)'], 'desc' => ['sk' => 'Dynamické prvky, všetky kategórie', 'en' => 'Dynamic elements, all categories', 'cs' => 'Dynamické prvky, všechny kategorie'], 'time' => [11, 30], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayMenQual->id],
+            ['title' => ['sk' => 'Kvalifikácia - Dynamika (Ženy)', 'en' => 'Qualification - Dynamics (Women)', 'cs' => 'Kvalifikace - Dynamika (Ženy)'], 'desc' => ['sk' => 'Dynamické prvky, všetky kategórie', 'en' => 'Dynamic elements, all categories', 'cs' => 'Dynamické prvky, všechny kategorie'], 'time' => [12, 0], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayWomenQual->id],
+            ['title' => ['sk' => 'Obedová prestávka', 'en' => 'Lunch Break', 'cs' => 'Obědová přestávka'], 'desc' => null, 'time' => [12, 45], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => null, 'round_id' => null],
+            ['title' => ['sk' => 'Kvalifikácia - Juniori', 'en' => 'Qualification - Juniors', 'cs' => 'Kvalifikace - Junioři'], 'desc' => ['sk' => 'Záverečné kolo, všetky kategórie', 'en' => 'Final round, all categories', 'cs' => 'Závěrečné kolo, všechny kategorie'], 'time' => [13, 30], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayJuniorsQual->id],
+            ['title' => ['sk' => 'Battle semifinále (Muži)', 'en' => 'Battle Semi-finals (Men)', 'cs' => 'Battle semifinále (Muži)'], 'desc' => ['sk' => 'Top 4 z kvalifikácie, 1v1', 'en' => 'Top 4 from qualification, 1v1', 'cs' => 'Top 4 z kvalifikace, 1v1'], 'time' => [14, 30], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayMenSemifinal->id],
+            ['title' => ['sk' => 'Battle semifinále (Ženy)', 'en' => 'Battle Semi-finals (Women)', 'cs' => 'Battle semifinále (Ženy)'], 'desc' => ['sk' => 'Top 4 z kvalifikácie, 1v1', 'en' => 'Top 4 from qualification, 1v1', 'cs' => 'Top 4 z kvalifikace, 1v1'], 'time' => [15, 15], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayWomenSemifinal->id],
+            ['title' => ['sk' => 'Battle finále (Muži)', 'en' => 'Battle Finals (Men)', 'cs' => 'Battle finále (Muži)'], 'desc' => ['sk' => 'Finále 1v1', 'en' => 'Finals 1v1', 'cs' => 'Finále 1v1'], 'time' => [16, 0], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayMenBattle->id],
+            ['title' => ['sk' => 'Battle finále (Ženy)', 'en' => 'Battle Finals (Women)', 'cs' => 'Battle finále (Ženy)'], 'desc' => ['sk' => 'Finále 1v1', 'en' => 'Finals 1v1', 'cs' => 'Finále 1v1'], 'time' => [16, 30], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => TimetableEntryTypeEnum::COMPETITION_ROUND, 'round_id' => $todayWomenBattle->id],
+            ['title' => ['sk' => 'Vyhlásenie výsledkov', 'en' => 'Award Ceremony', 'cs' => 'Vyhlášení výsledků'], 'desc' => ['sk' => 'Odovzdávanie cien, spoločné foto', 'en' => 'Prize giving, group photo', 'cs' => 'Předávání cen, společné foto'], 'time' => [17, 30], 'status' => TimetableEntryStatusEnum::PENDING, 'type' => null, 'round_id' => null],
+        ];
+        foreach ($todayTimetable as $i => $entry) {
+            TimetableEntry::factory()->create([
+                'competition_detail_id' => $todayCompDetail->id,
+                'title' => $entry['title'],
+                'description' => $entry['desc'],
+                'type' => $entry['type'],
+                'competition_round_id' => $entry['round_id'],
+                'scheduled_time' => today('Europe/Bratislava')->setTime(...$entry['time'])->utc(),
+                'actual_start_time' => $i === 0 ? today('Europe/Bratislava')->setTime(8, 17)->utc() : null,
+                'status' => $entry['status'],
+                'sort_order' => $i,
+            ]);
+        }
+
+        $allCompDetails = collect([$pastCompDetail, $battleCompDetail, $upcomingCompDetail, $freeCompDetail, $futureCompDetail, $todayCompDetail]);
+
+        // Attach disciplines, categories, judges to all competitions (1 judge per discipline)
         $allCompDetails->each(function (CompetitionDetail $detail) use ($disciplines, $allCategories, $judges) {
-            $detail->disciplines()->attach($disciplines->random(rand(3, 5))->pluck('id'));
+            $attachedDisciplines = $disciplines->random(rand(3, 5));
+            $detail->disciplines()->attach($attachedDisciplines->pluck('id'));
             $detail->athleteCategories()->attach($allCategories->pluck('id'));
 
-            $judges->each(function (User $judge) use ($detail, $disciplines) {
+            // Assign one judge per discipline (round-robin through available judges)
+            $attachedDisciplines->values()->each(function (Discipline $disc, $index) use ($detail, $judges) {
+                $judge = $judges[$index % $judges->count()];
                 $detail->judges()->attach($judge->id, [
-                    'discipline_id' => $disciplines->random()->id,
+                    'discipline_id' => $disc->id,
                 ]);
             });
         });
 
         // Registration fees — different pricing per competition
         $allCompDetails->each(function (CompetitionDetail $detail, $i) use ($allCategories) {
-            $basePrice = [25.00, 15.00, 25.00, 0.00, 40.00][$i] ?? 20.00;
+            $basePrice = [25.00, 15.00, 25.00, 0.00, 40.00, 30.00][$i] ?? 20.00;
 
             RegistrationFee::factory()->create([
                 'competition_detail_id' => $detail->id,
@@ -1208,7 +1948,7 @@ class DemoDataSeeder extends Seeder
                 'event_id' => $pastCompetition->id,
                 'user_id' => $athlete->id,
                 'athlete_category_id' => $category->id,
-                'status' => 'confirmed',
+                'status' => 'approved',
                 'weight_in' => rand(55, 95) + (rand(0, 9) / 10),
                 'registered_at' => now()->subMonths(4)->addDays($index),
             ]);
@@ -1220,20 +1960,20 @@ class DemoDataSeeder extends Seeder
                 'event_id' => $battleCompetition->id,
                 'user_id' => $athlete->id,
                 'athlete_category_id' => $menCategory->id,
-                'status' => 'confirmed',
+                'status' => 'approved',
                 'weight_in' => rand(60, 90) + (rand(0, 9) / 10),
                 'registered_at' => now()->subMonths(2)->addDays($index),
             ]);
         });
 
         // Upcoming — mixed confirmed/pending
-        $allCompetitors->take(12)->each(function (User $athlete, $index) use ($upcomingCompetition, $allCategories) {
+        $allCompetitors->take(15)->each(function (User $athlete, $index) use ($upcomingCompetition, $allCategories) {
             $category = $allCategories[$index % 3];
             EventRegistration::factory()->create([
                 'event_id' => $upcomingCompetition->id,
                 'user_id' => $athlete->id,
                 'athlete_category_id' => $category->id,
-                'status' => $index < 8 ? 'confirmed' : 'pending',
+                'status' => $index < 12 ? 'approved' : 'pending',
                 'registered_at' => now()->subDays(7 - ($index % 7)),
             ]);
         });
@@ -1244,10 +1984,104 @@ class DemoDataSeeder extends Seeder
                 'event_id' => $freeCompetition->id,
                 'user_id' => $athlete->id,
                 'athlete_category_id' => $allCategories[$index % 3]->id,
-                'status' => 'confirmed',
+                'status' => 'approved',
                 'registered_at' => now()->subMonths(6)->addDays($index),
             ]);
         });
+
+        // Today's Live Cup — all approved, NO weight_in (weigh-in in progress)
+        $allCompetitors->each(function (User $athlete, $index) use ($todayCompetition, $allCategories) {
+            if ($index >= 20) {
+                return;
+            }
+            $category = $allCategories[$index % 3];
+            EventRegistration::factory()->create([
+                'event_id' => $todayCompetition->id,
+                'user_id' => $athlete->id,
+                'athlete_category_id' => $category->id,
+                'status' => 'approved',
+                'weight_in' => null,
+                'registered_at' => now()->subDays(rand(3, 25)),
+            ]);
+        });
+
+        // Today's Live Cup — seed battles for SEMIFINÁLE rounds (top 4 men, top 4 women)
+        // Finále rounds stay empty (placeholder brackets in public view)
+        $todayMenReg = EventRegistration::where('event_id', $todayCompetition->id)
+            ->where('athlete_category_id', $menCategory->id)
+            ->with('user')
+            ->orderBy('registered_at')
+            ->take(4)
+            ->get();
+        if ($todayMenReg->count() >= 4) {
+            Battle::factory()
+                ->pair($todayMenReg[0]->user, $todayMenReg[3]->user)
+                ->create([
+                    'competition_round_id' => $todayMenSemifinal->id,
+                    'athlete_category_id' => $menCategory->id,
+                    'bracket_position' => 1,
+                ]);
+            Battle::factory()
+                ->pair($todayMenReg[1]->user, $todayMenReg[2]->user)
+                ->create([
+                    'competition_round_id' => $todayMenSemifinal->id,
+                    'athlete_category_id' => $menCategory->id,
+                    'bracket_position' => 2,
+                ]);
+        }
+
+        $todayWomenReg = EventRegistration::where('event_id', $todayCompetition->id)
+            ->where('athlete_category_id', $womenCategory->id)
+            ->with('user')
+            ->orderBy('registered_at')
+            ->take(4)
+            ->get();
+        if ($todayWomenReg->count() >= 4) {
+            Battle::factory()
+                ->pair($todayWomenReg[0]->user, $todayWomenReg[3]->user)
+                ->create([
+                    'competition_round_id' => $todayWomenSemifinal->id,
+                    'athlete_category_id' => $womenCategory->id,
+                    'bracket_position' => 1,
+                ]);
+            Battle::factory()
+                ->pair($todayWomenReg[1]->user, $todayWomenReg[2]->user)
+                ->create([
+                    'competition_round_id' => $todayWomenSemifinal->id,
+                    'athlete_category_id' => $womenCategory->id,
+                    'bracket_position' => 2,
+                ]);
+        }
+
+        // Spring Cup — seed battles for Battle finále (top 4 men)
+        $springMenReg = EventRegistration::where('event_id', $upcomingCompetition->id)
+            ->where('athlete_category_id', $menCategory->id)
+            ->where('status', 'approved')
+            ->with('user')
+            ->orderBy('registered_at')
+            ->take(4)
+            ->get();
+        if ($springMenReg->count() >= 4) {
+            $springBattleRound = CompetitionRound::where('competition_detail_id', $upcomingCompDetail->id)
+                ->where('advancement_type', RoundAdvancementTypeEnum::BATTLE_WINNER)
+                ->first();
+            if ($springBattleRound) {
+                Battle::factory()
+                    ->pair($springMenReg[0]->user, $springMenReg[3]->user)
+                    ->create([
+                        'competition_round_id' => $springBattleRound->id,
+                        'athlete_category_id' => $menCategory->id,
+                        'bracket_position' => 1,
+                    ]);
+                Battle::factory()
+                    ->pair($springMenReg[1]->user, $springMenReg[2]->user)
+                    ->create([
+                        'competition_round_id' => $springBattleRound->id,
+                        'athlete_category_id' => $menCategory->id,
+                        'bracket_position' => 2,
+                    ]);
+            }
+        }
 
         // ===== COMPETITION 1: BCZ Championship — POINTS-BASED ROUNDS =====
         // Men: Qualification (Statics + Dynamics) → Final (Combos)
@@ -1258,7 +2092,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Kvalifikacia - Muzi',
             'scoring_format' => 'points',
             'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
-            'advance_count' => 6,
             'sort_order' => 1,
         ]);
         $menFinal = CompetitionRound::factory()->create([
@@ -1268,7 +2101,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Finale - Muzi',
             'scoring_format' => 'points',
             'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
-            'advance_count' => 3,
             'sort_order' => 2,
         ]);
 
@@ -1280,7 +2112,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Kvalifikacia - Zeny',
             'scoring_format' => 'points',
             'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
-            'advance_count' => 4,
             'sort_order' => 3,
         ]);
         $womenFinal = CompetitionRound::factory()->create([
@@ -1290,7 +2121,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Finale - Zeny',
             'scoring_format' => 'points',
             'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
-            'advance_count' => 3,
             'sort_order' => 4,
         ]);
 
@@ -1302,7 +2132,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Juniori - Finale',
             'scoring_format' => 'points',
             'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
-            'advance_count' => 3,
             'sort_order' => 5,
         ]);
 
@@ -1419,7 +2248,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Osminove kolo',
             'scoring_format' => 'coach_decision',
             'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
-            'battle_size' => 1,
             'sort_order' => 1,
         ]);
         $r16Winners = collect();
@@ -1428,14 +2256,13 @@ class DemoDataSeeder extends Seeder
             $bComp = $battleAthletes[$b * 2 + 1];
             $winner = rand(0, 1) === 0 ? $a : $bComp;
             $r16Winners->push($winner);
-            Battle::factory()->create([
-                'competition_round_id' => $roundOf16->id,
-                'athlete_category_id' => $menCategory->id,
-                'bracket_position' => $b + 1,
-                'competitor_a_id' => [$a->id, $a->name],
-                'competitor_b_id' => [$bComp->id, $bComp->name],
-                'winner_id' => [$winner->id, $winner->name],
-            ]);
+            Battle::factory()
+                ->pair($a, $bComp, $winner)
+                ->create([
+                    'competition_round_id' => $roundOf16->id,
+                    'athlete_category_id' => $menCategory->id,
+                    'bracket_position' => $b + 1,
+                ]);
         }
 
         // Quarter-finals (4 battles)
@@ -1446,7 +2273,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Stvrfinale',
             'scoring_format' => 'coach_decision',
             'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
-            'battle_size' => 1,
             'sort_order' => 2,
         ]);
         $qfWinners = collect();
@@ -1455,14 +2281,13 @@ class DemoDataSeeder extends Seeder
             $bComp = $r16Winners[$b * 2 + 1];
             $winner = rand(0, 1) === 0 ? $a : $bComp;
             $qfWinners->push($winner);
-            Battle::factory()->create([
-                'competition_round_id' => $quarterFinals->id,
-                'athlete_category_id' => $menCategory->id,
-                'bracket_position' => $b + 1,
-                'competitor_a_id' => [$a->id, $a->name],
-                'competitor_b_id' => [$bComp->id, $bComp->name],
-                'winner_id' => [$winner->id, $winner->name],
-            ]);
+            Battle::factory()
+                ->pair($a, $bComp, $winner)
+                ->create([
+                    'competition_round_id' => $quarterFinals->id,
+                    'athlete_category_id' => $menCategory->id,
+                    'bracket_position' => $b + 1,
+                ]);
         }
 
         // Semi-finals (2 battles)
@@ -1473,7 +2298,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Semifinale',
             'scoring_format' => 'coach_decision',
             'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
-            'battle_size' => 1,
             'sort_order' => 3,
         ]);
         $sfWinners = collect();
@@ -1485,14 +2309,13 @@ class DemoDataSeeder extends Seeder
             $loser = $winner->id === $a->id ? $bComp : $a;
             $sfWinners->push($winner);
             $sfLosers->push($loser);
-            Battle::factory()->create([
-                'competition_round_id' => $semiFinals->id,
-                'athlete_category_id' => $menCategory->id,
-                'bracket_position' => $b + 1,
-                'competitor_a_id' => [$a->id, $a->name],
-                'competitor_b_id' => [$bComp->id, $bComp->name],
-                'winner_id' => [$winner->id, $winner->name],
-            ]);
+            Battle::factory()
+                ->pair($a, $bComp, $winner)
+                ->create([
+                    'competition_round_id' => $semiFinals->id,
+                    'athlete_category_id' => $menCategory->id,
+                    'bracket_position' => $b + 1,
+                ]);
         }
 
         // 3rd place battle
@@ -1503,18 +2326,16 @@ class DemoDataSeeder extends Seeder
             'name' => 'Battle o 3. miesto',
             'scoring_format' => 'coach_decision',
             'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
-            'battle_size' => 1,
             'sort_order' => 4,
         ]);
         $thirdPlaceWinner = $sfLosers->random();
-        Battle::factory()->create([
-            'competition_round_id' => $thirdPlaceRound->id,
-            'athlete_category_id' => $menCategory->id,
-            'bracket_position' => 1,
-            'competitor_a_id' => [$sfLosers[0]->id, $sfLosers[0]->name],
-            'competitor_b_id' => [$sfLosers[1]->id, $sfLosers[1]->name],
-            'winner_id' => [$thirdPlaceWinner->id, $thirdPlaceWinner->name],
-        ]);
+        Battle::factory()
+            ->pair($sfLosers[0], $sfLosers[1], $thirdPlaceWinner)
+            ->create([
+                'competition_round_id' => $thirdPlaceRound->id,
+                'athlete_category_id' => $menCategory->id,
+                'bracket_position' => 1,
+            ]);
 
         // Grand Final
         $grandFinal = CompetitionRound::factory()->create([
@@ -1524,18 +2345,16 @@ class DemoDataSeeder extends Seeder
             'name' => 'Finale',
             'scoring_format' => 'coach_decision',
             'advancement_type' => RoundAdvancementTypeEnum::BATTLE_WINNER,
-            'battle_size' => 1,
             'sort_order' => 5,
         ]);
         $champion = $sfWinners->random();
-        Battle::factory()->create([
-            'competition_round_id' => $grandFinal->id,
-            'athlete_category_id' => $menCategory->id,
-            'bracket_position' => 1,
-            'competitor_a_id' => [$sfWinners[0]->id, $sfWinners[0]->name],
-            'competitor_b_id' => [$sfWinners[1]->id, $sfWinners[1]->name],
-            'winner_id' => [$champion->id, $champion->name],
-        ]);
+        Battle::factory()
+            ->pair($sfWinners[0], $sfWinners[1], $champion)
+            ->create([
+                'competition_round_id' => $grandFinal->id,
+                'athlete_category_id' => $menCategory->id,
+                'bracket_position' => 1,
+            ]);
 
         // ===== COMPETITION 4: Community Jam — simple points, no battles =====
         $jamRound = CompetitionRound::factory()->create([
@@ -1544,7 +2363,6 @@ class DemoDataSeeder extends Seeder
             'name' => 'Freestyle Jam',
             'scoring_format' => 'points',
             'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
-            'advance_count' => 3,
             'sort_order' => 1,
         ]);
         $jamPart = RoundPart::factory()->create([
@@ -1940,7 +2758,7 @@ class DemoDataSeeder extends Seeder
             });
 
         // Payments for competition registrations
-        $compRegistrations = EventRegistration::where('status', 'confirmed')
+        $compRegistrations = EventRegistration::where('status', 'approved')
             ->whereHas('event', fn ($q) => $q->where('event_type', 'competition'))
             ->get();
         $compRegistrations->take(4)->each(function (EventRegistration $registration) use ($bczTeam) {
@@ -2214,5 +3032,62 @@ class DemoDataSeeder extends Seeder
             'active_to' => now()->month(4)->endOfMonth()->toDateTimeString(),
             'sort_order' => 10,
         ]);
+
+        $this->chainCompetitionRounds();
+    }
+
+    /**
+     * Link rounds into a chain via next_round_id and populate competitor_count.
+     *
+     * Within each (competition_detail_id, athlete_category_id) group, sort by
+     * sort_order + round_number and point each round at its successor. Fills
+     * competitor_count from actual battle pivot rows (battle rounds) or
+     * approved registration counts (qualification rounds).
+     */
+    private function chainCompetitionRounds(): void
+    {
+        $rounds = CompetitionRound::query()
+            ->orderBy('competition_detail_id')
+            ->orderBy('athlete_category_id')
+            ->orderBy('sort_order')
+            ->orderBy('round_number')
+            ->get()
+            ->groupBy(fn ($r) => $r->competition_detail_id.'|'.($r->athlete_category_id ?? 'null'));
+
+        foreach ($rounds as $chain) {
+            $ordered = $chain->values();
+            for ($i = 0; $i < $ordered->count() - 1; $i++) {
+                $ordered[$i]->update(['next_round_id' => $ordered[$i + 1]->id]);
+            }
+        }
+
+        foreach (CompetitionRound::all() as $round) {
+            if ($round->isBattle()) {
+                $count = BattleCompetitor::whereIn(
+                    'battle_id',
+                    $round->battles()->pluck('id'),
+                )->count();
+                if ($count > 0) {
+                    $round->update(['competitor_count' => $count]);
+                }
+
+                continue;
+            }
+
+            $detail = $round->competitionDetail;
+            if (! $detail || $round->athlete_category_id === null) {
+                continue;
+            }
+
+            $count = EventRegistration::query()
+                ->where('event_id', $detail->event_id)
+                ->where('athlete_category_id', $round->athlete_category_id)
+                ->where('status', RegistrationStatusEnum::Approved)
+                ->count();
+
+            if ($count > 0) {
+                $round->update(['competitor_count' => $count]);
+            }
+        }
     }
 }

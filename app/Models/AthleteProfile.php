@@ -44,6 +44,7 @@ class AthleteProfile extends Model implements HasMedia
     {
         $this->addMediaCollection('journey_image')->singleFile();
         $this->addMediaCollection('main_image')->singleFile();
+        $this->addMediaCollection('gallery');
     }
 
     public function user(): BelongsTo

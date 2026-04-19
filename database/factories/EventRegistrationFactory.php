@@ -22,10 +22,10 @@ class EventRegistrationFactory extends Factory
         ];
     }
 
-    public function confirmed(): static
+    public function approved(): static
     {
         return $this->state(fn () => [
-            'status' => 'confirmed',
+            'status' => 'approved',
         ]);
     }
 }

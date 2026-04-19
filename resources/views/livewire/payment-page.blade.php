@@ -50,7 +50,7 @@
 
                     {{-- Description --}}
                     <p class="text-[#888888] text-sm leading-relaxed">
-                        Platba bola vytvorená pre teba tvojím tímom. Vyber spôsob platby a uhraď sumu.
+                        Vyber spôsob platby a uhraď sumu.
                     </p>
 
                     {{-- Divider --}}
@@ -65,29 +65,31 @@
                             <span class="text-white text-sm font-medium">{{ $this->payableTypeLabel }}</span>
                         </div>
 
+                        @if($this->payableName)
+                            <div class="flex justify-between items-center py-1.5">
+                                <span class="text-[#888888] text-sm">Názov</span>
+                                <span class="text-white text-sm font-medium text-right">{{ $this->payableName }}</span>
+                            </div>
+                        @endif
+
                         @if($payment->payable_type === 'membership' && $payment->payable?->season)
                             <div class="flex justify-between items-center py-1.5">
                                 <span class="text-[#888888] text-sm">Sezóna</span>
                                 <span class="text-white text-sm font-medium">{{ $payment->payable->season->name }}</span>
                             </div>
-                        @elseif($payment->payable_type === 'training_registration' && $payment->payable?->training)
-                            <div class="flex justify-between items-center py-1.5">
-                                <span class="text-[#888888] text-sm">Tréning</span>
-                                <span class="text-white text-sm font-medium">{{ $payment->payable->training->getTranslation('title', 'sk') }}</span>
-                            </div>
-                        @endif
-
-                        @if($payment->team)
-                            <div class="flex justify-between items-center py-1.5">
-                                <span class="text-[#888888] text-sm">Tím</span>
-                                <span class="text-white text-sm font-medium">{{ $payment->team->getTranslation('name', 'sk') }}</span>
-                            </div>
                         @endif
 
                         <div class="flex justify-between items-center py-1.5">
-                            <span class="text-[#888888] text-sm">Člen</span>
-                            <span class="text-white text-sm font-medium">{{ $payment->display_name }}</span>
+                            <span class="text-[#888888] text-sm">Meno</span>
+                            <span class="text-white text-sm font-medium">{{ $payment->user?->first_name }} {{ $payment->user?->last_name }}</span>
                         </div>
+
+                        @if($payment->payer_email)
+                            <div class="flex justify-between items-center py-1.5">
+                                <span class="text-[#888888] text-sm">E-mail</span>
+                                <span class="text-white text-sm font-medium">{{ $payment->payer_email }}</span>
+                            </div>
+                        @endif
 
                         {{-- Divider --}}
                         <div class="w-full h-px bg-[#222222]"></div>
@@ -101,20 +103,23 @@
                 </div>
 
                 {{-- Right panel --}}
+                @php
+                    $paymentMethodModels = $payment->team?->enabledPaymentMethods?->keyBy(fn ($m) => $m->method instanceof \App\Enums\PaymentMethodEnum ? $m->method->value : $m->method) ?? collect();
+                @endphp
                 <div class="lg:w-1/2 p-6 md:p-8 flex flex-col gap-5">
                     <h2 class="text-white text-base font-semibold">Vyber spôsob platby</h2>
 
                     {{-- Payment method cards --}}
                     <div class="flex flex-col gap-3">
                         @if(in_array('gopay', $this->enabledMethods))
-                            <button wire:click="selectMethod('gopay')" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl bg-[#0A0A0A] transition cursor-pointer {{ $selectedMethod === 'gopay' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
+                            <button wire:click="selectMethod('gopay')" class="w-full flex items-center gap-4 px-5 py-4 bg-[#0A0A0A] transition cursor-pointer {{ $selectedMethod === 'gopay' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
                                 <svg class="w-[22px] h-[22px] shrink-0 {{ $selectedMethod === 'gopay' ? 'text-[#FF2D2D]' : 'text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                                     <line x1="1" y1="10" x2="23" y2="10"/>
                                 </svg>
                                 <div class="flex flex-col items-start gap-0.5 flex-1">
-                                    <span class="text-white text-sm font-semibold">Platba kartou</span>
-                                    <span class="text-[#666666] text-xs">Okamžitá platba cez GoPay</span>
+                                    <span class="text-white text-sm font-semibold">{{ $paymentMethodModels->get('gopay')?->title ?? 'Platba kartou' }}</span>
+                                    <span class="text-[#666666] text-xs text-left">{!! strip_tags($paymentMethodModels->get('gopay')?->description ?? '', '<b><i><a>') !!}</span>
                                 </div>
                                 <div class="w-5 h-5 rounded-full flex items-center justify-center {{ $selectedMethod === 'gopay' ? 'border-2 border-[#FF2D2D]' : 'border-2 border-[#333333]' }}">
                                     @if($selectedMethod === 'gopay')
@@ -125,13 +130,13 @@
                         @endif
 
                         @if(in_array('bank_transfer', $this->enabledMethods))
-                            <button wire:click="selectMethod('bank_transfer')" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl bg-[#0A0A0A] transition cursor-pointer {{ $selectedMethod === 'bank_transfer' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
+                            <button wire:click="selectMethod('bank_transfer')" class="w-full flex items-center gap-4 px-5 py-4 bg-[#0A0A0A] transition cursor-pointer {{ $selectedMethod === 'bank_transfer' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
                                 <svg class="w-[22px] h-[22px] shrink-0 {{ $selectedMethod === 'bank_transfer' ? 'text-[#FF2D2D]' : 'text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>
                                 </svg>
                                 <div class="flex flex-col items-start gap-0.5 flex-1">
-                                    <span class="text-white text-sm font-semibold">Bankový prevod</span>
-                                    <span class="text-[#666666] text-xs">Platba na účet</span>
+                                    <span class="text-white text-sm font-semibold">{{ $paymentMethodModels->get('bank_transfer')?->title ?? 'Bankovy prevod' }}</span>
+                                    <span class="text-[#666666] text-xs text-left">{!! strip_tags($paymentMethodModels->get('bank_transfer')?->description ?? '', '<b><i><a>') !!}</span>
                                 </div>
                                 <div class="w-5 h-5 rounded-full flex items-center justify-center {{ $selectedMethod === 'bank_transfer' ? 'border-2 border-[#FF2D2D]' : 'border-2 border-[#333333]' }}">
                                     @if($selectedMethod === 'bank_transfer')
@@ -142,14 +147,14 @@
                         @endif
 
                         @if(in_array('cash', $this->enabledMethods))
-                            <button wire:click="selectMethod('cash')" class="w-full flex items-center gap-4 px-5 py-4 rounded-xl bg-[#0A0A0A] transition cursor-pointer {{ $selectedMethod === 'cash' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
+                            <button wire:click="selectMethod('cash')" class="w-full flex items-center gap-4 px-5 py-4 bg-[#0A0A0A] transition cursor-pointer {{ $selectedMethod === 'cash' ? 'border-2 border-[#FF2D2D]' : 'border border-[#333333] hover:border-[#555555]' }}">
                                 <svg class="w-[22px] h-[22px] shrink-0 {{ $selectedMethod === 'cash' ? 'text-[#FF2D2D]' : 'text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                     <rect x="2" y="6" width="20" height="12" rx="1"/>
                                     <circle cx="12" cy="12" r="3"/>
                                 </svg>
                                 <div class="flex flex-col items-start gap-0.5 flex-1">
-                                    <span class="text-white text-sm font-semibold">Hotovosť</span>
-                                    <span class="text-[#666666] text-xs">V hotovosti</span>
+                                    <span class="text-white text-sm font-semibold">{{ $paymentMethodModels->get('cash')?->title ?? 'Hotovost' }}</span>
+                                    <span class="text-[#666666] text-xs text-left">{!! strip_tags($paymentMethodModels->get('cash')?->description ?? '', '<b><i><a>') !!}</span>
                                 </div>
                                 <div class="w-5 h-5 rounded-full flex items-center justify-center {{ $selectedMethod === 'cash' ? 'border-2 border-[#FF2D2D]' : 'border-2 border-[#333333]' }}">
                                     @if($selectedMethod === 'cash')
@@ -291,7 +296,7 @@
                         <button
                             wire:click="pay"
                             wire:loading.attr="disabled"
-                            class="w-full h-[50px] rounded-xl bg-[#FF2D2D] hover:bg-red-700 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            class="w-full h-[50px] bg-[#FF2D2D] hover:bg-red-700 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                         >
                             <span wire:loading.remove wire:target="pay" class="text-white text-sm font-bold">Zaplatiť {{ $this->formattedAmount }}</span>
                             <span wire:loading wire:target="pay" class="text-white text-sm font-bold">Spracovávam...</span>
@@ -299,6 +304,7 @@
                     @endif
 
                     {{-- Footer note --}}
+                    @if($selectedMethod === 'gopay')
                     <div class="flex items-center justify-center gap-1.5">
                         <svg class="w-3 h-3 text-[#22C55E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -306,6 +312,7 @@
                         </svg>
                         <span class="text-[#666666] text-[10px]">Platba spracovaná cez GoPay &middot; SSL šifrované</span>
                     </div>
+                    @endif
 
                     {{-- Bottom note --}}
                     <p class="text-[#555555] text-xs text-center leading-relaxed">

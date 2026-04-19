@@ -51,10 +51,10 @@
             {{-- Text Block --}}
             <div class="flex flex-col gap-6">
                 <h2 class="font-display font-bold text-[32px] tracking-wide text-white">O vystúpení</h2>
-                <p class="text-[#CCCCCC] text-base leading-[1.8]">
+                <p class="text-[#CCCCCC] text-base leading-relaxed">
                     Grape Festival 2024 bol pre nás výnimočný zážitok. Ako headlineri akrobatickej show sme vystúpili na hlavnom pódiu pred viac ako 30 000 divákmi. Naša 20-minútová performance kombinovala prvky parkouru, freeruningu a akrobacie s hudobným sprievodom naživo.
                 </p>
-                <p class="text-[#CCCCCC] text-base leading-[1.8]">
+                <p class="text-[#CCCCCC] text-base leading-relaxed">
                     Spolupráca s organizátormi festivalu bola bezproblémová a profesionálna. Tím BCZ Club pripravil jedinečnú choreografiu špeciálne pre tento event, ktorá zahŕňala synchronizované salto, wall-flipy a ďalšie náročné prvky.
                 </p>
             </div>

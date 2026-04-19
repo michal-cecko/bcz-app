@@ -12,18 +12,17 @@
         default => '#10b981',
     };
 
-    $scheduleText = $training->schedule_days
-        ? collect($training->schedule_days)->map(fn ($day) => __('archive.days.'.$day))->implode(', ')
+    $scheduleEntries = $training->schedules;
+    $scheduleText = $scheduleEntries->isNotEmpty()
+        ? $scheduleEntries->map(function ($s) use ($training) {
+            $day = __('archive.days.' . $s->day);
+            $time = $s->start_time ? \Illuminate\Support\Str::substr($s->start_time, 0, 5) : '';
+            if ($time && $training->duration_minutes) {
+                $time .= ' - ' . \Carbon\Carbon::parse($s->start_time)->addMinutes($training->duration_minutes)->format('H:i');
+            }
+            return trim("{$day} {$time}");
+        })->implode(', ')
         : null;
-
-    $timeText = null;
-    if ($training->start_time) {
-        $timeText = \Illuminate\Support\Str::substr($training->start_time, 0, 5);
-        if ($training->duration_minutes) {
-            $end = \Carbon\Carbon::parse($training->start_time)->addMinutes($training->duration_minutes)->format('H:i');
-            $timeText .= ' - ' . $end;
-        }
-    }
 @endphp
 
 <div class="flex h-full flex-col gap-5">
@@ -53,15 +52,8 @@
     <div class="flex flex-col" style="gap: 10px">
         @if($scheduleText)
             <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500 dark:text-gray-400">Deň</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">Rozvrh</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-gray-300">{{ $scheduleText }}</span>
-            </div>
-        @endif
-
-        @if($timeText)
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500 dark:text-gray-400">Čas</span>
-                <span class="text-sm font-semibold text-gray-900 dark:text-gray-300">{{ $timeText }}</span>
             </div>
         @endif
 

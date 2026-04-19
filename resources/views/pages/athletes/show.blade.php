@@ -11,7 +11,7 @@
     $exercises = $user->athleteExercises;
     $goals = $user->athleteGoals;
     $results = $user->competitionResults ?? collect();
-    $gallery = $user->profileGalleryItems ?? collect();
+    $gallery = $profile?->getMedia('gallery') ?? collect();
     $yearsExperience = $profile?->date_started_working_out ? (int) $profile->date_started_working_out->diffInYears(now()) : null;
     $country = $user->country_code ?? 'SK';
 @endphp
@@ -106,7 +106,7 @@
                         <h2 class="font-display font-bold text-4xl tracking-[0.5px]">{{ __('AKO TO VŠETKO ZAČALO') }}</h2>
                     </div>
 
-                    <div class="text-[#AAAAAA] text-base leading-[1.8] space-y-4 prose prose-invert prose-p:text-[#AAAAAA] prose-a:text-bcz-red max-w-none">
+                    <div class="text-[#AAAAAA] text-base leading-relaxed space-y-4 prose prose-invert prose-p:text-[#AAAAAA] prose-a:text-bcz-red max-w-none">
                         {!! $journeyText !!}
                     </div>
                 </div>
@@ -226,7 +226,7 @@
                                                     <span class="text-bcz-red text-sm font-bold">{{ $exercise->duration }}</span>
                                                 @endif
                                                 @if($exDescription)
-                                                    <p class="text-[#AAAAAA] text-base leading-[1.8]">{{ $exDescription }}</p>
+                                                    <p class="text-[#AAAAAA] text-base leading-relaxed">{{ $exDescription }}</p>
                                                 @endif
                                             </div>
                                         </div>
@@ -395,7 +395,7 @@
 
     {{-- Gallery Section --}}
     @if($gallery->isNotEmpty())
-        <x-profile-gallery :items="$gallery" :locale="$locale" />
+        <x-profile-gallery :media="$gallery" />
     @endif
 
     {{-- Other Athletes Section --}}

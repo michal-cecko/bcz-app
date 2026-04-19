@@ -7,7 +7,7 @@
 
 @font-face {
     font-family: 'DM Sans';
-    src: url('/fonts/public/dm-sans/DMSans-VariableFont_opsz,wght.ttf') format('truetype');
+    src: url('../fonts/dm-sans/DMSans-VariableFont_opsz,wght.ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;
@@ -15,7 +15,7 @@
 
 @font-face {
     font-family: 'DM Sans';
-    src: url('/fonts/public/dm-sans/DMSans-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+    src: url('../fonts/dm-sans/DMSans-Italic-VariableFont_opsz,wght.ttf') format('truetype');
     font-weight: 100 900;
     font-style: italic;
     font-display: swap;
@@ -23,7 +23,7 @@
 
 @font-face {
     font-family: 'Thunder';
-    src: url('/fonts/public/thunder/Thunder-BoldLC.ttf') format('truetype');
+    src: url('../fonts/thunder/Thunder-BoldLC.ttf') format('truetype');
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -31,7 +31,7 @@
 
 @font-face {
     font-family: 'Thunder';
-    src: url('/fonts/public/thunder/Thunder-SemiBoldLC.ttf') format('truetype');
+    src: url('../fonts/thunder/Thunder-SemiBoldLC.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -40,6 +40,14 @@
 @theme {
     --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Thunder', 'Impact', sans-serif;
+    --radius-xs: 0px;
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+    --radius-2xl: 0px;
+    --radius-3xl: 0px;
+    --radius-4xl: 0px;
     --color-bcz-red: #FF2D2D;
     --color-bcz-dark: #0A0A0A;
     --color-bcz-darker: #050505;
@@ -56,4 +64,60 @@
 
 html, body {
     font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+button, [role="button"] {
+    cursor: pointer;
+}
+
+.mason-rich-text {
+    max-width: none;
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #FFFFFF;
+        font-family: var(--font-display);
+        font-weight: 700;
+        letter-spacing: 0.025em;
+    }
+
+    h2 { font-size: 1.875rem; margin-bottom: 1rem; }
+    h3 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    h4 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+
+    p {
+        color: #CCCCCC;
+        font-size: 1rem;
+        line-height: 1.625;
+        margin-bottom: 1.25rem;
+    }
+
+    li {
+        color: #CCCCCC;
+        line-height: 1.625;
+    }
+
+    strong { color: #FFFFFF; }
+
+    a {
+        color: var(--color-bcz-red);
+        text-decoration: underline;
+    }
+
+    blockquote {
+        color: #AAAAAA;
+        border-left: 3px solid #333333;
+        padding-left: 1rem;
+    }
+
+    hr {
+        border-color: #222222;
+    }
+
+    ul, ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    ul { list-style: disc; }
+    ol { list-style: decimal; }
 }

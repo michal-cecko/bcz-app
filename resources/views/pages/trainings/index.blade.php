@@ -79,19 +79,15 @@
                                     <h3 class="text-white text-[20px] font-semibold">{{ $training->getTranslation('title', app()->getLocale()) }}</h3>
 
                                     <div class="flex flex-col gap-2">
-                                        @if($training->schedule_days)
+                                        @if($training->schedules->isNotEmpty())
                                             <div class="flex items-center gap-2 text-[#888888] text-[14px]">
                                                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>
                                                 </svg>
                                                 <span>
-                                                    {{ collect($training->schedule_days)->pluck('day')->join(', ') }}
-                                                    @if($training->start_time)
-                                                        &middot; {{ \Illuminate\Support\Str::substr($training->start_time, 0, 5) }}
-                                                        @if($training->duration_minutes)
-                                                            - {{ \Carbon\Carbon::createFromFormat('H:i:s', $training->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}
-                                                        @endif
-                                                    @endif
+                                                    @foreach($training->schedules as $schedule)
+                                                        {{ __('archive.days.' . $schedule->day) }} {{ $schedule->start_time ? \Illuminate\Support\Str::substr($schedule->start_time, 0, 5) : '' }}@if($schedule->start_time && $training->duration_minutes) - {{ \Carbon\Carbon::createFromFormat('H:i:s', $schedule->start_time)->addMinutes($training->duration_minutes)->format('H:i') }}@endif@if(!$loop->last), @endif
+                                                    @endforeach
                                                 </span>
                                             </div>
                                         @endif

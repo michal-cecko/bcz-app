@@ -74,7 +74,10 @@ class TrainingResourceTest extends TestCase
                 'pricing_type' => TrainingPricingTypeEnum::FREE->value,
                 'is_active' => true,
                 'registration_form_schema' => [
-                    ['name' => 'email', 'type' => 'email', 'label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'required' => true],
+                    ['name' => 'meno', 'type' => 'first_name', 'label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'required' => true, 'width' => 'half'],
+                    ['name' => 'priezvisko', 'type' => 'last_name', 'label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'required' => true, 'width' => 'half'],
+                    ['name' => 'email', 'type' => 'email', 'label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'required' => true, 'width' => 'half'],
+                    ['name' => 'telefon', 'type' => 'phone', 'label' => ['sk' => 'Telefón', 'en' => 'Phone', 'cs' => 'Telefon'], 'required' => true, 'width' => 'half'],
                 ],
             ])
             ->call('create')

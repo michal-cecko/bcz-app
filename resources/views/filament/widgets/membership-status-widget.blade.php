@@ -44,7 +44,7 @@
             @if($membership->status === \App\Enums\MembershipStatusEnum::PENDING && !$membership->is_free)
                 @php
                     $team = \Filament\Facades\Filament::getTenant();
-                    $enabledMethods = $team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
+                    $enabledMethods = $team?->getEnabledPaymentMethodKeys() ?? [];
                     $season = $membership->season;
                 @endphp
                 <div class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">

@@ -23,7 +23,6 @@ class TeamFactory extends Factory
                 'facebook' => 'https://facebook.com/'.fake()->userName(),
             ],
             'is_active' => true,
-            'payment_methods_enabled' => ['gopay', 'bank_transfer', 'cash'],
         ];
     }
 

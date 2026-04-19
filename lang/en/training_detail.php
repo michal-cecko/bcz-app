@@ -99,11 +99,38 @@ return [
     'payment_cash_desc' => 'Pay on site or contact the team',
     'payment_cash_instructions' => 'Cash payment can be made on site or contact the team for more information.',
 
+    // Bank transfer details
+    'bank_payment_details' => 'Payment details',
+    'bank_iban' => 'IBAN:',
+    'bank_variable_symbol' => 'Variable symbol:',
+    'bank_amount' => 'Amount:',
+    'bank_recipient' => 'Recipient:',
+    'bank_message' => 'Message:',
+    'bank_message_value' => 'Membership :season',
+    'bank_instructions_title' => 'Payment instructions',
+    'bank_instruction_1' => '1. Scan the QR code or enter the details in your internet banking',
+    'bank_instruction_2' => '2. Enter the correct variable symbol for payment identification',
+    'bank_instruction_3' => '3. Membership will be activated after the payment is credited (1–3 business days)',
+    'bank_instruction_3_registration' => '3. Registration will be confirmed after the payment is credited (1–3 business days)',
+    'bank_scan_qr' => 'Scan QR',
+
+    // Cash payment details
+    'cash_instructions_title' => 'Cash payment instructions',
+    'cash_amount_label' => 'Amount to pay:',
+    'cash_step_1' => 'Come to the nearest training with cash',
+    'cash_step_2' => 'Hand the payment to the coach before or after training',
+    'cash_step_3' => 'The coach will confirm receipt and membership will be activated',
+    'cash_step_1_registration' => 'Prepare the cash in the given amount',
+    'cash_step_2_registration' => 'Hand the payment to the organizer on site',
+    'cash_step_3_registration' => 'Your registration will be confirmed after payment is received',
+    'cash_warning' => 'Membership will be active only after payment is confirmed by the coach.',
+    'cash_warning_registration' => 'Registration will be confirmed only after payment is received.',
+
     // Payment buttons
     'pay_button' => 'Pay :price',
     'show_payment_details' => 'Show payment details',
     'contact_team' => 'Contact team',
-    'payment_auto_approve_note' => 'After payment you will be automatically registered for this training.',
+    'payment_auto_approve_note' => 'After payment you will be automatically registered.',
 
     // Season info
     'season_remaining' => 'for the rest of the season',

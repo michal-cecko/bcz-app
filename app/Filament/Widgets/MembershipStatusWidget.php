@@ -41,7 +41,7 @@ class MembershipStatusWidget extends Widget
     public function mount(): void
     {
         $team = Filament::getTenant();
-        $enabledMethods = $team?->payment_methods_enabled ?? ['gopay', 'bank_transfer', 'cash'];
+        $enabledMethods = $team?->getEnabledPaymentMethodKeys() ?? [];
         $this->paymentMethod = $enabledMethods[0] ?? 'bank_transfer';
 
         // Show success notification when returning from GoPay

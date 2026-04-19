@@ -63,18 +63,10 @@ class EventCategoryForm
                             ->dehydrated(),
                         Select::make('color')
                             ->label('Farba')
-                            ->options([
-                                '#6366f1' => 'Fialová',
-                                '#3b82f6' => 'Modrá',
-                                '#22c55e' => 'Zelená',
-                                '#f59e0b' => 'Žltá',
-                                '#ef4444' => 'Červená',
-                                '#6b7280' => 'Sivá',
-                                '#ec4899' => 'Ružová',
-                                '#f97316' => 'Oranžová',
-                                '#14b8a6' => 'Teal (tyrkysová)',
-                            ])
-                            ->searchable(),
+                            ->options(self::colorOptions())
+                            ->searchable()
+                            ->allowHtml()
+                            ->native(false),
                         Toggle::make('is_active')
                             ->label('Aktívna')
                             ->default(true),
@@ -236,5 +228,31 @@ class EventCategoryForm
                     ])
                     ->collapsible(),
             ]);
+    }
+
+    private static function colorOptions(): array
+    {
+        $colors = [
+            '#FF6B35' => 'Oranžová (Vystúpenia)',
+            '#2EC4B6' => 'Teal (Prednášky)',
+            '#9B5DE5' => 'Fialová (Workshopy)',
+            '#FF6B6B' => 'Červená (Freestyle)',
+            '#FF2D2D' => 'Červená (BCZ)',
+            '#3B82F6' => 'Modrá',
+            '#22C55E' => 'Zelená',
+            '#F59E0B' => 'Žltá',
+            '#EC4899' => 'Ružová',
+            '#6B7280' => 'Sivá',
+            '#14B8A6' => 'Tyrkysová',
+            '#8B5CF6' => 'Fialová',
+        ];
+
+        $options = [];
+
+        foreach ($colors as $hex => $label) {
+            $options[$hex] = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:14px;height:14px;border-radius:3px;background:'.$hex.';display:inline-block;"></span> '.$label.'</span>';
+        }
+
+        return $options;
     }
 }

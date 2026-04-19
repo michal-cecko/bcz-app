@@ -16,7 +16,6 @@ use App\Mason\EmailBricks\EmailSpacerBrick;
 use App\Models\TeamSeason;
 use Awcodes\Mason\Mason;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -191,7 +190,7 @@ class TrainingForm
                                                         $set('price_amount', null);
                                                     }
                                                 } else {
-                                                    $set('schedule_days', null);
+                                                    $set('schedules', []);
                                                     if ($get('pricing_type') === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED->value) {
                                                         $set('pricing_type', TrainingPricingTypeEnum::FREE->value);
                                                     }
@@ -201,21 +200,36 @@ class TrainingForm
                                             ->label('Trvanie')
                                             ->numeric()
                                             ->suffix('minút'),
-                                        TimePicker::make('start_time')
-                                            ->label('Čas začiatku'),
-                                        CheckboxList::make('schedule_days')
-                                            ->label('Dni v týždni')
-                                            ->options([
-                                                'monday' => 'Pondelok',
-                                                'tuesday' => 'Utorok',
-                                                'wednesday' => 'Streda',
-                                                'thursday' => 'Štvrtok',
-                                                'friday' => 'Piatok',
-                                                'saturday' => 'Sobota',
-                                                'sunday' => 'Nedeľa',
+                                        Repeater::make('schedules')
+                                            ->relationship()
+                                            ->label('Rozvrh')
+                                            ->schema([
+                                                Select::make('day')
+                                                    ->label('Deň')
+                                                    ->options([
+                                                        'monday' => 'Pondelok',
+                                                        'tuesday' => 'Utorok',
+                                                        'wednesday' => 'Streda',
+                                                        'thursday' => 'Štvrtok',
+                                                        'friday' => 'Piatok',
+                                                        'saturday' => 'Sobota',
+                                                        'sunday' => 'Nedeľa',
+                                                    ])
+                                                    ->required(),
+                                                TimePicker::make('start_time')
+                                                    ->label('Čas')
+                                                    ->seconds(false),
                                             ])
                                             ->columns(2)
-                                            ->visible(fn (Get $get): bool => (bool) $get('is_recurring')),
+                                            ->orderColumn('sort_order')
+                                            ->reorderable()
+                                            ->defaultItems(0)
+                                            ->addActionLabel('Pridať do rozvrhu')
+                                            ->visible(fn (Get $get): bool => (bool) $get('is_recurring'))
+                                            ->columnSpanFull(),
+                                        TimePicker::make('start_time')
+                                            ->label('Čas začiatku')
+                                            ->visible(fn (Get $get): bool => ! $get('is_recurring')),
                                         DatePicker::make('event_date')
                                             ->label('Dátum')
                                             ->required(fn (Get $get): bool => ! $get('is_recurring'))
@@ -291,7 +305,7 @@ class TrainingForm
                                             ->label('Registrácia sa zatvorí'),
                                     ]),
                                 Section::make('Registračný formulár')
-                                    ->description('Definujte všetky polia registračného formulára. Aspoň jedno pole typu Email je povinné.')
+                                    ->description('Definujte všetky polia registračného formulára. Povinné typy: Meno, Priezvisko, Email, Telefón.')
                                     ->schema([
                                         Repeater::make('registration_form_schema')
                                             ->label('Polia formulára')
@@ -300,9 +314,17 @@ class TrainingForm
                                                     if (! is_array($value)) {
                                                         return;
                                                     }
-                                                    $hasEmail = collect($value)->contains(fn ($field) => ($field['type'] ?? '') === RegistrationFieldTypeEnum::EMAIL->value);
-                                                    if (! $hasEmail) {
-                                                        $fail('Formulár musí obsahovať aspoň jedno pole typu Email.');
+                                                    $types = collect($value)->pluck('type')->filter()->toArray();
+                                                    $required = [
+                                                        RegistrationFieldTypeEnum::FIRST_NAME->value => 'Meno',
+                                                        RegistrationFieldTypeEnum::LAST_NAME->value => 'Priezvisko',
+                                                        RegistrationFieldTypeEnum::EMAIL->value => 'Email',
+                                                        RegistrationFieldTypeEnum::PHONE->value => 'Telefón',
+                                                    ];
+                                                    foreach ($required as $type => $label) {
+                                                        if (! in_array($type, $types)) {
+                                                            $fail("Formulár musí obsahovať pole typu {$label}.");
+                                                        }
                                                     }
                                                 };
                                             })
@@ -373,7 +395,22 @@ class TrainingForm
                                                     ->options(RegistrationFieldTypeEnum::class)
                                                     ->required()
                                                     ->default(RegistrationFieldTypeEnum::TEXT_INPUT)
-                                                    ->live(),
+                                                    ->live()
+                                                    ->disabled(fn (Get $get): bool => in_array($get('type'), [
+                                                        RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                                        RegistrationFieldTypeEnum::LAST_NAME->value,
+                                                        RegistrationFieldTypeEnum::EMAIL->value,
+                                                        RegistrationFieldTypeEnum::PHONE->value,
+                                                    ]))
+                                                    ->dehydrated()
+                                                    ->afterStateUpdated(function (Get $get, Set $set, mixed $state): void {
+                                                        $label = $get('label.sk');
+                                                        if ($label) {
+                                                            $set('name', Str::slug($label, '_'));
+                                                        } elseif ($state) {
+                                                            $set('name', $state instanceof RegistrationFieldTypeEnum ? $state->value : $state);
+                                                        }
+                                                    }),
                                                 Select::make('width')
                                                     ->label('Šírka')
                                                     ->options([
@@ -384,7 +421,19 @@ class TrainingForm
                                                 Toggle::make('required')
                                                     ->label('Povinné')
                                                     ->inline(false)
-                                                    ->default(false),
+                                                    ->default(fn (Get $get): bool => in_array($get('type'), [
+                                                        RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                                        RegistrationFieldTypeEnum::LAST_NAME->value,
+                                                        RegistrationFieldTypeEnum::EMAIL->value,
+                                                        RegistrationFieldTypeEnum::PHONE->value,
+                                                    ]))
+                                                    ->disabled(fn (Get $get): bool => in_array($get('type'), [
+                                                        RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                                        RegistrationFieldTypeEnum::LAST_NAME->value,
+                                                        RegistrationFieldTypeEnum::EMAIL->value,
+                                                        RegistrationFieldTypeEnum::PHONE->value,
+                                                    ]))
+                                                    ->dehydrated(),
                                                 TextInput::make('options')
                                                     ->label('Možnosti')
                                                     ->placeholder('Čiarkou oddelené')
@@ -436,7 +485,19 @@ class TrainingForm
                                                     ->columnSpanFull(),
                                             ])
                                             ->addActionLabel('Pridať pole')
-                                            ->deleteAction(fn ($action) => $action->requiresConfirmation())
+                                            ->deleteAction(fn ($action) => $action
+                                                ->requiresConfirmation()
+                                                ->hidden(function (array $arguments, Repeater $component): bool {
+                                                    $items = $component->getState();
+                                                    $type = $items[$arguments['item']]['type'] ?? null;
+
+                                                    return in_array($type, [
+                                                        RegistrationFieldTypeEnum::FIRST_NAME->value,
+                                                        RegistrationFieldTypeEnum::LAST_NAME->value,
+                                                        RegistrationFieldTypeEnum::EMAIL->value,
+                                                        RegistrationFieldTypeEnum::PHONE->value,
+                                                    ]);
+                                                }))
                                             ->defaultItems(0)
                                             ->reorderable()
                                             ->reorderableWithButtons()

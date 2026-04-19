@@ -1,5 +1,6 @@
 @php
     $iconName = $icon ?? 'megaphone';
+    $accentColor = $bg_color ?? '#FF2D2D';
     $titleText = brick_trans($title ?? []);
     $descText = brick_trans($description ?? []);
     $btnText = brick_trans($primary_button_text ?? []);
@@ -29,7 +30,7 @@
 <div class="flex flex-col items-center gap-5 {{ $imageUrl ? 'px-8 pt-6 pb-8' : '' }}">
     {{-- Badge --}}
     @if($badgeLabel)
-        <div class="inline-flex items-center gap-1.5 bg-[#FF2D2D]/[0.12] text-[#FF2D2D] rounded-md px-2.5 py-1">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1" style="background-color: {{ $accentColor }}1F; color: {{ $accentColor }}">
             <i data-lucide="trophy" class="w-3 h-3"></i>
             <span class="text-[10px] font-semibold font-['DM_Sans']">{{ $badgeLabel }}</span>
         </div>
@@ -37,8 +38,8 @@
 
     {{-- Icon (only if no image) --}}
     @if(!$imageUrl && !$badgeLabel)
-        <div class="w-16 h-16 rounded-full bg-[#FF2D2D]/[0.08] flex items-center justify-center">
-            <i data-lucide="{{ $iconName }}" class="w-7 h-7 text-[#FF2D2D]"></i>
+        <div class="w-16 h-16 flex items-center justify-center" style="background-color: {{ $accentColor }}14">
+            <i data-lucide="{{ $iconName }}" class="w-7 h-7" style="color: {{ $accentColor }}"></i>
         </div>
     @endif
 
@@ -60,18 +61,18 @@
     {{-- Buttons --}}
     @if($btnText && $btnUrl)
         <div class="w-full flex flex-col gap-3">
-            <a href="{{ $btnUrl }}" class="flex items-center justify-center gap-2 w-full h-[46px] bg-[#FF2D2D] text-white text-[13px] font-bold font-['DM_Sans'] rounded-xl hover:bg-[#E02626] transition-colors">
+            <a href="{{ $btnUrl }}" class="flex items-center justify-center gap-2 w-full h-[46px] text-white text-[13px] font-bold font-['DM_Sans'] hover:brightness-90 transition-all cursor-pointer" style="background-color: {{ $accentColor }}">
                 @if(!$imageUrl)
                     <i data-lucide="{{ $iconName === 'heart' ? 'heart' : 'arrow-right' }}" class="w-4 h-4"></i>
                 @endif
                 {{ $btnText }}
             </a>
             @if($secBtnText)
-                <a href="{{ $secBtnUrl ?: '#' }}" class="banner-dismiss flex items-center justify-center w-full h-[44px] bg-[#0A0A0A] border border-[#333333] text-[#888888] text-[13px] font-semibold font-['DM_Sans'] rounded-[10px] hover:text-white transition-colors">
+                <a href="{{ $secBtnUrl ?: '#' }}" class="banner-dismiss flex items-center justify-center w-full h-[44px] bg-[#0A0A0A] border border-[#333333] text-[#888888] text-[13px] font-semibold font-['DM_Sans'] hover:text-white transition-colors cursor-pointer">
                     {{ $secBtnText }}
                 </a>
             @elseif(!$imageUrl)
-                <button class="banner-dismiss text-[#555555] text-xs font-medium font-['DM_Sans'] text-center hover:text-white transition-colors">
+                <button class="banner-dismiss text-[#555555] text-xs font-medium font-['DM_Sans'] text-center hover:text-white transition-colors cursor-pointer">
                     {{ __('Neskôr') }}
                 </button>
             @endif

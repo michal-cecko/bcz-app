@@ -50,33 +50,35 @@
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="space-y-1.5">
                                         <label class="text-bcz-muted text-[13px] font-medium">Meno</label>
-                                        <input type="text" wire:model="firstName" placeholder="Dominik" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                        <input type="text" wire:model="firstName" placeholder="Dominik" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                         @error('firstName') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                     </div>
                                     <div class="space-y-1.5">
                                         <label class="text-bcz-muted text-[13px] font-medium">Priezvisko</label>
-                                        <input type="text" wire:model="lastName" placeholder="Klimek" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                        <input type="text" wire:model="lastName" placeholder="Klimek" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                         @error('lastName') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-bcz-muted text-[13px] font-medium">Email</label>
-                                    <input type="email" wire:model="email" placeholder="dominik@bczclub.sk" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                    <input type="email" wire:model="email" placeholder="dominik@bczclub.sk" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                     @error('email') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-bcz-muted text-[13px] font-medium">Heslo</label>
-                                    <input type="password" wire:model="password" placeholder="••••••••" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                    <input type="password" wire:model="password" placeholder="••••••••" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                     @error('password') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-bcz-muted text-[13px] font-medium">Potvrdiť heslo</label>
-                                    <input type="password" wire:model="passwordConfirmation" placeholder="••••••••" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                    <input type="password" wire:model="passwordConfirmation" placeholder="••••••••" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                     @error('passwordConfirmation') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                 </div>
                             </div>
+                            <x-gdpr-checkbox :with-terms="true" />
+
                             <div class="space-y-5">
-                                <button wire:click="nextStep" class="w-full bg-bcz-red text-white text-sm font-bold rounded-lg h-12 flex items-center justify-center gap-2 hover:bg-red-700 transition-colors">
+                                <button wire:click="nextStep" class="w-full bg-bcz-red text-white text-sm font-bold h-12 flex items-center justify-center gap-2 hover:bg-red-700 transition-colors">
                                     Pokračovať
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                 </button>
@@ -98,29 +100,29 @@
                             <div class="space-y-5">
                                 <div class="space-y-1.5">
                                     <label class="text-bcz-muted text-[13px] font-medium">Názov tímu *</label>
-                                    <input type="text" wire:model="teamName" placeholder="BCZ Club" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                    <input type="text" wire:model="teamName" placeholder="BCZ Club" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                     @error('teamName') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="space-y-1.5">
                                         <label class="text-bcz-muted text-[13px] font-medium">Meno vlastníka tímu *</label>
-                                        <input type="text" wire:model="ownerName" placeholder="Ján Novák" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                        <input type="text" wire:model="ownerName" placeholder="Ján Novák" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                         @error('ownerName') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                     </div>
                                     <div class="space-y-1.5">
                                         <label class="text-bcz-muted text-[13px] font-medium">Email vlastníka *</label>
-                                        <input type="email" wire:model="ownerEmail" placeholder="jan@bczclub.sk" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                        <input type="email" wire:model="ownerEmail" placeholder="jan@bczclub.sk" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                         @error('ownerEmail') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="space-y-1.5">
                                         <label class="text-bcz-muted text-[13px] font-medium">Typ športu</label>
-                                        <input type="text" wire:model="sportType" placeholder="Street Workout" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                        <input type="text" wire:model="sportType" placeholder="Street Workout" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                     </div>
                                     <div class="space-y-1.5">
                                         <label class="text-bcz-muted text-[13px] font-medium">Krajina</label>
-                                        <select wire:model="country" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red appearance-none">
+                                        <select wire:model="country" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red appearance-none">
                                             <option value="SK">Slovensko</option>
                                             <option value="CZ">Česko</option>
                                             <option value="OTHER">Iná</option>
@@ -129,11 +131,11 @@
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-bcz-muted text-[13px] font-medium">Mesto</label>
-                                    <input type="text" wire:model="city" placeholder="Čadca" class="w-full bg-[#111111] border border-bcz-border rounded-lg h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
+                                    <input type="text" wire:model="city" placeholder="Čadca" class="w-full bg-[#111111] border border-bcz-border h-[46px] px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red">
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-bcz-muted text-[13px] font-medium">Logo tímu (voliteľné)</label>
-                                    <label class="flex items-center justify-center gap-2.5 bg-[#111111] border border-bcz-border rounded-lg h-20 cursor-pointer hover:border-bcz-muted transition-colors">
+                                    <label class="flex items-center justify-center gap-2.5 bg-[#111111] border border-bcz-border h-20 cursor-pointer hover:border-bcz-muted transition-colors">
                                         <input type="file" wire:model="logo" class="hidden" accept="image/*">
                                         @if($logo && method_exists($logo, 'isPreviewable') && $logo->isPreviewable())
                                             <img src="{{ $logo->temporaryUrl() }}" alt="Logo" class="h-14 w-14 object-cover rounded-lg">
@@ -150,15 +152,15 @@
                                 </div>
                                 <div class="space-y-1.5">
                                     <label class="text-bcz-muted text-[13px] font-medium">Krátky popis (voliteľné)</label>
-                                    <textarea wire:model="description" placeholder="Napíšte niečo o vašom tíme..." rows="3" class="w-full bg-[#111111] border border-bcz-border rounded-lg p-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red resize-none"></textarea>
+                                    <textarea wire:model="description" placeholder="Napíšte niečo o vašom tíme..." rows="3" class="w-full bg-[#111111] border border-bcz-border p-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red resize-none"></textarea>
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
-                                <button wire:click="previousStep" class="flex items-center justify-center gap-2 border border-bcz-border text-bcz-muted text-sm font-medium rounded-lg h-12 px-8 hover:border-bcz-muted transition-colors">
+                                <button wire:click="previousStep" class="flex items-center justify-center gap-2 border border-bcz-border text-bcz-muted text-sm font-medium h-12 px-8 hover:border-bcz-muted transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                                     Späť
                                 </button>
-                                <button wire:click="nextStep" class="flex-1 bg-bcz-red text-white text-sm font-bold rounded-lg h-12 flex items-center justify-center gap-2 hover:bg-red-700 transition-colors">
+                                <button wire:click="nextStep" class="flex-1 bg-bcz-red text-white text-sm font-bold h-12 flex items-center justify-center gap-2 hover:bg-red-700 transition-colors">
                                     Pokračovať
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                 </button>
@@ -219,11 +221,11 @@
 
             {{-- Action Buttons --}}
             <div class="flex items-center gap-4">
-                <a href="/admin" class="flex items-center gap-2 bg-bcz-red text-white text-[13px] font-bold rounded-lg px-6 py-3.5 hover:bg-red-700 transition-colors">
+                <a href="/admin" class="flex items-center gap-2 bg-bcz-red text-white text-[13px] font-bold px-6 py-3.5 hover:bg-red-700 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                     Pridať prvého člena
                 </a>
-                <a href="/admin" class="flex items-center gap-2 border border-bcz-border text-bcz-lighter text-[13px] font-medium rounded-lg px-6 py-3.5 hover:border-bcz-muted transition-colors">
+                <a href="/admin" class="flex items-center gap-2 border border-bcz-border text-bcz-lighter text-[13px] font-medium px-6 py-3.5 hover:border-bcz-muted transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                     Preskúmať dashboard
                 </a>

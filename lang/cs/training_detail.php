@@ -99,11 +99,38 @@ return [
     'payment_cash_desc' => 'Platba na místě nebo kontaktujte tým',
     'payment_cash_instructions' => 'Platbu v hotovosti je možné uhradit přímo na místě nebo kontaktujte tým pro více informací.',
 
+    // Bank transfer details
+    'bank_payment_details' => 'Platební údaje',
+    'bank_iban' => 'IBAN:',
+    'bank_variable_symbol' => 'Variabilní symbol:',
+    'bank_amount' => 'Částka:',
+    'bank_recipient' => 'Příjemce:',
+    'bank_message' => 'Zpráva:',
+    'bank_message_value' => 'Členství :season',
+    'bank_instructions_title' => 'Pokyny k platbě',
+    'bank_instruction_1' => '1. Naskenujte QR kód nebo zadejte údaje v internetovém bankovnictví',
+    'bank_instruction_2' => '2. Uveďte správný variabilní symbol pro identifikaci platby',
+    'bank_instruction_3' => '3. Členství bude aktivováno po připsání platby (1–3 prac. dny)',
+    'bank_instruction_3_registration' => '3. Registrace bude potvrzena po připsání platby (1–3 prac. dny)',
+    'bank_scan_qr' => 'Naskenujte QR',
+
+    // Cash payment details
+    'cash_instructions_title' => 'Pokyny pro platbu v hotovosti',
+    'cash_amount_label' => 'Částka k úhradě:',
+    'cash_step_1' => 'Přijďte na nejbližší trénink s hotovostí',
+    'cash_step_2' => 'Předejte platbu trenérovi před nebo po tréninku',
+    'cash_step_3' => 'Trenér potvrdí příjem a členství bude aktivováno',
+    'cash_step_1_registration' => 'Připravte si hotovost v dané částce',
+    'cash_step_2_registration' => 'Platbu předejte organizátorovi na místě',
+    'cash_step_3_registration' => 'Po přijetí platby bude vaše registrace potvrzena',
+    'cash_warning' => 'Členství bude aktivní až po potvrzení platby trenérem.',
+    'cash_warning_registration' => 'Registrace bude potvrzena až po přijetí platby.',
+
     // Payment buttons
     'pay_button' => 'Zaplatit :price',
     'show_payment_details' => 'Zobrazit platební údaje',
     'contact_team' => 'Kontaktujte tým',
-    'payment_auto_approve_note' => 'Po zaplacení budeš automaticky registrován na tento trénink.',
+    'payment_auto_approve_note' => 'Po zaplacení budete automaticky registrováni.',
 
     // Season info
     'season_remaining' => 'za zbytek sezóny',

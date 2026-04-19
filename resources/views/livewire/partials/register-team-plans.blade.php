@@ -9,13 +9,13 @@
         <div class="flex bg-[#111111] border border-bcz-border rounded-lg">
             <button
                 wire:click="$set('billingPeriod', 'monthly')"
-                class="px-5 py-2.5 rounded-lg text-xs font-semibold transition-colors {{ $billingPeriod === 'monthly' ? 'bg-bcz-red text-white' : 'text-bcz-dim hover:text-white' }}"
+                class="px-5 py-2.5 text-xs font-semibold transition-colors {{ $billingPeriod === 'monthly' ? 'bg-bcz-red text-white' : 'text-bcz-dim hover:text-white' }}"
             >
                 Mesačne
             </button>
             <button
                 wire:click="$set('billingPeriod', 'yearly')"
-                class="px-5 py-2.5 rounded-lg text-xs font-medium transition-colors {{ $billingPeriod === 'yearly' ? 'bg-bcz-red text-white' : 'text-bcz-dim hover:text-white' }}"
+                class="px-5 py-2.5 text-xs font-medium transition-colors {{ $billingPeriod === 'yearly' ? 'bg-bcz-red text-white' : 'text-bcz-dim hover:text-white' }}"
             >
                 Ročne (-17%)
             </button>
@@ -82,11 +82,11 @@
 
     {{-- Buttons --}}
     <div class="flex items-center justify-center gap-4">
-        <button wire:click="previousStep" class="flex items-center gap-2 border border-bcz-border text-bcz-muted text-sm font-medium rounded-lg h-12 px-8 hover:border-bcz-muted transition-colors">
+        <button wire:click="previousStep" class="flex items-center gap-2 border border-bcz-border text-bcz-muted text-sm font-medium h-12 px-8 hover:border-bcz-muted transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             Späť
         </button>
-        <button wire:click="nextStep" class="flex items-center gap-2 bg-bcz-red text-white text-sm font-bold rounded-lg h-12 px-12 hover:bg-red-700 transition-colors">
+        <button wire:click="nextStep" class="flex items-center gap-2 bg-bcz-red text-white text-sm font-bold h-12 px-12 hover:bg-red-700 transition-colors">
             Pokračovať s PRO
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>

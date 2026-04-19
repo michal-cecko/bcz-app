@@ -78,7 +78,7 @@
                             <div class="space-y-3">
                                 <button
                                     wire:click="joinDirectly"
-                                    class="w-full bg-bcz-red text-white text-sm font-bold rounded-lg h-12 hover:bg-red-700 transition-colors"
+                                    class="w-full bg-bcz-red text-white text-sm font-bold h-12 hover:bg-red-700 transition-colors"
                                 >
                                     Pripojiť sa k tímu
                                 </button>
@@ -95,7 +95,7 @@
                                                 type="text"
                                                 wire:model="requestName"
                                                 placeholder="Meno"
-                                                class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                                                class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                                             >
                                             @error('requestName') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                         </div>
@@ -104,7 +104,7 @@
                                                 type="text"
                                                 wire:model="requestSurname"
                                                 placeholder="Priezvisko"
-                                                class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                                                class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                                             >
                                             @error('requestSurname') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                         </div>
@@ -114,13 +114,13 @@
                                         type="email"
                                         wire:model="requestEmail"
                                         placeholder="Váš email"
-                                        class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                                        class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                                     >
                                     @error('requestEmail') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                 </div>
                                 <button
                                     wire:click="submitGuestJoinRequest"
-                                    class="w-full bg-bcz-red text-white text-sm font-bold rounded-lg h-12 hover:bg-red-700 transition-colors"
+                                    class="w-full bg-bcz-red text-white text-sm font-bold h-12 hover:bg-red-700 transition-colors"
                                 >
                                     Pripojiť sa
                                 </button>
@@ -135,7 +135,7 @@
                             <div class="space-y-3">
                                 <button
                                     wire:click="submitJoinRequest"
-                                    class="w-full bg-bcz-red text-white text-sm font-bold rounded-lg h-12 hover:bg-red-700 transition-colors"
+                                    class="w-full bg-bcz-red text-white text-sm font-bold h-12 hover:bg-red-700 transition-colors"
                                 >
                                     Požiadať o pripojenie
                                 </button>
@@ -154,7 +154,7 @@
                                                     type="text"
                                                     wire:model="requestName"
                                                     placeholder="Meno"
-                                                    class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                                                    class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                                                 >
                                                 @error('requestName') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                             </div>
@@ -163,7 +163,7 @@
                                                     type="text"
                                                     wire:model="requestSurname"
                                                     placeholder="Priezvisko"
-                                                    class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                                                    class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                                                 >
                                                 @error('requestSurname') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                             </div>
@@ -173,13 +173,13 @@
                                             type="email"
                                             wire:model="requestEmail"
                                             placeholder="Váš email"
-                                            class="w-full bg-[#111111] border border-bcz-border rounded-lg h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
+                                            class="w-full bg-[#111111] border border-bcz-border h-11 px-4 text-white text-sm placeholder:text-bcz-dim focus:outline-none focus:ring-1 focus:ring-bcz-red focus:border-bcz-red"
                                         >
                                         @error('requestEmail') <span class="text-bcz-red text-xs">{{ $message }}</span> @enderror
                                     </div>
                                     <button
                                         wire:click="submitJoinRequest"
-                                        class="w-full bg-bcz-red text-white text-sm font-bold rounded-lg h-11 hover:bg-red-700 transition-colors"
+                                        class="w-full bg-bcz-red text-white text-sm font-bold h-11 hover:bg-red-700 transition-colors"
                                     >
                                         Odoslať žiadosť
                                     </button>
@@ -191,7 +191,7 @@
                                 <div class="space-y-3">
                                     <button
                                         wire:click="showGuestRequestForm"
-                                        class="w-full bg-bcz-red text-white text-sm font-bold rounded-lg h-12 hover:bg-red-700 transition-colors"
+                                        class="w-full bg-bcz-red text-white text-sm font-bold h-12 hover:bg-red-700 transition-colors"
                                     >
                                         Požiadať o pripojenie
                                     </button>
@@ -212,7 +212,7 @@
                         <div class="space-y-3">
                             <label class="text-bcz-lighter text-[13px] font-semibold">Pozývací kód</label>
                             <div class="flex items-center gap-3">
-                                <div class="flex-1 flex items-center gap-3 bg-[#111111] border border-bcz-border rounded-lg h-12 px-4">
+                                <div class="flex-1 flex items-center gap-3 bg-[#111111] border border-bcz-border h-12 px-4">
                                     <svg class="w-[18px] h-[18px] text-bcz-dim flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                                     <input
                                         type="text"
@@ -223,7 +223,7 @@
                                 </div>
                                 <button
                                     wire:click="redeemCode"
-                                    class="bg-bcz-red text-white text-[13px] font-bold rounded-lg h-12 px-7 hover:bg-red-700 transition-colors flex-shrink-0"
+                                    class="bg-bcz-red text-white text-[13px] font-bold h-12 px-7 hover:bg-red-700 transition-colors flex-shrink-0"
                                 >
                                     Pripojiť sa
                                 </button>

@@ -40,10 +40,10 @@
             {{-- Text Block --}}
             <div class="flex flex-col gap-4">
                 <h2 class="font-display font-bold text-[32px] tracking-wide text-white">O prednáške</h2>
-                <p class="text-[#CCCCCC] text-base leading-[1.8]">
+                <p class="text-[#CCCCCC] text-base leading-relaxed">
                     Navštívili sme Strednú odbornú školu v Čadci, kde sme pre študentov pripravili inšpiratívnu prednášku o správnom nastavení mysle, prekonávaní prekážok a budovaní vytrvalosti. Cieľom bolo ukázať mladým ľuďom, že s disciplínou a tvrdou prácou môžu dosiahnuť čokoľvek.
                 </p>
-                <p class="text-[#CCCCCC] text-base leading-[1.8]">
+                <p class="text-[#CCCCCC] text-base leading-relaxed">
                     Prednáška trvala 90 minút a zúčastnilo sa jej viac ako 150 študentov z rôznych ročníkov. Súčasťou bola aj praktická ukážka základných prvkov parkouru a street workoutu, ktorá študentov nadchla.
                 </p>
             </div>
@@ -54,23 +54,23 @@
                 <ul class="flex flex-col gap-3">
                     <li class="flex items-start gap-3">
                         <div class="w-2 h-2 bg-[#3B82F6] rounded-sm mt-2 shrink-0"></div>
-                        <span class="text-[#CCCCCC] text-base leading-[1.8]">Správne nastavenie mysle a pozitívne myslenie</span>
+                        <span class="text-[#CCCCCC] text-base leading-relaxed">Správne nastavenie mysle a pozitívne myslenie</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <div class="w-2 h-2 bg-[#3B82F6] rounded-sm mt-2 shrink-0"></div>
-                        <span class="text-[#CCCCCC] text-base leading-[1.8]">Hodnotové rebríčky - čo je v živote skutočne dôležité</span>
+                        <span class="text-[#CCCCCC] text-base leading-relaxed">Hodnotové rebríčky - čo je v živote skutočne dôležité</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <div class="w-2 h-2 bg-[#3B82F6] rounded-sm mt-2 shrink-0"></div>
-                        <span class="text-[#CCCCCC] text-base leading-[1.8]">Trpezlivosť a vytrvalosť - kľúč k úspechu</span>
+                        <span class="text-[#CCCCCC] text-base leading-relaxed">Trpezlivosť a vytrvalosť - kľúč k úspechu</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <div class="w-2 h-2 bg-[#3B82F6] rounded-sm mt-2 shrink-0"></div>
-                        <span class="text-[#CCCCCC] text-base leading-[1.8]">Výhody pravidelného cvičenia pre telo aj myseľ</span>
+                        <span class="text-[#CCCCCC] text-base leading-relaxed">Výhody pravidelného cvičenia pre telo aj myseľ</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <div class="w-2 h-2 bg-[#3B82F6] rounded-sm mt-2 shrink-0"></div>
-                        <span class="text-[#CCCCCC] text-base leading-[1.8]">Prekonávanie strachu a komfortnej zóny</span>
+                        <span class="text-[#CCCCCC] text-base leading-relaxed">Prekonávanie strachu a komfortnej zóny</span>
                     </li>
                 </ul>
             </div>
@@ -79,7 +79,7 @@
             <div class="rounded-xl bg-[#111111] p-8 border border-[#3B82F640] flex gap-5">
                 <div class="w-1 bg-[#3B82F6] rounded-sm self-stretch shrink-0"></div>
                 <div class="flex flex-col gap-3">
-                    <p class="text-[#CCCCCC] text-base leading-[1.8] italic">
+                    <p class="text-[#CCCCCC] text-base leading-relaxed italic">
                         „Prednáška bola úžasná! Konečne niekto, kto hovorí k mladým ľuďom ich jazykom. Študenti boli nadšení a ešte týždne potom diskutovali o témach, ktoré ste otvorili."
                     </p>
                     <span class="text-[#888888] text-sm">— Mgr. Jana Kováčová, riaditeľka SOŠ Čadca</span>

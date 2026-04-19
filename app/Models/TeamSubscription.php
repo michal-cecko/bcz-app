@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\Payable;
 use App\Enums\BillingPeriodEnum;
 use App\Enums\SubscriptionStatusEnum;
 use App\Models\Concerns\HasCreator;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class TeamSubscription extends Model
+class TeamSubscription extends Model implements Payable
 {
     use HasCreator, HasFactory, HasUuidV7;
 
@@ -61,5 +62,13 @@ class TeamSubscription extends Model
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function getPaymentDescription(): string
+    {
+        $teamName = $this->team?->getTranslation('name', 'sk') ?? 'Tím';
+        $planName = $this->plan?->getTranslation('name', 'sk') ?? 'Predplatné';
+
+        return "{$teamName} - {$planName}";
     }
 }

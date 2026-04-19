@@ -16,7 +16,7 @@
     @endif
     <span class="text-white text-[11px] font-['DM_Sans']">{{ $titleText }}</span>
     @if($btnText && $btnUrl)
-        <a href="{{ $btnUrl }}" class="inline-flex items-center gap-1 bg-white/[0.12] text-white text-[11px] font-bold font-['DM_Sans'] rounded-md px-2.5 py-1 hover:bg-white/20 transition-colors">
+        <a href="{{ $btnUrl }}" class="inline-flex items-center gap-1 bg-white/[0.12] text-white text-[11px] font-bold font-['DM_Sans'] px-2.5 py-1 hover:bg-white/20 transition-colors">
             {{ $btnText }}
             <i data-lucide="arrow-right" class="w-3 h-3"></i>
         </a>

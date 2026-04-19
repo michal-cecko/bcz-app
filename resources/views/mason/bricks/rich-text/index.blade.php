@@ -1,3 +1,3 @@
-<div class="prose prose-lg max-w-none">
-    {!! brick_trans($content ?? []) !!}
+<div class="mason-rich-text">
+ {!! brick_trans($content ?? []) !!}
 </div>

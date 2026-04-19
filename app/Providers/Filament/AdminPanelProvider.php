@@ -22,7 +22,7 @@ use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
@@ -101,6 +101,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('logo/logo-horizontal-short.svg'))
             ->darkModeBrandLogo(asset('logo/logo-horizontal-short-white.svg'))
             ->brandLogoHeight('2rem')
+            ->homeUrl('/')
             ->font('DM Sans')
             ->colors([
                 'primary' => Color::Sky,
@@ -117,7 +118,7 @@ class AdminPanelProvider extends PanelProvider
                 StartSession::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
-                PreventRequestForgery::class,
+                VerifyCsrfToken::class,
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,

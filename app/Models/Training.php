@@ -41,7 +41,6 @@ class Training extends Model implements HasMedia, Linkable
         'gender',
         'duration_minutes',
         'start_time',
-        'schedule_days',
         'place_name',
         'place_address',
         'latitude',
@@ -72,7 +71,6 @@ class Training extends Model implements HasMedia, Linkable
             'max_age' => 'integer',
             'gender' => GenderEnum::class,
             'pricing_type' => TrainingPricingTypeEnum::class,
-            'schedule_days' => 'json',
             'registration_form_schema' => 'json',
             'gallery_images' => 'json',
             'is_active' => 'boolean',
@@ -226,6 +224,11 @@ class Training extends Model implements HasMedia, Linkable
         return $this->belongsToMany(User::class, 'coach_training')
             ->withPivot('role')
             ->withTimestamps();
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(TrainingSchedule::class)->orderBy('sort_order');
     }
 
     public function registrations(): HasMany

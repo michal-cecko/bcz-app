@@ -41,6 +41,9 @@ return [
     'no_events' => 'Momentálne nie sú k dispozícii žiadne podujatia.',
     'training_count' => 'tréning|tréningy|tréningov',
     'event_count' => 'podujatie|podujatia|podujatí',
+    'pagination_showing' => 'Zobrazuje sa',
+    'pagination_from' => 'z',
+    'pagination_results' => 'výsledkov',
     'days' => [
         'monday' => 'Pondelok',
         'tuesday' => 'Utorok',

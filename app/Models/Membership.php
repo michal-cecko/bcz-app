@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\Payable;
 use App\Enums\MembershipStatusEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class Membership extends Model
+class Membership extends Model implements Payable
 {
     use HasCreator, HasFactory, HasUuidV7;
 
@@ -63,5 +64,13 @@ class Membership extends Model
     public function payments(): MorphMany
     {
         return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function getPaymentDescription(): string
+    {
+        $userName = trim(($this->user?->first_name ?? '').' '.($this->user?->last_name ?? ''));
+        $seasonName = $this->season?->name ?? 'Členstvo';
+
+        return $userName ? "{$userName} - {$seasonName}" : $seasonName;
     }
 }

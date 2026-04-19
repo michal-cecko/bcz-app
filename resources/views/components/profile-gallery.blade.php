@@ -1,10 +1,10 @@
-@props(['items', 'locale' => 'sk'])
+@props(['media'])
 
 @php
-    $allImages = $items->map(fn ($item) => [
-        'url' => $item->getFirstMediaUrl('image'),
-        'description' => $item->getTranslation('description', $locale),
-    ])->filter(fn ($img) => $img['url'])->values();
+    $allImages = $media->map(fn ($item) => [
+        'url' => $item->getUrl(),
+        'name' => $item->name,
+    ])->values();
 @endphp
 
 <section
@@ -25,35 +25,19 @@
         <div class="flex flex-col items-center gap-3">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-0.5 bg-bcz-red"></div>
-                <span class="text-bcz-red text-xs font-bold tracking-[3px]">{{ __('FOTO') }}</span>
+                <span class="text-bcz-red text-xs font-bold tracking-[3px]">GALÉRIA</span>
                 <div class="w-10 h-0.5 bg-bcz-red"></div>
             </div>
-            <h2 class="font-display font-bold text-4xl tracking-[0.5px]">{{ __('GALERIA') }}</h2>
-            <p class="text-[#888888] text-base">{{ __('Momenty z treningov a sutazi') }}</p>
+            <h2 class="font-display font-bold text-4xl tracking-[0.5px]">FOTOGALÉRIA</h2>
         </div>
 
         <div class="columns-1 md:columns-2 lg:columns-3 gap-5 space-y-5">
             @foreach($allImages as $index => $image)
                 <div class="break-inside-avoid group cursor-pointer">
-                    <div class="relative rounded-lg overflow-hidden" @click="open({{ $index }})">
-                        <img src="{{ $image['url'] }}" alt="{{ $image['description'] }}" class="w-full object-cover group-hover:scale-105 transition-transform duration-300">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div class="absolute bottom-4 left-4 right-4">
-                                @if($image['description'])
-                                    <p class="text-white text-sm">{{ $image['description'] }}</p>
-                                @endif
-                            </div>
-                        </div>
+                    <div class="relative rounded-xl overflow-hidden" @click="open({{ $index }})">
+                        <img src="{{ $image['url'] }}" alt="{{ $image['name'] }}" class="w-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
-
-                    @php $item = $items[$index]; @endphp
-                    @if($item->tags && count($item->tags) > 0)
-                        <div class="flex flex-wrap gap-2 mt-3">
-                            @foreach($item->tags as $tag)
-                                <span class="text-bcz-red text-[11px] font-medium bg-bcz-red/10 px-3 py-1 rounded-full">{{ $tag }}</span>
-                            @endforeach
-                        </div>
-                    @endif
                 </div>
             @endforeach
         </div>
@@ -84,11 +68,10 @@
             </button>
 
             {{-- Image --}}
-            <img :src="images[current]?.url" :alt="images[current]?.description || ''" class="max-h-[85vh] max-w-[90vw] object-contain rounded-lg">
+            <img :src="images[current]?.url" :alt="images[current]?.name || ''" class="max-h-[85vh] max-w-[90vw] object-contain rounded-lg">
 
-            {{-- Caption & Counter --}}
+            {{-- Counter --}}
             <div class="absolute bottom-4 flex flex-col items-center gap-2">
-                <p class="text-white/70 text-sm max-w-lg text-center" x-show="images[current]?.description" x-text="images[current]?.description"></p>
                 <span class="text-white/40 text-sm" x-show="images.length > 1" x-text="(current + 1) + ' / ' + images.length"></span>
             </div>
         </div>

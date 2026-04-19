@@ -89,7 +89,7 @@ $frontendRoutes = function () {
     Route::redirect('/tim/{any}', '/timy', 301)->where('any', '.+');
 
     Route::get('/{slug}', [PageController::class, 'show'])
-        ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|en|cs|timy).*$');
+        ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|payment|en|cs|timy).*$');
 };
 
 // Localized: /en/..., /cs/...
@@ -168,7 +168,7 @@ Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
 
 // Catch-all CMS page
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|en|cs|timy).*$')
+    ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|payment|en|cs|timy).*$')
     ->name('page.show');
 
 /*
