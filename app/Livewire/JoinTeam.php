@@ -63,12 +63,14 @@ class JoinTeam extends Component
             return collect();
         }
 
+        $needle = '%'.mb_strtolower($this->search).'%';
+
         return Team::query()
             ->where('is_active', true)
-            ->where(function ($query) {
-                $query->whereRaw("name->>'sk' ILIKE ?", ['%'.$this->search.'%'])
-                    ->orWhereRaw("name->>'en' ILIKE ?", ['%'.$this->search.'%'])
-                    ->orWhereRaw("name->>'cs' ILIKE ?", ['%'.$this->search.'%']);
+            ->where(function ($query) use ($needle) {
+                $query->whereRaw("LOWER(name->>'sk') LIKE ?", [$needle])
+                    ->orWhereRaw("LOWER(name->>'en') LIKE ?", [$needle])
+                    ->orWhereRaw("LOWER(name->>'cs') LIKE ?", [$needle]);
             })
             ->withCount('members')
             ->limit(5)

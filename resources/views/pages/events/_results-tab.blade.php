@@ -139,6 +139,7 @@
         $isPublished = $round->scores_published;
         $advanceCount = $round->nextRound?->competitor_count;
         $hasFollowingBattle = $catRounds->contains(fn($r) => $r->isBattle() && $r->sort_order > $round->sort_order);
+        $showStatusColumn = $round->nextRound !== null;
 
         if ($isPublished) {
             $compData = [];
@@ -170,7 +171,9 @@
             <span class="text-[#555555] text-[11px] font-normal font-sans tracking-wider w-[70px] text-right">{{ mb_strtoupper($part->getTranslation('name', $locale)) }}</span>
             @endforeach
             <span class="text-[#555555] text-[11px] font-normal font-sans tracking-wider w-[70px] text-right">{{ mb_strtoupper(__('event_detail.score')) }}</span>
+            @if($showStatusColumn)
             <span class="text-[#555555] text-[11px] font-normal font-sans tracking-wider w-[100px] text-right">{{ mb_strtoupper(__('event_detail.status_label')) }}</span>
+            @endif
             @endif
         </div>
         @foreach($competitors as $i => $comp)
@@ -198,6 +201,7 @@
             <span class="text-sm font-sans w-[70px] text-right {{ $isBelowCutoff ? 'text-[#666666]' : 'text-[#CCCCCC]' }}">{{ isset($comp['parts'][$part->id]) ? number_format((float) $comp['parts'][$part->id], 1) : '—' }}</span>
             @endforeach
             <span class="text-sm font-bold font-sans w-[70px] text-right {{ $isBelowCutoff ? 'text-[#888888]' : 'text-white' }}">{{ number_format($comp['total'], 1) }}</span>
+            @if($showStatusColumn)
             <div class="w-[100px] text-right">
                 @if($isAdvancing)
                 <span class="inline-flex items-center gap-1.5 bg-[#22C55E20] text-[#22C55E] text-xs font-semibold font-sans px-3 py-1 rounded-full">
@@ -208,6 +212,7 @@
                 <span class="text-[#666666] text-xs font-sans">{{ __('event_detail.results_eliminated') }}</span>
                 @endif
             </div>
+            @endif
             @endif
         </div>
         @endforeach

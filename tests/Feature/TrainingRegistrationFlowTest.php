@@ -100,6 +100,7 @@ class TrainingRegistrationFlowTest extends TestCase
             ->test('training-registration-form', ['training' => $training])
             ->set('fields.meno', $user->first_name)
             ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
             ->call('submit');
 
         $registration = TrainingRegistration::where('training_id', $training->id)
@@ -134,6 +135,7 @@ class TrainingRegistrationFlowTest extends TestCase
             ->test('training-registration-form', ['training' => $training])
             ->set('fields.meno', $user->first_name)
             ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
             ->call('submit');
 
         $registration = TrainingRegistration::where('training_id', $training->id)
@@ -158,6 +160,7 @@ class TrainingRegistrationFlowTest extends TestCase
             ->test('training-registration-form', ['training' => $training])
             ->set('fields.meno', $user->first_name)
             ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
             ->call('submit');
 
         $registration = TrainingRegistration::where('training_id', $training->id)
@@ -185,6 +188,7 @@ class TrainingRegistrationFlowTest extends TestCase
             ->test('training-registration-form', ['training' => $training])
             ->set('fields.meno', $user->first_name)
             ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
             ->call('submit');
 
         $registration = TrainingRegistration::where('training_id', $training->id)
@@ -205,6 +209,8 @@ class TrainingRegistrationFlowTest extends TestCase
             ->set('fields.meno', 'John')
             ->set('fields.priezvisko', 'Doe')
             ->set('fields.email', 'existing@test.com')
+            ->set('fields.telefon', '+421900123456')
+            ->set('gdprAgreed', true)
             ->call('submit')
             ->assertHasErrors(['fields.email']);
     }
@@ -228,6 +234,7 @@ class TrainingRegistrationFlowTest extends TestCase
             ->set('fields.meno', 'Jane')
             ->set('fields.email', 'new@test.com')
             ->set('fields.telefon', '+421900111222')
+            ->set('gdprAgreed', true)
             ->call('submit')
             ->assertHasErrors(['fields.telefon']);
     }
@@ -244,6 +251,8 @@ class TrainingRegistrationFlowTest extends TestCase
             ->set('fields.meno', 'New')
             ->set('fields.priezvisko', 'User')
             ->set('fields.email', 'newuser@test.com')
+            ->set('fields.telefon', '+421900654321')
+            ->set('gdprAgreed', true)
             ->call('submit');
 
         Mail::assertQueued(RegistrationConfirmationMail::class, function ($mail) {
