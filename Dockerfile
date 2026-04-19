@@ -55,6 +55,13 @@ COPY --from=build --chown=www-data:www-data /var/www /var/www
 
 RUN chmod -R 755 /var/www/storage /var/www/bootstrap/cache /var/www/public
 
+# Dokploy's docker terminal hardcodes `docker exec -w /`, overriding WORKDIR.
+# Auto-cd into the app dir for interactive shells (bash/sh/ash, login or not).
+RUN printf 'cd /var/www\n' > /etc/profile.d/cd-app.sh \
+    && printf 'cd /var/www\n' > /root/.bashrc \
+    && printf 'cd /var/www\n' > /root/.ashrc
+ENV ENV=/root/.ashrc
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
