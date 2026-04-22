@@ -83,14 +83,20 @@ class UserForm
                                     ->required(),
                                 Select::make('team_id')
                                     ->label('Tím')
-                                    ->helperText('Priradenie k tímu pre rolu trénera, športovca alebo tímového administrátora.')
+                                    ->helperText('Povinné pre rolu Tímový admin, Tréner alebo Športovec.')
                                     ->options(fn () => Team::query()->pluck('name', 'id')->map(fn ($name) => is_array($name) ? ($name['sk'] ?? reset($name)) : $name))
                                     ->searchable()
                                     ->preload()
                                     ->dehydrated(false)
                                     ->default(fn ($record) => $record?->teams()->first()?->id)
-                                    ->visible(fn (Get $get): bool => self::hasTeamScopedRole($get('roles') ?? []))
-                                    ->required(fn (Get $get): bool => self::hasTeamScopedRole($get('roles') ?? [])),
+                                    ->required(fn (Get $get): bool => self::hasTeamScopedRole($get('roles') ?? []))
+                                    ->rule(function (Get $get) {
+                                        return function (string $attribute, $value, \Closure $fail) use ($get): void {
+                                            if (self::hasTeamScopedRole($get('roles') ?? []) && ! $value) {
+                                                $fail('Pre tímovú rolu je potrebné zvoliť tím.');
+                                            }
+                                        };
+                                    }),
                                 Select::make('gender')
                                     ->label('Pohlavie')
                                     ->options(GenderEnum::translations()),
