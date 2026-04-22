@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\RoleEnum;
 use App\Filament\Pages\Auth\UserSetupWizard;
 use App\Filament\Resources\Settings\SettingResource;
 use App\Filament\Resources\Teams\TeamResource;
@@ -69,6 +70,13 @@ class AdminPanelProvider extends PanelProvider
                 Action::make('complete-profile')
                     ->label('Dokončiť profil')
                     ->url(fn (): string => '/'.filament()->getCurrentPanel()->getPath().'/setup-wizard')
+                    ->visible(function (): bool {
+                        $user = auth()->user();
+
+                        return $user !== null
+                            && ($user->hasRole([RoleEnum::CUSTOMER->value])
+                                || $user->hasRole([RoleEnum::ATHLETE->value]));
+                    })
                     ->icon(Heroicon::OutlinedPencilSquare),
                 Action::make('settings')
                     ->label('Nastavenia')

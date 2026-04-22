@@ -23,7 +23,7 @@ class CompleteProfileWidget extends Widget
             return false;
         }
 
-        if (!$user->hasRole([RoleEnum::CUSTOMER->value]) && !$user->hasRole([RoleEnum::ATHLETE->value])) {
+        if (! $user->hasRole([RoleEnum::CUSTOMER->value]) && ! $user->hasRole([RoleEnum::ATHLETE->value])) {
             return false;
         }
 

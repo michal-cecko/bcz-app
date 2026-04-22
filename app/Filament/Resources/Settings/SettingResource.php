@@ -12,12 +12,20 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class SettingResource extends Resource
 {
     protected static ?string $model = Setting::class;
 
-    protected static ?string $recordTitleAttribute = 'key';
+    public static function getRecordTitle(?Model $record): ?string
+    {
+        if (! $record instanceof Setting) {
+            return null;
+        }
+
+        return $record->getTranslation('label', app()->getLocale()) ?: $record->key;
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 

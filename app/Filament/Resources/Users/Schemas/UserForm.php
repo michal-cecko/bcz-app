@@ -29,7 +29,7 @@ class UserForm
                 Tabs::make('user_tabs')
                     ->tabs([
                         self::personalInfoTab(),
-                        self::passwordTab(),
+                        self::passwordTab()->visible(fn (string $operation): bool => $operation === 'edit'),
                         self::publicProfilesTab(),
                     ])
                     ->persistTabInQueryString()
@@ -101,17 +101,19 @@ class UserForm
                 Grid::make(2)
                     ->schema([
                         TextInput::make('password')
-                            ->label('Heslo')
+                            ->label('Nové heslo')
+                            ->helperText('Nechajte prázdne ak nechcete meniť heslo.')
                             ->password()
                             ->revealable()
-                            ->required(fn (string $operation): bool => $operation === 'create')
                             ->dehydrated(fn (?string $state): bool => filled($state))
+                            ->requiredWith('passwordConfirmation')
                             ->same('passwordConfirmation'),
                         TextInput::make('passwordConfirmation')
                             ->label('Potvrdenie hesla')
                             ->password()
                             ->revealable()
-                            ->dehydrated(false),
+                            ->dehydrated(false)
+                            ->requiredWith('password'),
                     ]),
             ]);
     }

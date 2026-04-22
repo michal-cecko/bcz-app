@@ -23,16 +23,22 @@ class SettingForm
                         TextInput::make('label')
                             ->label('Názov')
                             ->disabled()
-                            ->dehydrated(false),
+                            ->dehydrated(false)
+                            ->formatStateUsing(fn ($state) => is_array($state) ? ($state[app()->getLocale()] ?? $state['sk'] ?? reset($state)) : $state),
                         TextInput::make('description')
                             ->label('Popis')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->formatStateUsing(fn ($state) => is_array($state) ? ($state[app()->getLocale()] ?? $state['sk'] ?? reset($state)) : $state),
+                        TextInput::make('key')
+                            ->label('Kľúč')
                             ->disabled()
                             ->dehydrated(false),
                         TextInput::make('type')
                             ->label('Typ')
                             ->disabled()
                             ->dehydrated(false)
-                            ->formatStateUsing(fn ($state) => $state instanceof SettingTypeEnum ? $state->translation() : $state),
+                            ->formatStateUsing(fn ($state) => $state instanceof SettingTypeEnum ? $state->value : $state),
 
                         // Dynamic value field based on type
                         TextInput::make('value')

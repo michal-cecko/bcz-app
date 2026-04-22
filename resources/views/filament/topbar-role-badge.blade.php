@@ -18,7 +18,7 @@
     $allRoles = $globalRoles->merge($teamRoles)->unique();
 @endphp
 
-@if ($allRoles->isNotEmpty())
+@if ($allRoles->isNotEmpty() && ! app()->environment('production'))
     <div class="flex items-center gap-2">
         @foreach ($allRoles as $role)
             <x-filament::badge size="sm" color="gray">

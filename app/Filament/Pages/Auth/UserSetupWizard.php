@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Auth;
 
 use App\Enums\GenderEnum;
 use App\Enums\ProfileTypeEnum;
+use App\Enums\RoleEnum;
 use App\Filament\Schemas\PublicProfileSchema;
 use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
@@ -36,6 +37,16 @@ class UserSetupWizard extends SimplePage
     public ?array $data = [];
 
     public bool $isRevisit = false;
+
+    public static function canAccess(): bool
+    {
+        /** @var User|null $user */
+        $user = auth()->user();
+
+        return $user !== null
+            && ($user->hasRole([RoleEnum::CUSTOMER->value])
+                || $user->hasRole([RoleEnum::ATHLETE->value]));
+    }
 
     public function mount(): void
     {
