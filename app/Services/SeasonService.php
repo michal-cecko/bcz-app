@@ -26,23 +26,30 @@ class SeasonService
                 ->get();
 
             foreach ($activeMembers as $member) {
-                $isFree = false;
-                $feeAmount = (float) $season->fee_amount;
+                // Global admins don't participate in team billing at all.
+                if (! $member->participatesInMembershipBilling()) {
+                    continue;
+                }
+
+                $isFree = ! $member->isMembershipPayer();
+                $feeAmount = $isFree ? 0.0 : (float) $season->fee_amount;
 
                 $membership = Membership::create([
                     'team_id' => $team->id,
                     'user_id' => $member->id,
                     'team_season_id' => $season->id,
-                    'status' => MembershipStatusEnum::PENDING,
+                    'status' => $isFree ? MembershipStatusEnum::ACTIVE : MembershipStatusEnum::PENDING,
                     'fee_amount' => $feeAmount,
                     'fee_currency' => $season->fee_currency,
                     'is_free' => $isFree,
-                    'payment_deadline_at' => now()->addDays($season->payment_deadline_days),
+                    'payment_deadline_at' => $isFree ? null : now()->addDays($season->payment_deadline_days),
                     'starts_at' => $season->starts_at,
                     'ends_at' => $season->ends_at,
                 ]);
 
-                $member->notify(new MembershipPaymentDue($membership));
+                if (! $isFree) {
+                    $member->notify(new MembershipPaymentDue($membership));
+                }
             }
 
             return $season;

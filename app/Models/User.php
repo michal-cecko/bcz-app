@@ -54,6 +54,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
         'judge_profile_approved_at',
         'birth_date',
         'gender',
+        'has_free_membership',
         'password_set_at',
     ];
 
@@ -80,6 +81,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             'judge_profile_approved_at' => 'datetime',
             'birth_date' => 'date',
             'gender' => GenderEnum::class,
+            'has_free_membership' => 'boolean',
             'password_set_at' => 'datetime',
         ];
     }
@@ -347,6 +349,33 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
     public function canImpersonate(): bool
     {
         return $this->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN]);
+    }
+
+    /**
+     * Whether this user should be billed for team memberships.
+     * Global admins/super-admins are never billed. Users flagged
+     * `has_free_membership` get a free membership record instead.
+     */
+    public function isMembershipPayer(): bool
+    {
+        if ($this->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN])) {
+            return false;
+        }
+
+        if ($this->has_free_membership) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Global admins and super-admins don't participate in team billing at all —
+     * no membership record should be created for them when a season is opened.
+     */
+    public function participatesInMembershipBilling(): bool
+    {
+        return ! $this->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN]);
     }
 
     /**

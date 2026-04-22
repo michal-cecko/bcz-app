@@ -4,10 +4,13 @@ namespace App\Filament\Resources\Payments\Tables;
 
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Filament\Resources\Payments\PaymentResource;
 use App\Models\Payment;
 use App\Services\PaymentService;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -65,6 +68,7 @@ class PaymentsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(fn (Payment $record): string => PaymentResource::getUrl('view', ['record' => $record]))
             ->filters([
                 SelectFilter::make('status')
                     ->label('Stav')
@@ -74,7 +78,6 @@ class PaymentsTable
                     ->options(PaymentMethodEnum::translations()),
             ])
             ->recordActions([
-                ViewAction::make(),
                 EditAction::make()
                     ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->schema([
@@ -120,6 +123,12 @@ class PaymentsTable
                             );
                         }
                     }),
+                DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ]);
     }
 }

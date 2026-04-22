@@ -11,6 +11,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -84,6 +85,10 @@ class UserForm
                                     ->label('Dátum narodenia')
                                     ->native(false)
                                     ->maxDate(now()),
+                                Toggle::make('has_free_membership')
+                                    ->label('Oslobodený od platby členstva')
+                                    ->helperText('Pri otvorení sezóny dostane bezplatné členstvo bez notifikácie.')
+                                    ->default(false),
                             ]),
                     ]),
             ]);

@@ -134,7 +134,7 @@ class ViewTeamSeason extends ViewRecord
 
                     $count = 0;
                     foreach ($unpaidMemberships as $membership) {
-                        if ($membership->user) {
+                        if ($membership->user && $membership->user->isMembershipPayer()) {
                             $membership->user->notify(new MembershipPaymentDue($membership));
                             $count++;
                         }
