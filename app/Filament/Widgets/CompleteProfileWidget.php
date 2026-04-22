@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\RoleEnum;
 use App\Models\User;
 use Filament\Widgets\Widget;
 
@@ -18,6 +19,14 @@ class CompleteProfileWidget extends Widget
         /** @var User|null $user */
         $user = auth()->user();
 
-        return $user !== null && $user->isProfileIncomplete();
+        if ($user === null) {
+            return false;
+        }
+
+        if (!$user->hasRole([RoleEnum::CUSTOMER->value]) && !$user->hasRole([RoleEnum::ATHLETE->value])) {
+            return false;
+        }
+
+        return $user->isProfileIncomplete();
     }
 }
