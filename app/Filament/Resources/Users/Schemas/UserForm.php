@@ -18,6 +18,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Spatie\Permission\Models\Role;
@@ -66,7 +67,11 @@ class UserForm
                                 TextInput::make('email')
                                     ->label('E-mail')
                                     ->email()
-                                    ->required(),
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->validationMessages([
+                                        'unique' => 'Používateľ s touto e-mailovou adresou už existuje.',
+                                    ]),
                                 Select::make('roles')
                                     ->label('Roly')
                                     ->relationship('roles', 'name')
@@ -80,6 +85,12 @@ class UserForm
                                     ->multiple()
                                     ->preload()
                                     ->live()
+                                    ->afterStateUpdated(function (Set $set, $state): void {
+                                        // Non-members (admin/editor/judge only) always get the free flag forced on.
+                                        if (! self::hasMembershipEligibleRole($state ?? [])) {
+                                            $set('has_free_membership', true);
+                                        }
+                                    })
                                     ->required(),
                                 Select::make('team_id')
                                     ->label('Tím')

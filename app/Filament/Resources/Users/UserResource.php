@@ -22,6 +22,8 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Spatie\Permission\Models\Role;
@@ -47,6 +49,22 @@ class UserResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         return ! auth()->user()?->isMemberLevel();
+    }
+
+    /**
+     * Platform admins see every user (including those on other teams or no team).
+     * Everyone else stays scoped to the current tenant.
+     */
+    public static function scopeEloquentQueryToTenant(Builder $query, ?Model $tenant): Builder
+    {
+        /** @var User|null $actor */
+        $actor = auth()->user();
+
+        if ($actor?->isGlobalAdmin()) {
+            return $query;
+        }
+
+        return parent::scopeEloquentQueryToTenant($query, $tenant);
     }
 
     public static function form(Schema $schema): Schema

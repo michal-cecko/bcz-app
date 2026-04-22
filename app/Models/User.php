@@ -170,12 +170,30 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
 
     public function getTenants(Panel $panel): Collection
     {
+        // Global admins can switch into any team's context, even teams they don't belong to.
+        if ($this->isGlobalAdmin()) {
+            return Team::query()->orderBy('name')->get();
+        }
+
         return $this->teams;
     }
 
     public function canAccessTenant(Model $tenant): bool
     {
+        if ($this->isGlobalAdmin()) {
+            return true;
+        }
+
         return $this->teams()->whereKey($tenant)->exists();
+    }
+
+    /**
+     * SUPER_ADMIN / ADMIN globally. Used by tenant-scoping overrides so resources
+     * can opt out of the current-team restriction for platform admins.
+     */
+    public function isGlobalAdmin(): bool
+    {
+        return $this->hasRole([RoleEnum::SUPER_ADMIN->value, RoleEnum::ADMIN->value]);
     }
 
     public function athleteProfile(): HasOne
