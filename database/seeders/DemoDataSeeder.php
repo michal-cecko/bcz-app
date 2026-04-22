@@ -3037,10 +3037,10 @@ class DemoDataSeeder extends Seeder
     }
 
     /**
-     * Link rounds into a chain via next_round_id and populate competitor_count.
+     * Link rounds into a chain via previous_round_id and populate competitor_count.
      *
      * Within each (competition_detail_id, athlete_category_id) group, sort by
-     * sort_order + round_number and point each round at its successor. Fills
+     * sort_order + round_number and point each round at its predecessor. Fills
      * competitor_count from actual battle pivot rows (battle rounds) or
      * approved registration counts (qualification rounds).
      */
@@ -3056,8 +3056,8 @@ class DemoDataSeeder extends Seeder
 
         foreach ($rounds as $chain) {
             $ordered = $chain->values();
-            for ($i = 0; $i < $ordered->count() - 1; $i++) {
-                $ordered[$i]->update(['next_round_id' => $ordered[$i + 1]->id]);
+            for ($i = 1; $i < $ordered->count(); $i++) {
+                $ordered[$i]->update(['previous_round_id' => $ordered[$i - 1]->id]);
             }
         }
 

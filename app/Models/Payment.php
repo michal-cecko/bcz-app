@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\DB;
 
 class Payment extends Model
 {
@@ -40,9 +41,38 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'status' => PaymentStatusEnum::class,
             'payment_method' => PaymentMethodEnum::class,
+            'sequence_number' => 'integer',
             'paid_at' => 'datetime',
             'refunded_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $payment): void {
+            if (! empty($payment->sequence_number)) {
+                return;
+            }
+
+            // Postgres assigns via DB sequence default. Other drivers (SQLite in tests)
+            // don't have a sequence default, so assign sequentially from max.
+            if (DB::connection()->getDriverName() !== 'pgsql') {
+                $payment->sequence_number = ((int) static::max('sequence_number')) + 1;
+            }
+        });
+    }
+
+    /**
+     * 8-digit zero-padded variable symbol derived from the payment's sequence_number.
+     * Returns null until the payment has been persisted and has a sequence_number.
+     */
+    public function formattedVariableSymbol(): ?string
+    {
+        if (empty($this->sequence_number)) {
+            return null;
+        }
+
+        return str_pad((string) $this->sequence_number, 8, '0', STR_PAD_LEFT);
     }
 
     public function team(): BelongsTo

@@ -218,6 +218,7 @@ return [
         MenuLocationEnum::Header->value => 'Hlavička',
         MenuLocationEnum::FooterDiscover->value => 'Päta — Objavte',
         MenuLocationEnum::FooterPrograms->value => 'Päta — Programy',
+        MenuLocationEnum::FooterLegal->value => 'Päta — Právne',
     ],
     TeamJoinModeEnum::class => [
         TeamJoinModeEnum::APPROVAL->value => 'So schválením',

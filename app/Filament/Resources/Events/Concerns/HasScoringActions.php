@@ -253,7 +253,7 @@ trait HasScoringActions
             $viewData['battles'] = $round->battles->map(fn (Battle $battle) => $this->battleToPayload($battle))->toArray();
 
             $viewData['isStale'] = app(BattleGeneratorService::class)->isBattleRoundStale($round);
-            $viewData['previousRoundName'] = $round->previousRound()?->name;
+            $viewData['previousRoundName'] = $round->previousRound?->name;
         }
 
         return [

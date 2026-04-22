@@ -7,6 +7,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 
 class PaymentMethodForm
@@ -25,14 +26,39 @@ class PaymentMethodForm
                     ->required()
                     ->disabled()
                     ->dehydrated(),
-                TextInput::make('title')
-                    ->label('Názov')
-                    ->required()
-                    ->placeholder('napr. Platba kartou'),
-                RichEditor::make('description')
-                    ->label('Popis')
-                    ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
-                    ->placeholder('Popis platobnej metódy zobrazený zákazníkovi...')
+                Tabs::make('Preklady')
+                    ->tabs([
+                        Tabs\Tab::make('SK')
+                            ->schema([
+                                TextInput::make('title.sk')
+                                    ->label('Názov (SK)')
+                                    ->required()
+                                    ->placeholder('napr. Platba kartou'),
+                                RichEditor::make('description.sk')
+                                    ->label('Popis (SK)')
+                                    ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                    ->placeholder('Popis platobnej metódy zobrazený zákazníkovi...')
+                                    ->columnSpanFull(),
+                            ]),
+                        Tabs\Tab::make('EN')
+                            ->schema([
+                                TextInput::make('title.en')
+                                    ->label('Názov (EN)'),
+                                RichEditor::make('description.en')
+                                    ->label('Popis (EN)')
+                                    ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                    ->columnSpanFull(),
+                            ]),
+                        Tabs\Tab::make('CZ')
+                            ->schema([
+                                TextInput::make('title.cs')
+                                    ->label('Názov (CZ)'),
+                                RichEditor::make('description.cs')
+                                    ->label('Popis (CZ)')
+                                    ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                    ->columnSpanFull(),
+                            ]),
+                    ])
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->label('Aktívna')

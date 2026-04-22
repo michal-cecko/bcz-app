@@ -7,6 +7,7 @@ use App\Enums\BillingPeriodEnum;
 use App\Enums\SubscriptionStatusEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
+use App\Services\EmailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -70,5 +71,36 @@ class TeamSubscription extends Model implements Payable
         $planName = $this->plan?->getTranslation('name', 'sk') ?? 'Predplatné';
 
         return "{$teamName} - {$planName}";
+    }
+
+    public function getTotalPriceAmount(): float
+    {
+        return (float) $this->amount;
+    }
+
+    public function getPriceCurrency(): string
+    {
+        return $this->currency ?? 'EUR';
+    }
+
+    public function getQrPaymentNote(): ?string
+    {
+        $template = $this->plan?->payment_note;
+
+        if (! $template) {
+            return null;
+        }
+
+        $seasonLabel = match (true) {
+            $this->starts_at !== null && $this->ends_at !== null => $this->starts_at->format('Y').'–'.$this->ends_at->format('Y'),
+            $this->starts_at !== null => (string) $this->starts_at->format('Y'),
+            default => '',
+        };
+
+        return EmailService::replaceVariables($template, [
+            'nazov_timu' => (string) ($this->team?->getTranslation('name', app()->getLocale()) ?? ''),
+            'nazov_planu' => (string) ($this->plan?->getTranslation('name', app()->getLocale()) ?? ''),
+            'sezona' => $seasonLabel,
+        ]);
     }
 }

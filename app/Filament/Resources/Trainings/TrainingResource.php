@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Trainings;
 
 use App\Filament\Clusters\Trainings\TrainingsCluster;
+use App\Filament\RelationManagers\PaymentMethodsRelationManager;
 use App\Filament\Resources\Trainings\Pages\CreateTraining;
 use App\Filament\Resources\Trainings\Pages\EditTraining;
 use App\Filament\Resources\Trainings\Pages\ListTrainings;
@@ -75,6 +76,7 @@ class TrainingResource extends Resource
         return [
             CoachesRelationManager::class,
             RegistrationsRelationManager::class,
+            PaymentMethodsRelationManager::class,
             PaymentsRelationManager::class,
             WaitlistRelationManager::class,
         ];

@@ -32,8 +32,9 @@ class PaymentService
         string $currency,
         PaymentMethodEnum $paymentMethod,
         ?string $notes = null,
+        bool $notify = true,
     ): Payment {
-        return Payment::create([
+        $payment = Payment::create([
             'team_id' => $team->id,
             'user_id' => $user->id,
             'payer_name' => $user->name,
@@ -44,12 +45,43 @@ class PaymentService
             'currency' => $currency,
             'status' => PaymentStatusEnum::COMPLETED,
             'payment_method' => $paymentMethod,
-            'variable_symbol' => $paymentMethod === PaymentMethodEnum::BANK_TRANSFER
-                ? $this->generateVariableSymbol()
-                : null,
             'notes' => $notes,
             'paid_at' => now(),
         ]);
+
+        if ($paymentMethod === PaymentMethodEnum::BANK_TRANSFER) {
+            $payment->refresh();
+            $payment->update(['variable_symbol' => $this->variableSymbolFor($payment)]);
+        }
+
+        $payment->setRelation('payable', $payable->fresh() ?? $payable);
+
+        $this->processPaymentCompleted($payment, $notify);
+
+        return $payment;
+    }
+
+    /**
+     * Check whether the sum of completed payments for this payable covers its full price.
+     */
+    public function isFullyPaid(Payable $payable): bool
+    {
+        if (! $payable instanceof Model) {
+            return false;
+        }
+
+        $totalPrice = $payable->getTotalPriceAmount();
+
+        if ($totalPrice <= 0) {
+            return true;
+        }
+
+        $totalPaid = (float) $payable->payments()
+            ->where('status', PaymentStatusEnum::COMPLETED)
+            ->where('currency', $payable->getPriceCurrency())
+            ->sum('amount');
+
+        return ($totalPaid + 0.005) >= $totalPrice;
     }
 
     /**
@@ -159,34 +191,50 @@ class PaymentService
 
     /**
      * Process business logic after a payment is completed.
+     *
+     * Activates the underlying payable only when the sum of completed payments
+     * covers its full price (so partial / installment payments are supported).
      */
-    private function processPaymentCompleted(Payment $payment): void
+    public function processPaymentCompleted(Payment $payment, bool $notify = true): void
     {
-        if ($payment->payable instanceof Membership) {
-            $payment->payable->update(['status' => MembershipStatusEnum::ACTIVE]);
-            $this->autoApprovePendingRegistrationsForMembership($payment->payable);
+        $payable = $payment->payable;
 
-            if ($payment->user) {
+        if (! $payable) {
+            return;
+        }
+
+        $isFullyPaid = $payable instanceof Payable && $this->isFullyPaid($payable);
+
+        if ($payable instanceof Membership) {
+            if ($isFullyPaid && $payable->status !== MembershipStatusEnum::ACTIVE) {
+                $payable->update(['status' => MembershipStatusEnum::ACTIVE]);
+                $this->autoApprovePendingRegistrationsForMembership($payable, $notify);
+            }
+
+            if ($notify && $payment->user) {
                 $payment->user->notify(new PaymentConfirmed($payment));
             }
         }
 
-        if ($payment->payable instanceof TrainingRegistration) {
-            $registration = $payment->payable;
-            $registration->update([
-                'status' => RegistrationStatusEnum::Approved,
-                'payment_due_at' => null,
-            ]);
+        if ($payable instanceof TrainingRegistration) {
+            if ($isFullyPaid && $payable->status !== RegistrationStatusEnum::Approved) {
+                $payable->update([
+                    'status' => RegistrationStatusEnum::Approved,
+                    'payment_due_at' => null,
+                ]);
+            }
 
-            if ($registration->user) {
-                $registration->user->notify(new PaymentConfirmed($payment));
+            if ($notify && $payable->user) {
+                $payable->user->notify(new PaymentConfirmed($payment));
             }
         }
 
-        if ($payment->payable instanceof EventRegistration) {
-            $payment->payable->update(['status' => RegistrationStatusEnum::Approved]);
+        if ($payable instanceof EventRegistration) {
+            if ($isFullyPaid && $payable->status !== RegistrationStatusEnum::Approved) {
+                $payable->update(['status' => RegistrationStatusEnum::Approved]);
+            }
 
-            if ($payment->user) {
+            if ($notify && $payment->user) {
                 $payment->user->notify(new PaymentConfirmed($payment));
             }
         }
@@ -212,7 +260,7 @@ class PaymentService
      * Auto-approve all pending training registrations for MEMBERSHIP_REQUIRED trainings
      * when a membership becomes active.
      */
-    protected function autoApprovePendingRegistrationsForMembership(Membership $membership): void
+    protected function autoApprovePendingRegistrationsForMembership(Membership $membership, bool $notify = true): void
     {
         $pendingRegistrations = TrainingRegistration::query()
             ->where('user_id', $membership->user_id)
@@ -227,7 +275,7 @@ class PaymentService
         foreach ($pendingRegistrations as $registration) {
             $registration->update(['status' => RegistrationStatusEnum::Approved]);
 
-            if ($registration->user) {
+            if ($notify && $registration->user) {
                 $registration->user->notify(new TrainingPaymentConfirmed($registration->training));
             }
         }
@@ -256,12 +304,20 @@ class PaymentService
         ]);
     }
 
-    public function generateVariableSymbol(): string
+    /**
+     * Build the 8-digit zero-padded variable symbol from the payment's sequence_number.
+     * The payment must already be persisted so the sequence_number is assigned.
+     */
+    public function variableSymbolFor(Payment $payment): string
     {
-        do {
-            $symbol = (string) random_int(1000000000, 9999999999);
-        } while (Payment::where('variable_symbol', $symbol)->exists());
+        if (empty($payment->sequence_number)) {
+            $payment->refresh();
+        }
 
-        return $symbol;
+        if (empty($payment->sequence_number)) {
+            throw new \LogicException('Payment must be persisted before a variable symbol can be generated.');
+        }
+
+        return str_pad((string) $payment->sequence_number, 8, '0', STR_PAD_LEFT);
     }
 }

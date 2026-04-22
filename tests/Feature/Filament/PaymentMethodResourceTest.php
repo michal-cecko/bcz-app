@@ -65,15 +65,17 @@ class PaymentMethodResourceTest extends TestCase
         Livewire::test(EditPaymentMethod::class, ['record' => $method->getRouteKey()])
             ->assertOk()
             ->fillForm([
-                'title' => 'Platba kartou cez GoPay',
-                'description' => 'Updated description',
+                'title.sk' => 'Platba kartou cez GoPay',
+                'title.en' => 'Pay by card via GoPay',
+                'description.sk' => 'Updated description',
             ])
             ->call('save')
             ->assertNotified();
 
         $method->refresh();
-        $this->assertEquals('Platba kartou cez GoPay', $method->title);
-        $this->assertStringContainsString('Updated description', $method->description);
+        $this->assertEquals('Platba kartou cez GoPay', $method->getTranslation('title', 'sk'));
+        $this->assertEquals('Pay by card via GoPay', $method->getTranslation('title', 'en'));
+        $this->assertStringContainsString('Updated description', $method->getTranslation('description', 'sk'));
     }
 
     public function test_team_can_have_payment_methods_via_pivot(): void

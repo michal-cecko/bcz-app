@@ -101,7 +101,7 @@ class BattleGeneratorService
      */
     private function generateWithThirdPlace(CompetitionRound $round, bool $overwrite): Collection
     {
-        $previous = $round->previousRound();
+        $previous = $round->previousRound;
         if ($previous === null || ! $previous->isBattle()) {
             throw BattleGenerationException::thirdPlaceRequiresBattleSource();
         }
@@ -195,7 +195,7 @@ class BattleGeneratorService
      */
     public function getCompetitorsForRound(CompetitionRound $round): Collection
     {
-        $previous = $round->previousRound();
+        $previous = $round->previousRound;
 
         if ($previous === null) {
             return $this->getRegisteredCompetitors($round);
@@ -220,7 +220,7 @@ class BattleGeneratorService
      */
     private function shouldIncludeThirdPlace(CompetitionRound $round): bool
     {
-        $previous = $round->previousRound();
+        $previous = $round->previousRound;
 
         return $previous !== null
             && $previous->isBattle()
@@ -260,7 +260,7 @@ class BattleGeneratorService
             return false;
         }
 
-        $previous = $round->previousRound();
+        $previous = $round->previousRound;
         if ($previous === null) {
             return false;
         }
@@ -313,7 +313,7 @@ class BattleGeneratorService
      */
     public function isPreviousRoundComplete(CompetitionRound $round): bool
     {
-        $previous = $round->previousRound();
+        $previous = $round->previousRound;
         if ($previous === null) {
             return false;
         }
@@ -390,7 +390,7 @@ class BattleGeneratorService
 
     private function deriveCompetitorCountFromPrevious(CompetitionRound $round): int
     {
-        $previous = $round->previousRound();
+        $previous = $round->previousRound;
         if ($previous === null || ! $previous->isBattle()) {
             return 0;
         }

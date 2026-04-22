@@ -20,7 +20,7 @@ class PaymentMethodsTable
                     ->badge(),
                 TextColumn::make('title')
                     ->label('Názov')
-                    ->searchable(),
+                    ->searchable(['title->sk', 'title->en', 'title->cs']),
                 TextColumn::make('description')
                     ->label('Popis')
                     ->html()

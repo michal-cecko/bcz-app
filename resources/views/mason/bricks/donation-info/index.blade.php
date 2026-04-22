@@ -20,12 +20,13 @@
  $qrAccountNumber = brick_trans($account_number ?? []);
  $qrVs = brick_trans($qr_variable_symbol ?? []);
  $qrRecipient = brick_trans($qr_recipient_name ?? []);
+ $qrNote = brick_trans($qr_note ?? []);
  $qrFormat = brick_trans($qr_format ?? []) ?: 'pay_by_square';
 
  if ($qrIban || $qrAccountNumber) {
  $qrImage = match ($qrFormat) {
- 'qr_platba' => QrPaymentService::qrPlatba($qrIban ?: $qrAccountNumber, null, 'CZK', $qrVs ?: '', $qrRecipient ?: ''),
- default => QrPaymentService::payBySquare($qrIban, null, 'EUR', $qrVs ?: '', $qrRecipient ?: ''),
+ 'qr_platba' => QrPaymentService::qrPlatba($qrIban ?: $qrAccountNumber, null, 'CZK', $qrVs ?: '', $qrRecipient ?: '', $qrNote ?: null),
+ default => QrPaymentService::payBySquare($qrIban, null, 'EUR', $qrVs ?: '', $qrRecipient ?: '', $qrNote ?: null),
  };
  }
 @endphp

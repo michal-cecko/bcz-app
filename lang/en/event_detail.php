@@ -110,6 +110,7 @@ return [
     'tab_timetable' => 'Timetable',
     'tab_results' => 'Results',
     'tab_registration' => 'Registration',
+    'tab_report' => 'Report',
 
     // Competition registration tab
     'registration_status' => 'Registration Status',
@@ -180,6 +181,7 @@ return [
     'dr_location' => 'Location',
     'dr_amount' => 'Amount',
     'dr_payment_method' => 'Payment',
+    'dr_membership' => 'Membership',
     'error_email_exists' => 'This email is already registered. Please sign in to continue.',
     'error_phone_exists' => 'This phone number is already assigned to another account.',
 

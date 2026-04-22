@@ -59,6 +59,17 @@
     {{-- Divider --}}
     <div class="w-full h-px bg-bcz-border mt-10 lg:mt-16"></div>
 
+    {{-- Legal links --}}
+    @if($footerLegalMenu && ! empty($footerLegalMenu->items))
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-5 gap-y-2 mt-6">
+            @foreach(collect($footerLegalMenu->items)->sortBy('sort_order') as $item)
+                <a href="{{ \App\Services\LinkResolver::resolve($item) ?? ($item['url'] ?? '#') }}" target="{{ $item['target'] ?? '_self' }}" class="text-bcz-subtle text-[12px] hover:text-white transition-colors">
+                    {{ $item['label_' . app()->getLocale()] ?? $item['label_sk'] }}
+                </a>
+            @endforeach
+        </div>
+    @endif
+
     {{-- Footer Bottom --}}
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 lg:mt-10">
         <span class="text-[#666666] text-[13px]">&copy; {{ date('Y') }} BCZ Club. {{ __('layout.all_rights_reserved') }}</span>

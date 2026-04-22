@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 
 class CompetitionRound extends Model
@@ -19,7 +20,7 @@ class CompetitionRound extends Model
 
     protected $fillable = [
         'competition_detail_id',
-        'next_round_id',
+        'previous_round_id',
         'athlete_category_id',
         'round_number',
         'name',
@@ -58,20 +59,14 @@ class CompetitionRound extends Model
         return $this->belongsTo(AthleteCategory::class);
     }
 
-    public function nextRound(): BelongsTo
+    public function previousRound(): BelongsTo
     {
-        return $this->belongsTo(self::class, 'next_round_id');
+        return $this->belongsTo(self::class, 'previous_round_id');
     }
 
-    public function previousRound(): ?self
+    public function nextRound(): HasOne
     {
-        return self::query()
-            ->where('next_round_id', $this->id)
-            ->when(
-                $this->athlete_category_id !== null,
-                fn ($q) => $q->where('athlete_category_id', $this->athlete_category_id)
-            )
-            ->first();
+        return $this->hasOne(self::class, 'previous_round_id');
     }
 
     public function parts(): HasMany

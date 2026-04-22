@@ -52,7 +52,7 @@ class PaymentFactory extends Factory
     {
         return $this->state(fn () => [
             'payment_method' => PaymentMethodEnum::BANK_TRANSFER,
-            'variable_symbol' => (string) fake()->numerify('##########'),
+            'variable_symbol' => (string) fake()->numerify('########'),
         ]);
     }
 

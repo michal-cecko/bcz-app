@@ -218,6 +218,7 @@ return [
         MenuLocationEnum::Header->value => 'Hlavička',
         MenuLocationEnum::FooterDiscover->value => 'Patička — Objevte',
         MenuLocationEnum::FooterPrograms->value => 'Patička — Programy',
+        MenuLocationEnum::FooterLegal->value => 'Patička — Právní',
     ],
     TeamJoinModeEnum::class => [
         TeamJoinModeEnum::APPROVAL->value => 'Se schválením',

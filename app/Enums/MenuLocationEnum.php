@@ -9,6 +9,7 @@ enum MenuLocationEnum: string implements HasLabel
     case Header = 'header';
     case FooterDiscover = 'footer_discover';
     case FooterPrograms = 'footer_programs';
+    case FooterLegal = 'footer_legal';
 
     public function getLabel(): string
     {

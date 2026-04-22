@@ -44,7 +44,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $previousRound->update(['next_round_id' => $round->id]);
+        $round->update(['previous_round_id' => $previousRound->id]);
 
         $this->expectException(BattleGenerationException::class);
         app(BattleGeneratorService::class)->generate($round);
@@ -66,7 +66,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $battleRound->id]);
+        $battleRound->update(['previous_round_id' => $qual->id]);
 
         $users = User::factory()->count(4)->create();
         foreach ($users as $i => $user) {
@@ -115,7 +115,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $firstRound->update(['next_round_id' => $battleRound->id]);
+        $battleRound->update(['previous_round_id' => $firstRound->id]);
 
         $users = User::factory()->count(8)->create();
         foreach ($users as $i => $user) {
@@ -160,7 +160,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $previousRound->update(['next_round_id' => $round->id]);
+        $round->update(['previous_round_id' => $previousRound->id]);
 
         Battle::factory()->create(['competition_round_id' => $round->id]);
 
@@ -184,7 +184,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $battleRound->id]);
+        $battleRound->update(['previous_round_id' => $qual->id]);
 
         $users = User::factory()->count(2)->create();
         foreach ($users as $i => $user) {
@@ -222,7 +222,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $semi->update(['next_round_id' => $final->id]);
+        $final->update(['previous_round_id' => $semi->id]);
 
         $usersA = User::factory()->count(2)->create();
         $usersB = User::factory()->count(2)->create();
@@ -277,7 +277,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $final->id]);
+        $final->update(['previous_round_id' => $qual->id]);
 
         $users = User::factory()->count(4)->create();
         foreach ($users as $i => $user) {
@@ -327,7 +327,7 @@ class BattleGeneratorServiceTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $semi->update(['next_round_id' => $final->id]);
+        $final->update(['previous_round_id' => $semi->id]);
 
         $usersA = User::factory()->count(2)->create();
         $usersB = User::factory()->count(2)->create();

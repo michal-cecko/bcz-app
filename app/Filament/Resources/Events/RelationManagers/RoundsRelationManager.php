@@ -105,9 +105,9 @@ class RoundsRelationManager extends RelationManager
                 ->options(PairingStrategyEnum::class)
                 ->default(PairingStrategyEnum::RANDOM->value)
                 ->visible(fn (Get $get): bool => $get('advancement_type') === RoundAdvancementTypeEnum::BATTLE_WINNER->value),
-            Select::make('next_round_id')
-                ->label('Nadväzujúce kolo')
-                ->placeholder('Žiadne — toto je finálové kolo')
+            Select::make('previous_round_id')
+                ->label('Predchádzajúce kolo')
+                ->placeholder('Žiadne — toto je prvé kolo')
                 ->options(function (Get $get, ?CompetitionRound $record): array {
                     return CompetitionRound::query()
                         ->where('competition_detail_id', $this->getOwnerRecord()->competitionDetail?->id)

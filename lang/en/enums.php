@@ -218,6 +218,7 @@ return [
         MenuLocationEnum::Header->value => 'Header',
         MenuLocationEnum::FooterDiscover->value => 'Footer — Discover',
         MenuLocationEnum::FooterPrograms->value => 'Footer — Programs',
+        MenuLocationEnum::FooterLegal->value => 'Footer — Legal',
     ],
     TeamJoinModeEnum::class => [
         TeamJoinModeEnum::APPROVAL->value => 'With Approval',

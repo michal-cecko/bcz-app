@@ -383,6 +383,10 @@ class RegistrationsRelationManager extends RelationManager
                             Textarea::make('notes')
                                 ->label('Poznámka')
                                 ->rows(2),
+                            Toggle::make('notify_customer')
+                                ->label('Upozorniť zákazníka?')
+                                ->helperText('Pošle e-mail s potvrdením platby.')
+                                ->default(true),
                         ];
                     })
                     ->action(function (array $data, TrainingRegistration $record): void {
@@ -422,7 +426,6 @@ class RegistrationsRelationManager extends RelationManager
                             return;
                         }
 
-                        // Record payment
                         $paymentService = app(PaymentService::class);
                         $paymentService->recordManualPayment(
                             $user,
@@ -432,27 +435,12 @@ class RegistrationsRelationManager extends RelationManager
                             $data['currency'],
                             PaymentMethodEnum::from($data['payment_method']),
                             $data['notes'] ?? null,
+                            ! empty($data['notify_customer']),
                         );
-
-                        // Activate membership
-                        $membership->update(['status' => MembershipStatusEnum::ACTIVE]);
-
-                        // Auto-approve all pending registrations for membership-required trainings
-                        TrainingRegistration::where('user_id', $record->user_id)
-                            ->where('status', RegistrationStatusEnum::Pending)
-                            ->whereHas('training', function ($query) use ($team): void {
-                                $query->where('team_id', $team->id)
-                                    ->where('pricing_type', TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED);
-                            })
-                            ->update([
-                                'status' => RegistrationStatusEnum::Approved->value,
-                                'payment_due_at' => null,
-                            ]);
 
                         Notification::make()
                             ->success()
                             ->title('Platba za členstvo bola zaznamenaná.')
-                            ->body('Registrácia bola schválená.')
                             ->send();
                     }),
                 ViewAction::make()

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Contracts\Payable;
 use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
+use App\Services\EmailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,7 @@ class TrainingRegistration extends Model implements Payable
         'cancellation_reason',
         'registered_at',
         'payment_due_at',
+        'payment_reminder_sent_at',
     ];
 
     protected function casts(): array
@@ -31,6 +33,7 @@ class TrainingRegistration extends Model implements Payable
             'status' => RegistrationStatusEnum::class,
             'registered_at' => 'datetime',
             'payment_due_at' => 'datetime',
+            'payment_reminder_sent_at' => 'datetime',
         ];
     }
 
@@ -60,5 +63,35 @@ class TrainingRegistration extends Model implements Payable
         $title = $this->training?->getTranslation('title', app()->getLocale()) ?? 'Tréning';
 
         return $userName ? "{$userName} - {$title}" : $title;
+    }
+
+    public function getTotalPriceAmount(): float
+    {
+        return (float) ($this->training?->price_amount ?? 0);
+    }
+
+    public function getPriceCurrency(): string
+    {
+        return 'EUR';
+    }
+
+    public function getQrPaymentNote(): ?string
+    {
+        $template = $this->training?->payment_note;
+
+        if (! $template) {
+            return null;
+        }
+
+        $schedule = $this->training?->schedules?->first();
+
+        return EmailService::replaceVariables($template, [
+            'meno' => (string) ($this->user?->first_name ?? ''),
+            'priezvisko' => (string) ($this->user?->last_name ?? ''),
+            'nazov_treningu' => (string) ($this->training?->getTranslation('title', app()->getLocale()) ?? ''),
+            'mesto' => (string) ($this->training?->city?->name ?? ''),
+            'miesto' => (string) ($this->training?->getTranslation('place_name', app()->getLocale()) ?? ''),
+            'cas' => $schedule?->start_time ? mb_substr((string) $schedule->start_time, 0, 5) : '',
+        ]);
     }
 }

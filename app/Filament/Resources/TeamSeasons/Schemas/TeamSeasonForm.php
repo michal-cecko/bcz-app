@@ -44,8 +44,9 @@ class TeamSeasonForm
                     ->label('Variabilný symbol')
                     ->maxLength(10),
                 TextInput::make('payment_note')
-                    ->label('Poznámka platby')
-                    ->maxLength(50),
+                    ->label('Poznámka platby (QR)')
+                    ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{sezona}}, {{nazov_timu}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
+                    ->maxLength(140),
                 TextInput::make('max_capacity')
                     ->label('Maximálny počet členov')
                     ->numeric()

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Events;
 
 use App\Filament\Clusters\Events\EventsCluster;
+use App\Filament\RelationManagers\PaymentMethodsRelationManager;
 use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ListEvents;
@@ -77,6 +78,7 @@ class EventResource extends Resource
             RoundsRelationManager::class,
             RegistrationsRelationManager::class,
             JudgesRelationManager::class,
+            PaymentMethodsRelationManager::class,
         ];
     }
 

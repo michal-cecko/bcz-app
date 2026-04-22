@@ -39,7 +39,7 @@ class AutoGenerateNextRoundTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $final->id]);
+        $final->update(['previous_round_id' => $qual->id]);
 
         $users = User::factory()->count(4)->create();
         foreach ($users as $user) {
@@ -84,7 +84,7 @@ class AutoGenerateNextRoundTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $final->id]);
+        $final->update(['previous_round_id' => $qual->id]);
 
         $existingBattle = Battle::factory()->create(['competition_round_id' => $final->id]);
 
@@ -127,7 +127,7 @@ class AutoGenerateNextRoundTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $secondQual->id]);
+        $secondQual->update(['previous_round_id' => $qual->id]);
 
         $users = User::factory()->count(2)->create();
         foreach ($users as $user) {

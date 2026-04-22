@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\HasMedia;
@@ -256,5 +257,21 @@ class Training extends Model implements HasMedia, Linkable
         return $this->registrations()
             ->where('status', RegistrationStatusEnum::Approved->value)
             ->count() >= $this->max_capacity;
+    }
+
+    public function paymentMethods(): MorphToMany
+    {
+        return $this->morphToMany(PaymentMethod::class, 'payable', 'payable_payment_method')
+            ->using(PayablePaymentMethod::class)
+            ->withPivot(['id', 'title', 'description', 'instructions', 'is_enabled', 'sort_order'])
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
+    }
+
+    public function enabledPaymentMethods(): MorphToMany
+    {
+        return $this->paymentMethods()
+            ->wherePivot('is_enabled', true)
+            ->where('is_active', true);
     }
 }

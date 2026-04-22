@@ -11,6 +11,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -97,6 +98,10 @@ class MembershipsRelationManager extends RelationManager
                         Textarea::make('notes')
                             ->label('Poznámky')
                             ->rows(2),
+                        Toggle::make('notify_customer')
+                            ->label('Upozorniť zákazníka?')
+                            ->helperText('Pošle e-mail s potvrdením platby.')
+                            ->default(true),
                     ])
                     ->action(function (array $data, Membership $record): void {
                         $paymentService = app(PaymentService::class);
@@ -108,9 +113,8 @@ class MembershipsRelationManager extends RelationManager
                             $data['currency'],
                             PaymentMethodEnum::from($data['payment_method']),
                             $data['notes'] ?? null,
+                            ! empty($data['notify_customer']),
                         );
-
-                        $record->update(['status' => MembershipStatusEnum::ACTIVE]);
 
                         Notification::make()
                             ->title('Platba bola zaznamenaná.')

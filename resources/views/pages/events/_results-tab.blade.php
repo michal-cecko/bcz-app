@@ -31,7 +31,11 @@
                     $results[$result->user_id]['total'] += (float) $result->score;
                 }
             }
-            return ['category' => $round->athleteCategory, 'podium' => collect($results)->sortBy(fn($r) => $r['place'] ?? 9999)->values()->take(3)];
+            return ['category' => $round->athleteCategory, 'podium' => collect($results)
+                ->sortByDesc('total')
+                ->sortBy(fn ($r) => $r['place'] ?? PHP_INT_MAX)
+                ->values()
+                ->take(3)];
         })->filter()->values();
     $podiumGenders = $podiumCategories->groupBy(fn($c) => $c['category']?->gender?->value ?? 'other');
 @endphp
@@ -152,7 +156,10 @@
                     $compData[$result->user_id]['total'] += (float) $result->score;
                 }
             }
-            $competitors = collect($compData)->sortBy(fn($c) => $c['place'] ?? 9999)->values();
+            $competitors = collect($compData)
+                ->sortByDesc('total')
+                ->sortBy(fn ($c) => $c['place'] ?? PHP_INT_MAX)
+                ->values();
         } else {
             $competitors = $round->getOrderedCompetitors()->map(fn($reg, $i) => ['user' => $reg->user, 'parts' => [], 'total' => 0, 'place' => $i + 1])->values();
         }

@@ -103,6 +103,12 @@ class SubscriptionPlanForm
                     ])
                     ->columnSpanFull(),
 
+                TextInput::make('payment_note')
+                    ->label('Poznámka platby (QR)')
+                    ->helperText('Dostupné premenné: {{nazov_timu}}, {{nazov_planu}}, {{sezona}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
+                    ->maxLength(140)
+                    ->columnSpanFull(),
+
                 Toggle::make('is_active')
                     ->label('Aktívny')
                     ->default(true),

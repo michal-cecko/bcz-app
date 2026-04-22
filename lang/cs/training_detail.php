@@ -23,6 +23,7 @@ return [
     'capacity_label' => 'Aktuální kapacita',
     'capacity_spots' => 'míst',
     'capacity_full' => 'Plný',
+    'training_full_message' => 'Momentálně nejsou k dispozici žádná volná místa. Zkuste to později nebo kontaktujte trenéra.',
     'capacity_remaining' => 'Zbývá už jen :count volné místo!|Zbývají už jen :count volná místa!|Zbývá už jen :count volných míst!',
 
     'location_label' => 'LOKACE',

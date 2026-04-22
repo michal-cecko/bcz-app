@@ -210,16 +210,21 @@
 
  {{-- Tab Bar + Content --}}
  @php
- $tabs = [
-     'popis' => __('event_detail.tab_description'),
-     'harmonogram' => __('event_detail.tab_timetable'),
- ];
+ $galleryImages = $event->getMedia('gallery');
+ $hasReportTab = $status === 'finished' && (! empty($renderedReportContent) || $galleryImages->isNotEmpty());
+ $tabs = [];
+ if ($hasReportTab) {
+     $tabs['report'] = __('event_detail.tab_report');
+ }
+ $tabs['popis'] = __('event_detail.tab_description');
+ $tabs['harmonogram'] = __('event_detail.tab_timetable');
  if ($detail?->rounds->isNotEmpty()) {
      $tabs['vysledky'] = __('event_detail.tab_results');
  }
  if ($status !== 'finished') {
      $tabs['registracia'] = __('event_detail.tab_registration');
  }
+ $defaultTab = array_key_first($tabs);
  $tabKeys = json_encode(array_keys($tabs));
  @endphp
  <section id="competition-tabs" class="bg-[#0A0A0A]" x-data="{
@@ -227,7 +232,7 @@
      tab: '',
      init() {
          const h = window.location.hash.replace('#', '');
-         this.tab = this.validTabs.includes(h) ? h : 'popis';
+         this.tab = this.validTabs.includes(h) ? h : '{{ $defaultTab }}';
          window.addEventListener('hashchange', () => {
              const t = location.hash.replace('#', '');
              if (this.validTabs.includes(t)) this.tab = t;
@@ -249,6 +254,38 @@
  </button>
  @endforeach
  </div>
+
+ {{-- Tab: Report --}}
+ @if($hasReportTab)
+ <div x-show="tab === 'report'" x-cloak class="flex flex-col gap-12">
+ @if(!empty($renderedReportContent))
+ <div class="flex flex-col gap-4">
+ <div class="flex items-center gap-3 mb-2">
+ <div class="w-6 h-0.5" style="background-color: {{ $categoryColor }}"></div>
+ <span class="text-xs font-bold tracking-[2px]" style="color: {{ $categoryColor }}">{{ mb_strtoupper(__('event_detail.post_competition_report')) }}</span>
+ </div>
+ {!! $renderedReportContent !!}
+ </div>
+ @endif
+
+ @if($galleryImages->isNotEmpty())
+ <div class="flex flex-col gap-6">
+ <div class="flex items-center gap-3">
+ <div class="w-6 h-0.5" style="background-color: {{ $categoryColor }}"></div>
+ <span class="text-xs font-bold tracking-[2px]" style="color: {{ $categoryColor }}">{{ mb_strtoupper(__('event_detail.gallery')) }}</span>
+ </div>
+ <h2 class="font-display font-bold text-[36px] tracking-wide text-white">{{ __('event_detail.photos_from_competition') }}</h2>
+ <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+ @foreach($galleryImages as $image)
+ <a href="{{ $image->getUrl() }}" target="_blank" rel="noopener" class="block overflow-hidden bg-[#1A1A1A] aspect-[4/3]">
+ <img src="{{ $image->getUrl() }}" alt="{{ $image->name }}" loading="lazy" class="w-full h-full object-cover hover:scale-105 transition-transform duration-500">
+ </a>
+ @endforeach
+ </div>
+ </div>
+ @endif
+ </div>
+ @endif
 
  {{-- Tab: Popis --}}
  <div x-show="tab === 'popis'"x-cloak>

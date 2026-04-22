@@ -39,7 +39,7 @@ class RoundsRelationManagerGenerateTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $battleRound->id]);
+        $battleRound->update(['previous_round_id' => $qual->id]);
 
         $users = User::factory()->count(2)->create();
         foreach ($users as $i => $user) {
@@ -89,7 +89,7 @@ class RoundsRelationManagerGenerateTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $battleRound->id]);
+        $battleRound->update(['previous_round_id' => $qual->id]);
 
         Battle::factory()->count(3)->create(['competition_round_id' => $battleRound->id]);
 
@@ -139,7 +139,7 @@ class RoundsRelationManagerGenerateTest extends TestCase
             'athlete_category_id' => $category->id,
             'sort_order' => 2,
         ]);
-        $qual->update(['next_round_id' => $battleRound->id]);
+        $battleRound->update(['previous_round_id' => $qual->id]);
 
         $this->actingAs(User::factory()->create());
 

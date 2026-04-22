@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Spatie\MediaLibrary\HasMedia;
@@ -74,6 +75,7 @@ class Event extends Model implements HasMedia, Linkable
         $this->addMediaCollection('card_image')->singleFile();
         $this->addMediaCollection('detail_image')->singleFile();
         $this->addMediaCollection('email_attachments');
+        $this->addMediaCollection('gallery');
     }
 
     public function getSlugOptions(): SlugOptions
@@ -191,5 +193,21 @@ class Event extends Model implements HasMedia, Linkable
     public function registrations(): HasMany
     {
         return $this->hasMany(EventRegistration::class);
+    }
+
+    public function paymentMethods(): MorphToMany
+    {
+        return $this->morphToMany(PaymentMethod::class, 'payable', 'payable_payment_method')
+            ->using(PayablePaymentMethod::class)
+            ->withPivot(['id', 'title', 'description', 'instructions', 'is_enabled', 'sort_order'])
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
+    }
+
+    public function enabledPaymentMethods(): MorphToMany
+    {
+        return $this->paymentMethods()
+            ->wherePivot('is_enabled', true)
+            ->where('is_active', true);
     }
 }

@@ -28,6 +28,7 @@ class SubscriptionPlan extends Model
         'limits',
         'is_active',
         'sort_order',
+        'payment_note',
     ];
 
     protected function casts(): array

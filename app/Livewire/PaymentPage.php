@@ -5,13 +5,18 @@ namespace App\Livewire;
 use App\Contracts\Payable;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\PayablePaymentMethod;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
+use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Services\GoPayService;
 use App\Services\PaymentService;
 use App\Services\QrPaymentService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class PaymentPage extends Component
@@ -38,7 +43,7 @@ class PaymentPage extends Component
         ]);
 
         if (! $this->isCompleted) {
-            $enabledMethods = $this->payment->team?->getEnabledPaymentMethodKeys() ?? [];
+            $enabledMethods = $this->enabledMethods;
 
             if (count($enabledMethods) > 0) {
                 $this->selectedMethod = $enabledMethods[0];
@@ -141,7 +146,7 @@ class PaymentPage extends Component
             $paymentService = app(PaymentService::class);
             $this->payment->update([
                 'payment_method' => PaymentMethodEnum::BANK_TRANSFER,
-                'variable_symbol' => $paymentService->generateVariableSymbol(),
+                'variable_symbol' => $paymentService->variableSymbolFor($this->payment),
             ]);
             $this->payment->refresh();
         }
@@ -174,7 +179,81 @@ class PaymentPage extends Component
      */
     public function getEnabledMethodsProperty(): array
     {
-        return $this->payment->team?->getEnabledPaymentMethodKeys() ?? [];
+        return $this->resolvedMethods->keys()->values()->all();
+    }
+
+    /**
+     * Resolved payment methods for this payment, keyed by method enum value (gopay|bank_transfer|cash).
+     * Prefers methods configured on the payable's parent (Training/Event) with pivot overrides;
+     * falls back to the team's enabled payment methods for memberships or unconfigured payables.
+     *
+     * @return Collection<string, object{key: string, title: string, description: ?string, instructions: ?string, icon: ?string}>
+     */
+    public function getResolvedMethodsProperty(): Collection
+    {
+        $source = $this->payableMethodSource();
+
+        if ($source) {
+            $payableMethods = $source->enabledPaymentMethods()->get();
+
+            if ($payableMethods->isNotEmpty()) {
+                return $this->buildMethodCollection($payableMethods);
+            }
+        }
+
+        $teamMethods = $this->payment->team?->enabledPaymentMethods ?? collect();
+
+        return $this->buildMethodCollection($teamMethods);
+    }
+
+    protected function payableMethodSource(): Training|Event|null
+    {
+        $payable = $this->payment->payable;
+
+        if ($payable instanceof TrainingRegistration) {
+            return $payable->training;
+        }
+
+        if ($payable instanceof EventRegistration) {
+            return $payable->event;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, PaymentMethod>  $methods
+     * @return Collection<string, object>
+     */
+    protected function buildMethodCollection(Collection $methods): Collection
+    {
+        $locale = app()->getLocale();
+
+        return $methods
+            ->map(function (PaymentMethod $m) use ($locale): object {
+                $pivot = $m->pivot ?? null;
+
+                $pivotTitle = null;
+                $pivotDescription = null;
+                $pivotInstructions = null;
+
+                if ($pivot instanceof PayablePaymentMethod) {
+                    $pivotTitle = $pivot->getTranslation('title', $locale, false) ?: null;
+                    $pivotDescription = $pivot->getTranslation('description', $locale, false) ?: null;
+                    $pivotInstructions = $pivot->getTranslation('instructions', $locale, false) ?: null;
+                }
+
+                $key = $m->method instanceof PaymentMethodEnum ? $m->method->value : (string) $m->method;
+
+                return (object) [
+                    'key' => $key,
+                    'title' => $pivotTitle ?? $m->getTranslation('title', $locale),
+                    'description' => $pivotDescription ?? ($m->getTranslation('description', $locale, false) ?: null),
+                    'instructions' => $pivotInstructions,
+                    'icon' => $m->icon,
+                ];
+            })
+            ->keyBy('key');
     }
 
     public function getPayableTypeLabelProperty(): string

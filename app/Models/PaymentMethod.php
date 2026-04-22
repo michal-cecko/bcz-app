@@ -5,9 +5,15 @@ namespace App\Models;
 use App\Enums\PaymentMethodEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Translatable\HasTranslations;
 
 class PaymentMethod extends Model
 {
+    use HasTranslations;
+
+    /** @var list<string> */
+    public array $translatable = ['title', 'description'];
+
     protected $fillable = [
         'method',
         'title',

@@ -83,6 +83,10 @@ class DonationInfoBrick extends Brick
                                                 ->label('Meno príjemcu'),
                                             TextInput::make("qr_variable_symbol.{$locale}")
                                                 ->label('Variabilný symbol (voliteľný)'),
+                                            TextInput::make("qr_note.{$locale}")
+                                                ->label('Poznámka platby (voliteľná)')
+                                                ->helperText('Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
+                                                ->maxLength(140),
                                             Select::make("qr_format.{$locale}")
                                                 ->label('Formát QR kódu')
                                                 ->options([

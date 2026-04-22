@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Contracts\Payable;
 use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
+use App\Services\EmailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,8 @@ class EventRegistration extends Model implements Payable
         'registration_fee_id',
         'status',
         'registered_at',
+        'payment_due_at',
+        'payment_reminder_sent_at',
         'weight_in',
     ];
 
@@ -30,6 +33,8 @@ class EventRegistration extends Model implements Payable
         return [
             'status' => RegistrationStatusEnum::class,
             'registered_at' => 'datetime',
+            'payment_due_at' => 'datetime',
+            'payment_reminder_sent_at' => 'datetime',
             'weight_in' => 'decimal:2',
         ];
     }
@@ -70,5 +75,40 @@ class EventRegistration extends Model implements Payable
         $title = $this->event?->getTranslation('title', app()->getLocale()) ?? 'Podujatie';
 
         return $userName ? "{$userName} - {$title}" : $title;
+    }
+
+    public function getTotalPriceAmount(): float
+    {
+        if ($this->registrationFee) {
+            return (float) $this->registrationFee->amount;
+        }
+
+        return (float) ($this->event?->organization?->price_amount ?? 0);
+    }
+
+    public function getPriceCurrency(): string
+    {
+        if ($this->registrationFee?->currency) {
+            return $this->registrationFee->currency;
+        }
+
+        return $this->event?->organization?->price_currency ?? 'EUR';
+    }
+
+    public function getQrPaymentNote(): ?string
+    {
+        $template = $this->event?->organization?->payment_note;
+
+        if (! $template) {
+            return null;
+        }
+
+        return EmailService::replaceVariables($template, [
+            'meno' => (string) ($this->user?->first_name ?? ''),
+            'priezvisko' => (string) ($this->user?->last_name ?? ''),
+            'nazov_eventu' => (string) ($this->event?->getTranslation('title', app()->getLocale()) ?? ''),
+            'datum_eventu' => $this->event?->date?->format('d.m.Y') ?? '',
+            'miesto' => (string) ($this->event?->place_name ?? ''),
+        ]);
     }
 }

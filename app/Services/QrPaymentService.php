@@ -35,6 +35,7 @@ class QrPaymentService
             currency: $payment->currency,
             variableSymbol: $payment->variable_symbol ?? '',
             recipientName: $team->bank_account_name ?? '',
+            note: $payment->payable?->getQrPaymentNote(),
         );
     }
 
@@ -55,6 +56,7 @@ class QrPaymentService
             currency: $payment->currency,
             variableSymbol: $payment->variable_symbol ?? '',
             recipientName: $team->bank_account_name ?? '',
+            note: $payment->payable?->getQrPaymentNote(),
         );
     }
 
@@ -70,6 +72,7 @@ class QrPaymentService
         string $currency = 'EUR',
         string $variableSymbol = '',
         string $recipientName = '',
+        ?string $note = null,
     ): ?string {
         $iban = str_replace(' ', '', $iban);
 
@@ -77,27 +80,7 @@ class QrPaymentService
             return null;
         }
 
-        // Pay by Square tab-separated data format
-        $data = implode("\t", [
-            '',                                          // Invoice ID
-            '1',                                         // Payments count
-            '1',                                         // Payment type (regular)
-            $amount !== null ? $amount : '',              // Amount (empty = open)
-            $currency,                                   // Currency
-            '',                                          // Due date
-            $variableSymbol,                             // Variable symbol
-            '',                                          // Constant symbol
-            '',                                          // Specific symbol
-            '',                                          // Note
-            '1',                                         // Bank accounts count
-            $iban,                                       // IBAN
-            '',                                          // BIC/SWIFT
-            '0',                                         // Standing order
-            '0',                                         // Direct debit
-            $recipientName,                              // Beneficiary name
-            '',                                          // Beneficiary address 1
-            '',                                          // Beneficiary address 2
-        ]);
+        $data = self::payBySquareRawData($iban, $amount, $currency, $variableSymbol, $recipientName, $note);
 
         // CRC32 checksum prepended to data
         $crc = strrev(hash('crc32b', $data, true));
@@ -133,6 +116,28 @@ class QrPaymentService
         string $currency = 'CZK',
         string $variableSymbol = '',
         string $recipientName = '',
+        ?string $note = null,
+    ): ?string {
+        $payload = self::qrPlatbaPayload($iban, $amount, $currency, $variableSymbol, $recipientName, $note);
+
+        if ($payload === null) {
+            return null;
+        }
+
+        return self::buildQrPng($payload);
+    }
+
+    /**
+     * Build the raw SPAYD payload string that qrPlatba() encodes into the QR.
+     * Extracted for testability.
+     */
+    public static function qrPlatbaPayload(
+        string $iban,
+        ?float $amount = null,
+        string $currency = 'CZK',
+        string $variableSymbol = '',
+        string $recipientName = '',
+        ?string $note = null,
     ): ?string {
         $iban = str_replace(' ', '', $iban);
 
@@ -140,7 +145,6 @@ class QrPaymentService
             return null;
         }
 
-        // Convert Czech account number to IBAN if needed
         if (str_contains($iban, '/')) {
             $iban = self::czechAccountToIban($iban);
         }
@@ -164,7 +168,47 @@ class QrPaymentService
             $parts[] = 'RN:'.mb_substr($recipientName, 0, 35);
         }
 
-        return self::buildQrPng(implode('*', $parts));
+        if ($note !== null && $note !== '') {
+            $parts[] = 'MSG:'.mb_substr($note, 0, 60);
+        }
+
+        return implode('*', $parts);
+    }
+
+    /**
+     * Build the raw tab-separated data string that payBySquare() compresses into the QR.
+     * Extracted for testability.
+     */
+    public static function payBySquareRawData(
+        string $iban,
+        ?float $amount = null,
+        string $currency = 'EUR',
+        string $variableSymbol = '',
+        string $recipientName = '',
+        ?string $note = null,
+    ): string {
+        $noteField = mb_substr((string) ($note ?? ''), 0, 140);
+
+        return implode("\t", [
+            '',                                          // Invoice ID
+            '1',                                         // Payments count
+            '1',                                         // Payment type (regular)
+            $amount !== null ? $amount : '',              // Amount (empty = open)
+            $currency,                                   // Currency
+            '',                                          // Due date
+            $variableSymbol,                             // Variable symbol
+            '',                                          // Constant symbol
+            '',                                          // Specific symbol
+            $noteField,                                  // Note
+            '1',                                         // Bank accounts count
+            $iban,                                       // IBAN
+            '',                                          // BIC/SWIFT
+            '0',                                         // Standing order
+            '0',                                         // Direct debit
+            $recipientName,                              // Beneficiary name
+            '',                                          // Beneficiary address 1
+            '',                                          // Beneficiary address 2
+        ]);
     }
 
     private static function buildQrPng(string $data): string

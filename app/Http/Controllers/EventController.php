@@ -49,7 +49,6 @@ class EventController extends Controller
 
         $renderedContent = $this->renderMasonContent($event, 'content');
 
-        // For finished competitions, render the report content instead
         $renderedReportContent = '';
         if ($event->event_type === EventTypeEnum::Competition && $event->status === 'finished') {
             $renderedReportContent = $this->renderMasonContent($event, 'report_content');
@@ -64,12 +63,8 @@ class EventController extends Controller
             ->limit(3)
             ->get();
 
-        $hasReportContent = $event->status === 'finished' && ! empty($renderedReportContent);
-
         $view = match ($event->event_type) {
-            EventTypeEnum::Competition => $hasReportContent
-                ? 'pages.events.show-competition-finished'
-                : 'pages.events.show-competition',
+            EventTypeEnum::Competition => 'pages.events.show-competition',
             EventTypeEnum::Organized => 'pages.events.show-organized',
             default => 'pages.events.show',
         };

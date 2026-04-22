@@ -244,7 +244,8 @@ class EventForm
                                 ->label('Suma')
                                 ->numeric()
                                 ->minValue(0.01)
-                                ->visible(fn (Get $get): bool => $get('pricing_type') === EventPricingTypeEnum::Paid->value),
+                                ->required(fn (Get $get): bool => self::isPaid($get('pricing_type')))
+                                ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             Select::make('price_currency')
                                 ->label('Mena')
                                 ->options([
@@ -253,15 +254,16 @@ class EventForm
                                     'USD' => 'USD',
                                 ])
                                 ->default('EUR')
-                                ->visible(fn (Get $get): bool => $get('pricing_type') === EventPricingTypeEnum::Paid->value),
+                                ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             TextInput::make('variable_symbol')
                                 ->label('Variabilný symbol')
                                 ->maxLength(10)
-                                ->visible(fn (Get $get): bool => $get('pricing_type') === EventPricingTypeEnum::Paid->value),
+                                ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             TextInput::make('payment_note')
-                                ->label('Poznámka platby')
-                                ->maxLength(50)
-                                ->visible(fn (Get $get): bool => $get('pricing_type') === EventPricingTypeEnum::Paid->value),
+                                ->label('Poznámka platby (QR)')
+                                ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{nazov_eventu}}, {{datum_eventu}}, {{miesto}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
+                                ->maxLength(140)
+                                ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             DateTimePicker::make('registration_opens_at')
                                 ->label('Registrácia od'),
                             DateTimePicker::make('registration_closes_at')
@@ -516,6 +518,15 @@ class EventForm
         return self::resolveEventType($value) === EventTypeEnum::Competition;
     }
 
+    private static function isPaid(mixed $value): bool
+    {
+        if ($value instanceof EventPricingTypeEnum) {
+            return $value === EventPricingTypeEnum::Paid;
+        }
+
+        return EventPricingTypeEnum::tryFrom((string) $value) === EventPricingTypeEnum::Paid;
+    }
+
     private static function reportContentTab(): array
     {
         return [
@@ -546,6 +557,20 @@ class EventForm
                                         ->columnSpanFull(),
                                 ]),
                         ])
+                        ->columnSpanFull(),
+                ]),
+            Section::make('Galéria')
+                ->description('Fotografie z podujatia — zobrazia sa v záložke Report na verejnej stránke.')
+                ->schema([
+                    SpatieMediaLibraryFileUpload::make('gallery')
+                        ->collection('gallery')
+                        ->disk('public')
+                        ->visibility('public')
+                        ->multiple()
+                        ->reorderable()
+                        ->appendFiles()
+                        ->image()
+                        ->label('Obrázky galérie')
                         ->columnSpanFull(),
                 ]),
         ];

@@ -23,6 +23,7 @@ return [
     'capacity_label' => 'Current capacity',
     'capacity_spots' => 'spots',
     'capacity_full' => 'Full',
+    'training_full_message' => 'No spots are currently available. Please try later or contact the coach.',
     'capacity_remaining' => 'Only :count spot remaining!|Only :count spots remaining!',
 
     'location_label' => 'LOCATION',

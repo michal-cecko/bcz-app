@@ -104,7 +104,7 @@
 
                 {{-- Right panel --}}
                 @php
-                    $paymentMethodModels = $payment->team?->enabledPaymentMethods?->keyBy(fn ($m) => $m->method instanceof \App\Enums\PaymentMethodEnum ? $m->method->value : $m->method) ?? collect();
+                    $paymentMethodModels = $this->resolvedMethods;
                 @endphp
                 <div class="lg:w-1/2 p-6 md:p-8 flex flex-col gap-5">
                     <h2 class="text-white text-base font-semibold">Vyber spôsob platby</h2>
@@ -223,9 +223,13 @@
                                     </svg>
                                     <span class="text-[#FF2D2D] text-[11px] font-semibold">Dôležité pokyny</span>
                                 </div>
-                                <p class="text-left text-[#888888] text-[10px]">Použite správny variabilný symbol pre automatické priradenie platby.</p>
-                                <p class="text-left text-[#888888] text-[10px]">Platba môže trvať 1-2 pracovné dni v závislosti od vašej banky.</p>
-                                <p class="text-left text-[#888888] text-[10px]">Po priradení platby dostanete potvrdenie na email.</p>
+                                @if($paymentMethodModels->get('bank_transfer')?->instructions)
+                                    <div class="text-left text-[#888888] text-[10px] prose-sm">{!! $paymentMethodModels->get('bank_transfer')->instructions !!}</div>
+                                @else
+                                    <p class="text-left text-[#888888] text-[10px]">Použite správny variabilný symbol pre automatické priradenie platby.</p>
+                                    <p class="text-left text-[#888888] text-[10px]">Platba môže trvať 1-2 pracovné dni v závislosti od vašej banky.</p>
+                                    <p class="text-left text-[#888888] text-[10px]">Po priradení platby dostanete potvrdenie na email.</p>
+                                @endif
                             </div>
                         </div>
                     @endif
@@ -246,20 +250,24 @@
                                 <span class="text-[#FF2D2D] text-base font-bold">{{ $this->formattedAmount }}</span>
                             </div>
 
-                            <div class="flex flex-col gap-2.5">
-                                @foreach([
-                                    'Kontaktuj svoj tím pre dohodnutie termínu.',
-                                    'Priprav si presnú sumu v hotovosti.',
-                                    'Po zaplatení dostaneš potvrdenie.',
-                                ] as $index => $stepText)
-                                    <div class="flex items-center gap-2.5">
-                                        <div class="w-[22px] h-[22px] rounded-full bg-[#FF2D2D]/[0.12] flex items-center justify-center shrink-0">
-                                            <span class="text-[#FF2D2D] text-[10px] font-bold">{{ $index + 1 }}</span>
+                            @if($paymentMethodModels->get('cash')?->instructions)
+                                <div class="text-left text-[#AAAAAA] text-xs font-medium prose-sm">{!! $paymentMethodModels->get('cash')->instructions !!}</div>
+                            @else
+                                <div class="flex flex-col gap-2.5">
+                                    @foreach([
+                                        'Kontaktuj svoj tím pre dohodnutie termínu.',
+                                        'Priprav si presnú sumu v hotovosti.',
+                                        'Po zaplatení dostaneš potvrdenie.',
+                                    ] as $index => $stepText)
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-[22px] h-[22px] rounded-full bg-[#FF2D2D]/[0.12] flex items-center justify-center shrink-0">
+                                                <span class="text-[#FF2D2D] text-[10px] font-bold">{{ $index + 1 }}</span>
+                                            </div>
+                                            <span class="text-[#AAAAAA] text-xs font-medium">{{ $stepText }}</span>
                                         </div>
-                                        <span class="text-[#AAAAAA] text-xs font-medium">{{ $stepText }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
+                                    @endforeach
+                                </div>
+                            @endif
 
                             @if($payment->team?->contact_phone || $payment->team?->contact_email)
                                 <div class="w-full h-px bg-[#222222]"></div>

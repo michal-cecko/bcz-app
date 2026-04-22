@@ -57,6 +57,18 @@ class MenuSeeder extends Seeder
                 ],
             ],
         );
+
+        Menu::query()->updateOrCreate(
+            ['location' => MenuLocationEnum::FooterLegal],
+            [
+                'label' => ['sk' => 'Právne', 'en' => 'Legal', 'cs' => 'Právní'],
+                'items' => [
+                    $this->pageItem('Podmienky používania', 'Terms of Use', 'Podmínky používání', 'terms_of_use', 0),
+                    $this->pageItem('Obchodné podmienky', 'Terms of Commerce', 'Obchodní podmínky', 'terms_of_commerce', 1),
+                    $this->pageItem('Ochrana osobných údajov', 'Privacy Policy', 'Ochrana osobních údajů', 'privacy_policy', 2),
+                ],
+            ],
+        );
     }
 
     /**

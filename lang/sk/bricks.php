@@ -84,6 +84,7 @@ return [
         'value' => 'Hodnota',
         'content' => 'Obsah',
         'button_text' => 'Text tlačidla',
+        'link' => 'Odkaz',
     ],
 
     // Hero brick
@@ -190,6 +191,33 @@ return [
     'skill_cards' => [
         'levels' => 'Úrovne',
         'cards' => 'Karty',
+    ],
+
+    // Feature cards brick
+    'feature_cards' => [
+        'cards' => 'Karty',
+    ],
+
+    // Contact inquiry brick
+    'contact_inquiry' => [
+        'label' => 'Označenie',
+        'title' => 'Nadpis',
+        'description' => 'Popis',
+        'contact_email' => 'Kontaktný e-mail',
+        'contact_phone' => 'Kontaktný telefón',
+    ],
+
+    // Events showcase brick
+    'events_showcase' => [
+        'view_all_text' => 'Text tlačidla "Zobraziť všetky"',
+        'view_all_url' => 'URL tlačidla "Zobraziť všetky"',
+        'mode' => 'Režim',
+        'mode_random' => 'Náhodný výber',
+        'mode_category' => 'Podľa kategórie',
+        'mode_specific' => 'Konkrétne podujatia',
+        'category' => 'Kategória',
+        'events' => 'Podujatia',
+        'count' => 'Počet podujatí',
     ],
 
     // Sport categories brick

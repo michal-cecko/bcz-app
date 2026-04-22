@@ -14,6 +14,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Utilities\Get;
@@ -113,6 +114,10 @@ class ListPayments extends ListRecords
                     Textarea::make('notes')
                         ->label('Poznámky')
                         ->rows(2),
+                    Toggle::make('notify_customer')
+                        ->label('Upozorniť zákazníka?')
+                        ->helperText('Pošle e-mail s potvrdením platby.')
+                        ->default(true),
                 ])
                 ->action(function (array $data): void {
                     $user = User::findOrFail($data['user_id']);
@@ -135,6 +140,7 @@ class ListPayments extends ListRecords
                         $data['currency'],
                         PaymentMethodEnum::from($data['payment_method']),
                         $data['notes'] ?? null,
+                        ! empty($data['notify_customer']),
                     );
 
                     Notification::make()

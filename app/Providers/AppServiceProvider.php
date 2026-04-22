@@ -48,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         View::composer('components.footer', function ($view) {
             $view->with('footerDiscoverMenu', Menu::query()->where('location', MenuLocationEnum::FooterDiscover)->first());
             $view->with('footerProgramsMenu', Menu::query()->where('location', MenuLocationEnum::FooterPrograms)->first());
+            $view->with('footerLegalMenu', Menu::query()->where('location', MenuLocationEnum::FooterLegal)->first());
         });
     }
 

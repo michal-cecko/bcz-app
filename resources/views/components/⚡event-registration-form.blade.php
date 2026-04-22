@@ -215,6 +215,7 @@ new class extends Component
             'user_id' => $user?->id,
             'status' => $status->value,
             'registered_at' => now(),
+            'payment_due_at' => $isPaid ? now()->addDays(14) : null,
         ]);
 
         // Store field values

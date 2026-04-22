@@ -4,12 +4,9 @@ namespace App\Filament\Resources\Memberships\Tables;
 
 use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
-use App\Enums\RegistrationStatusEnum;
-use App\Enums\TrainingPricingTypeEnum;
 use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
 use App\Models\Membership;
-use App\Models\TrainingRegistration;
 use App\Services\PaymentService;
 use App\Services\QrPaymentService;
 use Filament\Actions\Action;
@@ -18,6 +15,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -114,6 +112,10 @@ class MembershipsTable
                         Textarea::make('notes')
                             ->label('Poznámky')
                             ->rows(2),
+                        Toggle::make('notify_customer')
+                            ->label('Upozorniť zákazníka?')
+                            ->helperText('Pošle e-mail s potvrdením platby.')
+                            ->default(true),
                     ])
                     ->action(function (array $data, Membership $record): void {
                         $paymentService = app(PaymentService::class);
@@ -125,29 +127,11 @@ class MembershipsTable
                             $data['currency'],
                             PaymentMethodEnum::from($data['payment_method']),
                             $data['notes'] ?? null,
+                            ! empty($data['notify_customer']),
                         );
 
-                        $record->update(['status' => MembershipStatusEnum::ACTIVE]);
-
-                        // Auto-approve all pending registrations for membership-required trainings
-                        $approvedCount = TrainingRegistration::where('user_id', $record->user_id)
-                            ->where('status', RegistrationStatusEnum::Pending)
-                            ->whereHas('training', function ($query) use ($record): void {
-                                $query->where('team_id', $record->team_id)
-                                    ->where('pricing_type', TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED);
-                            })
-                            ->update([
-                                'status' => RegistrationStatusEnum::Approved->value,
-                                'payment_due_at' => null,
-                            ]);
-
-                        $message = 'Platba bola zaznamenaná.';
-                        if ($approvedCount > 0) {
-                            $message .= " Schválených registrácií: {$approvedCount}.";
-                        }
-
                         Notification::make()
-                            ->title($message)
+                            ->title('Platba bola zaznamenaná.')
                             ->success()
                             ->send();
                     }),

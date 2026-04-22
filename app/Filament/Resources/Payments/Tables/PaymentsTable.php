@@ -4,7 +4,15 @@ namespace App\Filament\Resources\Payments\Tables;
 
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Models\Payment;
+use App\Services\PaymentService;
+use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -67,6 +75,51 @@ class PaymentsTable
             ])
             ->recordActions([
                 ViewAction::make(),
+                EditAction::make()
+                    ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
+                    ->schema([
+                        TextInput::make('amount')
+                            ->label('Suma')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0.01),
+                        Select::make('currency')
+                            ->label('Mena')
+                            ->options([
+                                'EUR' => 'EUR',
+                                'CZK' => 'CZK',
+                                'USD' => 'USD',
+                            ])
+                            ->required(),
+                        Select::make('payment_method')
+                            ->label('Spôsob platby')
+                            ->options(PaymentMethodEnum::translations())
+                            ->required(),
+                        Select::make('status')
+                            ->label('Stav')
+                            ->options(PaymentStatusEnum::translations())
+                            ->required(),
+                        DateTimePicker::make('paid_at')
+                            ->label('Zaplatené'),
+                        TextInput::make('variable_symbol')
+                            ->label('Variabilný symbol'),
+                        Textarea::make('notes')
+                            ->label('Poznámky')
+                            ->rows(2),
+                        Toggle::make('notify_customer')
+                            ->label('Upozorniť zákazníka?')
+                            ->helperText('Pošle e-mail s potvrdením platby.')
+                            ->default(false),
+                    ])
+                    ->after(function (Payment $record, array $data): void {
+                        if ($record->status === PaymentStatusEnum::COMPLETED) {
+                            $record->load('payable');
+                            app(PaymentService::class)->processPaymentCompleted(
+                                $record,
+                                ! empty($data['notify_customer']),
+                            );
+                        }
+                    }),
             ]);
     }
 }
