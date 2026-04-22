@@ -38,7 +38,8 @@ class EditUser extends EditRecord
 
         return [
             Impersonate::make()
-                ->record($this->getRecord()),
+                ->record($this->getRecord())
+                ->color('gray'),
             // Approve pending profiles (shown only when drafts exist)
             Action::make('approveProfiles')
                 ->label('Schváliť profily')
@@ -109,9 +110,9 @@ class EditUser extends EditRecord
                     || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
                 )),
             Action::make('sendLoginLink')
-                ->label('Prihlásenie do profilu: '.$user->name)
+                ->label('Odoslať pozvánku')
                 ->icon(Heroicon::OutlinedEnvelope)
-                ->color('primary')
+                ->color('gray')
                 ->requiresConfirmation()
                 ->modalHeading('Odoslať pozvánku s prihlasovacím odkazom')
                 ->modalDescription(fn () => "Na {$user->email} bude odoslaný uvítací e-mail s prihlasovacím odkazom platným 7 dní.")
