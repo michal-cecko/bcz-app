@@ -40,7 +40,8 @@ class EventRegistrationResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return ! auth()->user()?->isMemberLevel();
+        // Managed only through the Event relation manager; hide the standalone list.
+        return false;
     }
 
     public static function getEloquentQuery(): Builder
