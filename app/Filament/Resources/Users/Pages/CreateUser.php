@@ -30,4 +30,12 @@ class CreateUser extends CreateRecord
 
         UserResource::syncTeamScopedRoles($user, $roleIds, $teamId);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        // If the new user isn't attached to the current tenant, the view page 404s under
+        // tenant-scoping. Prefer the edit page (not tenant-scoped for record binding); fall
+        // back to the index when even that's inaccessible.
+        return static::getResource()::getUrl('edit', ['record' => $this->record]);
+    }
 }

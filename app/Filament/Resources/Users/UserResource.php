@@ -22,6 +22,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Spatie\Permission\Models\Role;
 
@@ -248,20 +249,14 @@ class UserResource extends Resource
     }
 
     /**
-     * Split selected Spatie role IDs into global (stay on model_has_roles)
-     * and team-scoped (move to team_user pivot for the chosen team).
+     * Split selected Spatie role IDs into global (stay on model_has_roles) and team-scoped
+     * (replace rows on the given team only — other teams' pivots are never touched).
      *
      * @param  array<int|string>  $roleIds
      */
     public static function syncTeamScopedRoles(User $user, array $roleIds, ?string $teamId): void
     {
-        if (empty($roleIds)) {
-            $user->teams()->sync([]);
-
-            return;
-        }
-
-        $roles = Role::query()->whereIn('id', $roleIds)->get();
+        $roles = $roleIds ? Role::query()->whereIn('id', $roleIds)->get() : collect();
         $teamScopedValues = array_map(fn (RoleEnum $r) => $r->value, RoleEnum::teamScopedCases());
 
         [$teamScoped, $global] = $roles->partition(fn ($r) => in_array($r->name, $teamScopedValues, true));
@@ -269,17 +264,20 @@ class UserResource extends Resource
         // Keep only the chosen global roles (Spatie-managed).
         $user->syncRoles($global->pluck('name')->all());
 
-        if ($teamScoped->isEmpty() || ! $teamId) {
-            // No team-scoped roles or team chosen — clear any existing team pivot for this user.
-            $user->teams()->sync([]);
-
+        // Without a team, we can't know which team to update — preserve existing pivots to
+        // avoid wiping a user's membership on other teams.
+        if (! $teamId) {
             return;
         }
 
-        // Rebuild the team_user pivot: one row per team-scoped role on the chosen team.
-        \DB::table('team_user')->where('user_id', $user->id)->delete();
+        // Rebuild rows ONLY for this team (other teams are untouched).
+        DB::table('team_user')
+            ->where('user_id', $user->id)
+            ->where('team_id', $teamId)
+            ->delete();
+
         foreach ($teamScoped as $role) {
-            \DB::table('team_user')->insert([
+            DB::table('team_user')->insert([
                 'team_id' => $teamId,
                 'user_id' => $user->id,
                 'role' => $role->name,
