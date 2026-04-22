@@ -54,11 +54,15 @@ class Payment extends Model
                 return;
             }
 
-            // Postgres assigns via DB sequence default. Other drivers (SQLite in tests)
-            // don't have a sequence default, so assign sequentially from max.
-            if (DB::connection()->getDriverName() !== 'pgsql') {
-                $payment->sequence_number = ((int) static::max('sequence_number')) + 1;
+            if (DB::connection()->getDriverName() === 'pgsql') {
+                $payment->sequence_number = (int) DB::selectOne(
+                    "SELECT nextval('payments_sequence_number_seq') AS seq"
+                )->seq;
+
+                return;
             }
+
+            $payment->sequence_number = ((int) static::max('sequence_number')) + 1;
         });
     }
 
