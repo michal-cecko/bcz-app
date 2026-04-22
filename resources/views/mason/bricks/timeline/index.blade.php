@@ -1,5 +1,5 @@
 @if(! empty($items))
-<section class="bg-bcz-dark pb-[100px]">
+<section class="bg-bcz-dark py-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-{{ min(count($items), 4) }} gap-0">
  @foreach($items as $i => $item)

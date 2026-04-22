@@ -1,4 +1,4 @@
-<section class="bg-[#111111] pb-20">
+<section class="bg-[#111111] py-20">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col lg:flex-row gap-10 lg:gap-20 items-center">
  {{-- Image --}}
  @php $media = brick_media($image ?? null); @endphp

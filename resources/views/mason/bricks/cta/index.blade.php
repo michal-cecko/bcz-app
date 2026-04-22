@@ -3,7 +3,7 @@
  $secondaryHref = brick_link(['link_type' => $secondary_link_type ?? '', 'link_model_id' => $secondary_link_model_id ?? '', 'link_url' => $secondary_link_url ?? '']);
  $secondaryText = brick_trans($secondary_text ?? []);
 @endphp
-<section class="px-8 pb-20 text-center"style="background-color: {{ $background_color ?? '#0A0A0A' }};">
+<section class="px-8 py-20 text-center"style="background-color: {{ $background_color ?? '#0A0A0A' }};">
  @if(! empty($title))
  <h2 class="font-display font-bold text-[40px] tracking-wide mb-4 text-white">{{ brick_trans($title) }}</h2>
  @endif

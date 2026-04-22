@@ -1,4 +1,4 @@
-<section class="bg-bcz-dark pb-20">
+<section class="bg-bcz-dark py-20">
  <div class="max-w-[1440px] mx-auto px-5 md:px-20 lg:px-40 flex flex-col items-center gap-6">
  <span class="font-display font-bold text-[80px] text-bcz-red leading-[0.5]">&ldquo;</span>
 

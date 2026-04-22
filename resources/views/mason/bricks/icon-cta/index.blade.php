@@ -1,4 +1,4 @@
-<section class="pb-20">
+<section class="py-20">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col items-center gap-6">
  <div class="bg-[#FF2D2D10] border border-[#FF2D2D30] px-5 md:px-10 lg:px-20 py-[60px] w-full flex flex-col items-center gap-6">
  {{-- Icon --}}

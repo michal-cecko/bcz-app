@@ -1,4 +1,4 @@
-<section class="bg-[#0A0A0A] pb-20">
+<section class="bg-[#0A0A0A] py-20">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col items-center gap-6 lg:gap-10">
  {{-- Header --}}
  <div class="flex flex-col items-center gap-4">

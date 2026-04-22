@@ -8,7 +8,7 @@
  $secondaryLabel = brick_trans($secondary_text ?? []);
 @endphp
 
-<section class="relative w-full pb-24 overflow-hidden">
+<section class="relative w-full py-24 overflow-hidden">
  <div class="absolute inset-0"style="background: linear-gradient(to bottom, {{ $bgColor }}, {{ $bgColor }}CC)"></div>
  <div class="relative w-full flex flex-col items-center justify-center gap-8 max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  @if($heading)

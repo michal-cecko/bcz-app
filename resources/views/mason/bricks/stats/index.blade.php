@@ -7,7 +7,7 @@
 @endphp
 
 @if(! empty($items))
- <section class="pb-[60px]"@if($bgColor) style="background-color: {{ $bgColor }};"@endif>
+ <section class="py-[60px]"@if($bgColor) style="background-color: {{ $bgColor }};"@endif>
  @if($badgeText || $sectionTitle || $sectionDescription)
  <div class="flex flex-col items-center gap-4 mb-8 text-center">
  @if($badgeText)

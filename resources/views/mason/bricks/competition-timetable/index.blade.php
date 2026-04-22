@@ -1,4 +1,4 @@
-<section class="pb-16">
+<section class="py-16">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  <div class="flex flex-col gap-3 mb-10">
  <div class="flex items-center gap-3">

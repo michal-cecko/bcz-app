@@ -1,5 +1,5 @@
 @if(! empty($events) && $events->count() > 0)
-<section class="pb-[100px]">
+<section class="py-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  {{-- Header --}}
  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-12">

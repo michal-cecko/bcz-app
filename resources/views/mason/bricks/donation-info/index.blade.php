@@ -31,7 +31,7 @@
  }
 @endphp
 
-<section class="pb-[60px]">
+<section class="py-[60px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  <div class="flex flex-col lg:flex-row gap-10">
  {{-- Left column --}}

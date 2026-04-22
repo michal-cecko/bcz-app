@@ -1,4 +1,4 @@
-<section class="bg-bcz-dark pb-[100px]">
+<section class="bg-bcz-dark py-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col lg:flex-row gap-10 lg:gap-20">
  @php $media = brick_media($image ?? null); @endphp
  @if($media->url)

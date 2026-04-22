@@ -6,7 +6,7 @@
  $competitions = $upcoming ?? collect();
 @endphp
 
-<section class="bg-[#0A0A0A] pb-[100px]">
+<section class="bg-[#0A0A0A] py-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  <div class="flex flex-col gap-16 items-center">
  {{-- Section Header --}}

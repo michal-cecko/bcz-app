@@ -1,4 +1,4 @@
-<section class="pb-[60px]">
+<section class="pt-[100px] pb-[60px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col items-center gap-6">
  {{-- Badge --}}
  @if(! empty($badge))

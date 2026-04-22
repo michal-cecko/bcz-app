@@ -1,5 +1,5 @@
 @if(! empty($label) || ! empty($title) || ! empty($subtitle) || $categories->isNotEmpty())
-<section class="bg-bcz-dark pb-24">
+<section class="bg-bcz-dark py-24">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col gap-16">
  <div class="flex flex-col gap-4">
  @if(! empty($label))

@@ -12,7 +12,7 @@
 @endphp
 
 @if(! empty($label) || ! empty($title) || ! empty($subtitle) || $trainings->isNotEmpty())
-<section class="bg-[#111111] pb-[100px]">
+<section class="bg-[#111111] py-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col gap-[60px]">
  @if(! empty($label) || ! empty($title) || ! empty($subtitle))
  <div class="flex flex-col items-center gap-4">
