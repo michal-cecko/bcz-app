@@ -27,8 +27,8 @@ class PaymentMethodsRelationManager extends RelationManager
         $isDefaultTeam = $this->getOwnerRecord()->id === Setting::get('default_team_id');
 
         return $table
-            ->reorderable('sort_order')
-            ->defaultSort('sort_order')
+            ->reorderable('payment_method_team.sort_order')
+            ->defaultSort('payment_method_team.sort_order')
             ->columns([
                 TextColumn::make('method')
                     ->label('Metóda')
