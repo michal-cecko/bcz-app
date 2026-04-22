@@ -129,6 +129,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugin(
                 FilamentShieldPlugin::make()
                     ->scopeToTenant(false)
+                    ->registerNavigation(false)
             )
             ->plugin(FilamentApexChartsPlugin::make());
     }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Exercises\Tables;
 
 use App\Enums\ComplexityLevelEnum;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
@@ -62,6 +63,7 @@ class ExercisesTable
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
