@@ -147,6 +147,7 @@ class EditUser extends EditRecord
 
     /**
      * Non-admin users editing themselves: route profile data through draft workflow.
+     * Admins: sync team-scoped roles to the team_user pivot based on the form's Team select.
      */
     protected function afterSave(): void
     {
@@ -155,6 +156,11 @@ class EditUser extends EditRecord
 
         /** @var User $record */
         $record = $this->record;
+
+        // Admin path: move team-scoped roles from Spatie to the team_user pivot.
+        $teamId = $this->data['team_id'] ?? null;
+        $roleIds = $this->data['roles'] ?? [];
+        UserResource::syncTeamScopedRoles($record, $roleIds, $teamId);
 
         // Only apply draft workflow when user edits themselves and is not admin
         if ($authUser->id !== $record->id) {

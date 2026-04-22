@@ -55,7 +55,7 @@ class SendPaymentDueReminders extends Command
                 continue;
             }
 
-            if (! $membership->user->isMembershipPayer()) {
+            if (! $membership->user->isMembershipPayer($membership->team)) {
                 continue;
             }
 

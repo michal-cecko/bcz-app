@@ -42,6 +42,13 @@ class SendPaymentDueRemindersTest extends TestCase
 
         $this->team = Team::factory()->create();
         $this->user = User::factory()->create();
+
+        // Attach as team ATHLETE so the user is a valid membership payer.
+        $this->team->members()->attach($this->user, [
+            'role' => RoleEnum::ATHLETE->value,
+            'is_active' => true,
+            'joined_at' => now(),
+        ]);
     }
 
     public function test_sends_membership_reminder_when_deadline_within_threshold(): void

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
+use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -18,5 +19,15 @@ class CreateUser extends CreateRecord
         $data['password'] = Hash::make(Str::random(32));
 
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        /** @var User $user */
+        $user = $this->record;
+        $teamId = $this->data['team_id'] ?? null;
+        $roleIds = $this->data['roles'] ?? [];
+
+        UserResource::syncTeamScopedRoles($user, $roleIds, $teamId);
     }
 }

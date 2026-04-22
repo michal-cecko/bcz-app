@@ -26,12 +26,12 @@ class SeasonService
                 ->get();
 
             foreach ($activeMembers as $member) {
-                // Global admins don't participate in team billing at all.
-                if (! $member->participatesInMembershipBilling()) {
+                // Non-billable roles (admins, editors, judges) skip billing entirely.
+                if (! $member->participatesInMembershipBilling($team)) {
                     continue;
                 }
 
-                $isFree = ! $member->isMembershipPayer();
+                $isFree = ! $member->isMembershipPayer($team);
                 $feeAmount = $isFree ? 0.0 : (float) $season->fee_amount;
 
                 $membership = Membership::create([

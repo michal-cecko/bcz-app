@@ -23,6 +23,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -244,5 +245,48 @@ class UserResource extends Resource
             'view' => ViewUser::route('/{record}'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Split selected Spatie role IDs into global (stay on model_has_roles)
+     * and team-scoped (move to team_user pivot for the chosen team).
+     *
+     * @param  array<int|string>  $roleIds
+     */
+    public static function syncTeamScopedRoles(User $user, array $roleIds, ?string $teamId): void
+    {
+        if (empty($roleIds)) {
+            $user->teams()->sync([]);
+
+            return;
+        }
+
+        $roles = Role::query()->whereIn('id', $roleIds)->get();
+        $teamScopedValues = array_map(fn (RoleEnum $r) => $r->value, RoleEnum::teamScopedCases());
+
+        [$teamScoped, $global] = $roles->partition(fn ($r) => in_array($r->name, $teamScopedValues, true));
+
+        // Keep only the chosen global roles (Spatie-managed).
+        $user->syncRoles($global->pluck('name')->all());
+
+        if ($teamScoped->isEmpty() || ! $teamId) {
+            // No team-scoped roles or team chosen — clear any existing team pivot for this user.
+            $user->teams()->sync([]);
+
+            return;
+        }
+
+        // Rebuild the team_user pivot: one row per team-scoped role on the chosen team.
+        \DB::table('team_user')->where('user_id', $user->id)->delete();
+        foreach ($teamScoped as $role) {
+            \DB::table('team_user')->insert([
+                'team_id' => $teamId,
+                'user_id' => $user->id,
+                'role' => $role->name,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

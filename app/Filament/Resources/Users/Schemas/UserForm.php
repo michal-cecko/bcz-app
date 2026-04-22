@@ -6,6 +6,7 @@ use App\Enums\DraftStatusEnum;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Schemas\PublicProfileSchema;
+use App\Models\Team;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -16,6 +17,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Spatie\Permission\Models\Role;
@@ -77,7 +79,18 @@ class UserForm
                                     )
                                     ->multiple()
                                     ->preload()
+                                    ->live()
                                     ->required(),
+                                Select::make('team_id')
+                                    ->label('Tím')
+                                    ->helperText('Priradenie k tímu pre rolu trénera, športovca alebo tímového administrátora.')
+                                    ->options(fn () => Team::query()->pluck('name', 'id')->map(fn ($name) => is_array($name) ? ($name['sk'] ?? reset($name)) : $name))
+                                    ->searchable()
+                                    ->preload()
+                                    ->dehydrated(false)
+                                    ->default(fn ($record) => $record?->teams()->first()?->id)
+                                    ->visible(fn (Get $get): bool => self::hasTeamScopedRole($get('roles') ?? []))
+                                    ->required(fn (Get $get): bool => self::hasTeamScopedRole($get('roles') ?? [])),
                                 Select::make('gender')
                                     ->label('Pohlavie')
                                     ->options(GenderEnum::translations()),
@@ -87,8 +100,15 @@ class UserForm
                                     ->maxDate(now()),
                                 Toggle::make('has_free_membership')
                                     ->label('Oslobodený od platby členstva')
-                                    ->helperText('Pri otvorení sezóny dostane bezplatné členstvo bez notifikácie.')
-                                    ->default(false),
+                                    ->helperText('Pri otvorení sezóny dostane bezplatné členstvo bez notifikácie. Automaticky zapnuté pre admina, editora a porotcu.')
+                                    ->default(false)
+                                    ->disabled(fn (Get $get): bool => ! self::hasMembershipEligibleRole($get('roles') ?? []))
+                                    ->afterStateHydrated(function (Toggle $component, Get $get, $state) {
+                                        if (! self::hasMembershipEligibleRole($get('roles') ?? [])) {
+                                            $component->state(true);
+                                        }
+                                    })
+                                    ->dehydrateStateUsing(fn (Get $get, $state) => self::hasMembershipEligibleRole($get('roles') ?? []) ? (bool) $state : true),
                             ]),
                     ]),
             ]);
@@ -277,5 +297,40 @@ class UserForm
             ]);
 
         return $tabs;
+    }
+
+    /**
+     * Returns true if any of the selected role IDs maps to a team-scoped role
+     * (TEAM_ADMIN / COACH / ATHLETE). Used to toggle the Team select's visibility.
+     *
+     * @param  array<int|string>  $roleIds
+     */
+    public static function hasTeamScopedRole(array $roleIds): bool
+    {
+        if (empty($roleIds)) {
+            return false;
+        }
+
+        $names = Role::query()->whereIn('id', $roleIds)->pluck('name');
+        $teamScoped = array_map(fn (RoleEnum $r) => $r->value, RoleEnum::teamScopedCases());
+
+        return $names->intersect($teamScoped)->isNotEmpty();
+    }
+
+    /**
+     * Returns true if any of the selected role IDs maps to CUSTOMER or ATHLETE
+     * — the only roles that pay membership fees. Used to gate the has_free_membership toggle.
+     *
+     * @param  array<int|string>  $roleIds
+     */
+    public static function hasMembershipEligibleRole(array $roleIds): bool
+    {
+        if (empty($roleIds)) {
+            return false;
+        }
+
+        $names = Role::query()->whereIn('id', $roleIds)->pluck('name');
+
+        return $names->intersect([RoleEnum::CUSTOMER->value, RoleEnum::ATHLETE->value])->isNotEmpty();
     }
 }

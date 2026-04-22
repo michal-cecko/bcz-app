@@ -353,12 +353,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
 
     /**
      * Whether this user should be billed for team memberships.
-     * Global admins/super-admins are never billed. Users flagged
-     * `has_free_membership` get a free membership record instead.
+     * Only users holding CUSTOMER or ATHLETE role are potential payers, and only
+     * when they don't have the `has_free_membership` flag.
      */
-    public function isMembershipPayer(): bool
+    public function isMembershipPayer(?Team $team = null): bool
     {
-        if ($this->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN])) {
+        if (! $this->participatesInMembershipBilling($team)) {
             return false;
         }
 
@@ -370,12 +370,21 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
     }
 
     /**
-     * Global admins and super-admins don't participate in team billing at all —
-     * no membership record should be created for them when a season is opened.
+     * Only CUSTOMER and ATHLETE are eligible for membership records. Admins, editors,
+     * and judges never have a membership — no record is created for them when a season opens.
+     * If a team is given, also accepts users attached to that team with the ATHLETE pivot role.
      */
-    public function participatesInMembershipBilling(): bool
+    public function participatesInMembershipBilling(?Team $team = null): bool
     {
-        return ! $this->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN]);
+        if ($this->hasRole([RoleEnum::CUSTOMER->value, RoleEnum::ATHLETE->value])) {
+            return true;
+        }
+
+        if ($team && $this->hasTeamRole([RoleEnum::ATHLETE], $team)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
