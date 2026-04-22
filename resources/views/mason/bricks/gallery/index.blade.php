@@ -1,5 +1,5 @@
 @if(! empty($label) || ! empty($title) || ! empty($images))
-<section class="bg-bcz-dark py-[100px]">
+<section class="bg-bcz-dark pb-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  <div class="flex flex-col gap-12">
  @if(! empty($label) || ! empty($title))

@@ -6,7 +6,7 @@
 @endphp
 
 @if(($competitions ?? collect())->isNotEmpty())
-<section class="bg-[#111111] py-[100px] px-10 md:px-20">
+<section class="bg-[#111111] pb-[100px] px-10 md:px-20">
  <div class="max-w-[1440px] mx-auto">
  <div class="flex flex-col gap-16 items-center">
  <div class="flex flex-col items-center gap-4">

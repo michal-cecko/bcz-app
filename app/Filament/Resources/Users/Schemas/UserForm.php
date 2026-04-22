@@ -7,6 +7,7 @@ use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Schemas\PublicProfileSchema;
 use App\Models\Team;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -74,8 +75,7 @@ class UserForm
                                     ]),
                                 Select::make('roles')
                                     ->label('Roly')
-                                    ->relationship('roles', 'name')
-                                    ->getOptionLabelFromRecordUsing(fn ($record): string => RoleEnum::tryFrom($record->name)?->getLabel() ?? $record->name)
+                                    ->dehydrated(false)
                                     ->options(
                                         Role::query()
                                             ->whereNotIn('name', ['panel_user', RoleEnum::SUPER_ADMIN->value])
@@ -85,6 +85,26 @@ class UserForm
                                     ->multiple()
                                     ->preload()
                                     ->live()
+                                    ->afterStateHydrated(function (Select $component, ?User $record): void {
+                                        if (! $record) {
+                                            return;
+                                        }
+
+                                        // Global roles live on Spatie model_has_roles, team-scoped roles on team_user pivot.
+                                        // Surface both as selected option IDs in the roles Select.
+                                        $globalRoleIds = $record->roles()->pluck('id')->all();
+
+                                        $teamRoleNames = $record->teams()
+                                            ->pluck('team_user.role')
+                                            ->unique()
+                                            ->filter()
+                                            ->all();
+                                        $teamRoleIds = $teamRoleNames
+                                            ? Role::query()->whereIn('name', $teamRoleNames)->pluck('id')->all()
+                                            : [];
+
+                                        $component->state(array_values(array_unique(array_merge($globalRoleIds, $teamRoleIds))));
+                                    })
                                     ->afterStateUpdated(function (Set $set, $state): void {
                                         // Non-members (admin/editor/judge only) always get the free flag forced on.
                                         if (! self::hasMembershipEligibleRole($state ?? [])) {
@@ -99,7 +119,11 @@ class UserForm
                                     ->searchable()
                                     ->preload()
                                     ->dehydrated(false)
-                                    ->default(fn ($record) => $record?->teams()->first()?->id)
+                                    ->afterStateHydrated(function (Select $component, ?User $record): void {
+                                        if ($record) {
+                                            $component->state($record->teams()->first()?->id);
+                                        }
+                                    })
                                     ->required(fn (Get $get): bool => self::hasTeamScopedRole($get('roles') ?? []))
                                     ->rule(function (Get $get) {
                                         return function (string $attribute, $value, \Closure $fail) use ($get): void {
@@ -115,6 +139,12 @@ class UserForm
                                     ->label('Dátum narodenia')
                                     ->native(false)
                                     ->maxDate(now()),
+                                Toggle::make('send_welcome_notification')
+                                    ->label('Poslať privítaciu notifikáciu')
+                                    ->helperText('Po vytvorení odošleme používateľovi e-mail s prihlasovacím odkazom a nastavením hesla.')
+                                    ->default(true)
+                                    ->dehydrated(false)
+                                    ->visible(fn (string $operation): bool => $operation === 'create'),
                                 Toggle::make('has_free_membership')
                                     ->label('Oslobodený od platby členstva')
                                     ->helperText('Pri otvorení sezóny dostane bezplatné členstvo bez notifikácie. Automaticky zapnuté pre admina, editora a porotcu.')

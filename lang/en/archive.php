@@ -31,7 +31,7 @@ return [
     'no_trainings' => 'No trainings are currently available.',
     'no_competitions' => 'No competitions are currently available.',
     'all_types' => 'All types',
-    'type_report' => 'Where we were',
+    'type_report' => 'Reports',
     'type_organized' => 'Our events',
     'type_competition' => 'Competitions',
     'registered' => 'Registered',

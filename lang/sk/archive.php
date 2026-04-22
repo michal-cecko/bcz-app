@@ -31,7 +31,7 @@ return [
     'no_trainings' => 'Momentálne nie sú k dispozícii žiadne tréningy.',
     'no_competitions' => 'Momentálne nie sú k dispozícii žiadne súťaže.',
     'all_types' => 'Všetky typy',
-    'type_report' => 'Kde sme boli',
+    'type_report' => 'Reporty',
     'type_organized' => 'Naše akcie',
     'type_competition' => 'Súťaže',
     'registered' => 'Prihlásený',

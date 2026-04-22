@@ -1,5 +1,5 @@
 @if(! empty($label) || ! empty($title) || ! empty($cards))
-<section class="bg-[#111111] py-[100px]">
+<section class="bg-[#111111] pb-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  <div class="flex flex-col gap-[60px]">
  @if(! empty($label) || ! empty($title) || ! empty($subtitle))

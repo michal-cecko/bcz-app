@@ -6,7 +6,7 @@
  $phone = $contact_phone ?? '';
 @endphp
 
-<section class="bg-[#0D0D0D] py-[100px]">
+<section class="bg-[#0D0D0D] pb-[100px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
  <div class="flex flex-col lg:flex-row lg:items-start gap-16">
  {{-- Left column --}}

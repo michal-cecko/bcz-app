@@ -1,4 +1,4 @@
-<section class="bg-[#0D0D0D] py-[60px]">
+<section class="bg-[#0D0D0D] pb-[60px]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col items-center gap-8">
  {{-- Title --}}
  @if(! empty($title))

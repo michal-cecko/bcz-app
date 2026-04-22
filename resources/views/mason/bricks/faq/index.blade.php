@@ -11,7 +11,7 @@
  default => $count . ' otázok',
  };
  @endphp
- <section class="bg-[#111111] py-20">
+ <section class="bg-[#111111] pb-20">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col gap-12">
  {{-- Header --}}
  @if(! empty($heading))

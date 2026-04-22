@@ -1,4 +1,4 @@
-<section class="bg-[#111111] py-24">
+<section class="bg-[#111111] pb-24">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col lg:flex-row gap-10 lg:gap-20">
  <div class="flex-1 flex flex-col gap-8">
  @if(! empty($label))
