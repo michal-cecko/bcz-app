@@ -9,6 +9,7 @@ use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
 use App\Models\JudgeProfile;
 use App\Models\User;
+use App\Notifications\WelcomeToApp;
 use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -107,6 +108,22 @@ class EditUser extends EditRecord
                     || $user->fresh()->athleteProfile?->draft_status === DraftStatusEnum::Pending
                     || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
                 )),
+            Action::make('sendLoginLink')
+                ->label('Prihlásenie do profilu: '.$user->name)
+                ->icon(Heroicon::OutlinedEnvelope)
+                ->color('primary')
+                ->requiresConfirmation()
+                ->modalHeading('Odoslať pozvánku s prihlasovacím odkazom')
+                ->modalDescription(fn () => "Na {$user->email} bude odoslaný uvítací e-mail s prihlasovacím odkazom platným 7 dní.")
+                ->modalSubmitActionLabel('Odoslať')
+                ->action(function () use ($user): void {
+                    $user->notify(new WelcomeToApp);
+
+                    Notification::make()
+                        ->success()
+                        ->title('Pozvánka s prihlasovacím odkazom bola odoslaná.')
+                        ->send();
+                }),
             Action::make('sendPasswordReset')
                 ->label('Obnoviť heslo')
                 ->icon(Heroicon::OutlinedKey)
