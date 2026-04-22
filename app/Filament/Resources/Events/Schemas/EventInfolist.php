@@ -19,6 +19,7 @@ use App\Mason\Bricks\QuoteBrick;
 use App\Mason\Bricks\RichTextBrick;
 use App\Mason\Bricks\StatsBrick;
 use App\Mason\Bricks\TableBrick;
+use App\Mason\Bricks\VideoSectionBrick;
 use App\Models\Event;
 use Awcodes\Mason\MasonEntry;
 use Filament\Infolists\Components\IconEntry;
@@ -249,7 +250,7 @@ class EventInfolist
                         ->schema([
                             MasonEntry::make('content_sk')
                                 ->label('Obsah (SK)')
-                                ->state(fn (Event $record): array => $record->getTranslation('content', 'sk') ?? [])
+                                ->state(fn (Event $record): array => is_array($v = $record->getTranslation('content', 'sk')) ? $v : [])
                                 ->bricks(self::bricks())
                                 ->columnSpanFull(),
                         ]),
@@ -257,7 +258,7 @@ class EventInfolist
                         ->schema([
                             MasonEntry::make('content_en')
                                 ->label('Obsah (EN)')
-                                ->state(fn (Event $record): array => $record->getTranslation('content', 'en') ?? [])
+                                ->state(fn (Event $record): array => is_array($v = $record->getTranslation('content', 'en')) ? $v : [])
                                 ->bricks(self::bricks())
                                 ->columnSpanFull(),
                         ]),
@@ -265,7 +266,7 @@ class EventInfolist
                         ->schema([
                             MasonEntry::make('content_cs')
                                 ->label('Obsah (CZ)')
-                                ->state(fn (Event $record): array => $record->getTranslation('content', 'cs') ?? [])
+                                ->state(fn (Event $record): array => is_array($v = $record->getTranslation('content', 'cs')) ? $v : [])
                                 ->bricks(self::bricks())
                                 ->columnSpanFull(),
                         ]),
@@ -290,6 +291,7 @@ class EventInfolist
             HeadingBrick::class,
             StatsBrick::class,
             TableBrick::class,
+            VideoSectionBrick::class,
             CompetitionResultsBrick::class,
             CompetitionBracketsBrick::class,
             CompetitionTimetableBrick::class,

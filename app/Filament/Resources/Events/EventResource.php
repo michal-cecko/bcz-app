@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\Events;
 
 use App\Filament\Clusters\Events\EventsCluster;
-use App\Filament\RelationManagers\PaymentMethodsRelationManager;
 use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ListEvents;
 use App\Filament\Resources\Events\Pages\ViewEvent;
+use App\Filament\Resources\Events\RelationManagers\EventPaymentMethodsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\JudgesRelationManager;
 use App\Filament\Resources\Events\RelationManagers\RegistrationsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\RoundsRelationManager;
@@ -78,7 +78,7 @@ class EventResource extends Resource
             RoundsRelationManager::class,
             RegistrationsRelationManager::class,
             JudgesRelationManager::class,
-            PaymentMethodsRelationManager::class,
+            EventPaymentMethodsRelationManager::class,
         ];
     }
 

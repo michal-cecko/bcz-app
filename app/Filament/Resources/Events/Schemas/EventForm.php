@@ -20,6 +20,7 @@ use App\Mason\Bricks\QuoteBrick;
 use App\Mason\Bricks\RichTextBrick;
 use App\Mason\Bricks\StatsBrick;
 use App\Mason\Bricks\TableBrick;
+use App\Mason\Bricks\VideoSectionBrick;
 use App\Mason\EmailBricks\EmailButtonBrick;
 use App\Mason\EmailBricks\EmailCalloutBrick;
 use App\Mason\EmailBricks\EmailDividerBrick;
@@ -592,6 +593,7 @@ class EventForm
             HeadingBrick::class,
             StatsBrick::class,
             TableBrick::class,
+            VideoSectionBrick::class,
             CompetitionResultsBrick::class,
             CompetitionBracketsBrick::class,
             CompetitionTimetableBrick::class,
