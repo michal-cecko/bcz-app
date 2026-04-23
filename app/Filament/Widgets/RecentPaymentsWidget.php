@@ -12,6 +12,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
+use Illuminate\Support\Facades\URL;
 
 class RecentPaymentsWidget extends TableWidget
 {
@@ -58,6 +59,13 @@ class RecentPaymentsWidget extends TableWidget
                     ->placeholder('-'),
             ])
             ->recordActions([
+                Action::make('openPaymentPage')
+                    ->icon(Heroicon::ArrowTopRightOnSquare)
+                    ->color('primary')
+                    ->iconButton()
+                    ->tooltip('Otvoriť platbu')
+                    ->url(fn (Payment $record): string => URL::signedRoute('payment.page', ['payment' => $record->id]))
+                    ->openUrlInNewTab(),
                 Action::make('view')
                     ->icon(Heroicon::Eye)
                     ->color('gray')

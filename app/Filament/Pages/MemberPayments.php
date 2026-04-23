@@ -17,6 +17,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\URL;
 
 class MemberPayments extends Page implements HasTable
 {
@@ -91,6 +92,12 @@ class MemberPayments extends Page implements HasTable
                     ->options(PaymentMethodEnum::translations()),
             ])
             ->recordActions([
+                Action::make('openPaymentPage')
+                    ->label('Otvoriť platbu')
+                    ->icon(Heroicon::ArrowTopRightOnSquare)
+                    ->color('primary')
+                    ->url(fn (Payment $record): string => URL::signedRoute('payment.page', ['payment' => $record->id]))
+                    ->openUrlInNewTab(),
                 Action::make('view')
                     ->label('Detail')
                     ->icon(Heroicon::Eye)

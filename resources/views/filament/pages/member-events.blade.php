@@ -48,7 +48,7 @@
                             </h3>
                             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                                 @if($event->eventCategory)
-                                    <span>{{ $event->eventCategory->getTranslation('name', app()->getLocale()) ?: $event->eventCategory->getTranslation('name', 'sk') }}</span>
+                                    <span>{{ $event->eventCategory->getTranslation('title', app()->getLocale()) ?: $event->eventCategory->getTranslation('title', 'sk') }}</span>
                                 @endif
                                 @if($event->city)
                                     <span class="flex items-center gap-1">
