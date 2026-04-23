@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\PaymentStatusEnum;
 use App\Filament\Pages\MemberPayments;
 use App\Models\Payment;
 use Filament\Actions\Action;
@@ -69,6 +70,7 @@ class RecentPaymentsWidget extends TableWidget
                     ->color('primary')
                     ->iconButton()
                     ->tooltip(__('payments.open_payment_page'))
+                    ->visible(fn (Payment $record): bool => $record->status !== PaymentStatusEnum::CANCELLED)
                     ->url(fn (Payment $record): string => URL::signedRoute('payment.page', ['payment' => $record->id]))
                     ->openUrlInNewTab(),
                 Action::make('view')

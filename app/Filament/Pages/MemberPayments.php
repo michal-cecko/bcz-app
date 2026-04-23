@@ -106,6 +106,7 @@ class MemberPayments extends Page implements HasTable
                     ->label(__('payments.open_payment_page'))
                     ->icon(Heroicon::ArrowTopRightOnSquare)
                     ->color('primary')
+                    ->visible(fn (Payment $record): bool => $record->status !== PaymentStatusEnum::CANCELLED)
                     ->url(fn (Payment $record): string => URL::signedRoute('payment.page', ['payment' => $record->id]))
                     ->openUrlInNewTab(),
                 Action::make('view')
