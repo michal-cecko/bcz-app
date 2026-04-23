@@ -42,4 +42,36 @@ trait HasResolvedPaymentMethods
             ->values()
             ->all();
     }
+
+    /**
+     * Resolve instructions for a method with cascade:
+     * 1. per-payable pivot (payable_payment_method.instructions)
+     * 2. team pivot (payment_method_team.instructions)
+     * 3. null — caller falls back to localized defaults
+     */
+    public function effectivePaymentMethodInstructions(string $methodKey, ?string $locale = null): ?string
+    {
+        $locale ??= app()->getLocale();
+
+        $perPayable = $this->enabledPaymentMethods()
+            ->where('method', $methodKey)
+            ->first();
+
+        $instructions = $perPayable?->pivot?->getTranslation('instructions', $locale, false);
+        if (filled($instructions) && trim(strip_tags($instructions)) !== '') {
+            return $instructions;
+        }
+
+        $teamMethod = $this->team?->enabledPaymentMethods
+            ->firstWhere(
+                fn ($m) => ($m->method instanceof PaymentMethodEnum ? $m->method->value : (string) $m->method) === $methodKey,
+            );
+
+        $instructions = $teamMethod?->pivot?->getTranslation('instructions', $locale, false);
+        if (filled($instructions) && trim(strip_tags($instructions)) !== '') {
+            return $instructions;
+        }
+
+        return null;
+    }
 }

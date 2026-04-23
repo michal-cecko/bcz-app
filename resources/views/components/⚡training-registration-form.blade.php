@@ -558,7 +558,7 @@ new class extends Component
                 'team' => $team,
                 'season' => $season,
                 'variableSymbol' => $membershipPayment?->formattedVariableSymbol(),
-                'paymentNote' => $season->payment_note ?? null,
+                'paymentNote' => $membershipPayment?->payable?->getQrPaymentNote(),
             ])
         </div>
 
@@ -591,7 +591,7 @@ new class extends Component
                 'season' => null,
                 'payable' => $training,
                 'variableSymbol' => $pendingPayment?->formattedVariableSymbol(),
-                'paymentNote' => $training->payment_note ?? null,
+                'paymentNote' => $pendingPayment?->payable?->getQrPaymentNote(),
                 'context' => 'registration',
             ])
         </div>

@@ -56,6 +56,7 @@ return [
         'payment_status' => 'Payment status',
         'amount' => 'Amount',
         'variable_symbol' => 'Variable symbol',
+        'submitted_fields' => 'Submitted details',
     ],
     'payments' => [
         'title' => 'Payments',

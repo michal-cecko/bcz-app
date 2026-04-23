@@ -10,6 +10,7 @@ use App\Models\EventRegistration;
 use App\Models\PayablePaymentMethod;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\TeamPaymentMethod;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Services\GoPayService;
@@ -192,18 +193,17 @@ class PaymentPage extends Component
     public function getResolvedMethodsProperty(): Collection
     {
         $source = $this->payableMethodSource();
+        $teamMethods = $this->payment->team?->enabledPaymentMethods ?? collect();
 
         if ($source) {
             $payableMethods = $source->enabledPaymentMethods()->get();
 
             if ($payableMethods->isNotEmpty()) {
-                return $this->buildMethodCollection($payableMethods);
+                return $this->buildMethodCollection($payableMethods, $teamMethods);
             }
         }
 
-        $teamMethods = $this->payment->team?->enabledPaymentMethods ?? collect();
-
-        return $this->buildMethodCollection($teamMethods);
+        return $this->buildMethodCollection($teamMethods, $teamMethods);
     }
 
     protected function payableMethodSource(): Training|Event|null
@@ -223,33 +223,48 @@ class PaymentPage extends Component
 
     /**
      * @param  Collection<int, PaymentMethod>  $methods
+     * @param  Collection<int, PaymentMethod>  $teamMethods  Team-scoped methods used for cascade fallback of title/description/instructions.
      * @return Collection<string, object>
      */
-    protected function buildMethodCollection(Collection $methods): Collection
+    protected function buildMethodCollection(Collection $methods, Collection $teamMethods): Collection
     {
         $locale = app()->getLocale();
 
-        return $methods
-            ->map(function (PaymentMethod $m) use ($locale): object {
-                $pivot = $m->pivot ?? null;
+        $teamByKey = $teamMethods->keyBy(
+            fn (PaymentMethod $m) => $m->method instanceof PaymentMethodEnum ? $m->method->value : (string) $m->method,
+        );
 
-                $pivotTitle = null;
-                $pivotDescription = null;
-                $pivotInstructions = null;
+        return $methods
+            ->map(function (PaymentMethod $m) use ($locale, $teamByKey): object {
+                $pivot = $m->pivot ?? null;
+                $key = $m->method instanceof PaymentMethodEnum ? $m->method->value : (string) $m->method;
+
+                $perPayableTitle = null;
+                $perPayableDescription = null;
+                $perPayableInstructions = null;
 
                 if ($pivot instanceof PayablePaymentMethod) {
-                    $pivotTitle = $pivot->getTranslation('title', $locale, false) ?: null;
-                    $pivotDescription = $pivot->getTranslation('description', $locale, false) ?: null;
-                    $pivotInstructions = $pivot->getTranslation('instructions', $locale, false) ?: null;
+                    $perPayableTitle = $pivot->getTranslation('title', $locale, false) ?: null;
+                    $perPayableDescription = $pivot->getTranslation('description', $locale, false) ?: null;
+                    $perPayableInstructions = $pivot->getTranslation('instructions', $locale, false) ?: null;
                 }
 
-                $key = $m->method instanceof PaymentMethodEnum ? $m->method->value : (string) $m->method;
+                $teamPivot = $teamByKey->get($key)?->pivot;
+                $teamTitle = null;
+                $teamDescription = null;
+                $teamInstructions = null;
+
+                if ($teamPivot instanceof TeamPaymentMethod) {
+                    $teamTitle = $teamPivot->getTranslation('title', $locale, false) ?: null;
+                    $teamDescription = $teamPivot->getTranslation('description', $locale, false) ?: null;
+                    $teamInstructions = $teamPivot->getTranslation('instructions', $locale, false) ?: null;
+                }
 
                 return (object) [
                     'key' => $key,
-                    'title' => $pivotTitle ?? $m->getTranslation('title', $locale),
-                    'description' => $pivotDescription ?? ($m->getTranslation('description', $locale, false) ?: null),
-                    'instructions' => $pivotInstructions,
+                    'title' => $perPayableTitle ?? $teamTitle ?? $m->getTranslation('title', $locale),
+                    'description' => $perPayableDescription ?? $teamDescription ?? ($m->getTranslation('description', $locale, false) ?: null),
+                    'instructions' => $perPayableInstructions ?? $teamInstructions,
                     'icon' => $m->icon,
                 ];
             })

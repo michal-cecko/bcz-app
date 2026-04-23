@@ -56,6 +56,7 @@ return [
         'payment_status' => 'Stav platby',
         'amount' => 'Částka',
         'variable_symbol' => 'Variabilní symbol',
+        'submitted_fields' => 'Vyplněné údaje',
     ],
     'payments' => [
         'title' => 'Platby',

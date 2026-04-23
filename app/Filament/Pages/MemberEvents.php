@@ -103,7 +103,7 @@ class MemberEvents extends Page implements HasActions, HasSchemas
                 $registration = EventRegistration::query()
                     ->where('id', $arguments['registration'])
                     ->where('user_id', auth()->id())
-                    ->with(['event', 'payments'])
+                    ->with(['event', 'payments', 'fieldValues'])
                     ->firstOrFail();
 
                 return View::make(

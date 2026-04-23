@@ -563,7 +563,7 @@ new class extends Component
                 'season' => null,
                 'payable' => $event,
                 'variableSymbol' => $pendingPayment?->formattedVariableSymbol(),
-                'paymentNote' => $org->payment_note ?? null,
+                'paymentNote' => $pendingPayment?->payable?->getQrPaymentNote(),
                 'context' => 'registration',
             ])
         </div>

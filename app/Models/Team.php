@@ -197,7 +197,8 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     public function paymentMethods(): BelongsToMany
     {
         return $this->belongsToMany(PaymentMethod::class)
-            ->withPivot('is_enabled', 'sort_order')
+            ->withPivot('is_enabled', 'sort_order', 'title', 'description', 'instructions')
+            ->using(TeamPaymentMethod::class)
             ->withTimestamps()
             ->orderByPivot('sort_order');
     }

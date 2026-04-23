@@ -154,9 +154,20 @@
 
         {{-- Instructions box (full width) --}}
         @php
-            $bankInstructions = $paymentMethodModels->get('bank_transfer')?->pivot
-                ? ($paymentMethodModels->get('bank_transfer')->pivot->getTranslation('instructions', app()->getLocale(), false) ?: null)
-                : null;
+            $bankInstructions = null;
+            if ($payable && method_exists($payable, 'effectivePaymentMethodInstructions')) {
+                $bankInstructions = $payable->effectivePaymentMethodInstructions('bank_transfer');
+            }
+            if (! $bankInstructions) {
+                $teamBankMethod = $team?->enabledPaymentMethods
+                    ?->firstWhere(
+                        fn ($m) => ($m->method instanceof \App\Enums\PaymentMethodEnum ? $m->method->value : (string) $m->method) === 'bank_transfer',
+                    );
+                $teamInstructions = $teamBankMethod?->pivot?->getTranslation('instructions', app()->getLocale(), false);
+                if (filled($teamInstructions) && trim(strip_tags($teamInstructions)) !== '') {
+                    $bankInstructions = $teamInstructions;
+                }
+            }
             $hasInstructions = $bankInstructions && trim(strip_tags($bankInstructions)) !== '';
         @endphp
         <div class="rounded-lg bg-[#FF2D2D]/[0.03] border border-[#FF2D2D]/[0.12] p-2.5 flex flex-col gap-1.5 w-full">
