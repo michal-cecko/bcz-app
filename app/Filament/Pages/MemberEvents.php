@@ -10,13 +10,13 @@ use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Facades\Filament;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\View\View as ViewContract;
+use Illuminate\Support\Facades\View;
 use Livewire\Attributes\Url;
 
 class MemberEvents extends Page implements HasActions, HasSchemas
@@ -89,48 +89,18 @@ class MemberEvents extends Page implements HasActions, HasSchemas
             ->modalHeading('Detail registrácie')
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Zavrieť')
-            ->fillForm(function (array $arguments): array {
+            ->modalContent(function (array $arguments): ViewContract {
                 $registration = EventRegistration::query()
                     ->where('id', $arguments['registration'])
                     ->where('user_id', auth()->id())
                     ->with(['event', 'payments'])
                     ->firstOrFail();
 
-                $latestPayment = $registration->payments->sortByDesc('created_at')->first();
-
-                return [
-                    'event_title' => $registration->event?->getTranslation('title', app()->getLocale())
-                        ?: $registration->event?->getTranslation('title', 'sk'),
-                    'event_date' => $registration->event?->date?->format('d.m.Y'),
-                    'event_city' => $registration->event?->city,
-                    'status' => $registration->status,
-                    'registered_at' => $registration->registered_at?->format('d.m.Y H:i'),
-                    'payment_status' => $latestPayment?->status?->value,
-                    'payment_amount' => $latestPayment
-                        ? number_format((float) $latestPayment->amount, 2).' '.$latestPayment->currency
-                        : null,
-                    'variable_symbol' => $latestPayment?->formattedVariableSymbol(),
-                ];
-            })
-            ->schema([
-                Section::make()
-                    ->schema([
-                        TextEntry::make('event_title')->label('Podujatie'),
-                        TextEntry::make('event_date')->label('Dátum')->placeholder('-'),
-                        TextEntry::make('event_city')->label('Miesto')->placeholder('-'),
-                        TextEntry::make('status')->label('Stav registrácie')->badge(),
-                        TextEntry::make('registered_at')->label('Zaregistrované')->placeholder('-'),
-                    ])
-                    ->columns(2),
-                Section::make('Platba')
-                    ->schema([
-                        TextEntry::make('payment_status')->label('Stav platby')->badge()->placeholder('-'),
-                        TextEntry::make('payment_amount')->label('Suma')->placeholder('-'),
-                        TextEntry::make('variable_symbol')->label('Variabilný symbol')->placeholder('-'),
-                    ])
-                    ->columns(3)
-                    ->visible(fn (array $state): bool => ! empty($state['payment_status'])),
-            ]);
+                return View::make(
+                    'filament.components.registration-details-modal',
+                    ['registration' => $registration],
+                );
+            });
     }
 
     protected function getViewData(): array

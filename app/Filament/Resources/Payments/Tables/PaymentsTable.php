@@ -5,7 +5,10 @@ namespace App\Filament\Resources\Payments\Tables;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Filament\Resources\Payments\PaymentResource;
+use App\Models\EventRegistration;
+use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\TrainingRegistration;
 use App\Services\PaymentService;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -25,6 +28,7 @@ class PaymentsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('payable'))
             ->columns([
                 TextColumn::make('display_name')
                     ->label('Používateľ')
@@ -40,10 +44,28 @@ class PaymentsTable
                         'membership' => 'Členstvo',
                         'training_registration' => 'Tréning',
                         'competition_registration' => 'Súťaž',
+                        'event_registration' => 'Podujatie',
                         'team_subscription' => 'Predplatné',
                         default => $state,
                     })
                     ->badge(),
+                TextColumn::make('payable_name')
+                    ->label('Predmet')
+                    ->state(fn (Payment $record): string => $record->payable_name)
+                    ->wrap()
+                    ->searchable(query: function ($query, string $search): void {
+                        $query->where(function ($q) use ($search): void {
+                            $q->whereHasMorph('payable', [
+                                TrainingRegistration::class,
+                            ], fn ($q) => $q->whereHas('training', fn ($t) => $t->where('title', 'ilike', "%{$search}%")))
+                                ->orWhereHasMorph('payable', [
+                                    EventRegistration::class,
+                                ], fn ($q) => $q->whereHas('event', fn ($e) => $e->where('title', 'ilike', "%{$search}%")))
+                                ->orWhereHasMorph('payable', [
+                                    Membership::class,
+                                ], fn ($q) => $q->whereHas('season', fn ($s) => $s->where('name', 'ilike', "%{$search}%")));
+                        });
+                    }),
                 TextColumn::make('amount')
                     ->label('Suma')
                     ->formatStateUsing(fn ($record): string => number_format((float) $record->amount, 2).' '.$record->currency)

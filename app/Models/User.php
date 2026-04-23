@@ -8,6 +8,7 @@ use App\Enums\MembershipStatusEnum;
 use App\Enums\ProfileTypeEnum;
 use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
+use App\Notifications\ResetPassword;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
@@ -15,6 +16,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -30,7 +32,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
-class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia, HasTenants, Linkable
+class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocalePreference, HasMedia, HasTenants, Linkable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasPanelShield, HasRoles, HasSlug, HasUuidV7, InteractsWithMedia, Notifiable;
@@ -483,5 +485,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasMedia,
             ->orderBy('name')
             ->get()
             ->mapWithKeys(fn (User $u) => [$u->id => $u->getLinkLabel()]);
+    }
+
+    public function preferredLocale(): ?string
+    {
+        return $this->locale;
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPassword($token));
     }
 }
