@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Memberships\Tables;
 
 use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
 use App\Models\Membership;
@@ -132,6 +133,28 @@ class MembershipsTable
 
                         Notification::make()
                             ->title('Platba bola zaznamenaná.')
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('cancel')
+                    ->label('Zrušiť členstvo')
+                    ->icon('heroicon-o-no-symbol')
+                    ->color('gray')
+                    ->visible(fn (Membership $record): bool => ! auth()->user()?->isMemberLevel()
+                        && $record->status !== MembershipStatusEnum::CANCELLED)
+                    ->requiresConfirmation()
+                    ->modalHeading('Zrušiť členstvo?')
+                    ->modalDescription('Členstvo bude označené ako zrušené a všetky čakajúce platby budú zrušené.')
+                    ->modalSubmitActionLabel('Áno, zrušiť')
+                    ->modalCancelActionLabel('Späť')
+                    ->action(function (Membership $record): void {
+                        $record->update(['status' => MembershipStatusEnum::CANCELLED]);
+                        $record->payments()
+                            ->where('status', PaymentStatusEnum::PENDING)
+                            ->update(['status' => PaymentStatusEnum::CANCELLED->value]);
+
+                        Notification::make()
+                            ->title('Členstvo bolo zrušené.')
                             ->success()
                             ->send();
                     }),

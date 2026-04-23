@@ -17,6 +17,7 @@ enum PaymentStatusEnum: string implements HasColor, HasIcon, HasLabel
     case COMPLETED = 'completed';
     case FAILED = 'failed';
     case REFUNDED = 'refunded';
+    case CANCELLED = 'cancelled';
 
     public function getColor(): string
     {
@@ -25,6 +26,7 @@ enum PaymentStatusEnum: string implements HasColor, HasIcon, HasLabel
             self::COMPLETED => 'success',
             self::FAILED => 'danger',
             self::REFUNDED => 'gray',
+            self::CANCELLED => 'gray',
         };
     }
 
@@ -35,6 +37,7 @@ enum PaymentStatusEnum: string implements HasColor, HasIcon, HasLabel
             self::COMPLETED => Heroicon::CheckCircle,
             self::FAILED => Heroicon::XCircle,
             self::REFUNDED => Heroicon::ArrowUturnLeft,
+            self::CANCELLED => Heroicon::NoSymbol,
         };
     }
 }

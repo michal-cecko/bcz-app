@@ -70,7 +70,7 @@ class MemberEvents extends Page implements HasActions, HasSchemas
 
                 $registration->payments()
                     ->where('status', PaymentStatusEnum::PENDING)
-                    ->update(['status' => PaymentStatusEnum::FAILED->value]);
+                    ->update(['status' => PaymentStatusEnum::CANCELLED->value]);
 
                 Notification::make()
                     ->title('Registrácia bola zrušená')

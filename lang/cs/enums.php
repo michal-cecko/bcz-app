@@ -89,6 +89,7 @@ return [
         PaymentStatusEnum::COMPLETED->value => 'Zaplaceno',
         PaymentStatusEnum::FAILED->value => 'Selhalo',
         PaymentStatusEnum::REFUNDED->value => 'Vráceno',
+        PaymentStatusEnum::CANCELLED->value => 'Zrušeno',
     ],
     PairingStrategyEnum::class => [
         PairingStrategyEnum::RANDOM->value => 'Náhodně',

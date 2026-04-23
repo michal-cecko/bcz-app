@@ -89,6 +89,7 @@ return [
         PaymentStatusEnum::COMPLETED->value => 'Zaplatené',
         PaymentStatusEnum::FAILED->value => 'Zlyhalo',
         PaymentStatusEnum::REFUNDED->value => 'Vrátené',
+        PaymentStatusEnum::CANCELLED->value => 'Zrušené',
     ],
     PairingStrategyEnum::class => [
         PairingStrategyEnum::RANDOM->value => 'Náhodne',

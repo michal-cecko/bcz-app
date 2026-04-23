@@ -59,6 +59,32 @@ class ViewTrainingRegistration extends ViewRecord
                     $this->refreshFormData(['status']);
                 }),
 
+            Action::make('cancel')
+                ->label('Zrušiť registráciu')
+                ->icon(Heroicon::NoSymbol)
+                ->color('gray')
+                ->visible(fn (): bool => $record->status !== RegistrationStatusEnum::Cancelled)
+                ->schema([
+                    Textarea::make('cancellation_reason')
+                        ->label('Dôvod zrušenia')
+                        ->rows(2),
+                ])
+                ->modalHeading('Zrušiť registráciu?')
+                ->modalDescription('Registrácia bude označená ako zrušená a všetky čakajúce platby budú zrušené.')
+                ->modalSubmitActionLabel('Áno, zrušiť')
+                ->modalCancelActionLabel('Späť')
+                ->action(function (array $data) use ($record): void {
+                    $record->update([
+                        'status' => RegistrationStatusEnum::Cancelled,
+                        'cancellation_reason' => $data['cancellation_reason'] ?? null,
+                    ]);
+                    $record->payments()
+                        ->where('status', PaymentStatusEnum::PENDING)
+                        ->update(['status' => PaymentStatusEnum::CANCELLED->value]);
+                    Notification::make()->success()->title('Registrácia bola zrušená.')->send();
+                    $this->refreshFormData(['status']);
+                }),
+
             Action::make('record_payment')
                 ->label('Zaznamenať platbu')
                 ->icon(Heroicon::CurrencyEuro)
