@@ -65,7 +65,13 @@
                         {{-- Actions --}}
                         <div class="flex flex-shrink-0 items-center gap-2">
                             @if($userRegistration)
-                                <x-filament::badge color="success">Registrovaný</x-filament::badge>
+                                <x-filament::badge :color="$userRegistration->status->getColor()">
+                                    {{ $userRegistration->status->getLabel() }}
+                                </x-filament::badge>
+                                {{ ($this->viewRegistrationAction)(['registration' => $userRegistration->id]) }}
+                                @if($tab === 'upcoming' && $userRegistration->status !== \App\Enums\RegistrationStatusEnum::Cancelled)
+                                    {{ ($this->cancelRegistrationAction)(['registration' => $userRegistration->id]) }}
+                                @endif
                             @elseif($tab === 'upcoming')
                                 <x-filament::button color="danger" size="sm" tag="a" href="{{ $event->getLinkUrl() }}">
                                     Registrovať sa
