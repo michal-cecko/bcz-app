@@ -7,6 +7,7 @@ use App\Enums\GenderEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Concerns\HasCreator;
+use App\Models\Concerns\HasResolvedPaymentMethods;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +25,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Training extends Model implements HasMedia, Linkable
 {
-    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
+    use HasCreator, HasFactory, HasResolvedPaymentMethods, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'description', 'place_name', 'gathering_place'];

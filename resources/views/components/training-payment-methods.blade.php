@@ -6,6 +6,7 @@
     'feeCurrency' => 'EUR',
     'team' => null,
     'season' => null,
+    'payable' => null,
     'variableSymbol' => null,
     'paymentNote' => null,
     'context' => 'membership',
@@ -13,7 +14,19 @@
 
 @php
     $isRegistration = $context === 'registration';
-    $paymentMethodModels = $team?->enabledPaymentMethods?->keyBy(fn ($m) => $m->method instanceof \App\Enums\PaymentMethodEnum ? $m->method->value : $m->method) ?? collect();
+
+    $sourceMethods = null;
+    if ($payable && method_exists($payable, 'effectivePaymentMethods')) {
+        $sourceMethods = $payable->effectivePaymentMethods();
+    }
+    if ($sourceMethods === null || $sourceMethods->isEmpty()) {
+        $sourceMethods = $team?->enabledPaymentMethods ?? collect();
+    }
+
+    $paymentMethodModels = $sourceMethods->keyBy(
+        fn ($m) => $m->method instanceof \App\Enums\PaymentMethodEnum ? $m->method->value : $m->method,
+    );
+
     if ($paymentMethodModels->isNotEmpty()) {
         $enabledMethods = $paymentMethodModels->keys()->toArray();
     }

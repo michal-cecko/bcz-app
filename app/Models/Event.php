@@ -6,6 +6,7 @@ use App\Contracts\Linkable;
 use App\Enums\EventTypeEnum;
 use App\Enums\TimetableEntryStatusEnum;
 use App\Models\Concerns\HasCreator;
+use App\Models\Concerns\HasResolvedPaymentMethods;
 use App\Models\Concerns\HasUuidV7;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -25,7 +26,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Event extends Model implements HasMedia, Linkable
 {
-    use HasCreator, HasFactory, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
+    use HasCreator, HasFactory, HasResolvedPaymentMethods, HasSlug, HasTranslations, HasUuidV7, InteractsWithMedia, SoftDeletes;
 
     /** @var list<string> */
     public array $translatable = ['title', 'card_description', 'content', 'report_content'];

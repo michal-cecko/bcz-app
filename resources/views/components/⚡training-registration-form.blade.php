@@ -267,7 +267,7 @@ new class extends Component
             return;
         }
 
-        $enabledMethods = $this->training->team?->getEnabledPaymentMethodKeys() ?? [];
+        $enabledMethods = $this->training->effectivePaymentMethodKeys();
         $this->selectedPaymentMethod = $enabledMethods[0] ?? null;
     }
 
@@ -565,7 +565,7 @@ new class extends Component
     @elseif($registrationState === 'payment_needed')
         @php
             $team = $training->team;
-            $enabledMethods = $team->getEnabledPaymentMethodKeys();
+            $enabledMethods = $training->effectivePaymentMethodKeys();
             $priceLabel = number_format($training->price_amount, 2) . ' EUR';
             $pendingPayment = $pendingPaymentId ? \App\Models\Payment::find($pendingPaymentId) : null;
         @endphp
@@ -589,6 +589,7 @@ new class extends Component
                 'feeCurrency' => 'EUR',
                 'team' => $team,
                 'season' => null,
+                'payable' => $training,
                 'variableSymbol' => $pendingPayment?->formattedVariableSymbol(),
                 'paymentNote' => $training->payment_note ?? null,
                 'context' => 'registration',
