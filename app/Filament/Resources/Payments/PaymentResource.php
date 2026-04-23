@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 
 class PaymentResource extends Resource
@@ -36,6 +37,17 @@ class PaymentResource extends Resource
     protected static ?int $navigationSort = 1;
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()?->isMemberLevel()) {
+            $query->where('user_id', auth()->id());
+        }
+
+        return $query;
+    }
 
     public static function infolist(Schema $schema): Schema
     {

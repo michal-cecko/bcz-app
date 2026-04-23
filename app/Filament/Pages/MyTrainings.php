@@ -95,7 +95,7 @@ class MyTrainings extends Page implements HasTable
             )
             ->columns([
                 TextColumn::make('training.title')
-                    ->label('Trening')
+                    ->label('Tréning')
                     ->formatStateUsing(fn ($record): string => $record->training->getTranslation('title', app()->getLocale()) ?: $record->training->getTranslation('title', 'sk'))
                     ->description(fn ($record): ?string => $record->training->sportCategory?->getTranslation('name', app()->getLocale()))
                     ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('training', fn ($q) => $q->where('title', 'ilike', "%{$search}%"))),
@@ -107,7 +107,7 @@ class MyTrainings extends Page implements HasTable
                             ->join(', ') ?: ($record->training->start_time ?? '-');
                     }),
                 TextColumn::make('training.coaches')
-                    ->label('Trener')
+                    ->label('Tréner')
                     ->formatStateUsing(fn ($record): string => $record->training->coaches->pluck('name')->implode(', '))
                     ->placeholder('-'),
                 TextColumn::make('training.city.name')
@@ -130,8 +130,8 @@ class MyTrainings extends Page implements HasTable
                     ->badge(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->emptyStateHeading('Nie ste registrovany na ziadne treningy')
-            ->emptyStateDescription('Pozrite si dostupne treningy nizsie a zaregistrujte sa.')
+            ->emptyStateHeading('Nie ste registrovaný na žiadne tréningy')
+            ->emptyStateDescription('Pozrite si dostupné tréningy nižšie a zaregistrujte sa.')
             ->paginated(false);
     }
 
@@ -150,12 +150,12 @@ class MyTrainings extends Page implements HasTable
             ->with(['training.sportCategory', 'training.season', 'training.city'])
             ->orderByDesc('created_at')
             ->get()
-            ->groupBy(fn ($reg) => $reg->training->season?->name ?? 'Bez sezony');
+            ->groupBy(fn ($reg) => $reg->training->season?->name ?? 'Bez sezóny');
 
         if ($historyRegistrations->isEmpty()) {
             return $schema->components([
                 Placeholder::make('no_history')
-                    ->content('Zatial ziadna historia treningov.')
+                    ->content('Zatiaľ žiadna história tréningov.')
                     ->hiddenLabel(),
             ]);
         }

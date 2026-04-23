@@ -17,7 +17,11 @@ class PaymentPolicy
 
     public function view(User $user, Payment $payment): bool
     {
-        return $user->can('View:Payment');
+        if ($payment->user_id === $user->id) {
+            return true;
+        }
+
+        return $user->can('ViewAny:Payment');
     }
 
     public function create(User $user): bool

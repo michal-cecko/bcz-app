@@ -39,6 +39,11 @@ class SubscriptionPlanResource extends Resource
         return ! auth()->user()?->isMemberLevel();
     }
 
+    public static function canGloballySearch(): bool
+    {
+        return ! auth()->user()?->isMemberLevel();
+    }
+
     public static function getGloballySearchableAttributes(): array
     {
         return ['name'];
