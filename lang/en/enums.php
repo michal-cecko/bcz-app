@@ -87,7 +87,6 @@ return [
     PaymentStatusEnum::class => [
         PaymentStatusEnum::PENDING->value => 'Pending',
         PaymentStatusEnum::COMPLETED->value => 'Paid',
-        PaymentStatusEnum::FAILED->value => 'Failed',
         PaymentStatusEnum::REFUNDED->value => 'Refunded',
         PaymentStatusEnum::CANCELLED->value => 'Cancelled',
     ],

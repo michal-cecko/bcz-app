@@ -173,12 +173,6 @@ class PaymentService
             $this->processPaymentCompleted($payment);
         }
 
-        if (in_array($state, ['CANCELED', 'TIMEOUTED'])) {
-            $payment->update([
-                'status' => PaymentStatusEnum::FAILED,
-            ]);
-        }
-
         if ($state === 'REFUNDED') {
             $payment->update([
                 'status' => PaymentStatusEnum::REFUNDED,

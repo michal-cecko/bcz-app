@@ -10,7 +10,7 @@ class PaymentPageController extends Controller
 {
     public function __invoke(Payment $payment): View
     {
-        abort_if($payment->status === PaymentStatusEnum::CANCELLED, 404);
+        abort_unless($payment->status === PaymentStatusEnum::PENDING, 404);
 
         $payment->load(['team', 'payable', 'user']);
 

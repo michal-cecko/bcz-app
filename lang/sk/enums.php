@@ -87,7 +87,6 @@ return [
     PaymentStatusEnum::class => [
         PaymentStatusEnum::PENDING->value => 'Čaká na platbu',
         PaymentStatusEnum::COMPLETED->value => 'Zaplatené',
-        PaymentStatusEnum::FAILED->value => 'Zlyhalo',
         PaymentStatusEnum::REFUNDED->value => 'Vrátené',
         PaymentStatusEnum::CANCELLED->value => 'Zrušené',
     ],

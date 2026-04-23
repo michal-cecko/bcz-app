@@ -15,7 +15,6 @@ enum PaymentStatusEnum: string implements HasColor, HasIcon, HasLabel
 
     case PENDING = 'pending';
     case COMPLETED = 'completed';
-    case FAILED = 'failed';
     case REFUNDED = 'refunded';
     case CANCELLED = 'cancelled';
 
@@ -24,7 +23,6 @@ enum PaymentStatusEnum: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::PENDING => 'warning',
             self::COMPLETED => 'success',
-            self::FAILED => 'danger',
             self::REFUNDED => 'gray',
             self::CANCELLED => 'gray',
         };
@@ -35,7 +33,6 @@ enum PaymentStatusEnum: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::PENDING => Heroicon::Clock,
             self::COMPLETED => Heroicon::CheckCircle,
-            self::FAILED => Heroicon::XCircle,
             self::REFUNDED => Heroicon::ArrowUturnLeft,
             self::CANCELLED => Heroicon::NoSymbol,
         };

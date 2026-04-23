@@ -70,7 +70,7 @@ class RecentPaymentsWidget extends TableWidget
                     ->color('primary')
                     ->iconButton()
                     ->tooltip(__('payments.open_payment_page'))
-                    ->visible(fn (Payment $record): bool => $record->status !== PaymentStatusEnum::CANCELLED)
+                    ->visible(fn (Payment $record): bool => $record->status === PaymentStatusEnum::PENDING)
                     ->url(fn (Payment $record): string => URL::signedRoute('payment.page', ['payment' => $record->id]))
                     ->openUrlInNewTab(),
                 Action::make('view')
