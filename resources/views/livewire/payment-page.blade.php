@@ -174,32 +174,40 @@
                                         <svg class="w-4 h-4 text-[#FF2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                                             <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>
                                         </svg>
-                                        <span class="text-white text-[13px] font-semibold">Údaje pre platbu</span>
+                                        <span class="text-white text-[13px] font-semibold">{{ __('payments.bank_transfer.details_title') }}</span>
                                     </div>
 
                                     @if($payment->team?->bank_account_iban)
                                         <div class="flex items-center gap-1.5">
-                                            <span class="text-[#666666] text-[11px] font-medium">IBAN:</span>
+                                            <span class="text-[#666666] text-[11px] font-medium">{{ __('payments.bank_transfer.iban') }}</span>
                                             <span class="text-white text-xs font-bold tracking-wide">{{ $payment->team->bank_account_iban }}</span>
                                         </div>
                                     @endif
 
                                     @if($payment->variable_symbol)
                                         <div class="flex items-center gap-1.5">
-                                            <span class="text-[#666666] text-[11px] font-medium">Variabilný symbol:</span>
+                                            <span class="text-[#666666] text-[11px] font-medium">{{ __('payments.bank_transfer.variable_symbol') }}</span>
                                             <span class="text-[#FF2D2D] text-xs font-bold">{{ $payment->variable_symbol }}</span>
                                         </div>
                                     @endif
 
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-[#666666] text-[11px] font-medium">Suma:</span>
+                                        <span class="text-[#666666] text-[11px] font-medium">{{ __('payments.bank_transfer.amount') }}</span>
                                         <span class="text-white text-xs font-bold">{{ $this->formattedAmount }}</span>
                                     </div>
 
                                     @if($payment->team?->bank_account_name)
                                         <div class="flex items-center gap-1.5">
-                                            <span class="text-[#666666] text-[11px] font-medium">Príjemca:</span>
+                                            <span class="text-[#666666] text-[11px] font-medium">{{ __('payments.bank_transfer.recipient') }}</span>
                                             <span class="text-[#AAAAAA] text-xs font-semibold">{{ $payment->team->bank_account_name }}</span>
+                                        </div>
+                                    @endif
+
+                                    @php $bankNote = $payment->payable?->getQrPaymentNote(); @endphp
+                                    @if($bankNote)
+                                        <div class="flex items-start gap-1.5">
+                                            <span class="text-[#666666] text-[11px] font-medium shrink-0">{{ __('payments.bank_transfer.note') }}</span>
+                                            <span class="text-[#AAAAAA] text-xs font-semibold">{{ $bankNote }}</span>
                                         </div>
                                     @endif
                                 </div>
@@ -209,7 +217,7 @@
                                         <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
                                             <img src="data:image/png;base64,{{ $qrCodeImage }}" alt="QR" class="w-full h-full">
                                         </div>
-                                        <span class="text-[#666666] text-[10px] font-medium">Naskenuj QR kód</span>
+                                        <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.scan_qr') }}</span>
                                     </div>
                                 @endif
                             </div>
@@ -221,14 +229,18 @@
                                         <line x1="12" y1="16" x2="12" y2="12"/>
                                         <line x1="12" y1="8" x2="12.01" y2="8"/>
                                     </svg>
-                                    <span class="text-[#FF2D2D] text-[11px] font-semibold">Dôležité pokyny</span>
+                                    <span class="text-[#FF2D2D] text-[11px] font-semibold">{{ __('payments.bank_transfer.instructions_title') }}</span>
                                 </div>
-                                @if($paymentMethodModels->get('bank_transfer')?->instructions)
-                                    <div class="text-left text-[#888888] text-[10px] prose-sm">{!! $paymentMethodModels->get('bank_transfer')->instructions !!}</div>
+                                @php
+                                    $btInstructions = $paymentMethodModels->get('bank_transfer')?->instructions;
+                                    $hasBtInstructions = $btInstructions && trim(strip_tags($btInstructions)) !== '';
+                                @endphp
+                                @if($hasBtInstructions)
+                                    <div class="text-left text-[#888888] text-[10px] prose-sm">{!! $btInstructions !!}</div>
                                 @else
-                                    <p class="text-left text-[#888888] text-[10px]">Použite správny variabilný symbol pre automatické priradenie platby.</p>
-                                    <p class="text-left text-[#888888] text-[10px]">Platba môže trvať 1-2 pracovné dni v závislosti od vašej banky.</p>
-                                    <p class="text-left text-[#888888] text-[10px]">Po priradení platby dostanete potvrdenie na email.</p>
+                                    <p class="text-left text-[#888888] text-[10px]">{{ __('payments.bank_transfer.instruction_use_vs') }}</p>
+                                    <p class="text-left text-[#888888] text-[10px]">{{ __('payments.bank_transfer.instruction_processing') }}</p>
+                                    <p class="text-left text-[#888888] text-[10px]">{{ __('payments.bank_transfer.instruction_confirmation') }}</p>
                                 @endif
                             </div>
                         </div>
@@ -242,11 +254,11 @@
                                     <rect x="2" y="6" width="20" height="12" rx="1"/>
                                     <circle cx="12" cy="12" r="3"/>
                                 </svg>
-                                <span class="text-white text-[13px] font-semibold">Platba v hotovosti</span>
+                                <span class="text-white text-[13px] font-semibold">{{ __('payments.cash.instructions_title') }}</span>
                             </div>
 
                             <div class="flex items-center gap-2.5 rounded-lg bg-[#FF2D2D]/[0.06] px-4 py-3 w-full">
-                                <span class="text-[#888888] text-xs font-medium">Suma na úhradu:</span>
+                                <span class="text-[#888888] text-xs font-medium">{{ __('payments.bank_transfer.amount_to_pay') }}</span>
                                 <span class="text-[#FF2D2D] text-base font-bold">{{ $this->formattedAmount }}</span>
                             </div>
 

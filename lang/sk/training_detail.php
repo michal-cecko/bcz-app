@@ -114,7 +114,7 @@ return [
     'bank_variable_symbol' => 'Variabilný symbol:',
     'bank_amount' => 'Suma:',
     'bank_recipient' => 'Príjemca:',
-    'bank_message' => 'Správa:',
+    'bank_message' => 'Poznámka:',
     'bank_message_value' => 'Členské :season',
     'bank_instructions_title' => 'Pokyny k platbe',
     'bank_instruction_1' => '1. Naskenuj QR kód alebo zadaj údaje v internet bankingu',

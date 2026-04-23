@@ -48,8 +48,8 @@ class MembershipStatusWidget extends Widget
         // Show success notification when returning from GoPay
         if (session('gopay_payment_success')) {
             Notification::make()
-                ->title('Platba bola úspešne spracovaná!')
-                ->body('Vaše členstvo bolo aktivované.')
+                ->title(__('payments.gopay.success_title'))
+                ->body(__('payments.gopay.success_body'))
                 ->success()
                 ->send();
         }
@@ -83,7 +83,7 @@ class MembershipStatusWidget extends Widget
             $this->redirect($result['url']);
         } catch (\Exception $e) {
             Notification::make()
-                ->title('Platba sa nepodarila. Skúste to znova.')
+                ->title(__('payments.gopay.failed'))
                 ->danger()
                 ->send();
         }

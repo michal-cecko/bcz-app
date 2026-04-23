@@ -106,7 +106,7 @@ return [
     'bank_variable_symbol' => 'Variable symbol:',
     'bank_amount' => 'Amount:',
     'bank_recipient' => 'Recipient:',
-    'bank_message' => 'Message:',
+    'bank_message' => 'Note:',
     'bank_message_value' => 'Membership :season',
     'bank_instructions_title' => 'Payment instructions',
     'bank_instruction_1' => '1. Scan the QR code or enter the details in your internet banking',

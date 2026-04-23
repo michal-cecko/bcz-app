@@ -22,6 +22,11 @@ class RecentPaymentsWidget extends TableWidget
 
     protected static ?string $heading = 'Posledné platby';
 
+    public function getHeading(): string
+    {
+        return __('member.payments.recent');
+    }
+
     public function table(Table $table): Table
     {
         $team = Filament::getTenant();
@@ -29,7 +34,7 @@ class RecentPaymentsWidget extends TableWidget
         return $table
             ->headerActions([
                 Action::make('viewAll')
-                    ->label('Všetky moje platby')
+                    ->label(__('member.payments.all_my_payments'))
                     ->button()
                     ->color('gray')
                     ->url(MemberPayments::getUrl())
@@ -45,16 +50,16 @@ class RecentPaymentsWidget extends TableWidget
             )
             ->columns([
                 TextColumn::make('payable_name')
-                    ->label('Predmet')
+                    ->label(__('member.payments.subject'))
                     ->state(fn (Payment $record): string => $record->payable_name),
                 TextColumn::make('amount')
-                    ->label('Suma')
+                    ->label(__('member.payments.amount'))
                     ->formatStateUsing(fn (Payment $record): string => number_format((float) $record->amount, 2).' '.$record->currency),
                 TextColumn::make('status')
-                    ->label('Stav')
+                    ->label(__('member.payments.status'))
                     ->badge(),
                 TextColumn::make('paid_at')
-                    ->label('Dátum')
+                    ->label(__('member.payments.paid_at'))
                     ->date('d.m.Y')
                     ->placeholder('-'),
             ])
@@ -63,24 +68,24 @@ class RecentPaymentsWidget extends TableWidget
                     ->icon(Heroicon::ArrowTopRightOnSquare)
                     ->color('primary')
                     ->iconButton()
-                    ->tooltip('Otvoriť platbu')
+                    ->tooltip(__('payments.open_payment_page'))
                     ->url(fn (Payment $record): string => URL::signedRoute('payment.page', ['payment' => $record->id]))
                     ->openUrlInNewTab(),
                 Action::make('view')
                     ->icon(Heroicon::Eye)
                     ->color('gray')
                     ->iconButton()
-                    ->modalHeading('Detail platby')
+                    ->modalHeading(__('member.payments.detail_modal'))
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Zavrieť')
+                    ->modalCancelActionLabel(__('member.payments.modal_close'))
                     ->schema([
-                        Section::make('Platba')
+                        Section::make(__('member.events.payment'))
                             ->schema([
                                 TextEntry::make('payable_name')
-                                    ->label('Predmet')
+                                    ->label(__('member.payments.subject'))
                                     ->state(fn (Payment $record): string => $record->payable_name),
                                 TextEntry::make('payable_type')
-                                    ->label('Typ')
+                                    ->label(__('member.payments.type'))
                                     ->formatStateUsing(fn (string $state): string => match ($state) {
                                         'membership' => 'Členstvo',
                                         'training_registration' => 'Tréning',
@@ -89,16 +94,16 @@ class RecentPaymentsWidget extends TableWidget
                                         default => $state,
                                     }),
                                 TextEntry::make('amount')
-                                    ->label('Suma')
+                                    ->label(__('member.payments.amount'))
                                     ->formatStateUsing(fn (Payment $record): string => number_format((float) $record->amount, 2).' '.$record->currency),
                                 TextEntry::make('status')
-                                    ->label('Stav')
+                                    ->label(__('member.payments.status'))
                                     ->badge(),
                                 TextEntry::make('payment_method')
-                                    ->label('Spôsob platby')
+                                    ->label(__('member.payments.method'))
                                     ->badge(),
                                 TextEntry::make('paid_at')
-                                    ->label('Zaplatené')
+                                    ->label(__('member.payments.paid'))
                                     ->dateTime('d.m.Y H:i')
                                     ->placeholder('-'),
                             ])
@@ -106,7 +111,7 @@ class RecentPaymentsWidget extends TableWidget
                     ]),
             ])
             ->paginated(false)
-            ->emptyStateHeading('Žiadne platby')
-            ->emptyStateDescription('Zatiaľ žiadne platby.');
+            ->emptyStateHeading(__('member.payments.recent_empty_heading'))
+            ->emptyStateDescription(__('member.payments.recent_empty_description'));
     }
 }

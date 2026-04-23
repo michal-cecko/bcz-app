@@ -30,6 +30,16 @@ class MemberEvents extends Page implements HasActions, HasSchemas
 
     protected static ?string $title = 'Podujatia';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('member.events.title');
+    }
+
+    public function getTitle(): string
+    {
+        return __('member.events.title');
+    }
+
     protected static ?int $navigationSort = 3;
 
     protected string $view = 'filament.pages.member-events';
@@ -45,15 +55,15 @@ class MemberEvents extends Page implements HasActions, HasSchemas
     public function cancelRegistrationAction(): Action
     {
         return Action::make('cancelRegistration')
-            ->label('Zrušiť registráciu')
+            ->label(__('member.events.cancel_registration'))
             ->icon(Heroicon::XMark)
             ->color('danger')
             ->size('sm')
             ->requiresConfirmation()
-            ->modalHeading('Zrušiť registráciu?')
-            ->modalDescription('Po zrušení sa môžete znova zaregistrovať, ak je registrácia stále otvorená.')
-            ->modalSubmitActionLabel('Áno, zrušiť')
-            ->modalCancelActionLabel('Späť')
+            ->modalHeading(__('member.events.cancel_modal_heading'))
+            ->modalDescription(__('member.events.cancel_modal_description'))
+            ->modalSubmitActionLabel(__('member.events.cancel_confirm'))
+            ->modalCancelActionLabel(__('member.events.cancel_back'))
             ->action(function (array $arguments): void {
                 $registration = EventRegistration::query()
                     ->where('id', $arguments['registration'])
@@ -73,7 +83,7 @@ class MemberEvents extends Page implements HasActions, HasSchemas
                     ->update(['status' => PaymentStatusEnum::CANCELLED->value]);
 
                 Notification::make()
-                    ->title('Registrácia bola zrušená')
+                    ->title(__('member.events.cancel_success'))
                     ->success()
                     ->send();
             });
@@ -82,13 +92,13 @@ class MemberEvents extends Page implements HasActions, HasSchemas
     public function viewRegistrationAction(): Action
     {
         return Action::make('viewRegistration')
-            ->label('Detail registrácie')
+            ->label(__('member.events.view_registration'))
             ->icon(Heroicon::Eye)
             ->color('gray')
             ->size('sm')
-            ->modalHeading('Detail registrácie')
+            ->modalHeading(__('member.events.modal_heading'))
             ->modalSubmitAction(false)
-            ->modalCancelActionLabel('Zavrieť')
+            ->modalCancelActionLabel(__('member.events.modal_close'))
             ->modalContent(function (array $arguments): ViewContract {
                 $registration = EventRegistration::query()
                     ->where('id', $arguments['registration'])

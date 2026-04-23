@@ -6,14 +6,14 @@
             size="sm"
             wire:click="$set('tab', 'upcoming')"
         >
-            Nadchádzajúce
+            {{ __('member.events.tab_upcoming') }}
         </x-filament::button>
         <x-filament::button
             :color="$tab === 'past' ? 'primary' : 'gray'"
             size="sm"
             wire:click="$set('tab', 'past')"
         >
-            Minulé
+            {{ __('member.events.tab_past') }}
         </x-filament::button>
     </div>
 
@@ -23,7 +23,7 @@
             <div class="flex flex-col items-center gap-2 py-8 text-center">
                 <x-filament::icon icon="heroicon-o-calendar-days" class="h-10 w-10 text-gray-300 dark:text-gray-600" />
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ $tab === 'upcoming' ? 'Žiadne nadchádzajúce podujatia.' : 'Žiadne minulé podujatia.' }}
+                    {{ $tab === 'upcoming' ? __('member.events.empty_upcoming') : __('member.events.empty_past') }}
                 </p>
             </div>
         </x-filament::section>
@@ -74,7 +74,7 @@
                                 @endif
                             @elseif($tab === 'upcoming')
                                 <x-filament::button color="danger" size="sm" tag="a" href="{{ $event->getLinkUrl() }}">
-                                    Registrovať sa
+                                    {{ __('member.events.register') }}
                                 </x-filament::button>
                             @endif
                         </div>

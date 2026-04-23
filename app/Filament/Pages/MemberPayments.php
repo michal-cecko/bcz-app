@@ -33,6 +33,16 @@ class MemberPayments extends Page implements HasTable
 
     protected string $view = 'filament.pages.member-payments';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('member.payments.title');
+    }
+
+    public function getTitle(): string
+    {
+        return __('member.payments.title');
+    }
+
     public static function shouldRegisterNavigation(): bool
     {
         return auth()->user()?->isMemberLevel() ?? false;
@@ -51,10 +61,10 @@ class MemberPayments extends Page implements HasTable
             )
             ->columns([
                 TextColumn::make('payable_name')
-                    ->label('Predmet')
+                    ->label(__('member.payments.subject'))
                     ->state(fn (Payment $record): string => $record->payable_name),
                 TextColumn::make('payable_type')
-                    ->label('Typ')
+                    ->label(__('member.payments.type'))
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'membership' => 'Členstvo',
                         'training_registration' => 'Tréning',
@@ -65,19 +75,19 @@ class MemberPayments extends Page implements HasTable
                     })
                     ->badge(),
                 TextColumn::make('amount')
-                    ->label('Suma')
+                    ->label(__('member.payments.amount'))
                     ->formatStateUsing(fn (Payment $record): string => number_format((float) $record->amount, 2).' '.$record->currency)
                     ->sortable(),
                 TextColumn::make('payment_method')
-                    ->label('Spôsob')
+                    ->label(__('member.payments.method'))
                     ->badge()
                     ->sortable(),
                 TextColumn::make('status')
-                    ->label('Stav')
+                    ->label(__('member.payments.status'))
                     ->badge()
                     ->sortable(),
                 TextColumn::make('paid_at')
-                    ->label('Dátum')
+                    ->label(__('member.payments.paid_at'))
                     ->dateTime('d.m.Y')
                     ->placeholder('-')
                     ->sortable(),
@@ -85,36 +95,36 @@ class MemberPayments extends Page implements HasTable
             ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('status')
-                    ->label('Stav')
+                    ->label(__('member.payments.status'))
                     ->options(PaymentStatusEnum::translations()),
                 SelectFilter::make('payment_method')
-                    ->label('Spôsob')
+                    ->label(__('member.payments.method'))
                     ->options(PaymentMethodEnum::translations()),
             ])
             ->recordActions([
                 Action::make('openPaymentPage')
-                    ->label('Otvoriť platbu')
+                    ->label(__('payments.open_payment_page'))
                     ->icon(Heroicon::ArrowTopRightOnSquare)
                     ->color('primary')
                     ->url(fn (Payment $record): string => URL::signedRoute('payment.page', ['payment' => $record->id]))
                     ->openUrlInNewTab(),
                 Action::make('view')
-                    ->label('Detail')
+                    ->label(__('member.payments.detail'))
                     ->icon(Heroicon::Eye)
                     ->color('gray')
-                    ->modalHeading('Detail platby')
+                    ->modalHeading(__('member.payments.detail_modal'))
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Zavrieť')
+                    ->modalCancelActionLabel(__('member.payments.modal_close'))
                     ->schema([
                         Grid::make(2)
                             ->schema([
-                                Section::make('Platba')
+                                Section::make(__('member.events.payment'))
                                     ->schema([
                                         TextEntry::make('payable_name')
-                                            ->label('Predmet')
+                                            ->label(__('member.payments.subject'))
                                             ->state(fn (Payment $record): string => $record->payable_name),
                                         TextEntry::make('payable_type')
-                                            ->label('Typ')
+                                            ->label(__('member.payments.type'))
                                             ->formatStateUsing(fn (string $state): string => match ($state) {
                                                 'membership' => 'Členstvo',
                                                 'training_registration' => 'Tréning',
@@ -123,45 +133,45 @@ class MemberPayments extends Page implements HasTable
                                                 default => $state,
                                             }),
                                         TextEntry::make('amount')
-                                            ->label('Suma')
+                                            ->label(__('member.payments.amount'))
                                             ->formatStateUsing(fn (Payment $record): string => number_format((float) $record->amount, 2).' '.$record->currency),
                                         TextEntry::make('status')
-                                            ->label('Stav')
+                                            ->label(__('member.payments.status'))
                                             ->badge(),
                                         TextEntry::make('payment_method')
-                                            ->label('Spôsob platby')
+                                            ->label(__('member.payments.method'))
                                             ->badge(),
                                         TextEntry::make('variable_symbol')
-                                            ->label('Variabilný symbol')
+                                            ->label(__('member.events.variable_symbol'))
                                             ->placeholder('-'),
                                     ])
                                     ->columns(2),
-                                Section::make('Dátumy')
+                                Section::make(__('member.payments.dates'))
                                     ->schema([
                                         TextEntry::make('paid_at')
-                                            ->label('Zaplatené')
+                                            ->label(__('member.payments.paid'))
                                             ->dateTime('d.m.Y H:i')
                                             ->placeholder('-'),
                                         TextEntry::make('refunded_at')
-                                            ->label('Vrátené')
+                                            ->label(__('member.payments.refunded'))
                                             ->dateTime('d.m.Y H:i')
                                             ->placeholder('-'),
                                         TextEntry::make('created_at')
-                                            ->label('Vytvorené')
+                                            ->label(__('member.payments.created'))
                                             ->dateTime('d.m.Y H:i'),
                                     ]),
                             ]),
-                        Section::make('Poznámky')
+                        Section::make(__('member.payments.notes'))
                             ->schema([
                                 TextEntry::make('notes')
                                     ->hiddenLabel()
-                                    ->placeholder('Žiadne poznámky'),
+                                    ->placeholder(__('member.payments.no_notes')),
                             ])
                             ->collapsible()
                             ->collapsed(),
                     ]),
             ])
-            ->emptyStateHeading('Zatiaľ žiadne platby')
-            ->emptyStateDescription('Po uskutočnení platby sa tu zobrazia.');
+            ->emptyStateHeading(__('member.payments.empty_heading'))
+            ->emptyStateDescription(__('member.payments.empty_description'));
     }
 }

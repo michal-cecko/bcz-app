@@ -153,14 +153,24 @@
         </div>
 
         {{-- Instructions box (full width) --}}
+        @php
+            $bankInstructions = $paymentMethodModels->get('bank_transfer')?->pivot
+                ? ($paymentMethodModels->get('bank_transfer')->pivot->getTranslation('instructions', app()->getLocale(), false) ?: null)
+                : null;
+            $hasInstructions = $bankInstructions && trim(strip_tags($bankInstructions)) !== '';
+        @endphp
         <div class="rounded-lg bg-[#FF2D2D]/[0.03] border border-[#FF2D2D]/[0.12] p-2.5 flex flex-col gap-1.5 w-full">
             <div class="flex items-center gap-1.5">
                 <svg class="w-3 h-3 text-[#FF2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span class="text-[#FF2D2D] text-[11px] font-semibold">{{ __('training_detail.bank_instructions_title') }}</span>
             </div>
-            <p class="text-left text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_1') }}</p>
-            <p class="text-left text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_2') }}</p>
-            <p class="text-left text-[#888888] text-[10px]">{{ __($isRegistration ? 'training_detail.bank_instruction_3_registration' : 'training_detail.bank_instruction_3') }}</p>
+            @if($hasInstructions)
+                <div class="text-left text-[#888888] text-[10px] prose-sm">{!! $bankInstructions !!}</div>
+            @else
+                <p class="text-left text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_1') }}</p>
+                <p class="text-left text-[#888888] text-[10px]">{{ __('training_detail.bank_instruction_2') }}</p>
+                <p class="text-left text-[#888888] text-[10px]">{{ __($isRegistration ? 'training_detail.bank_instruction_3_registration' : 'training_detail.bank_instruction_3') }}</p>
+            @endif
         </div>
     </div>
 @endif
