@@ -815,89 +815,14 @@
  </div>
  @endif
 
- {{-- Dynamic Registration Form --}}
- @if($status === 'registering' && $org?->registration_form_schema && count($org->registration_form_schema) > 0)
- <div class="bg-[#111111] border border-[#222222] p-6 flex flex-col gap-5">
- <h3 class="text-white text-lg font-bold font-sans">{{ __('event_detail.registration_form') }}</h3>
- <p class="text-[#888888] text-sm font-sans">{{ __('event_detail.registration_form_desc') }}</p>
-
- <form class="flex flex-col gap-4">
- @foreach($org->registration_form_schema as $field)
- <div class="flex flex-col gap-1.5">
- <label class="text-[#CCCCCC] text-sm font-sans">
- {{ $field['label'] ?? $field['key'] }}
- @if($field['required'] ?? false)
- <span style="color: {{ $categoryColor }}">*</span>
- @endif
- </label>
-
- @switch($field['type'] ?? 'text_input')
- @case('textarea')
- <textarea name="{{ $field['key'] }}"rows="3"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans placeholder-[#555555] focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors"
- placeholder="{{ $field['label'] ?? '' }}"></textarea>
- @break
- @case('select')
- <select name="{{ $field['key'] }}"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors">
- <option value="">{{ __('event_detail.select_placeholder') }}</option>
- @foreach(explode("\n", $field['options'] ?? '') as $option)
- @if(trim($option))
- <option value="{{ trim($option) }}">{{ trim($option) }}</option>
- @endif
- @endforeach
- </select>
- @break
- @case('date_picker')
- @case('birth_date')
- <input type="date"name="{{ $field['key'] }}"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors">
- @break
- @case('number_input')
- <input type="number"name="{{ $field['key'] }}"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans placeholder-[#555555] focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors"
- placeholder="{{ $field['label'] ?? '' }}">
- @break
- @case('email')
- <input type="email"name="{{ $field['key'] }}"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans placeholder-[#555555] focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors"
- placeholder="{{ $field['label'] ?? '' }}">
- @break
- @case('phone')
- <input type="tel"name="{{ $field['key'] }}"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans placeholder-[#555555] focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors"
- placeholder="{{ $field['label'] ?? '' }}">
- @break
- @case('gender')
- <select name="{{ $field['key'] }}"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors">
- <option value="">{{ __('event_detail.select_placeholder') }}</option>
- <option value="male">{{ __('event_detail.gender_male') }}</option>
- <option value="female">{{ __('event_detail.gender_female') }}</option>
- </select>
- @break
- @default
- <input type="text"name="{{ $field['key'] }}"{{ ($field['required'] ?? false) ? 'required' : '' }}
- class="w-full bg-[#0A0A0A] border border-[#333333] px-4 py-3 text-white text-sm font-sans placeholder-[#555555] focus:border-[{{ $categoryColor }}] focus:outline-none transition-colors"
- placeholder="{{ $field['label'] ?? '' }}">
- @endswitch
- </div>
- @endforeach
-
- <button type="submit"class="flex items-center justify-center gap-2 text-white text-base font-bold font-sans py-4 w-full mt-2 transition-opacity hover:opacity-90"style="background-color: {{ $categoryColor }}">
- {{ __('event_detail.submit_registration') }}
- <span>&#8594;</span>
- </button>
- </form>
- </div>
- @endif
-
- {{-- Register Button (external link) --}}
- @if($status === 'registering' && $org?->external_link)
+ {{-- Registration: external link OR inline Livewire form --}}
+ @if($org?->external_link && $status === 'registering')
  <a href="{{ $org->external_link }}"target="_blank"rel="noopener"class="flex items-center justify-center gap-2 text-white text-base font-bold font-sans py-4 w-full max-w-[400px] transition-opacity hover:opacity-90"style="background-color: {{ $categoryColor }}">
  {{ __('event_detail.register') }}
  <span>&#8594;</span>
  </a>
+ @elseif($org?->registration_form_schema && count($org->registration_form_schema) > 0)
+ <livewire:event-registration-form :event="$event" />
  @endif
  </div>
 

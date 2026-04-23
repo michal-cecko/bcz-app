@@ -18,7 +18,6 @@ class EventOrganization extends Model
         'pricing_type',
         'price_amount',
         'price_currency',
-        'variable_symbol',
         'payment_note',
         'registration_form_schema',
         'registration_opens_at',

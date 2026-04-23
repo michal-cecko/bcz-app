@@ -21,7 +21,6 @@ class TeamSeason extends Model
         'ends_at',
         'fee_amount',
         'fee_currency',
-        'variable_symbol',
         'payment_note',
         'max_capacity',
         'payment_deadline_days',

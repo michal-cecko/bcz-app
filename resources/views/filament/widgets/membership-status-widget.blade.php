@@ -46,6 +46,8 @@
                     $team = \Filament\Facades\Filament::getTenant();
                     $enabledMethods = $team?->getEnabledPaymentMethodKeys() ?? [];
                     $season = $membership->season;
+                    $pendingPayment = $this->pendingPayment;
+                    $variableSymbol = $pendingPayment?->formattedVariableSymbol();
                 @endphp
                 <div class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
                     <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Spôsob platby:</p>
@@ -79,9 +81,9 @@
                                                     IBAN: <span class="font-mono font-medium text-gray-900 dark:text-white">{{ $team->bank_account_iban }}</span>
                                                 </p>
                                             @endif
-                                            @if($season?->variable_symbol)
+                                            @if($variableSymbol)
                                                 <p class="text-gray-600 dark:text-gray-400">
-                                                    Variabilný symbol: <span class="font-mono font-medium text-primary-600 dark:text-primary-400">{{ $season->variable_symbol }}</span>
+                                                    Variabilný symbol: <span class="font-mono font-medium text-primary-600 dark:text-primary-400">{{ $variableSymbol }}</span>
                                                 </p>
                                             @endif
                                             <p class="text-gray-600 dark:text-gray-400">

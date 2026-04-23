@@ -256,10 +256,6 @@ class EventForm
                                 ])
                                 ->default('EUR')
                                 ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
-                            TextInput::make('variable_symbol')
-                                ->label('Variabilný symbol')
-                                ->maxLength(10)
-                                ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             TextInput::make('payment_note')
                                 ->label('Poznámka platby (QR)')
                                 ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{nazov_eventu}}, {{datum_eventu}}, {{miesto}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')

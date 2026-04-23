@@ -23,6 +23,8 @@ new class extends Component
 
     public ?string $selectedPaymentMethod = null;
 
+    public ?string $pendingPaymentId = null;
+
     public function mount(Training $training): void
     {
         $this->training = $training;
@@ -54,6 +56,9 @@ new class extends Component
                     // Show payment info for pending registrations
                     $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $user);
                     $this->autoSelectPaymentMethod();
+                    $this->pendingPaymentId = $registration->payments()
+                        ->where('status', \App\Enums\PaymentStatusEnum::PENDING)
+                        ->latest('created_at')->value('id');
                 } elseif ($registration->status === RegistrationStatusEnum::Approved) {
                     // Re-check: membership-required training where membership expired/unpaid
                     $needsMembership = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED
@@ -70,6 +75,9 @@ new class extends Component
 
                     if ($needsMembership || $needsPayment) {
                         $this->autoSelectPaymentMethod();
+                        $this->pendingPaymentId = $registration->payments()
+                            ->where('status', \App\Enums\PaymentStatusEnum::PENDING)
+                            ->latest('created_at')->value('id');
                     }
                 } else {
                     $this->registrationState = 'already_registered';
@@ -227,6 +235,7 @@ new class extends Component
                 amount: (float) $this->training->price_amount,
                 currency: 'EUR',
             );
+            $this->pendingPaymentId = $payment->id;
         }
 
         if ($user) {
@@ -492,6 +501,33 @@ new class extends Component
             $season = $team->currentSeason;
             $enabledMethods = $team->getEnabledPaymentMethodKeys();
             $feeLabel = $season ? number_format($season->proratedFee(), 2) . ' ' . ($season->fee_currency ?? 'EUR') : '';
+            $authUser = auth()->user();
+            $membershipPayment = null;
+            if ($authUser && $season) {
+                $membership = \App\Models\Membership::firstOrCreate(
+                    [
+                        'team_id' => $team->id,
+                        'user_id' => $authUser->id,
+                        'team_season_id' => $season->id,
+                    ],
+                    [
+                        'status' => \App\Enums\MembershipStatusEnum::PENDING,
+                        'fee_amount' => $season->proratedFee(),
+                        'fee_currency' => $season->fee_currency ?? 'EUR',
+                        'is_free' => false,
+                        'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
+                        'starts_at' => $season->starts_at,
+                        'ends_at' => $season->ends_at,
+                    ],
+                );
+                $membershipPayment = app(\App\Services\PaymentService::class)->ensurePendingPaymentFor(
+                    user: $authUser,
+                    team: $team,
+                    payable: $membership,
+                    amount: (float) $season->proratedFee(),
+                    currency: $season->fee_currency ?? 'EUR',
+                );
+            }
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
             <span class="text-[#DC2626] text-[10px] font-bold tracking-[2px]">{{ __('training_detail.state_membership_needed') }}</span>
@@ -521,7 +557,7 @@ new class extends Component
                 'feeCurrency' => $season->fee_currency ?? 'EUR',
                 'team' => $team,
                 'season' => $season,
-                'variableSymbol' => $season->variable_symbol ?? null,
+                'variableSymbol' => $membershipPayment?->formattedVariableSymbol(),
                 'paymentNote' => $season->payment_note ?? null,
             ])
         </div>
@@ -531,6 +567,7 @@ new class extends Component
             $team = $training->team;
             $enabledMethods = $team->getEnabledPaymentMethodKeys();
             $priceLabel = number_format($training->price_amount, 2) . ' EUR';
+            $pendingPayment = $pendingPaymentId ? \App\Models\Payment::find($pendingPaymentId) : null;
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
             <span class="text-[#F59E0B] text-[10px] font-bold tracking-[2px]">{{ __('training_detail.state_payment_needed') }}</span>
@@ -552,7 +589,7 @@ new class extends Component
                 'feeCurrency' => 'EUR',
                 'team' => $team,
                 'season' => null,
-                'variableSymbol' => $training->variable_symbol ?? null,
+                'variableSymbol' => $pendingPayment?->formattedVariableSymbol(),
                 'paymentNote' => $training->payment_note ?? null,
                 'context' => 'registration',
             ])
@@ -572,7 +609,7 @@ new class extends Component
                         $placeholder = is_array($field['placeholder'] ?? null) ? ($field['placeholder'][$locale] ?? $field['placeholder']['sk'] ?? '') : ($field['placeholder'] ?? '');
                         $options = [];
                         if (!empty($field['options'])) {
-                            $opts = is_array($field['options']) ? $field['options'] : explode(',', $field['options']);
+                            $opts = is_array($field['options']) ? $field['options'] : preg_split('/\r\n|\r|\n/', $field['options']);
                             $options = array_map('trim', $opts);
                         }
                         $hasCondition = $field['has_condition'] ?? false;
@@ -599,7 +636,7 @@ new class extends Component
                                         $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
                                         $hfOptions = [];
                                         if (!empty($hf['options'])) {
-                                            $hfOpts = is_array($hf['options']) ? $hf['options'] : explode(',', $hf['options']);
+                                            $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
                                             $hfOptions = array_map('trim', $hfOpts);
                                         }
                                     @endphp
@@ -625,7 +662,7 @@ new class extends Component
                                         $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
                                         $hfOptions = [];
                                         if (!empty($hf['options'])) {
-                                            $hfOpts = is_array($hf['options']) ? $hf['options'] : explode(',', $hf['options']);
+                                            $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
                                             $hfOptions = array_map('trim', $hfOpts);
                                         }
                                     @endphp
@@ -659,7 +696,7 @@ new class extends Component
                                 $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
                                 $hfOptions = [];
                                 if (!empty($hf['options'])) {
-                                    $hfOpts = is_array($hf['options']) ? $hf['options'] : explode(',', $hf['options']);
+                                    $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
                                     $hfOptions = array_map('trim', $hfOpts);
                                 }
                             @endphp

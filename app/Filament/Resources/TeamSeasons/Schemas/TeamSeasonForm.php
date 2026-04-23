@@ -40,9 +40,6 @@ class TeamSeasonForm
                     ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
                     ->default('EUR')
                     ->required(),
-                TextInput::make('variable_symbol')
-                    ->label('Variabilný symbol')
-                    ->maxLength(10),
                 TextInput::make('payment_note')
                     ->label('Poznámka platby (QR)')
                     ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{sezona}}, {{nazov_timu}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')

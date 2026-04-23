@@ -305,6 +305,32 @@ class PaymentService
     }
 
     /**
+     * Return the latest pending Payment for this user+payable, creating one if missing.
+     * Used by widgets that need a stable VS to display before the user picks a method.
+     */
+    public function ensurePendingPaymentFor(
+        User $user,
+        Team $team,
+        Model $payable,
+        float $amount,
+        string $currency = 'EUR',
+    ): Payment {
+        $existing = Payment::query()
+            ->where('user_id', $user->id)
+            ->where('payable_type', $payable->getMorphClass())
+            ->where('payable_id', $payable->getKey())
+            ->where('status', PaymentStatusEnum::PENDING)
+            ->latest('created_at')
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return $this->createPendingPayment($user, $team, $payable, $amount, $currency);
+    }
+
+    /**
      * Build the 8-digit zero-padded variable symbol from the payment's sequence_number.
      * The payment must already be persisted so the sequence_number is assigned.
      */

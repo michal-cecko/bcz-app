@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Events\Schemas;
 
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
+use App\Enums\RegistrationFieldTypeEnum;
 use App\Mason\Bricks\CompetitionBracketsBrick;
 use App\Mason\Bricks\CompetitionResultsBrick;
 use App\Mason\Bricks\CompetitionTimetableBrick;
@@ -204,7 +205,8 @@ class EventInfolist
                                 ->label('Označenie'),
                             TextEntry::make('type')
                                 ->label('Typ')
-                                ->badge(),
+                                ->badge()
+                                ->formatStateUsing(fn ($state): string => RegistrationFieldTypeEnum::tryFrom((string) $state)?->getLabel() ?? (string) $state),
                             IconEntry::make('required')
                                 ->label('Povinné')
                                 ->boolean(),

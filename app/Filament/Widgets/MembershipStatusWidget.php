@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Enums\MembershipStatusEnum;
 use App\Models\Membership;
+use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Services\QrPaymentService;
 use Filament\Facades\Filament;
@@ -127,6 +128,31 @@ class MembershipStatusWidget extends Widget
     }
 
     #[Computed]
+    public function pendingPayment(): ?Payment
+    {
+        $membership = $this->membership;
+
+        if (! $membership || $membership->status !== MembershipStatusEnum::PENDING || $membership->is_free) {
+            return null;
+        }
+
+        $team = Filament::getTenant();
+        $user = auth()->user();
+
+        if (! $team || ! $user) {
+            return null;
+        }
+
+        return app(PaymentService::class)->ensurePendingPaymentFor(
+            user: $user,
+            team: $team,
+            payable: $membership,
+            amount: (float) $membership->fee_amount,
+            currency: $membership->fee_currency ?? 'EUR',
+        );
+    }
+
+    #[Computed]
     public function qrCodes(): array
     {
         $membership = $this->membership;
@@ -146,7 +172,7 @@ class MembershipStatusWidget extends Widget
                 iban: $team->bank_account_iban,
                 amount: (float) $membership->fee_amount,
                 currency: $membership->fee_currency ?? 'EUR',
-                variableSymbol: $membership->season?->variable_symbol ?? '',
+                variableSymbol: $this->pendingPayment?->formattedVariableSymbol() ?? '',
             ),
         ];
     }

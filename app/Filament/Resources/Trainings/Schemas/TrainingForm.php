@@ -282,10 +282,6 @@ class TrainingForm
                                             ->numeric()
                                             ->prefix('€')
                                             ->visible(fn (Get $get): bool => $get('pricing_type') === TrainingPricingTypeEnum::PAID->value),
-                                        TextInput::make('variable_symbol')
-                                            ->label('Variabilný symbol')
-                                            ->maxLength(10)
-                                            ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
                                         TextInput::make('payment_note')
                                             ->label('Poznámka platby (QR)')
                                             ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{nazov_treningu}}, {{mesto}}, {{miesto}}, {{cas}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')

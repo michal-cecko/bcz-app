@@ -51,7 +51,6 @@ class Training extends Model implements HasMedia, Linkable
         'notify_on_available',
         'pricing_type',
         'price_amount',
-        'variable_symbol',
         'payment_note',
         'registration_form_schema',
         'gallery_images',

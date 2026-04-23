@@ -160,10 +160,6 @@ class TrainingInfolist
                                 ->label('Cena')
                                 ->money('EUR')
                                 ->visible(fn ($record): bool => $record->pricing_type === TrainingPricingTypeEnum::PAID),
-                            TextEntry::make('variable_symbol')
-                                ->label('Variabilný symbol')
-                                ->placeholder('-')
-                                ->visible(fn ($record): bool => $record->pricing_type !== TrainingPricingTypeEnum::FREE),
                             TextEntry::make('payment_note')
                                 ->label('Poznámka platby')
                                 ->placeholder('-')

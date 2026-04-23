@@ -3,6 +3,34 @@
     $enabledMethods = $team?->getEnabledPaymentMethodKeys() ?? [];
     $feeAmount = $season->proratedFee();
     $feeCurrency = $season->fee_currency ?? 'EUR';
+
+    $variableSymbol = null;
+    if ($team && auth()->check() && $team->bank_account_iban && in_array('bank_transfer', $enabledMethods)) {
+        $membership = \App\Models\Membership::firstOrCreate(
+            [
+                'team_id' => $team->id,
+                'user_id' => auth()->id(),
+                'team_season_id' => $season->id,
+            ],
+            [
+                'status' => \App\Enums\MembershipStatusEnum::PENDING,
+                'fee_amount' => $feeAmount,
+                'fee_currency' => $feeCurrency,
+                'is_free' => false,
+                'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
+                'starts_at' => $season->starts_at,
+                'ends_at' => $season->ends_at,
+            ],
+        );
+        $payment = app(\App\Services\PaymentService::class)->ensurePendingPaymentFor(
+            user: auth()->user(),
+            team: $team,
+            payable: $membership,
+            amount: (float) $feeAmount,
+            currency: $feeCurrency,
+        );
+        $variableSymbol = $payment->formattedVariableSymbol();
+    }
 @endphp
 
 <div class="mt-2 border-t border-gray-200 pt-5 dark:border-gray-700">
@@ -37,9 +65,9 @@
                                     IBAN: <span class="font-mono font-medium text-gray-900 dark:text-white">{{ $team->bank_account_iban }}</span>
                                 </p>
                             @endif
-                            @if($season->variable_symbol)
+                            @if($variableSymbol)
                                 <p class="text-gray-600 dark:text-gray-400">
-                                    Variabilný symbol: <span class="font-mono font-medium text-primary-600 dark:text-primary-400">{{ $season->variable_symbol }}</span>
+                                    Variabilný symbol: <span class="font-mono font-medium text-primary-600 dark:text-primary-400">{{ $variableSymbol }}</span>
                                 </p>
                             @endif
                             <p class="text-gray-600 dark:text-gray-400">
@@ -57,7 +85,7 @@
                                     iban: $team->bank_account_iban,
                                     amount: (float) $feeAmount,
                                     currency: $feeCurrency,
-                                    variableSymbol: $season->variable_symbol ?? '',
+                                    variableSymbol: $variableSymbol ?? '',
                                 );
                             @endphp
                             @if($qrImage)
