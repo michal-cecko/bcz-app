@@ -10,6 +10,21 @@ class UserPolicy
 {
     use HandlesAuthorization;
 
+    protected function sharesTeamWithTeamAdminActor(User $actor, User $target): bool
+    {
+        $actorTeamAdminTeamIds = $actor->teams()
+            ->wherePivot('role', RoleEnum::TEAM_ADMIN->value)
+            ->pluck('teams.id');
+
+        if ($actorTeamAdminTeamIds->isEmpty()) {
+            return false;
+        }
+
+        return $target->teams()
+            ->whereIn('teams.id', $actorTeamAdminTeamIds)
+            ->exists();
+    }
+
     public function viewAny(User $authUser): bool
     {
         return $authUser->can('ViewAny:User');
@@ -44,6 +59,7 @@ class UserPolicy
 
     /**
      * Self-edit always allowed. Permission check + ADMIN cannot modify SUPERADMIN.
+     * TEAM_ADMIN can only edit users who share a team where actor has TEAM_ADMIN pivot.
      */
     public function update(User $authUser, User $user): bool
     {
@@ -63,11 +79,16 @@ class UserPolicy
             return ! $user->hasRole([RoleEnum::ADMIN, RoleEnum::SUPER_ADMIN]);
         }
 
+        if ($authUser->teams()->wherePivot('role', RoleEnum::TEAM_ADMIN->value)->exists()) {
+            return $this->sharesTeamWithTeamAdminActor($authUser, $user);
+        }
+
         return true;
     }
 
     /**
      * Permission check + hierarchy: no self-delete, ADMIN cannot delete ADMIN/SUPERADMIN.
+     * TEAM_ADMIN can only delete users who share a team where actor has TEAM_ADMIN pivot.
      */
     public function delete(User $authUser, User $user): bool
     {
@@ -85,6 +106,10 @@ class UserPolicy
 
         if ($authUser->hasRole(RoleEnum::ADMIN)) {
             return ! $user->hasRole([RoleEnum::ADMIN, RoleEnum::SUPER_ADMIN]);
+        }
+
+        if ($authUser->teams()->wherePivot('role', RoleEnum::TEAM_ADMIN->value)->exists()) {
+            return $this->sharesTeamWithTeamAdminActor($authUser, $user);
         }
 
         return true;
