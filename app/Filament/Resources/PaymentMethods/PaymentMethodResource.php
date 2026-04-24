@@ -33,9 +33,7 @@ class PaymentMethodResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        $user = auth()->user();
-
-        return $user?->hasRole('super_admin') || $user?->hasRole('admin');
+        return ! auth()->user()?->isMemberLevel();
     }
 
     public static function form(Schema $schema): Schema

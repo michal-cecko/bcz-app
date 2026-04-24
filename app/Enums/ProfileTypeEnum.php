@@ -11,5 +11,4 @@ enum ProfileTypeEnum: string implements HasLabel
 
     case Coach = 'coach';
     case Athlete = 'athlete';
-    case Judge = 'judge';
 }

@@ -9,7 +9,6 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -28,7 +27,7 @@ class PublicProfileSchema
 {
     /**
      * Profile-specific fields (biography, dates, images).
-     * These are scoped to the profile model (CoachProfile, AthleteProfile, JudgeProfile).
+     * These are scoped to the profile model (CoachProfile, AthleteProfile).
      *
      * @return list<Component>
      */
@@ -37,7 +36,6 @@ class PublicProfileSchema
         return match ($role) {
             'coach' => self::coachProfileFields($mediaModel),
             'athlete' => self::athleteProfileFields($mediaModel),
-            'judge' => self::judgeProfileFields($mediaModel),
         };
     }
 
@@ -134,49 +132,6 @@ class PublicProfileSchema
                     ->image()
                     ->when($mediaModel, fn ($c) => $c->model($mediaModel)),
             ]),
-        ];
-    }
-
-    /**
-     * @return list<Component>
-     */
-    private static function judgeProfileFields(?Model $mediaModel): array
-    {
-        return [
-            DatePicker::make('date_started_judging')
-                ->label('Začiatok porotcovania')
-                ->native(false)
-                ->maxDate(now()),
-            TagsInput::make('disciplines')
-                ->label('Disciplíny')
-                ->placeholder('Pridajte disciplínu')
-                ->suggestions(['freestyle', 'speed', 'endurance', 'strength', 'parkour']),
-            Tabs::make('judge_bio_tabs')
-                ->tabs([
-                    Tab::make('SK')->schema([
-                        RichEditor::make('biography.sk')
-                            ->label('Biografia (SK)')
-                            ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
-                    ]),
-                    Tab::make('EN')->schema([
-                        RichEditor::make('biography.en')
-                            ->label('Biography (EN)')
-                            ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
-                    ]),
-                    Tab::make('CS')->schema([
-                        RichEditor::make('biography.cs')
-                            ->label('Biografie (CS)')
-                            ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
-                    ]),
-                ])
-                ->columnSpanFull(),
-            SpatieMediaLibraryFileUpload::make('hero_image')
-                ->collection('hero_image')
-                ->label('Hlavný obrázok')
-                ->disk('public')
-                ->visibility('public')
-                ->image()
-                ->when($mediaModel, fn ($c) => $c->model($mediaModel)),
         ];
     }
 
@@ -369,7 +324,7 @@ class PublicProfileSchema
                 ->schema(self::profileFields($role, $mediaModel)),
         ];
 
-        if (in_array($role, ['coach', 'judge'])) {
+        if ($role === 'coach') {
             $tabs[] = Tab::make('Certifikáty')
                 ->icon('heroicon-o-academic-cap')
                 ->schema([

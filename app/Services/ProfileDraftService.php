@@ -6,7 +6,6 @@ use App\Enums\DraftStatusEnum;
 use App\Enums\ProfileTypeEnum;
 use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
-use App\Models\JudgeProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,7 +14,7 @@ class ProfileDraftService
     /**
      * Save draft data on a profile model and mark it as pending.
      */
-    public function saveDraft(AthleteProfile|CoachProfile|JudgeProfile $profile, array $data): void
+    public function saveDraft(AthleteProfile|CoachProfile $profile, array $data): void
     {
         $profile->update([
             'draft_data' => $data,
@@ -28,7 +27,7 @@ class ProfileDraftService
     /**
      * Approve a pending draft: merge draft_data into main columns and clear draft state.
      */
-    public function approveDraft(AthleteProfile|CoachProfile|JudgeProfile $profile, User $user): void
+    public function approveDraft(AthleteProfile|CoachProfile $profile, User $user): void
     {
         $draftData = $profile->draft_data;
         if (! $draftData) {
@@ -62,7 +61,7 @@ class ProfileDraftService
     /**
      * Reject a pending draft with a reason.
      */
-    public function rejectDraft(AthleteProfile|CoachProfile|JudgeProfile $profile, string $reason): void
+    public function rejectDraft(AthleteProfile|CoachProfile $profile, string $reason): void
     {
         $profile->update([
             'draft_status' => DraftStatusEnum::Rejected,
@@ -73,7 +72,7 @@ class ProfileDraftService
     /**
      * Get draft data if it exists, otherwise return the live (main column) data.
      */
-    public function getDraftOrLiveData(AthleteProfile|CoachProfile|JudgeProfile $profile): array
+    public function getDraftOrLiveData(AthleteProfile|CoachProfile $profile): array
     {
         if ($profile->draft_data) {
             return $profile->draft_data;
@@ -86,7 +85,7 @@ class ProfileDraftService
             ->toArray();
     }
 
-    public function hasPendingDraft(AthleteProfile|CoachProfile|JudgeProfile $profile): bool
+    public function hasPendingDraft(AthleteProfile|CoachProfile $profile): bool
     {
         return $profile->draft_status === DraftStatusEnum::Pending;
     }
@@ -99,7 +98,6 @@ class ProfileDraftService
         return match (true) {
             $profile instanceof CoachProfile => ['biography', 'date_started_coaching'],
             $profile instanceof AthleteProfile => ['journey_text', 'date_started_working_out'],
-            $profile instanceof JudgeProfile => ['biography', 'disciplines', 'date_started_judging'],
         };
     }
 
@@ -108,7 +106,6 @@ class ProfileDraftService
         return match (true) {
             $profile instanceof CoachProfile => 'coach_profile_approved_at',
             $profile instanceof AthleteProfile => 'athlete_profile_approved_at',
-            $profile instanceof JudgeProfile => 'judge_profile_approved_at',
         };
     }
 
@@ -117,7 +114,6 @@ class ProfileDraftService
         return match (true) {
             $profile instanceof CoachProfile => ProfileTypeEnum::Coach,
             $profile instanceof AthleteProfile => ProfileTypeEnum::Athlete,
-            $profile instanceof JudgeProfile => ProfileTypeEnum::Judge,
         };
     }
 }

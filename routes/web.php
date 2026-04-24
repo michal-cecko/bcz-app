@@ -39,7 +39,7 @@ $frontendRoutes = function () {
     Route::get('/atleti', [PageController::class, 'show'])->defaults('slug', 'atleti');
     Route::get('/atleti/{user:slug}', [CoachController::class, 'showAthlete']);
     Route::get('/rozhodcovia', [PageController::class, 'show'])->defaults('slug', 'rozhodcovia');
-    Route::get('/rozhodcovia/{user:slug}', [CoachController::class, 'showJudge']);
+    Route::get('/rozhodcovia/{judge:slug}', [CoachController::class, 'showJudge']);
 
     // Teams archive (CMS page with Mason brick)
     Route::get('/timy', [PageController::class, 'show'])->defaults('slug', 'timy');
@@ -118,7 +118,7 @@ Route::get('/treneri/{user:slug}', [CoachController::class, 'show'])->name('coac
 Route::get('/atleti', [PageController::class, 'show'])->defaults('slug', 'atleti')->name('athletes.index');
 Route::get('/atleti/{user:slug}', [CoachController::class, 'showAthlete'])->name('athlete.show');
 Route::get('/rozhodcovia', [PageController::class, 'show'])->defaults('slug', 'rozhodcovia')->name('judges.index');
-Route::get('/rozhodcovia/{user:slug}', [CoachController::class, 'showJudge'])->name('judge.show');
+Route::get('/rozhodcovia/{judge:slug}', [CoachController::class, 'showJudge'])->name('judge.show');
 
 // Teams
 Route::get('/timy', [PageController::class, 'show'])->defaults('slug', 'timy')->name('teams.index');

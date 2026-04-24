@@ -33,6 +33,7 @@ class TeamInvitationController extends Controller
                 'role' => RoleEnum::ATHLETE->value,
                 'is_active' => true,
                 'joined_at' => now(),
+                'continuous_membership' => true,
             ]);
         }
 
@@ -83,6 +84,7 @@ class TeamInvitationController extends Controller
             'role' => RoleEnum::ATHLETE->value,
             'is_active' => true,
             'joined_at' => now(),
+            'continuous_membership' => true,
         ]);
 
         $invitation->update([

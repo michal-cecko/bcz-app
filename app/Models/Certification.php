@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\Translatable\HasTranslations;
 
 class Certification extends Model
@@ -16,7 +16,8 @@ class Certification extends Model
     public array $translatable = ['name', 'description'];
 
     protected $fillable = [
-        'user_id',
+        'certifiable_id',
+        'certifiable_type',
         'name',
         'description',
         'icon',
@@ -33,8 +34,8 @@ class Certification extends Model
         ];
     }
 
-    public function user(): BelongsTo
+    public function certifiable(): MorphTo
     {
-        return $this->belongsTo(User::class);
+        return $this->morphTo();
     }
 }

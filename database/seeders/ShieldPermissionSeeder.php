@@ -24,7 +24,6 @@ class ShieldPermissionSeeder extends Seeder
         $this->seedRole('TEAMADMIN', $guardName, $this->teamAdminPermissions());
         $this->seedRole('COACH', $guardName, $this->coachPermissions());
         $this->seedRole('ATHLETE', $guardName, $this->athletePermissions());
-        $this->seedRole('JUDGE', $guardName, $this->judgePermissions());
         $this->seedRole('CUSTOMER', $guardName, $this->customerPermissions());
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -239,18 +238,6 @@ class ShieldPermissionSeeder extends Seeder
             $this->viewPermissions('AthleteCategory'),
             // Ostatne
             $this->viewPermissions('MediaItem'),
-        );
-    }
-
-    /** @return list<string> */
-    protected function judgePermissions(): array
-    {
-        return array_merge(
-            // Podujatia
-            $this->viewPermissions('Event'),
-            $this->viewPermissions('EventCategory'),
-            $this->fullPermissions('Discipline'),
-            $this->viewPermissions('AthleteCategory'),
         );
     }
 

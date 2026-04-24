@@ -45,7 +45,7 @@ use App\Models\ExerciseCategory;
 use App\Models\Faq;
 use App\Models\FaqCategory;
 use App\Models\Inquiry;
-use App\Models\JudgeProfile;
+use App\Models\Judge;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\RegistrationFee;
@@ -222,32 +222,21 @@ class DemoDataSeeder extends Seeder
             ],
         ];
 
-        $judges = collect($judgeData)->map(function ($data) use ($bczTeam) {
-            $user = User::factory()->create([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'country_code' => $data['country_code'],
-            ]);
-            $user->assignRole(RoleEnum::JUDGE);
-            $user->teams()->attach($bczTeam, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()->subMonths(rand(3, 12))]);
-
-            JudgeProfile::create([
-                'user_id' => $user->id,
+        $judges = collect($judgeData)->map(function ($data) {
+            $judge = Judge::create([
+                'name' => $data['first_name'].' '.$data['last_name'],
                 'biography' => $data['biography'],
                 'disciplines' => $data['disciplines'],
                 'date_started_judging' => $data['date_started_judging'],
             ]);
 
-            // Approve judge public profile + add profile photo
-            $user->update([
-                'judge_profile_approved_at' => now()->subDays(rand(1, 60)),
-            ]);
-            $user->addMediaFromUrl('https://i.pravatar.cc/300?u='.$user->email)
+            $judge->addMediaFromUrl('https://i.pravatar.cc/300?u=judge-'.$judge->id)
                 ->toMediaCollection('profile_image');
 
             foreach ($data['certifications'] as $index => $cert) {
                 Certification::factory()->create([
-                    'user_id' => $user->id,
+                    'certifiable_id' => $judge->id,
+                    'certifiable_type' => Judge::class,
                     'name' => $cert['name'],
                     'description' => $cert['description'],
                     'year_of_issue' => $cert['year_of_issue'],
@@ -255,7 +244,7 @@ class DemoDataSeeder extends Seeder
                 ]);
             }
 
-            return $user;
+            return $judge;
         });
 
         $members = User::factory(5)->create()->each(function (User $user) use ($bczTeam) {
@@ -326,7 +315,7 @@ class DemoDataSeeder extends Seeder
             });
 
             AthleteGoal::factory(rand(1, 3))->create(['user_id' => $athlete->id]);
-            Certification::factory(rand(0, 2))->create(['user_id' => $athlete->id]);
+            Certification::factory(rand(0, 2))->create(['certifiable_id' => $athlete->id, 'certifiable_type' => User::class]);
         });
 
         // --- Registration form schemas for trainings ---
@@ -2659,24 +2648,6 @@ class DemoDataSeeder extends Seeder
                 'is_free' => false,
                 'payment_deadline_at' => now()->addDays(rand(5, 14)),
                 'starts_at' => now()->subDays(rand(1, 7)),
-                'ends_at' => $currentSeason->ends_at,
-            ]);
-
-            $memberships->push($membership);
-        });
-
-        // Judges — ACTIVE memberships (free, as judges)
-        $judges->each(function (User $judge) use ($bczTeam, $currentSeason, &$memberships) {
-            $membership = Membership::create([
-                'team_id' => $bczTeam->id,
-                'user_id' => $judge->id,
-                'team_season_id' => $currentSeason->id,
-                'status' => MembershipStatusEnum::ACTIVE,
-                'fee_amount' => 0,
-                'fee_currency' => 'EUR',
-                'is_free' => true,
-                'payment_deadline_at' => null,
-                'starts_at' => $currentSeason->starts_at,
                 'ends_at' => $currentSeason->ends_at,
             ]);
 

@@ -415,16 +415,13 @@
          @if($judge)
          <div class="flex items-center gap-2">
              <span class="text-white text-[15px] font-bold font-sans">{{ $judge->name }}</span>
-             @if($judge->country_code)
-             <span class="text-[#666666] text-[11px] font-semibold tracking-wider font-sans">{{ $judge->country_code }}</span>
-             @endif
          </div>
          <span class="text-[#666666] text-xs font-sans">{{ __('event_detail.judge') }}</span>
          @endif
          @if($disc->getTranslation('description', $locale))
          <p class="text-[#888888] text-[13px] font-sans leading-relaxed">{{ $disc->getTranslation('description', $locale) }}</p>
          @endif
-         @if($judge?->judge_profile_approved_at)
+         @if($judge)
          <a href="{{ route('judge.show', $judge) }}" class="flex items-center gap-1.5" style="color: {{ $categoryColor }}">
              <span class="text-xs font-semibold font-sans">{{ __('event_detail.judge_profile_link') }}</span>
              <span class="text-xs">&rarr;</span>

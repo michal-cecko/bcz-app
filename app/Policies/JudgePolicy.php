@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Enums\RoleEnum;
-use App\Models\PaymentMethod;
+use App\Models\Judge;
 use App\Models\User;
 
-class PaymentMethodPolicy
+class JudgePolicy
 {
     protected function isAdmin(User $user): bool
     {
@@ -18,7 +18,7 @@ class PaymentMethodPolicy
         return $this->isAdmin($user);
     }
 
-    public function view(User $user, PaymentMethod $paymentMethod): bool
+    public function view(User $user, Judge $judge): bool
     {
         return $this->isAdmin($user);
     }
@@ -28,22 +28,22 @@ class PaymentMethodPolicy
         return $this->isAdmin($user);
     }
 
-    public function update(User $user, PaymentMethod $paymentMethod): bool
+    public function update(User $user, Judge $judge): bool
     {
         return $this->isAdmin($user);
     }
 
-    public function delete(User $user, PaymentMethod $paymentMethod): bool
+    public function delete(User $user, Judge $judge): bool
     {
         return $this->isAdmin($user);
     }
 
-    public function restore(User $user, PaymentMethod $paymentMethod): bool
+    public function restore(User $user, Judge $judge): bool
     {
         return $this->isAdmin($user);
     }
 
-    public function forceDelete(User $user, PaymentMethod $paymentMethod): bool
+    public function forceDelete(User $user, Judge $judge): bool
     {
         return $this->isAdmin($user);
     }

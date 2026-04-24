@@ -156,7 +156,6 @@ return [
         RoleEnum::COACH->value => 'Coach',
         RoleEnum::ATHLETE->value => 'Athlete',
         RoleEnum::EDITOR->value => 'Editor',
-        RoleEnum::JUDGE->value => 'Judge',
         RoleEnum::CUSTOMER->value => 'Customer',
     ],
     PaymentMethodEnum::class => [

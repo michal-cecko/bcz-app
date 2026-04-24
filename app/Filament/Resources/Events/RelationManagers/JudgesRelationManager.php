@@ -59,9 +59,6 @@ class JudgesRelationManager extends RelationManager
                 TextColumn::make('name')
                     ->label('Meno')
                     ->searchable(),
-                TextColumn::make('email')
-                    ->label('Email')
-                    ->searchable(),
                 TextColumn::make('pivot.discipline_id')
                     ->label('Disciplína')
                     ->state(function ($record): string {

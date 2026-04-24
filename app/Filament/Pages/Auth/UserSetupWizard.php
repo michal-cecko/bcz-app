@@ -8,7 +8,6 @@ use App\Enums\RoleEnum;
 use App\Filament\Schemas\PublicProfileSchema;
 use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
-use App\Models\JudgeProfile;
 use App\Models\User;
 use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
@@ -233,13 +232,11 @@ class UserSetupWizard extends SimplePage
         $label = match ($profileType) {
             ProfileTypeEnum::Coach => 'Profil trénera',
             ProfileTypeEnum::Athlete => 'Profil športovca',
-            ProfileTypeEnum::Judge => 'Profil porotcu',
         };
 
         $description = match ($profileType) {
             ProfileTypeEnum::Coach => 'Nastavte si verejný profil trénera',
             ProfileTypeEnum::Athlete => 'Nastavte si verejný profil športovca',
-            ProfileTypeEnum::Judge => 'Nastavte si verejný profil porotcu',
         };
 
         /** @var User $user */
@@ -304,16 +301,6 @@ class UserSetupWizard extends SimplePage
             $service->saveDraft($profile, $draftData);
         }
 
-        if (! empty($state['has_public_profile_judge'])) {
-            $profile = $this->getOrCreateProfile($user, ProfileTypeEnum::Judge);
-            $draftData = array_filter([
-                'date_started_judging' => $state['date_started_judging'] ?? null,
-                'disciplines' => $state['disciplines'] ?? null,
-                'biography' => $this->collectTranslations($state, 'biography'),
-            ], fn ($value) => $value !== null);
-            $service->saveDraft($profile, $draftData);
-        }
-
         Notification::make()
             ->success()
             ->title('Profil bol úspešne nastavený')
@@ -338,12 +325,11 @@ class UserSetupWizard extends SimplePage
         return ! empty($translations) ? $translations : null;
     }
 
-    protected function getOrCreateProfile(User $user, ProfileTypeEnum $type): CoachProfile|AthleteProfile|JudgeProfile
+    protected function getOrCreateProfile(User $user, ProfileTypeEnum $type): CoachProfile|AthleteProfile
     {
         return match ($type) {
             ProfileTypeEnum::Coach => $user->coachProfile ?? $user->coachProfile()->create(['user_id' => $user->id]),
             ProfileTypeEnum::Athlete => $user->athleteProfile ?? $user->athleteProfile()->create(['user_id' => $user->id]),
-            ProfileTypeEnum::Judge => $user->judgeProfile ?? $user->judgeProfile()->create(['user_id' => $user->id]),
         };
     }
 }

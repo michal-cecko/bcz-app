@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\RoleEnum;
+use App\Models\Judge;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\View\View;
@@ -56,11 +57,7 @@ class CoachController extends Controller
 
     public function indexJudges(): View
     {
-        $teamId = Setting::get('default_team_id');
-        $judgeCount = User::role(RoleEnum::JUDGE)
-            ->whereNotNull('judge_profile_approved_at')
-            ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->count();
+        $judgeCount = Judge::query()->count();
 
         return view('pages.judges.index', compact('judgeCount'));
     }
@@ -87,21 +84,14 @@ class CoachController extends Controller
         return view('pages.athletes.show', compact('user', 'hasCoachProfile'));
     }
 
-    public function showJudge(User $user): View
+    public function showJudge(Judge $judge): View
     {
-        abort_unless(
-            $user->hasRole(RoleEnum::JUDGE)
-            && $user->judge_profile_approved_at,
-            404
-        );
-
-        $user->load([
-            'judgeProfile',
+        $judge->load([
             'certifications',
             'judgedCompetitionDetails' => fn ($q) => $q->with('event'),
-            'judgeProfile.media',
+            'media',
         ]);
 
-        return view('pages.judges.show', compact('user'));
+        return view('pages.judges.show', compact('judge'));
     }
 }

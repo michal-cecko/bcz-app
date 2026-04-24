@@ -15,7 +15,6 @@ enum RoleEnum: string implements HasLabel
     case COACH = 'COACH';
     case ATHLETE = 'ATHLETE';
     case EDITOR = 'EDITOR';
-    case JUDGE = 'JUDGE';
     case CUSTOMER = 'CUSTOMER';
 
     public function isTeamScoped(): bool

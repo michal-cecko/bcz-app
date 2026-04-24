@@ -138,7 +138,6 @@ class UserResource extends Resource
                             ->schema([
                                 self::buildInfolistProfileSection('coach'),
                                 self::buildInfolistProfileSection('athlete'),
-                                self::buildInfolistProfileSection('judge'),
                             ]),
                     ])
                     ->persistTabInQueryString()
@@ -163,15 +162,7 @@ class UserResource extends Resource
                 'rel' => 'athleteProfile',
                 'route' => 'athlete.show',
                 'fields' => ['journey_text' => 'Môj príbeh', 'date_started_working_out' => 'Začiatok cvičenia'],
-                'visibleFn' => fn (User $r) => $r->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists() && ! $r->hasRole(RoleEnum::JUDGE->value),
-            ],
-            'judge' => [
-                'title' => 'Profil porotcu',
-                'col' => 'judge_profile_approved_at',
-                'rel' => 'judgeProfile',
-                'route' => 'judge.show',
-                'fields' => ['biography' => 'Biografia', 'disciplines' => 'Disciplíny', 'date_started_judging' => 'Začiatok rozhodcovania'],
-                'visibleFn' => fn (User $r) => $r->hasRole(RoleEnum::JUDGE),
+                'visibleFn' => fn (User $r) => $r->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists(),
             ],
         };
 

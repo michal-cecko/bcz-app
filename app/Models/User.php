@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Arr;
@@ -53,7 +54,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         'password',
         'coach_profile_approved_at',
         'athlete_profile_approved_at',
-        'judge_profile_approved_at',
         'birth_date',
         'gender',
         'has_free_membership',
@@ -80,7 +80,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             'socials' => 'json',
             'coach_profile_approved_at' => 'datetime',
             'athlete_profile_approved_at' => 'datetime',
-            'judge_profile_approved_at' => 'datetime',
             'birth_date' => 'date',
             'gender' => GenderEnum::class,
             'has_free_membership' => 'boolean',
@@ -108,7 +107,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     {
         return $this->belongsToMany(Team::class)
             ->using(TeamUser::class)
-            ->withPivot('role', 'is_active', 'joined_at')
+            ->withPivot('role', 'is_active', 'joined_at', 'continuous_membership')
             ->withTimestamps();
     }
 
@@ -158,7 +157,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             return true;
         }
 
-        if ($this->hasRole([RoleEnum::ADMIN, RoleEnum::EDITOR, RoleEnum::JUDGE])) {
+        if ($this->hasRole([RoleEnum::ADMIN, RoleEnum::EDITOR])) {
             return true;
         }
 
@@ -208,11 +207,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         return $this->hasOne(CoachProfile::class);
     }
 
-    public function judgeProfile(): HasOne
-    {
-        return $this->hasOne(JudgeProfile::class);
-    }
-
     public function profileGalleryItems(): HasMany
     {
         return $this->hasMany(ProfileGalleryItem::class);
@@ -228,11 +222,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         return $this->profileGalleryItems()->where('profile_type', ProfileTypeEnum::Athlete);
     }
 
-    public function judgeGalleryItems(): HasMany
-    {
-        return $this->profileGalleryItems()->where('profile_type', ProfileTypeEnum::Judge);
-    }
-
     public function athleteExercises(): HasMany
     {
         return $this->hasMany(AthleteExercise::class);
@@ -243,9 +232,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         return $this->hasMany(AthleteGoal::class);
     }
 
-    public function certifications(): HasMany
+    public function certifications(): MorphMany
     {
-        return $this->hasMany(Certification::class);
+        return $this->morphMany(Certification::class, 'certifiable');
     }
 
     public function coachedTrainings(): BelongsToMany
@@ -276,12 +265,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function competitionResults(): HasMany
     {
         return $this->hasMany(CompetitionResult::class);
-    }
-
-    public function judgedCompetitionDetails(): BelongsToMany
-    {
-        return $this->belongsToMany(CompetitionDetail::class, 'competition_judges')
-            ->withPivot('discipline_id');
     }
 
     public function memberships(): HasMany
@@ -352,7 +335,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
      */
     public function isMemberLevel(?Team $team = null): bool
     {
-        $adminGlobalRoles = [RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::EDITOR, RoleEnum::JUDGE];
+        $adminGlobalRoles = [RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::EDITOR];
         $adminTeamRoles = [RoleEnum::TEAM_ADMIN, RoleEnum::COACH];
 
         if ($this->hasRole($adminGlobalRoles)) {
@@ -390,8 +373,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
-     * Only CUSTOMER and ATHLETE are eligible for membership records. Admins, editors,
-     * and judges never have a membership — no record is created for them when a season opens.
+     * Only CUSTOMER and ATHLETE are eligible for membership records. Admins and editors
+     * never have a membership — no record is created for them when a season opens.
      * If a team is given, also accepts users attached to that team with the ATHLETE pivot role.
      */
     public function participatesInMembershipBilling(?Team $team = null): bool
@@ -439,7 +422,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         return match ($type) {
             ProfileTypeEnum::Coach => $this->coach_profile_approved_at !== null,
             ProfileTypeEnum::Athlete => $this->athlete_profile_approved_at !== null,
-            ProfileTypeEnum::Judge => $this->judge_profile_approved_at !== null,
         };
     }
 
@@ -451,10 +433,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function getProfileableRoles(): array
     {
         $types = [];
-
-        if ($this->hasRole(RoleEnum::JUDGE)) {
-            $types[] = ProfileTypeEnum::Judge;
-        }
 
         if ($this->teams()->wherePivot('role', RoleEnum::COACH->value)->exists()) {
             $types[] = ProfileTypeEnum::Coach;

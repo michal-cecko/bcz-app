@@ -36,10 +36,11 @@ class SendMembershipRenewalReminders extends Command
         foreach ($seasons as $season) {
             $team = $season->team;
 
-            // Get all ATHLETE members of this team
+            // Only remind members who opted into continuous membership
             $memberUserIds = $team->members()
                 ->wherePivot('role', RoleEnum::ATHLETE->value)
                 ->wherePivot('is_active', true)
+                ->wherePivot('continuous_membership', true)
                 ->pluck('users.id');
 
             if ($memberUserIds->isEmpty()) {

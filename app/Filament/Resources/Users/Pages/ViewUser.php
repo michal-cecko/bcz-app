@@ -53,10 +53,6 @@ class ViewUser extends ViewRecord
                         $service->approveDraft($user->athleteProfile, $user);
                         $approved[] = 'športovca';
                     }
-                    if ($user->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
-                        $service->approveDraft($user->judgeProfile, $user);
-                        $approved[] = 'porotcu';
-                    }
 
                     Notification::make()
                         ->success()
@@ -66,7 +62,6 @@ class ViewUser extends ViewRecord
                 ->visible(fn () => $canManageProfiles && (
                     $user->fresh()->coachProfile?->draft_status === DraftStatusEnum::Pending
                     || $user->fresh()->athleteProfile?->draft_status === DraftStatusEnum::Pending
-                    || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
                 )),
             Action::make('rejectProfiles')
                 ->label('Zamietnuť profily')
@@ -87,9 +82,6 @@ class ViewUser extends ViewRecord
                     if ($user->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
                         $service->rejectDraft($user->athleteProfile, $data['reason']);
                     }
-                    if ($user->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
-                        $service->rejectDraft($user->judgeProfile, $data['reason']);
-                    }
 
                     Notification::make()
                         ->warning()
@@ -99,7 +91,6 @@ class ViewUser extends ViewRecord
                 ->visible(fn () => $canManageProfiles && (
                     $user->fresh()->coachProfile?->draft_status === DraftStatusEnum::Pending
                     || $user->fresh()->athleteProfile?->draft_status === DraftStatusEnum::Pending
-                    || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
                 )),
             Action::make('sendLoginLink')
                 ->label('Odoslať pozvánku')

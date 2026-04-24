@@ -1,37 +1,37 @@
-@props(['user', 'role' => 'athlete', 'locale' => 'sk'])
+@props(['user' => null, 'judge' => null, 'role' => 'athlete', 'locale' => 'sk'])
 
 @php
     use App\Enums\RoleEnum;
 
-    $teamIds = $user->teams()->pluck('teams.id');
-    $approvalColumn = match($role) {
-        'coach' => 'coach_profile_approved_at',
-        'athlete' => 'athlete_profile_approved_at',
-        'judge' => 'judge_profile_approved_at',
-    };
-    $pivotRole = match($role) {
-        'coach' => RoleEnum::COACH->value,
-        'athlete' => RoleEnum::ATHLETE->value,
-        'judge' => null,
-    };
-
-    $query = \App\Models\User::where('id', '!=', $user->id)
-        ->whereNotNull($approvalColumn)
-        ->whereHas('teams', fn ($q) => $q->whereIn('teams.id', $teamIds));
-
-    if ($pivotRole) {
-        $query->whereHas('teams', fn ($q) => $q
-            ->whereIn('teams.id', $teamIds)
-            ->where('team_user.role', $pivotRole)
-        );
+    if ($role === 'judge') {
+        $excludeId = $judge?->id;
+        $others = \App\Models\Judge::query()
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->inRandomOrder()
+            ->limit(3)
+            ->get();
     } else {
-        $query->role(RoleEnum::JUDGE);
-    }
+        $teamIds = $user->teams()->pluck('teams.id');
+        $approvalColumn = match($role) {
+            'coach' => 'coach_profile_approved_at',
+            'athlete' => 'athlete_profile_approved_at',
+        };
+        $pivotRole = match($role) {
+            'coach' => RoleEnum::COACH->value,
+            'athlete' => RoleEnum::ATHLETE->value,
+        };
 
-    $others = $query->with(['athleteProfile', 'coachProfile'])
-        ->inRandomOrder()
-        ->limit(3)
-        ->get();
+        $others = \App\Models\User::where('id', '!=', $user->id)
+            ->whereNotNull($approvalColumn)
+            ->whereHas('teams', fn ($q) => $q
+                ->whereIn('teams.id', $teamIds)
+                ->where('team_user.role', $pivotRole)
+            )
+            ->with(['athleteProfile', 'coachProfile'])
+            ->inRandomOrder()
+            ->limit(3)
+            ->get();
+    }
 
     $sectionTitle = match($role) {
         'coach' => __('ĎALŠÍ TRÉNERI'),
@@ -70,14 +70,19 @@
                     <a href="{{ route($routeName, $other) }}" class="bg-[#111111] border border-bcz-border rounded-lg overflow-hidden group hover:border-bcz-red/50 transition-colors">
                         {{-- Image --}}
                         @php
-                            $profileImage = $other->getProfileImageUrl();
+                            $profileImage = $role === 'judge'
+                                ? $other->getFirstMediaUrl('profile_image')
+                                : $other->getProfileImageUrl();
+                            $initials = $role === 'judge'
+                                ? mb_strtoupper(mb_substr($other->name, 0, 2))
+                                : $other->getInitials();
                         @endphp
                         <div class="h-[220px] bg-[#1A1A1A] overflow-hidden">
                             @if($profileImage)
                                 <img src="{{ $profileImage }}" alt="{{ $other->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
-                                    <span class="text-bcz-red font-display font-bold text-5xl">{{ $other->getInitials() }}</span>
+                                    <span class="text-bcz-red font-display font-bold text-5xl">{{ $initials }}</span>
                                 </div>
                             @endif
                         </div>
@@ -85,7 +90,9 @@
                         {{-- Info --}}
                         <div class="p-6 flex flex-col gap-2">
                             <h3 class="text-white font-semibold text-xl group-hover:text-bcz-red transition-colors">{{ $other->name }}</h3>
-                            <span class="text-[#666666] text-[11px] font-semibold tracking-[1px]">{{ $other->country_code ?? 'SK' }}</span>
+                            @if($role !== 'judge')
+                                <span class="text-[#666666] text-[11px] font-semibold tracking-[1px]">{{ $other->country_code ?? 'SK' }}</span>
+                            @endif
 
                             <div class="flex items-center gap-2 text-bcz-red text-[11px] font-bold tracking-wider mt-2">
                                 {{ __('ZOBRAZIT PROFIL') }}

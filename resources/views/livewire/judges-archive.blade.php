@@ -49,8 +49,9 @@
                 <div class="bg-[#111111] border border-[#222222] rounded-2xl overflow-hidden flex flex-col">
                     {{-- Image --}}
                     <div class="w-full h-[280px] overflow-hidden">
-                        @if($judge->profile_image)
-                            <img src="{{ Storage::url($judge->profile_image) }}" alt="{{ $judge->name }}" class="w-full h-full object-cover">
+                        @php $profileImage = $judge->getFirstMediaUrl('profile_image'); @endphp
+                        @if($profileImage)
+                            <img src="{{ $profileImage }}" alt="{{ $judge->name }}" class="w-full h-full object-cover">
                         @else
                             <div class="w-full h-full bg-[#1A1A1A] flex items-center justify-center">
                                 <span class="text-bcz-red font-display font-bold text-6xl">{{ mb_substr($judge->name, 0, 2) }}</span>
@@ -72,9 +73,9 @@
                             </div>
                         @endif
 
-                        @if($judge->judgedCompetitions->isNotEmpty())
+                        @if($judge->judgedCompetitionDetails->isNotEmpty())
                             <div class="flex items-center gap-2 text-[#888888] text-sm">
-                                <span>{{ sk_plural($judge->judgedCompetitions->count(), 'súťaž', 'súťaže', 'súťaží') }}</span>
+                                <span>{{ sk_plural($judge->judgedCompetitionDetails->count(), 'súťaž', 'súťaže', 'súťaží') }}</span>
                             </div>
                         @endif
 

@@ -52,8 +52,7 @@ class ProfileApprovals extends Page implements HasTable
     {
         $count = User::where(function (Builder $q) {
             $q->whereHas('coachProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
-                ->orWhereHas('athleteProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
-                ->orWhereHas('judgeProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending));
+                ->orWhereHas('athleteProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending));
         })->count();
 
         return $count > 0 ? (string) $count : null;
@@ -82,9 +81,6 @@ class ProfileApprovals extends Page implements HasTable
                         if ($record->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
                             $roles[] = 'Športovec';
                         }
-                        if ($record->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
-                            $roles[] = 'Porotca';
-                        }
 
                         return implode(', ', $roles);
                     })
@@ -95,14 +91,13 @@ class ProfileApprovals extends Page implements HasTable
                         $dates = array_filter([
                             $record->coachProfile?->draft_submitted_at,
                             $record->athleteProfile?->draft_submitted_at,
-                            $record->judgeProfile?->draft_submitted_at,
                         ]);
 
                         return ! empty($dates) ? max($dates)->diffForHumans() : null;
                     }),
                 TextColumn::make('previously_approved')
                     ->label('Už schválený')
-                    ->state(fn (User $record): string => ($record->coach_profile_approved_at || $record->athlete_profile_approved_at || $record->judge_profile_approved_at) ? 'Áno' : 'Nie')
+                    ->state(fn (User $record): string => ($record->coach_profile_approved_at || $record->athlete_profile_approved_at) ? 'Áno' : 'Nie')
                     ->badge()
                     ->color(fn (string $state): string => $state === 'Áno' ? 'success' : 'gray'),
             ])
@@ -122,9 +117,6 @@ class ProfileApprovals extends Page implements HasTable
                         }
                         if ($record->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
                             $service->approveDraft($record->athleteProfile, $record);
-                        }
-                        if ($record->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
-                            $service->approveDraft($record->judgeProfile, $record);
                         }
 
                         Notification::make()
@@ -151,9 +143,6 @@ class ProfileApprovals extends Page implements HasTable
                         if ($record->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
                             $service->rejectDraft($record->athleteProfile, $data['reason']);
                         }
-                        if ($record->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
-                            $service->rejectDraft($record->judgeProfile, $data['reason']);
-                        }
 
                         Notification::make()
                             ->warning()
@@ -172,7 +161,7 @@ class ProfileApprovals extends Page implements HasTable
         $currentUser = auth()->user();
 
         $query = User::query()
-            ->with(['coachProfile', 'athleteProfile', 'judgeProfile'])
+            ->with(['coachProfile', 'athleteProfile'])
             ->where(function (Builder $q) {
                 $q->whereHas('coachProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
                     ->orWhereHas('athleteProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))

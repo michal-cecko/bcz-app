@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use App\Contracts\Linkable;
 use App\Models\Event;
+use App\Models\Judge;
 use App\Models\MediaItem;
 use App\Models\Page;
 use App\Models\Team;
@@ -51,7 +52,8 @@ enum LinkTypeEnum: string
             self::Competition => Event::class,
             self::Event => Event::class,
             self::Team => Team::class,
-            self::Coach, self::Athlete, self::Judge => User::class,
+            self::Coach, self::Athlete => User::class,
+            self::Judge => Judge::class,
             self::Media => MediaItem::class,
             self::Custom => null,
         };
@@ -65,7 +67,6 @@ enum LinkTypeEnum: string
         return match ($this) {
             self::Coach => RoleEnum::COACH->value,
             self::Athlete => RoleEnum::ATHLETE->value,
-            self::Judge => RoleEnum::JUDGE->value,
             default => null,
         };
     }

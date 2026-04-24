@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
-use App\Enums\RoleEnum;
+use App\Models\Judge;
 use App\Models\Setting;
 use App\Models\SportCategory;
-use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -45,16 +44,16 @@ class JudgesArchive extends Component
 
     public function render(): View
     {
-        $locale = app()->getLocale();
         $teamId = Setting::get('default_team_id');
 
-        $query = User::role(RoleEnum::JUDGE)
-            ->whereNotNull('judge_profile_approved_at')
-            ->whereHas('teams', fn ($q) => $q->where('teams.id', $teamId))
-            ->with(['certifications', 'judgeProfile', 'judgedCompetitionDetails']);
+        $query = Judge::query()
+            ->with(['certifications', 'judgedCompetitionDetails', 'media']);
 
         if ($this->categoryFilter) {
-            $query->whereHas('judgedCompetitions.disciplines', fn ($q) => $q->where('sport_category_id', $this->categoryFilter));
+            $query->whereHas(
+                'judgedCompetitionDetails.disciplines',
+                fn ($q) => $q->where('sport_category_id', $this->categoryFilter),
+            );
         }
 
         if ($this->search) {

@@ -40,7 +40,7 @@ class CompetitionDetail extends Model
 
     public function judges(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'competition_judges')
+        return $this->belongsToMany(Judge::class, 'competition_judges')
             ->withPivot('discipline_id');
     }
 

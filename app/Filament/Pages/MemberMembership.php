@@ -3,6 +3,9 @@
 namespace App\Filament\Pages;
 
 use App\Enums\MembershipStatusEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\RoleEnum;
+use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Membership;
 use App\Services\PaymentService;
 use Filament\Facades\Filament;
@@ -20,6 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 
 class MemberMembership extends Page implements HasTable
@@ -35,6 +39,10 @@ class MemberMembership extends Page implements HasTable
     protected static ?int $navigationSort = 4;
 
     public string $paymentMethod = '';
+
+    public bool $showContinuousDisableModal = false;
+
+    public bool $cancelPendingOnDisable = true;
 
     public static function getNavigationLabel(): string
     {
@@ -124,11 +132,168 @@ class MemberMembership extends Page implements HasTable
             ->first();
     }
 
+    #[Computed]
+    public function continuousMembershipEnabled(): bool
+    {
+        $team = Filament::getTenant();
+        if (! $team) {
+            return false;
+        }
+
+        $pivot = auth()->user()?->teams()
+            ->where('teams.id', $team->id)
+            ->wherePivot('role', RoleEnum::ATHLETE->value)
+            ->first()?->pivot;
+
+        return (bool) ($pivot?->continuous_membership ?? false);
+    }
+
+    #[Computed]
+    public function continuousMembershipLocked(): bool
+    {
+        $team = Filament::getTenant();
+        if (! $team) {
+            return false;
+        }
+
+        return auth()->user()?->trainingRegistrations()
+            ->whereHas('training', fn ($q) => $q
+                ->where('team_id', $team->id)
+                ->where('pricing_type', TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED)
+                ->where('is_active', true)
+                ->current()
+            )
+            ->exists() ?? false;
+    }
+
+    /**
+     * Pending memberships for this user on the current team (not yet paid, not cancelled).
+     *
+     * @return Collection<int, Membership>
+     */
+    #[Computed]
+    public function pendingMembershipsForDisable(): Collection
+    {
+        $team = Filament::getTenant();
+        if (! $team) {
+            return collect();
+        }
+
+        return Membership::query()
+            ->where('team_id', $team->id)
+            ->where('user_id', auth()->id())
+            ->where('status', MembershipStatusEnum::PENDING)
+            ->with('season')
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    public function requestDisableContinuousMembership(): void
+    {
+        if ($this->continuousMembershipLocked) {
+            return;
+        }
+
+        $this->cancelPendingOnDisable = true;
+        $this->showContinuousDisableModal = true;
+    }
+
+    public function cancelDisableContinuousMembership(): void
+    {
+        $this->showContinuousDisableModal = false;
+    }
+
+    public function enableContinuousMembership(): void
+    {
+        $this->applyContinuousMembership(true);
+    }
+
+    public function confirmDisableContinuousMembership(): void
+    {
+        if ($this->continuousMembershipLocked) {
+            $this->showContinuousDisableModal = false;
+
+            return;
+        }
+
+        $cancelPending = $this->cancelPendingOnDisable;
+        $pending = $cancelPending ? $this->pendingMembershipsForDisable : collect();
+
+        $this->applyContinuousMembership(false);
+
+        if ($cancelPending && $pending->isNotEmpty()) {
+            foreach ($pending as $membership) {
+                $membership->update(['status' => MembershipStatusEnum::CANCELLED]);
+                $membership->payments()
+                    ->where('status', PaymentStatusEnum::PENDING)
+                    ->update(['status' => PaymentStatusEnum::CANCELLED->value]);
+            }
+
+            unset($this->pendingMembershipsForDisable);
+            unset($this->currentMembership);
+
+            Notification::make()
+                ->title(__('member.membership.continuous_pending_cancelled_notification', ['count' => $pending->count()]))
+                ->success()
+                ->send();
+        }
+
+        $this->showContinuousDisableModal = false;
+    }
+
+    protected function applyContinuousMembership(bool $newValue): void
+    {
+        $team = Filament::getTenant();
+        if (! $team) {
+            return;
+        }
+
+        $user = auth()->user();
+
+        $hasPivot = $user->teams()
+            ->where('teams.id', $team->id)
+            ->wherePivot('role', RoleEnum::ATHLETE->value)
+            ->exists();
+
+        if ($hasPivot) {
+            $user->teams()->updateExistingPivot($team->id, [
+                'continuous_membership' => $newValue,
+            ]);
+        } else {
+            $user->teams()->attach($team->id, [
+                'role' => RoleEnum::ATHLETE->value,
+                'is_active' => true,
+                'joined_at' => now(),
+                'continuous_membership' => $newValue,
+            ]);
+        }
+
+        unset($this->continuousMembershipEnabled);
+
+        Notification::make()
+            ->title($newValue
+                ? __('member.membership.continuous_enabled_notification')
+                : __('member.membership.continuous_disabled_notification'))
+            ->success()
+            ->send();
+    }
+
     public function content(Schema $schema): Schema
     {
         $membership = $this->currentMembership;
+        $continuousEnabled = $this->continuousMembershipEnabled;
+        $continuousLocked = $this->continuousMembershipLocked;
 
         $components = [];
+
+        $components[] = View::make('filament.components.continuous-membership-toggle')
+            ->viewData([
+                'enabled' => $continuousEnabled,
+                'locked' => $continuousLocked,
+                'showContinuousDisableModal' => $this->showContinuousDisableModal,
+                'pendingMemberships' => $this->pendingMembershipsForDisable,
+                'cancelPendingOnDisable' => $this->cancelPendingOnDisable,
+            ]);
 
         if ($membership) {
             $components[] = $this->buildCurrentMembershipSection($membership);

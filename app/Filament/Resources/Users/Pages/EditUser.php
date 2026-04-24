@@ -7,7 +7,6 @@ use App\Enums\RoleEnum;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
-use App\Models\JudgeProfile;
 use App\Models\User;
 use App\Notifications\WelcomeToApp;
 use App\Services\ProfileDraftService;
@@ -60,10 +59,6 @@ class EditUser extends EditRecord
                         $service->approveDraft($user->athleteProfile, $user);
                         $approved[] = 'športovca';
                     }
-                    if ($user->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
-                        $service->approveDraft($user->judgeProfile, $user);
-                        $approved[] = 'porotcu';
-                    }
 
                     Notification::make()
                         ->success()
@@ -73,7 +68,6 @@ class EditUser extends EditRecord
                 ->visible(fn () => $canManageProfiles && (
                     $user->fresh()->coachProfile?->draft_status === DraftStatusEnum::Pending
                     || $user->fresh()->athleteProfile?->draft_status === DraftStatusEnum::Pending
-                    || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
                 )),
             // Reject pending profiles
             Action::make('rejectProfiles')
@@ -95,9 +89,6 @@ class EditUser extends EditRecord
                     if ($user->athleteProfile?->draft_status === DraftStatusEnum::Pending) {
                         $service->rejectDraft($user->athleteProfile, $data['reason']);
                     }
-                    if ($user->judgeProfile?->draft_status === DraftStatusEnum::Pending) {
-                        $service->rejectDraft($user->judgeProfile, $data['reason']);
-                    }
 
                     Notification::make()
                         ->warning()
@@ -107,7 +98,6 @@ class EditUser extends EditRecord
                 ->visible(fn () => $canManageProfiles && (
                     $user->fresh()->coachProfile?->draft_status === DraftStatusEnum::Pending
                     || $user->fresh()->athleteProfile?->draft_status === DraftStatusEnum::Pending
-                    || $user->fresh()->judgeProfile?->draft_status === DraftStatusEnum::Pending
                 )),
             Action::make('sendLoginLink')
                 ->label('Odoslať pozvánku')
@@ -193,12 +183,11 @@ class EditUser extends EditRecord
 
         $this->submitProfileAsDraft($service, $record->coachProfile, $record);
         $this->submitProfileAsDraft($service, $record->athleteProfile, $record);
-        $this->submitProfileAsDraft($service, $record->judgeProfile, $record);
     }
 
     protected function submitProfileAsDraft(
         ProfileDraftService $service,
-        AthleteProfile|CoachProfile|JudgeProfile|null $profile,
+        AthleteProfile|CoachProfile|null $profile,
         User $user,
     ): void {
         if (! $profile) {
@@ -208,7 +197,6 @@ class EditUser extends EditRecord
         $mainFields = match (true) {
             $profile instanceof CoachProfile => ['biography', 'date_started_coaching'],
             $profile instanceof AthleteProfile => ['journey_text', 'date_started_working_out'],
-            $profile instanceof JudgeProfile => ['biography', 'disciplines', 'date_started_judging'],
         };
 
         $draftData = collect($mainFields)

@@ -17,6 +17,7 @@ class TeamUser extends Pivot
             'is_active' => 'boolean',
             'joined_at' => 'date',
             'role' => RoleEnum::class,
+            'continuous_membership' => 'boolean',
         ];
     }
 }

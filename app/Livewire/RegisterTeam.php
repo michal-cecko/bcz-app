@@ -269,6 +269,7 @@ class RegisterTeam extends Component
                 'role' => RoleEnum::ATHLETE->value,
                 'is_active' => true,
                 'joined_at' => now(),
+                'continuous_membership' => true,
             ]);
         }
 

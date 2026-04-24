@@ -106,7 +106,7 @@ class UserForm
                                         $component->state(array_values(array_unique(array_merge($globalRoleIds, $teamRoleIds))));
                                     })
                                     ->afterStateUpdated(function (Set $set, $state): void {
-                                        // Non-members (admin/editor/judge only) always get the free flag forced on.
+                                        // Non-members (admin/editor only) always get the free flag forced on.
                                         if (! self::hasMembershipEligibleRole($state ?? [])) {
                                             $set('has_free_membership', true);
                                         }
@@ -194,7 +194,6 @@ class UserForm
                     ->tabs([
                         self::buildRoleTab('coach'),
                         self::buildRoleTab('athlete'),
-                        self::buildRoleTab('judge'),
                     ])
                     ->persistTabInQueryString('profile-role'),
             ]);
@@ -215,14 +214,7 @@ class UserForm
                 'icon' => 'heroicon-o-trophy',
                 'approvalCol' => 'athlete_profile_approved_at',
                 'profileRel' => 'athleteProfile',
-                'visibleFn' => fn ($record) => $record && $record->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists() && ! $record->hasRole(RoleEnum::JUDGE->value),
-            ],
-            'judge' => [
-                'label' => 'Porotca',
-                'icon' => 'heroicon-o-scale',
-                'approvalCol' => 'judge_profile_approved_at',
-                'profileRel' => 'judgeProfile',
-                'visibleFn' => fn ($record) => $record && $record->hasRole(RoleEnum::JUDGE),
+                'visibleFn' => fn ($record) => $record && $record->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists(),
             ],
         };
 
@@ -288,7 +280,6 @@ class UserForm
         $profileConfig = match ($role) {
             'coach' => ['approvalCol' => 'coach_profile_approved_at', 'relation' => 'coachProfile', 'route' => 'coach.show'],
             'athlete' => ['approvalCol' => 'athlete_profile_approved_at', 'relation' => 'athleteProfile', 'route' => 'athlete.show'],
-            'judge' => ['approvalCol' => 'judge_profile_approved_at', 'relation' => 'judgeProfile', 'route' => 'judge.show'],
         };
 
         $profileLabel = $role === 'athlete' ? 'Môj príbeh' : 'Profil';
@@ -318,7 +309,7 @@ class UserForm
                 ]),
         ];
 
-        if (in_array($role, ['coach', 'judge'])) {
+        if ($role === 'coach') {
             $tabs[] = Tab::make('Certifikáty')
                 ->icon('heroicon-o-academic-cap')
                 ->schema([PublicProfileSchema::certificationsRepeater()->relationship()]);

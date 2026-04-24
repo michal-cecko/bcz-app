@@ -19,6 +19,8 @@ new class extends Component
 
     public bool $gdprAgreed = false;
 
+    public bool $continuousMembership = true;
+
     public string $registrationState = 'form';
 
     public ?string $selectedPaymentMethod = null;
@@ -203,6 +205,7 @@ new class extends Component
                             'role' => RoleEnum::ATHLETE->value,
                             'is_active' => true,
                             'joined_at' => now(),
+                            'continuous_membership' => $this->resolveContinuousMembership(),
                         ]);
                     }
                 }
@@ -210,6 +213,11 @@ new class extends Component
                 $user = null;
                 $isNewUser = false;
             }
+        }
+
+        // Set continuous_membership on pivot for every training registration (new or existing user)
+        if ($user) {
+            $this->setContinuousMembershipOnPivot($user);
         }
 
         $status = RegistrationService::determineRegistrationStatus($this->training, $user);
@@ -259,6 +267,52 @@ new class extends Component
     public function selectPaymentMethod(string $method): void
     {
         $this->selectedPaymentMethod = $method;
+    }
+
+    /**
+     * Resolve the continuous_membership pivot value for this training registration.
+     * Membership-required trainings always force it to true; paid/free respect the user's choice.
+     */
+    protected function resolveContinuousMembership(): bool
+    {
+        if ($this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
+            return true;
+        }
+
+        return $this->continuousMembership;
+    }
+
+    /**
+     * Promote the user's team_user pivot to continuous_membership = true when appropriate.
+     * Only flips false → true; never demotes an already-opted-in user from a single registration.
+     */
+    protected function setContinuousMembershipOnPivot(User $user): void
+    {
+        if (! $this->resolveContinuousMembership()) {
+            return;
+        }
+
+        $teamId = $this->training->team_id;
+
+        $pivotExists = $user->teams()
+            ->where('teams.id', $teamId)
+            ->wherePivot('role', RoleEnum::ATHLETE->value)
+            ->exists();
+
+        if ($pivotExists) {
+            $user->teams()->updateExistingPivot($teamId, [
+                'continuous_membership' => true,
+            ]);
+
+            return;
+        }
+
+        $user->teams()->attach($teamId, [
+            'role' => RoleEnum::ATHLETE->value,
+            'is_active' => true,
+            'joined_at' => now(),
+            'continuous_membership' => true,
+        ]);
     }
 
     protected function autoSelectPaymentMethod(): void
@@ -712,6 +766,21 @@ new class extends Component
             @endif
 
             <div class="h-px bg-[#222222]"></div>
+
+            @if($training->pricing_type !== \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED)
+                <div class="flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        wire:model="continuousMembership"
+                        id="continuousMembership"
+                        class="mt-1 w-4 h-4 rounded-none border-[#333333] bg-bcz-dark text-bcz-red focus:ring-bcz-red focus:ring-offset-0 shrink-0 cursor-pointer"
+                    >
+                    <label for="continuousMembership" class="text-[#888888] text-[13px] leading-[1.6] cursor-pointer">
+                        {{ __('training_detail.continuous_membership_label') }}
+                        <span class="block text-[#666666] text-[11px] mt-1">{{ __('training_detail.continuous_membership_help') }}</span>
+                    </label>
+                </div>
+            @endif
 
             <x-gdpr-checkbox />
 

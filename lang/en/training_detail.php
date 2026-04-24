@@ -50,6 +50,8 @@ return [
     'form_phone_placeholder' => '+421 XXX XXX XXX',
     'form_submit' => 'SUBMIT REGISTRATION',
     'form_submitting' => 'SUBMITTING...',
+    'continuous_membership_label' => 'Auto-renew membership',
+    'continuous_membership_help' => 'We will remind you to pay the membership fee before each new season starts. You can disable this anytime in your dashboard.',
     'form_consent' => 'By submitting you agree to the processing of personal data.',
     'form_success_title' => 'THANK YOU!',
     'form_success_message' => 'Your registration has been successfully submitted. We will contact you with a confirmation.',

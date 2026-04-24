@@ -1,24 +1,23 @@
 @extends('layouts.public')
 
-@section('title', $user->name . ' | BCZ Club')
+@section('title', $judge->name . ' | BCZ Club')
 
 @php
     $locale = app()->getLocale();
-    $judgeProfile = $user->judgeProfile;
-    $biography = $judgeProfile?->getTranslation('biography', $locale);
-    $heroImage = $judgeProfile?->getFirstMediaUrl('hero_image');
-    $disciplines = $judgeProfile?->disciplines ?? [];
-    $certifications = $user->certifications->sortBy('sort_order');
-    $competitions = $user->judgedCompetitionDetails ?? collect();
-    $gallery = $judgeProfile?->getMedia('gallery') ?? collect();
-    $yearsJudging = $judgeProfile?->date_started_judging ? (int) $judgeProfile->date_started_judging->diffInYears(now()) : null;
+    $biography = $judge->getTranslation('biography', $locale);
+    $heroImage = $judge->getFirstMediaUrl('hero_image');
+    $disciplines = $judge->disciplines ?? [];
+    $certifications = $judge->certifications->sortBy('sort_order');
+    $competitions = $judge->judgedCompetitionDetails ?? collect();
+    $gallery = $judge->getMedia('gallery');
+    $yearsJudging = $judge->date_started_judging ? (int) $judge->date_started_judging->diffInYears(now()) : null;
 @endphp
 
 @section('content')
     {{-- Hero Section --}}
     <section class="relative h-[500px] overflow-hidden">
         @if($heroImage)
-            <img src="{{ $heroImage }}" alt="{{ $user->name }}" class="absolute inset-0 w-full h-full object-cover">
+            <img src="{{ $heroImage }}" alt="{{ $judge->name }}" class="absolute inset-0 w-full h-full object-cover">
         @else
             <div class="absolute inset-0 bg-[#1A1A1A]"></div>
         @endif
@@ -31,20 +30,16 @@
                 <span class="text-[#666666] text-[11px]">></span>
                 <a href="{{ route('judges.index') }}" class="text-[#888888] text-[11px] font-medium tracking-[2px] hover:text-white transition-colors">ROZHODCOVIA</a>
                 <span class="text-[#666666] text-[11px]">></span>
-                <span class="text-bcz-red text-[11px] font-medium tracking-[2px]">{{ mb_strtoupper($user->name) }}</span>
+                <span class="text-bcz-red text-[11px] font-medium tracking-[2px]">{{ mb_strtoupper($judge->name) }}</span>
             </div>
 
             {{-- Name --}}
-            <h1 class="font-display font-bold text-[64px] tracking-[1px] leading-none">{{ mb_strtoupper($user->name) }}</h1>
+            <h1 class="font-display font-bold text-[64px] tracking-[1px] leading-none">{{ mb_strtoupper($judge->name) }}</h1>
 
-            {{-- Subtitle: country + role + disciplines --}}
+            {{-- Subtitle: role + disciplines --}}
             <p class="text-bcz-red text-base font-medium tracking-[2px]">
                 @php
-                    $parts = [];
-                    if ($user->country_code) {
-                        $parts[] = $user->country_code;
-                    }
-                    $parts[] = __('Porotca');
+                    $parts = [__('Porotca')];
                     if (! empty($disciplines)) {
                         $parts[] = implode(' & ', array_map('ucfirst', $disciplines));
                     }
@@ -100,12 +95,6 @@
                     <span class="text-[#888888] text-sm">{{ __('Súťaže') }}</span>
                     <span class="text-white text-sm">{{ $competitions->count() }} {{ __('hodnotených') }}</span>
                 </div>
-                @if($user->country_code)
-                    <div class="flex justify-between items-center py-4 px-5">
-                        <span class="text-[#888888] text-sm">{{ __('Krajina') }}</span>
-                        <span class="text-white text-sm">{{ $user->country_code }}</span>
-                    </div>
-                @endif
             </div>
         </div>
     </section>
@@ -186,5 +175,5 @@
     @endif
 
     {{-- Other Judges --}}
-    <x-other-profiles :user="$user" role="judge" :locale="$locale" />
+    <x-other-profiles :judge="$judge" role="judge" :locale="$locale" />
 @endsection

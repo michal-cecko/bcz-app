@@ -99,7 +99,7 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     {
         return $this->belongsToMany(User::class)
             ->using(TeamUser::class)
-            ->withPivot('role', 'is_active', 'joined_at')
+            ->withPivot('role', 'is_active', 'joined_at', 'continuous_membership')
             ->withTimestamps();
     }
 
