@@ -12,12 +12,13 @@ class PaymentMethod extends Model
     use HasTranslations;
 
     /** @var list<string> */
-    public array $translatable = ['title', 'description'];
+    public array $translatable = ['title', 'description', 'instructions'];
 
     protected $fillable = [
         'method',
         'title',
         'description',
+        'instructions',
         'icon',
         'is_active',
         'sort_order',

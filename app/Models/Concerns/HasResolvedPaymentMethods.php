@@ -47,7 +47,8 @@ trait HasResolvedPaymentMethods
      * Resolve instructions for a method with cascade:
      * 1. per-payable pivot (payable_payment_method.instructions)
      * 2. team pivot (payment_method_team.instructions)
-     * 3. null — caller falls back to localized defaults
+     * 3. default PaymentMethod.instructions (seeded fallback)
+     * 4. null — caller falls back to localized defaults
      */
     public function effectivePaymentMethodInstructions(string $methodKey, ?string $locale = null): ?string
     {
@@ -68,6 +69,12 @@ trait HasResolvedPaymentMethods
             );
 
         $instructions = $teamMethod?->pivot?->getTranslation('instructions', $locale, false);
+        if (filled($instructions) && trim(strip_tags($instructions)) !== '') {
+            return $instructions;
+        }
+
+        $default = $teamMethod ?? PaymentMethod::query()->where('method', $methodKey)->first();
+        $instructions = $default?->getTranslation('instructions', $locale, false);
         if (filled($instructions) && trim(strip_tags($instructions)) !== '') {
             return $instructions;
         }

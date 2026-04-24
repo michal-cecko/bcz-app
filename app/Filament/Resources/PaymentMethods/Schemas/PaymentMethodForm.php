@@ -39,6 +39,11 @@ class PaymentMethodForm
                                     ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
                                     ->placeholder('Popis platobnej metódy zobrazený zákazníkovi...')
                                     ->columnSpanFull(),
+                                RichEditor::make('instructions.sk')
+                                    ->label('Inštrukcie (SK)')
+                                    ->helperText('Zobrazia sa zákazníkovi, ak tím nemá vlastné inštrukcie.')
+                                    ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('EN')
                             ->schema([
@@ -48,6 +53,10 @@ class PaymentMethodForm
                                     ->label('Popis (EN)')
                                     ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
                                     ->columnSpanFull(),
+                                RichEditor::make('instructions.en')
+                                    ->label('Instructions (EN)')
+                                    ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('CZ')
                             ->schema([
@@ -55,6 +64,10 @@ class PaymentMethodForm
                                     ->label('Názov (CZ)'),
                                 RichEditor::make('description.cs')
                                     ->label('Popis (CZ)')
+                                    ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                    ->columnSpanFull(),
+                                RichEditor::make('instructions.cs')
+                                    ->label('Instrukce (CZ)')
                                     ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
                                     ->columnSpanFull(),
                             ]),
