@@ -4,66 +4,96 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\RoleEnum;
 use App\Models\ExerciseCategory;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class ExerciseCategoryPolicy
 {
     use HandlesAuthorization;
 
-    public function viewAny(AuthUser $authUser): bool
+    protected function isGlobalAdmin(User $user): bool
     {
-        return $authUser->can('ViewAny:ExerciseCategory');
+        return $user->hasRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN, RoleEnum::EDITOR]);
     }
 
-    public function view(AuthUser $authUser, ExerciseCategory $exerciseCategory): bool
+    protected function isCoachOrTeamAdminOf(User $user, ?string $teamId): bool
     {
-        return $authUser->can('View:ExerciseCategory');
+        if (! $teamId) {
+            return false;
+        }
+
+        return $user->teams()
+            ->where('teams.id', $teamId)
+            ->wherePivotIn('role', [RoleEnum::TEAM_ADMIN->value, RoleEnum::COACH->value])
+            ->exists();
     }
 
-    public function create(AuthUser $authUser): bool
+    public function viewAny(User $user): bool
     {
-        return $authUser->can('Create:ExerciseCategory');
+        return $user->can('ViewAny:ExerciseCategory');
     }
 
-    public function update(AuthUser $authUser, ExerciseCategory $exerciseCategory): bool
+    public function view(User $user, ExerciseCategory $exerciseCategory): bool
     {
-        return $authUser->can('Update:ExerciseCategory');
+        return $user->can('View:ExerciseCategory');
     }
 
-    public function delete(AuthUser $authUser, ExerciseCategory $exerciseCategory): bool
+    public function create(User $user): bool
     {
-        return $authUser->can('Delete:ExerciseCategory');
+        return $user->can('Create:ExerciseCategory');
     }
 
-    public function restore(AuthUser $authUser, ExerciseCategory $exerciseCategory): bool
+    public function update(User $user, ExerciseCategory $exerciseCategory): bool
     {
-        return $authUser->can('Restore:ExerciseCategory');
+        if (! $user->can('Update:ExerciseCategory')) {
+            return false;
+        }
+
+        return $this->isGlobalAdmin($user) || $this->isCoachOrTeamAdminOf($user, $exerciseCategory->team_id);
     }
 
-    public function forceDelete(AuthUser $authUser, ExerciseCategory $exerciseCategory): bool
+    public function delete(User $user, ExerciseCategory $exerciseCategory): bool
     {
-        return $authUser->can('ForceDelete:ExerciseCategory');
+        if (! $user->can('Delete:ExerciseCategory')) {
+            return false;
+        }
+
+        return $this->isGlobalAdmin($user) || $this->isCoachOrTeamAdminOf($user, $exerciseCategory->team_id);
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function restore(User $user, ExerciseCategory $exerciseCategory): bool
     {
-        return $authUser->can('ForceDeleteAny:ExerciseCategory');
+        return $user->can('Restore:ExerciseCategory') && $this->isGlobalAdmin($user);
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function forceDelete(User $user, ExerciseCategory $exerciseCategory): bool
     {
-        return $authUser->can('RestoreAny:ExerciseCategory');
+        return $user->can('ForceDelete:ExerciseCategory') && $this->isGlobalAdmin($user);
     }
 
-    public function replicate(AuthUser $authUser, ExerciseCategory $exerciseCategory): bool
+    public function forceDeleteAny(User $user): bool
     {
-        return $authUser->can('Replicate:ExerciseCategory');
+        return $user->can('ForceDeleteAny:ExerciseCategory') && $this->isGlobalAdmin($user);
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function restoreAny(User $user): bool
     {
-        return $authUser->can('Reorder:ExerciseCategory');
+        return $user->can('RestoreAny:ExerciseCategory') && $this->isGlobalAdmin($user);
+    }
+
+    public function replicate(User $user, ExerciseCategory $exerciseCategory): bool
+    {
+        if (! $user->can('Replicate:ExerciseCategory')) {
+            return false;
+        }
+
+        return $this->isGlobalAdmin($user) || $this->isCoachOrTeamAdminOf($user, $exerciseCategory->team_id);
+    }
+
+    public function reorder(User $user): bool
+    {
+        return $user->can('Reorder:ExerciseCategory');
     }
 }

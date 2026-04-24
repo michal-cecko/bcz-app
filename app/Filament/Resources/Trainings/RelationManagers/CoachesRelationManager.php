@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Trainings\RelationManagers;
 
 use App\Enums\CoachRoleEnum;
+use App\Enums\RoleEnum;
+use App\Models\Training;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DetachAction;
@@ -69,7 +71,19 @@ class CoachesRelationManager extends RelationManager
                     ->schema([
                         Select::make('user_id')
                             ->label('Tréner')
-                            ->options(fn () => User::orderBy('name')->pluck('name', 'id'))
+                            ->options(function (): array {
+                                /** @var Training $training */
+                                $training = $this->getOwnerRecord();
+
+                                return User::query()
+                                    ->whereHas('teams', fn ($q) => $q
+                                        ->where('teams.id', $training->team_id)
+                                        ->wherePivotIn('role', [RoleEnum::TEAM_ADMIN->value, RoleEnum::COACH->value])
+                                    )
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->all();
+                            })
                             ->searchable()
                             ->required(),
                         Select::make('role')

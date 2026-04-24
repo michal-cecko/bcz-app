@@ -212,7 +212,7 @@ class ShieldPermissionSeeder extends Seeder
             $this->viewPermissions('AthleteCategory'),
             // Ostatne
             $this->viewPermissions('EmailTemplate'),
-            $this->fullPermissions('MediaItem'),
+            $this->viewPermissions('MediaItem'),
             $this->viewPermissions('Inquiry'),
         );
     }
