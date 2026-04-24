@@ -45,6 +45,7 @@ class MembershipRenewalReminderTest extends TestCase
         $member->teams()->attach($this->team, [
             'role' => RoleEnum::ATHLETE->value,
             'is_active' => true,
+            'continuous_membership' => true,
         ]);
 
         $this->artisan('memberships:send-renewal-reminders')
@@ -70,6 +71,7 @@ class MembershipRenewalReminderTest extends TestCase
         $member->teams()->attach($this->team, [
             'role' => RoleEnum::ATHLETE->value,
             'is_active' => true,
+            'continuous_membership' => true,
         ]);
 
         Membership::create([

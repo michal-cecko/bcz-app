@@ -230,6 +230,5 @@ return [
     ProfileTypeEnum::class => [
         ProfileTypeEnum::Coach->value => 'Tréner',
         ProfileTypeEnum::Athlete->value => 'Športovec',
-        ProfileTypeEnum::Judge->value => 'Porotca',
     ],
 ];

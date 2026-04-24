@@ -15,26 +15,27 @@ return new class extends Migration
 
         // Backfill: any pivot row whose user has a Membership on that team
         DB::statement('
-            UPDATE team_user tu
+            UPDATE team_user
             SET continuous_membership = true
             WHERE EXISTS (
-                SELECT 1 FROM memberships m
-                WHERE m.user_id = tu.user_id AND m.team_id = tu.team_id
+                SELECT 1 FROM memberships
+                WHERE memberships.user_id = team_user.user_id
+                  AND memberships.team_id = team_user.team_id
             )
         ');
 
         // Backfill: any pivot row whose user has a TrainingRegistration for a
         // MEMBERSHIP_REQUIRED training on that team
         DB::statement("
-            UPDATE team_user tu
+            UPDATE team_user
             SET continuous_membership = true
             WHERE EXISTS (
                 SELECT 1
-                FROM training_registrations tr
-                INNER JOIN trainings t ON t.id = tr.training_id
-                WHERE tr.user_id = tu.user_id
-                  AND t.team_id = tu.team_id
-                  AND t.pricing_type = 'membership_required'
+                FROM training_registrations
+                INNER JOIN trainings ON trainings.id = training_registrations.training_id
+                WHERE training_registrations.user_id = team_user.user_id
+                  AND trainings.team_id = team_user.team_id
+                  AND trainings.pricing_type = 'membership_required'
             )
         ");
     }

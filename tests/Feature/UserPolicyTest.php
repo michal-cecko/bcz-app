@@ -76,13 +76,6 @@ class UserPolicyTest extends TestCase
         $this->assertTrue((new UserPolicy)->viewAny($athlete));
     }
 
-    public function test_judge_cannot_view_any_users(): void
-    {
-        $judge = $this->createUserWithRole(RoleEnum::JUDGE);
-
-        $this->assertFalse((new UserPolicy)->viewAny($judge));
-    }
-
     public function test_athlete_can_only_view_other_athletes(): void
     {
         $athlete = $this->createUserWithRole(RoleEnum::ATHLETE);

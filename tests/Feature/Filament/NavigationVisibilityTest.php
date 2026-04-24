@@ -92,10 +92,10 @@ class NavigationVisibilityTest extends TestCase
         $this->assertTrue(ContentCluster::shouldRegisterNavigation());
     }
 
-    public function test_inquiry_resource_visible_for_member(): void
+    public function test_inquiry_resource_hidden_from_member(): void
     {
         $this->actingAsMember();
 
-        $this->assertTrue(InquiryResource::shouldRegisterNavigation());
+        $this->assertFalse(InquiryResource::shouldRegisterNavigation());
     }
 }
