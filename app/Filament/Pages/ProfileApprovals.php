@@ -164,8 +164,7 @@ class ProfileApprovals extends Page implements HasTable
             ->with(['coachProfile', 'athleteProfile'])
             ->where(function (Builder $q) {
                 $q->whereHas('coachProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
-                    ->orWhereHas('athleteProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending))
-                    ->orWhereHas('judgeProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending));
+                    ->orWhereHas('athleteProfile', fn (Builder $q) => $q->where('draft_status', DraftStatusEnum::Pending));
             });
 
         // TEAM_ADMIN can only see their team's members (not judges)
