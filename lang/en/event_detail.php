@@ -170,6 +170,8 @@ return [
     'capacity_full_message' => 'Registration for this event is no longer possible. The capacity has been reached.',
     'registration_closed_title' => 'Registration Closed',
     'registration_not_yet_open_title' => 'Registration Not Yet Open',
+    'registration_not_eligible_title' => 'Registration Unavailable',
+    'registration_not_eligible_message' => 'As an administrator or coach you cannot register for events. Registration is for athletes and customers.',
     'payment_success_title' => 'Payment Successful',
     'payment_success_message' => 'Your payment has been accepted. We have sent a confirmation to your email.',
     'payment_needed_title' => 'Complete Payment',

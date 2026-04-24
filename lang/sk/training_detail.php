@@ -60,6 +60,8 @@ return [
     'registration_not_yet_open' => 'Registrácie ešte nie sú otvorené',
     'registration_closed' => 'Registrácie sú zatvorené',
     'registration_opens_at' => 'Registrácia sa otvorí :date',
+    'registration_not_eligible_title' => 'Registrácia nie je dostupná',
+    'registration_not_eligible_message' => 'Ako administrátor alebo tréner sa nemôžeš registrovať na tréningy. Registrácia je určená pre atlétov a zákazníkov.',
 
     'already_registered_title' => 'Už si zaregistrovaný',
     'already_registered_message' => 'Na tento tréning si sa už zaregistroval. Vidíme sa!',

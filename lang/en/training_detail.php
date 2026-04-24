@@ -60,6 +60,8 @@ return [
     'registration_not_yet_open' => 'Registrations are not yet open',
     'registration_closed' => 'Registrations are closed',
     'registration_opens_at' => 'Registration opens on :date',
+    'registration_not_eligible_title' => 'Registration Unavailable',
+    'registration_not_eligible_message' => 'As an administrator or coach you cannot register for trainings. Registration is for athletes and customers.',
 
     'already_registered_title' => 'Already registered',
     'already_registered_message' => 'You are already registered for this training.',

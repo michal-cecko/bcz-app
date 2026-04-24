@@ -60,6 +60,8 @@ return [
     'registration_not_yet_open' => 'Registrace ještě nejsou otevřené',
     'registration_closed' => 'Registrace jsou uzavřené',
     'registration_opens_at' => 'Registrace se otevře :date',
+    'registration_not_eligible_title' => 'Registrace není dostupná',
+    'registration_not_eligible_message' => 'Jako administrátor nebo trenér se nemůžeš registrovat na tréninky. Registrace je určena pro atlety a zákazníky.',
 
     'already_registered_title' => 'Už jsi registrovaný',
     'already_registered_message' => 'Už jsi registrovaný na tento trénink.',

@@ -170,6 +170,8 @@ return [
     'capacity_full_message' => 'Na tuto událost se již není možné zaregistrovat. Kapacita byla naplněna.',
     'registration_closed_title' => 'Registrace uzavřena',
     'registration_not_yet_open_title' => 'Registrace ještě není otevřena',
+    'registration_not_eligible_title' => 'Registrace není dostupná',
+    'registration_not_eligible_message' => 'Jako administrátor nebo trenér se nemůžeš registrovat na akce. Registrace je určena pro atlety a zákazníky.',
     'payment_success_title' => 'Platba úspěšná',
     'payment_success_message' => 'Vaše platba byla úspěšně přijata. Potvrzení jsme vám odeslali na e-mail.',
     'payment_needed_title' => 'Dokončete platbu',

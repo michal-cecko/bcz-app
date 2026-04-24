@@ -46,8 +46,15 @@ new class extends Component
             return;
         }
 
-        // Check if already registered (logged-in users)
+        // Admin-level users (admin/editor/team_admin/coach) cannot register — read-only view
         $user = auth()->user();
+        if ($user && ! $user->isMemberLevel()) {
+            $this->registrationState = 'not_eligible';
+
+            return;
+        }
+
+        // Check if already registered (logged-in users)
         if ($user) {
             $registration = EventRegistration::where('event_id', $this->event->id)
                 ->where('user_id', $user->id)
@@ -115,6 +122,13 @@ new class extends Component
 
     public function submit(): void
     {
+        $authCheck = auth()->user();
+        if ($authCheck && ! $authCheck->isMemberLevel()) {
+            $this->registrationState = 'not_eligible';
+
+            return;
+        }
+
         $org = $this->event->organization;
         $schema = $org->registration_form_schema ?? [];
         $rules = [];
@@ -387,7 +401,16 @@ new class extends Component
 @endphp
 
 <div>
-    @if($registrationState === 'registration_closed')
+    @if($registrationState === 'not_eligible')
+        <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-4 text-center">
+            <svg class="w-12 h-12 text-[#555555]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <h3 class="font-display font-bold text-2xl tracking-wide text-white">{{ __('event_detail.registration_not_eligible_title') }}</h3>
+            <p class="text-[#888888] text-base max-w-md">{{ __('event_detail.registration_not_eligible_message') }}</p>
+        </div>
+
+    @elseif($registrationState === 'registration_closed')
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-4 text-center">
             <svg class="w-12 h-12 text-[#555555]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
