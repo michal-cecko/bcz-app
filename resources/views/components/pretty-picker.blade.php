@@ -18,9 +18,9 @@
         placeholder: @js($placeholder),
         searchPlaceholder: @js(__('archive.search')),
         emptyLabel: @js(match (app()->getLocale()) { 'cs' => 'Nic nenalezeno', 'en' => 'No results', default => 'Nič nenájdené' }),
+        statePath: @js($wireModel),
+        initialValue: $wire.get(@js($wireModel)),
     })"
-    x-modelable="value"
-    wire:model.live="{{ $wireModel }}"
     class="relative"
     @keydown.escape.prevent.stop="close()"
     @click.outside="close()"
@@ -45,12 +45,12 @@
         {{-- Multi-select chips --}}
         <template x-if="multiple && selected.length > 0">
             <div class="flex items-center gap-1.5 flex-wrap">
-                <template x-for="value in selected" :key="value">
+                <template x-for="chipValue in selected" :key="chipValue">
                     <span class="inline-flex items-center gap-1.5 bg-[#1A1A1A] border border-[#333333] rounded-md pl-2 pr-1 py-0.5 text-[12px] text-white">
-                        <span x-text="labelFor(value)"></span>
+                        <span x-text="labelFor(chipValue)"></span>
                         <button
                             type="button"
-                            @click.stop="remove(value)"
+                            @click.stop="remove(chipValue)"
                             class="hover:bg-[#2A2A2A] rounded p-0.5 transition-colors text-[#888888] hover:text-white"
                             aria-label="Remove"
                         >
@@ -104,28 +104,28 @@
                     x-model="search"
                     x-ref="searchInput"
                     :placeholder="searchPlaceholder"
-                    class="bg-[#0F0F0F] border border-[#222222] rounded-md h-[36px] pl-8 pr-3 text-white text-[13px] focus:border-bcz-red focus:ring-0 outline-none w-full placeholder-[#555555]"
+                    class="bg-[#0F0F0F] border border-[#222222] rounded-md h-[36px] pl-8 pr-3 text-white text-[13px] focus-visible:border-bcz-red focus:ring-0 outline-none w-full placeholder-[#555555]"
                 >
             </div>
         </div>
 
         {{-- Options list --}}
         <ul class="max-h-64 overflow-y-auto py-1" role="listbox">
-            <template x-for="(label, value) in filteredOptions()" :key="value">
+            <template x-for="(label, optionValue) in filteredOptions()" :key="optionValue">
                 <li role="option">
                     <button
                         type="button"
-                        @click="select(value)"
-                        :class="isSelected(value) ? 'bg-[#1A1A1A] text-white' : 'text-[#CCCCCC] hover:bg-[#141414] hover:text-white'"
+                        @click="select(optionValue)"
+                        :class="isSelected(optionValue) ? 'bg-[#1A1A1A] text-white' : 'text-[#CCCCCC] hover:bg-[#141414] hover:text-white'"
                         class="flex items-center gap-2 w-full px-3 py-2 text-left text-[13px] transition-colors"
                     >
                         {{-- Multi-select checkbox --}}
                         <template x-if="multiple">
                             <span
-                                :class="isSelected(value) ? 'bg-bcz-red border-bcz-red' : 'border-[#333333]'"
+                                :class="isSelected(optionValue) ? 'bg-bcz-red border-bcz-red' : 'border-[#333333]'"
                                 class="w-4 h-4 border rounded flex items-center justify-center shrink-0 transition-colors"
                             >
-                                <svg x-show="isSelected(value)" class="w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <svg x-show="isSelected(optionValue)" class="w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
                                 </svg>
                             </span>
@@ -134,7 +134,7 @@
                         {{-- Single-select check on right when active --}}
                         <span x-text="label" class="flex-1"></span>
 
-                        <template x-if="!multiple && isSelected(value)">
+                        <template x-if="!multiple && isSelected(optionValue)">
                             <svg class="w-4 h-4 text-bcz-red shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
                             </svg>

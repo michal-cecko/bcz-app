@@ -39,13 +39,18 @@
         @php
             $minYear = 1900;
             $maxYear = (int) date('Y');
+            $yearOptions = [];
+            for ($y = $maxYear; $y >= $minYear; $y--) {
+                $yearOptions[(string) $y] = (string) $y;
+            }
         @endphp
-        <select wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
-            <option value="">{{ $placeholder ?: 'YYYY' }}</option>
-            @for($y = $maxYear; $y >= $minYear; $y--)
-                <option value="{{ $y }}">{{ $y }}</option>
-            @endfor
-        </select>
+        <x-pretty-picker
+            :wire-model="$wireModel"
+            :options="$yearOptions"
+            :placeholder="$placeholder ?: 'YYYY'"
+            :is-required="$isRequired"
+            :multiple="false"
+        />
         @break
     @case('number_input')
         <input type="number" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" @if($isRequired) required @endif class="{{ $inputClass }}">
@@ -91,11 +96,19 @@
         >
         @break
     @case('gender')
-        <select wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
-            <option value="">{{ $placeholder ?: '---' }}</option>
-            <option value="male">{{ __('enums.' . \App\Enums\GenderEnum::class . '.male') }}</option>
-            <option value="female">{{ __('enums.' . \App\Enums\GenderEnum::class . '.female') }}</option>
-        </select>
+        @php
+            $genderOptions = [
+                'male' => __('enums.'.\App\Enums\GenderEnum::class.'.male'),
+                'female' => __('enums.'.\App\Enums\GenderEnum::class.'.female'),
+            ];
+        @endphp
+        <x-pretty-picker
+            :wire-model="$wireModel"
+            :options="$genderOptions"
+            :placeholder="$placeholder ?: '---'"
+            :is-required="$isRequired"
+            :multiple="false"
+        />
         @break
     @default
         <input type="text" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" @if($isRequired) required @endif class="{{ $inputClass }}">

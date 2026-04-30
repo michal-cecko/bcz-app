@@ -13,18 +13,39 @@ if (htmlLang.startsWith('sk')) {
 
 window.flatpickr = flatpickr;
 
-window.prettyPicker = function ({ options, multiple, placeholder, searchPlaceholder, emptyLabel }) {
+window.prettyPicker = function ({ options, multiple, placeholder, searchPlaceholder, emptyLabel, statePath, initialValue }) {
+    const normalizeInitial = (raw) => {
+        if (multiple) {
+            if (Array.isArray(raw)) return raw.map((v) => String(v));
+            if (raw === null || raw === undefined || raw === '') return [];
+            return [String(raw)];
+        }
+        if (raw === null || raw === undefined) return '';
+        return String(raw);
+    };
+
     return {
         options,
         multiple,
         placeholder,
         searchPlaceholder,
         emptyLabel,
+        statePath,
         open: false,
         search: '',
-        // `value` is x-modelable-bound; Livewire syncs it via wire:model.live.
-        // Single mode: string (or empty). Multi mode: array.
-        value: multiple ? [] : '',
+        // Local Alpine state. We sync to Livewire imperatively via $wire.set() to
+        // avoid the wire:model.live + x-modelable race that swallowed the first click.
+        value: normalizeInitial(initialValue),
+
+        init() {
+            // Re-sync from server when Livewire pushes a new value (e.g., other
+            // form fields change) so the picker doesn't fall out of sync.
+            this.$watch('value', (newValue) => {
+                if (typeof this.$wire?.set === 'function' && this.statePath) {
+                    this.$wire.set(this.statePath, newValue, false);
+                }
+            });
+        },
 
         get selected() {
             if (this.multiple) {
@@ -55,7 +76,9 @@ window.prettyPicker = function ({ options, multiple, placeholder, searchPlacehol
                 }
                 this.value = current;
             } else {
-                this.value = this.value === stringValue ? '' : stringValue;
+                // Single mode: always commit the click (no toggle-off on same value).
+                // Removal is intentional via the chip's X / placeholder reset only.
+                this.value = stringValue;
                 this.close();
             }
         },
@@ -72,9 +95,7 @@ window.prettyPicker = function ({ options, multiple, placeholder, searchPlacehol
 
         toggle() {
             this.open = !this.open;
-            if (this.open) {
-                this.$nextTick(() => this.$refs.searchInput?.focus());
-            } else {
+            if (!this.open) {
                 this.search = '';
             }
         },
