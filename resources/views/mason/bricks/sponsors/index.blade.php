@@ -29,9 +29,9 @@
  @if($isClone) aria-hidden="true" tabindex="-1" @endif
  >
  @if($item['logoUrl'])
- <img src="{{ $item['logoUrl'] }}" alt="{{ $isClone ? '' : $item['sponsor']->name }}" class="{{ $item['isPortrait'] ? 'h-[3.6rem]' : 'h-12' }} w-auto object-contain filter grayscale opacity-60 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100">
+ <img src="{{ $item['logoUrl'] }}" alt="{{ $isClone ? '' : $item['sponsor']->name }}" class="{{ $item['isPortrait'] ? 'h-[3.6rem]' : 'h-20' }} w-auto object-contain filter grayscale opacity-60 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100">
  @else
- <div class="h-12 px-6 flex items-center justify-center bg-bcz-dark">
+ <div class="h-20 px-6 flex items-center justify-center bg-bcz-dark">
  <span class="text-bcz-border text-sm font-bold tracking-wider">{{ $item['sponsor']->name }}</span>
  </div>
  @endif
