@@ -18,6 +18,7 @@ use App\Services\PaymentService;
 use App\Services\QrPaymentService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class PaymentPage extends Component
@@ -90,6 +91,12 @@ class PaymentPage extends Component
                 $this->handleCashPayment();
             }
         } catch (\Throwable $e) {
+            Log::error('Payment processing failed', [
+                'payment_id' => $this->payment->id,
+                'method' => $this->selectedMethod,
+                'message' => $e->getMessage(),
+                'exception' => $e,
+            ]);
             $this->errorMessage = 'Nastala chyba pri spracovani platby. Skuste to znova.';
             $this->isProcessing = false;
         }
@@ -134,7 +141,12 @@ class PaymentPage extends Component
             return;
         }
 
-        throw new \RuntimeException('GoPay payment creation failed.');
+        // Surface GoPay's error body so the catch in pay() logs the real cause
+        // (auth, currency not enabled, missing GOID, etc.) rather than a generic message.
+        $details = is_array($response->json ?? null) ? json_encode($response->json) : (string) $response;
+        $statusCode = $response->statusCode ?? 'unknown';
+
+        throw new \RuntimeException("GoPay payment creation failed (HTTP {$statusCode}): {$details}");
     }
 
     protected function handleBankTransfer(): void

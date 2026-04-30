@@ -153,7 +153,7 @@
                     $qrCz = \App\Services\QrPaymentService::qrPlatba(...$qrArgs);
                 @endphp
                 @if($qrSk || $qrCz)
-                    <div class="flex flex-row items-start gap-3">
+                    <div class="flex flex-col items-center gap-3">
                         @if($qrSk)
                             <div class="flex flex-col items-center gap-1.5">
                                 <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">

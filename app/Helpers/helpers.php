@@ -180,14 +180,12 @@ if (! function_exists('embed_video_url')) {
 
         // YouTube: extract the 11-char video ID from any URL shape
         // (watch, share, shorts, live, embed, mobile, no-cookie, with extra params).
-        // Emits youtube-nocookie.com so Cookiebot's auto-blocker doesn't tag it
-        // as a marketing tracker.
         $youtubeHost = '(?:youtu\.be|(?:www\.|m\.|music\.)?youtube(?:-nocookie)?\.com)';
         $youtubePathPrefix = '(?:/(?:embed|shorts|live|v)/|/watch\?(?:[^"\s]*&)?v=|/)';
         $youtubeRegex = '#(?:https?://)?'.$youtubeHost.$youtubePathPrefix.'([A-Za-z0-9_-]{11})#i';
 
         if (preg_match($youtubeRegex, $url, $m)) {
-            return 'https://www.youtube-nocookie.com/embed/'.$m[1];
+            return 'https://www.youtube.com/embed/'.$m[1];
         }
 
         // Vimeo

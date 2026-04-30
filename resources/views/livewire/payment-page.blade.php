@@ -214,7 +214,7 @@
                                 </div>
 
                                 @if($qrCodeImage || $qrCodeImageCz)
-                                    <div class="flex flex-row items-start gap-3">
+                                    <div class="flex flex-col items-center gap-3">
                                         @if($qrCodeImage)
                                             <div class="flex flex-col items-center gap-1.5">
                                                 <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">

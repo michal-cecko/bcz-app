@@ -103,7 +103,7 @@
                                         </div>
                                         @php $qr = $this->qrCodes; @endphp
                                         @if(($qr['sk'] ?? null) || ($qr['cz'] ?? null))
-                                            <div class="flex flex-row items-start gap-3">
+                                            <div class="flex flex-col items-center gap-3">
                                                 @if($qr['sk'] ?? null)
                                                     <div class="flex flex-col items-center gap-1">
                                                         <div class="rounded-lg bg-white p-1.5">
