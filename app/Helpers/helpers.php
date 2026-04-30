@@ -178,25 +178,21 @@ if (! function_exists('embed_video_url')) {
             return $url;
         }
 
-        $patterns = [
-            // Use youtube-nocookie.com so Cookiebot's auto-blocker doesn't classify
-            // the embed as a marketing tracker — the iframe loads on first paint.
-            // youtu.be/VIDEO_ID
-            '#(?:https?://)?youtu\.be/([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube-nocookie.com/embed/$1',
-            // youtube.com/watch?v=VIDEO_ID
-            '#(?:https?://)?(?:www\.)?youtube\.com/watch\?(?:.*&)?v=([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube-nocookie.com/embed/$1',
-            // youtube.com/shorts/VIDEO_ID
-            '#(?:https?://)?(?:www\.)?youtube\.com/shorts/([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube-nocookie.com/embed/$1',
-            // youtube.com/live/VIDEO_ID
-            '#(?:https?://)?(?:www\.)?youtube\.com/live/([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube-nocookie.com/embed/$1',
-            // vimeo.com/VIDEO_ID (numeric)
-            '#(?:https?://)?(?:www\.)?vimeo\.com/(\d+)#i' => 'https://player.vimeo.com/video/$1',
-        ];
+        // YouTube: extract the 11-char video ID from any URL shape
+        // (watch, share, shorts, live, embed, mobile, no-cookie, with extra params).
+        // Emits youtube-nocookie.com so Cookiebot's auto-blocker doesn't tag it
+        // as a marketing tracker.
+        $youtubeHost = '(?:youtu\.be|(?:www\.|m\.|music\.)?youtube(?:-nocookie)?\.com)';
+        $youtubePathPrefix = '(?:/(?:embed|shorts|live|v)/|/watch\?(?:[^"\s]*&)?v=|/)';
+        $youtubeRegex = '#(?:https?://)?'.$youtubeHost.$youtubePathPrefix.'([A-Za-z0-9_-]{11})#i';
 
-        foreach ($patterns as $pattern => $replacement) {
-            if (preg_match($pattern, $url)) {
-                return preg_replace($pattern, $replacement, $url);
-            }
+        if (preg_match($youtubeRegex, $url, $m)) {
+            return 'https://www.youtube-nocookie.com/embed/'.$m[1];
+        }
+
+        // Vimeo
+        if (preg_match('#(?:https?://)?(?:www\.)?vimeo\.com/(\d+)#i', $url, $m)) {
+            return 'https://player.vimeo.com/video/'.$m[1];
         }
 
         return $url;
