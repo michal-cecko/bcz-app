@@ -26,8 +26,11 @@
  <video src="{{ $mediaVideoUrl }}"class="w-full h-full object-cover"controls playsinline></video>
  </div>
  @elseif($videoSource === 'url' && ! empty($video_url))
+ {{-- src moved to data-src + data-cookieconsent="marketing" so Cookiebot's auto --}}
+ {{-- blocking mode shows a consent placeholder and only loads YouTube/Vimeo --}}
+ {{-- once the visitor grants marketing consent. See public layout's uc.js. --}}
  <div class="w-full max-w-[900px] aspect-video overflow-hidden">
- <iframe src="{{ embed_video_url($video_url) }}"class="w-full h-full"frameborder="0"allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"allowfullscreen></iframe>
+ <iframe data-src="{{ embed_video_url($video_url) }}"data-cookieconsent="marketing"class="w-full h-full"frameborder="0"allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"allowfullscreen></iframe>
  </div>
  @else
  <div class="w-full max-w-[900px] aspect-video bg-[#0D0D0D] border border-[#222222] flex flex-col items-center justify-center">

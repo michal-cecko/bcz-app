@@ -21,7 +21,7 @@
  <a
  href="{{ $item['sponsor']->link ?? '#' }}"
  @class([
- 'group flex flex-col items-center gap-3 transition-all shrink-0 [padding-inline:3rem]',
+ 'group flex flex-col items-center gap-3 transition-all shrink-0 [max-width:10rem] [padding-inline:1rem]',
  'sponsors-clone' => $isClone,
  ])
  target="_blank"
