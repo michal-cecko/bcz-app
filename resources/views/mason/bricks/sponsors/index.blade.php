@@ -35,9 +35,9 @@
  <span class="text-bcz-border text-sm font-bold tracking-wider">{{ $item['sponsor']->name }}</span>
  </div>
  @endif
- <span class="text-sm font-semibold text-white/80 group-hover:text-white transition-colors">{{ $item['sponsor']->name }}</span>
+ <span class="text-sm font-semibold text-white/80 group-hover:text-white transition-colors text-center">{{ $item['sponsor']->name }}</span>
  @if($item['tagLabel'])
- <span class="text-xs text-white/40 -mt-2 uppercase tracking-wider">{{ $item['tagLabel'] }}</span>
+ <span class="text-xs text-white/40 -mt-2 uppercase tracking-wider text-center">{{ $item['tagLabel'] }}</span>
  @endif
  </a>
  @endforeach
