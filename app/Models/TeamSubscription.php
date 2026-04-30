@@ -103,4 +103,14 @@ class TeamSubscription extends Model implements Payable
             'sezona' => $seasonLabel,
         ]);
     }
+
+    public function getPayoutIban(): ?string
+    {
+        return $this->team?->bank_account_iban;
+    }
+
+    public function getPayoutRecipientName(): ?string
+    {
+        return $this->team?->bank_account_name;
+    }
 }

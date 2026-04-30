@@ -22,6 +22,7 @@ class EventRegistration extends Model implements Payable
         'athlete_category_id',
         'registration_fee_id',
         'status',
+        'locale',
         'registered_at',
         'payment_due_at',
         'payment_reminder_sent_at',
@@ -110,5 +111,17 @@ class EventRegistration extends Model implements Payable
             'datum_eventu' => $this->event?->date?->format('d.m.Y') ?? '',
             'miesto' => (string) ($this->event?->place_name ?? ''),
         ]);
+    }
+
+    public function getPayoutIban(): ?string
+    {
+        return $this->event?->organization?->effectiveBankAccountIban()
+            ?: $this->event?->team?->bank_account_iban;
+    }
+
+    public function getPayoutRecipientName(): ?string
+    {
+        return $this->event?->organization?->effectiveBankAccountName()
+            ?: $this->event?->team?->bank_account_name;
     }
 }

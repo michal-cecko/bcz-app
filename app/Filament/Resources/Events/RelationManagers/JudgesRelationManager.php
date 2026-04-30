@@ -4,12 +4,14 @@ namespace App\Filament\Resources\Events\RelationManagers;
 
 use App\Enums\EventTypeEnum;
 use App\Models\Discipline;
-use Filament\Actions\AttachAction;
+use App\Models\Judge;
+use Filament\Actions\Action;
 use Filament\Actions\DetachAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -68,11 +70,18 @@ class JudgesRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                AttachAction::make()
+                Action::make('attachJudge')
+                    ->label('Priradiť rozhodcu')
+                    ->icon(Heroicon::Plus)
                     ->modalHeading('Priradiť rozhodcu')
-                    ->form(fn (AttachAction $action): array => [
-                        $action->getRecordSelect()
+                    ->schema([
+                        Select::make('judge_id')
                             ->label('Rozhodca')
+                            ->options(fn (): array => Judge::query()
+                                ->orderBy('name')
+                                ->pluck('name', 'id')
+                                ->all())
+                            ->required()
                             ->searchable()
                             ->preload(),
                         Select::make('discipline_id')
@@ -80,7 +89,12 @@ class JudgesRelationManager extends RelationManager
                             ->options(Discipline::all()->mapWithKeys(fn (Discipline $d) => [$d->id => $d->getTranslation('name', 'sk')]))
                             ->required()
                             ->searchable(),
-                    ]),
+                    ])
+                    ->action(function (array $data) use ($detail): void {
+                        $detail->judges()->attach($data['judge_id'], [
+                            'discipline_id' => $data['discipline_id'],
+                        ]);
+                    }),
             ])
             ->recordActions([
                 EditAction::make()

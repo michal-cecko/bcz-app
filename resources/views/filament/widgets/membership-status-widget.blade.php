@@ -102,12 +102,24 @@
                                             @endif
                                         </div>
                                         @php $qr = $this->qrCodes; @endphp
-                                        @if($qr['sk'] ?? null)
-                                            <div class="flex flex-col items-center gap-1">
-                                                <div class="rounded-lg bg-white p-1.5">
-                                                    <img src="data:image/png;base64,{{ $qr['sk'] }}" alt="QR" class="h-24 w-24">
-                                                </div>
-                                                <span class="text-[10px] text-gray-400">{{ __('payments.bank_transfer.pay_by_square') }}</span>
+                                        @if(($qr['sk'] ?? null) || ($qr['cz'] ?? null))
+                                            <div class="flex flex-row items-start gap-3">
+                                                @if($qr['sk'] ?? null)
+                                                    <div class="flex flex-col items-center gap-1">
+                                                        <div class="rounded-lg bg-white p-1.5">
+                                                            <img src="data:image/png;base64,{{ $qr['sk'] }}" alt="Pay by Square" class="h-24 w-24">
+                                                        </div>
+                                                        <span class="text-[10px] text-gray-400">{{ __('payments.bank_transfer.pay_by_square') }}</span>
+                                                    </div>
+                                                @endif
+                                                @if($qr['cz'] ?? null)
+                                                    <div class="flex flex-col items-center gap-1">
+                                                        <div class="rounded-lg bg-white p-1.5">
+                                                            <img src="data:image/png;base64,{{ $qr['cz'] }}" alt="QR Platba / SEPA" class="h-24 w-24">
+                                                        </div>
+                                                        <span class="text-[10px] text-gray-400">{{ __('payments.bank_transfer.qr_platba_sepa') }}</span>
+                                                    </div>
+                                                @endif
                                             </div>
                                         @endif
                                     </div>

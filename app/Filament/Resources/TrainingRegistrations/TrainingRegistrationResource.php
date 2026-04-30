@@ -9,6 +9,7 @@ use App\Filament\Resources\TrainingRegistrations\Pages\ListTrainingRegistrations
 use App\Filament\Resources\TrainingRegistrations\Pages\ViewTrainingRegistration;
 use App\Filament\Resources\TrainingRegistrations\Tables\TrainingRegistrationsTable;
 use App\Models\TrainingRegistration;
+use App\Support\RegistrationFieldOptions;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\TextEntry;
@@ -119,6 +120,7 @@ class TrainingRegistrationResource extends Resource
                             ];
                         }
 
+                        $locale = app()->getLocale();
                         $entries = [];
                         foreach ($schema as $field) {
                             $key = $field['name'] ?? $field['key'] ?? '';
@@ -128,12 +130,16 @@ class TrainingRegistrationResource extends Resource
                             }
 
                             $label = is_array($field['label'] ?? null)
-                                ? ($field['label']['sk'] ?? reset($field['label']))
+                                ? ($field['label'][$locale] ?? $field['label']['sk'] ?? reset($field['label']))
                                 : ($field['label'] ?? $key);
+
+                            $displayValue = in_array($field['type'] ?? null, ['select', 'multi_select', 'category'], true)
+                                ? RegistrationFieldOptions::labelFor($field, $value, $locale)
+                                : $value;
 
                             $entries[] = TextEntry::make("form_data.{$key}")
                                 ->label($label)
-                                ->state($value);
+                                ->state($displayValue);
                         }
 
                         return $entries;

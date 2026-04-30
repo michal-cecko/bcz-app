@@ -186,6 +186,16 @@ class Event extends Model implements HasMedia, Linkable
         return $this->hasOne(EventOrganization::class);
     }
 
+    public function effectiveBankAccountIban(): ?string
+    {
+        return $this->organization?->effectiveBankAccountIban() ?: $this->team?->bank_account_iban;
+    }
+
+    public function effectiveBankAccountName(): ?string
+    {
+        return $this->organization?->effectiveBankAccountName() ?: $this->team?->bank_account_name;
+    }
+
     public function competitionDetail(): HasOne
     {
         return $this->hasOne(CompetitionDetail::class);

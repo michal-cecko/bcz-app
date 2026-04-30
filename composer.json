@@ -14,7 +14,7 @@
         "awcodes/mason": "^3.0",
         "awcodes/richer-editor": "^2.1",
         "bezhansalleh/filament-shield": "^4.1",
-        "cheesegrits/filament-google-maps": "^5.0",
+        "cheesegrits/filament-google-maps": "5.x-dev as 5.0.2",
         "endroid/qr-code": "^6.1",
         "fakerphp/faker": "^1.23",
         "filament/filament": "^5.4",
@@ -120,6 +120,10 @@
         "filament": {
             "type": "composer",
             "url": "https://packages.filamentphp.com/composer"
+        },
+        "filament-google-maps-fork": {
+            "type": "vcs",
+            "url": "https://github.com/michal-cecko/filament-google-maps.git"
         }
     }
 }

@@ -100,11 +100,14 @@ class TimetableRelationManager extends RelationManager
                 ->searchable(),
             DateTimePicker::make('scheduled_time')
                 ->label('Plánovaný čas')
-                ->required(),
+                ->required()
+                ->timezone(fn (): string => $this->getOwnerRecord()->getTimezone()),
             DateTimePicker::make('actual_start_time')
-                ->label('Skutočný začiatok'),
+                ->label('Skutočný začiatok')
+                ->timezone(fn (): string => $this->getOwnerRecord()->getTimezone()),
             DateTimePicker::make('actual_end_time')
-                ->label('Skutočný koniec'),
+                ->label('Skutočný koniec')
+                ->timezone(fn (): string => $this->getOwnerRecord()->getTimezone()),
             Select::make('status')
                 ->label('Stav')
                 ->options(TimetableEntryStatusEnum::class)

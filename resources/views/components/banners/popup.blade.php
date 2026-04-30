@@ -18,6 +18,17 @@
     $badgeLabel = brick_trans($badge_text ?? []);
     $noteText = brick_trans($note ?? []);
     $imageUrl = isset($image) && $image ? brick_media_url($image) : null;
+
+    $resolveIcon = static function (string $name): string {
+        try {
+            svg('heroicon-o-'.$name);
+
+            return 'heroicon-o-'.$name;
+        } catch (\Throwable $e) {
+            return 'heroicon-o-megaphone';
+        }
+    };
+    $iconRef = $resolveIcon($iconName);
 @endphp
 
 {{-- Image header --}}
@@ -31,15 +42,15 @@
     {{-- Badge --}}
     @if($badgeLabel)
         <div class="inline-flex items-center gap-1.5 px-2.5 py-1" style="background-color: {{ $accentColor }}1F; color: {{ $accentColor }}">
-            <i data-lucide="trophy" class="w-3 h-3"></i>
+            @svg('heroicon-o-trophy', 'w-3 h-3')
             <span class="text-[10px] font-semibold font-['DM_Sans']">{{ $badgeLabel }}</span>
         </div>
     @endif
 
     {{-- Icon (only if no image) --}}
     @if(!$imageUrl && !$badgeLabel)
-        <div class="w-16 h-16 flex items-center justify-center" style="background-color: {{ $accentColor }}14">
-            <i data-lucide="{{ $iconName }}" class="w-7 h-7" style="color: {{ $accentColor }}"></i>
+        <div class="w-16 h-16 flex items-center justify-center" style="background-color: {{ $accentColor }}14; color: {{ $accentColor }}">
+            {!! svg($iconRef, 'w-7 h-7')->toHtml() !!}
         </div>
     @endif
 
@@ -61,10 +72,7 @@
     {{-- Buttons --}}
     @if($btnText && $btnUrl)
         <div class="w-full flex flex-col gap-3">
-            <a href="{{ $btnUrl }}" class="flex items-center justify-center gap-2 w-full h-[46px] text-white text-[13px] font-bold font-['DM_Sans'] hover:brightness-90 transition-all cursor-pointer" style="background-color: {{ $accentColor }}">
-                @if(!$imageUrl)
-                    <i data-lucide="{{ $iconName === 'heart' ? 'heart' : 'arrow-right' }}" class="w-4 h-4"></i>
-                @endif
+            <a href="{{ $btnUrl }}" class="flex items-center justify-center w-full h-[46px] text-white text-[13px] font-bold font-['DM_Sans'] hover:brightness-90 transition-all cursor-pointer" style="background-color: {{ $accentColor }}">
                 {{ $btnText }}
             </a>
             @if($secBtnText)

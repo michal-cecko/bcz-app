@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'flatpickr/dist/flatpickr.min.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -120,4 +121,162 @@ button, [role="button"] {
 
     ul { list-style: disc; }
     ol { list-style: decimal; }
+}
+
+/* Flatpickr — BCZ dark theme */
+.flatpickr-calendar {
+    background: var(--color-bcz-card);
+    border: 1px solid var(--color-bcz-border);
+    border-radius: 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    color: #FFFFFF;
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+.flatpickr-calendar.arrowTop::before,
+.flatpickr-calendar.arrowBottom::before {
+    border-bottom-color: var(--color-bcz-border);
+    border-top-color: var(--color-bcz-border);
+}
+
+.flatpickr-calendar.arrowTop::after,
+.flatpickr-calendar.arrowBottom::after {
+    border-bottom-color: var(--color-bcz-card);
+    border-top-color: var(--color-bcz-card);
+}
+
+.flatpickr-months,
+.flatpickr-months .flatpickr-month {
+    background: var(--color-bcz-card);
+    color: #FFFFFF;
+    overflow: visible;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    background: var(--color-bcz-card);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.flatpickr-current-month input.cur-year {
+    border-bottom: 1px dotted var(--color-bcz-border);
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months .flatpickr-monthDropdown-month {
+    background: var(--color-bcz-card);
+    color: #FFFFFF;
+}
+
+.flatpickr-monthSelect-months .flatpickr-monthSelect-month,
+.flatpickr-current-month .numInputWrapper:hover {
+    background: var(--color-bcz-surface);
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: #FFFFFF;
+    fill: #FFFFFF;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--color-bcz-red);
+}
+
+.flatpickr-weekdays,
+span.flatpickr-weekday {
+    background: var(--color-bcz-card);
+    color: var(--color-bcz-muted);
+    font-weight: 600;
+}
+
+.flatpickr-days,
+.dayContainer {
+    background: var(--color-bcz-card);
+}
+
+.flatpickr-day {
+    color: var(--color-bcz-light);
+    border-radius: 0;
+    border-color: transparent;
+}
+
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+    background: var(--color-bcz-surface);
+    border-color: var(--color-bcz-border);
+    color: #FFFFFF;
+}
+
+.flatpickr-day.today {
+    border-color: var(--color-bcz-red);
+    color: #FFFFFF;
+}
+
+.flatpickr-day.today:hover {
+    background: var(--color-bcz-red);
+    color: #FFFFFF;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: var(--color-bcz-red);
+    border-color: var(--color-bcz-red);
+    color: #FFFFFF;
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: var(--color-bcz-faint);
+    background: transparent;
+}
+
+/* Time picker */
+.flatpickr-time {
+    background: var(--color-bcz-card);
+    border-top: 1px solid var(--color-bcz-border);
+}
+
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm {
+    background: var(--color-bcz-card);
+    color: #FFFFFF;
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time input:focus,
+.flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-time .flatpickr-am-pm:focus {
+    background: var(--color-bcz-surface);
+}
+
+.flatpickr-time .numInputWrapper span.arrowUp::after {
+    border-bottom-color: var(--color-bcz-light);
+}
+
+.flatpickr-time .numInputWrapper span.arrowDown::after {
+    border-top-color: var(--color-bcz-light);
+}
+
+/* Number wrapper arrows in month/year header */
+.numInputWrapper:hover {
+    background: var(--color-bcz-surface);
+}
+
+.numInputWrapper span {
+    border-color: var(--color-bcz-border);
+}
+
+.numInputWrapper span.arrowUp::after {
+    border-bottom-color: var(--color-bcz-light);
+}
+
+.numInputWrapper span.arrowDown::after {
+    border-top-color: var(--color-bcz-light);
 }

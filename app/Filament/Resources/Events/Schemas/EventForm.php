@@ -28,8 +28,12 @@ use App\Mason\EmailBricks\EmailHeadingBrick;
 use App\Mason\EmailBricks\EmailImageBrick;
 use App\Mason\EmailBricks\EmailRichTextBrick;
 use App\Mason\EmailBricks\EmailSpacerBrick;
+use App\Models\Event;
+use App\Models\EventOrganization;
+use App\Support\RegistrationFieldOptions;
 use Awcodes\Mason\Brick;
 use Awcodes\Mason\Mason;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
@@ -162,7 +166,8 @@ class EventForm
                                         ->label('Publikované')
                                         ->default(false),
                                     DateTimePicker::make('published_at')
-                                        ->label('Dátum publikovania'),
+                                        ->label('Dátum publikovania')
+                                        ->timezone(self::resolveEventTimezone()),
                                     Select::make('event_category_id')
                                         ->label('Kategória')
                                         ->relationship(name: 'eventCategory')
@@ -261,10 +266,22 @@ class EventForm
                                 ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{nazov_eventu}}, {{datum_eventu}}, {{miesto}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
                                 ->maxLength(140)
                                 ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
+                            TextInput::make('bank_account_iban')
+                                ->label('IBAN (override)')
+                                ->placeholder(fn (): string => Filament::getTenant()?->bank_account_iban ?? '')
+                                ->helperText(fn (): string => __('payments.bank_account_override.helper_text', ['default' => Filament::getTenant()?->bank_account_iban ?: '—']))
+                                ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
+                            TextInput::make('bank_account_name')
+                                ->label('Názov príjemcu (override)')
+                                ->placeholder(fn (): string => Filament::getTenant()?->bank_account_name ?? '')
+                                ->helperText(fn (): string => __('payments.bank_account_override.recipient_helper_text', ['default' => Filament::getTenant()?->bank_account_name ?: '—']))
+                                ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             DateTimePicker::make('registration_opens_at')
-                                ->label('Registrácia od'),
+                                ->label('Registrácia od')
+                                ->timezone(self::resolveEventTimezone()),
                             DateTimePicker::make('registration_closes_at')
-                                ->label('Registrácia do'),
+                                ->label('Registrácia do')
+                                ->timezone(self::resolveEventTimezone()),
                             Toggle::make('is_public_registration')
                                 ->label('Verejná registrácia')
                                 ->default(true),
@@ -300,22 +317,76 @@ class EventForm
                                 }
                             };
                         })
-                        ->table([
-                            TableColumn::make('Kľúč'),
-                            TableColumn::make('Typ'),
-                            TableColumn::make('Označenie'),
-                            TableColumn::make('Povinné'),
-                        ])
+                        ->itemLabel(fn (array $state): ?string => is_array($state['label'] ?? null) ? ($state['label']['sk'] ?? null) : ($state['label'] ?? null))
+                        ->columns(2)
                         ->schema([
-                            TextInput::make('key')
+                            Tabs::make('Preklady')
+                                ->tabs([
+                                    Tabs\Tab::make('SK')->schema([
+                                        TextInput::make('label.sk')
+                                            ->label('Názov poľa (SK)')
+                                            ->required()
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(fn (Set $set, ?string $state) => $set('name', Str::slug($state ?? '', '_'))),
+                                        TextInput::make('placeholder.sk')
+                                            ->label('Placeholder (SK)')
+                                            ->hidden(fn (Get $get): bool => in_array($get('type'), [
+                                                RegistrationFieldTypeEnum::SELECT->value,
+                                                RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                RegistrationFieldTypeEnum::DATE_PICKER->value,
+                                                RegistrationFieldTypeEnum::YEAR_PICKER->value,
+                                                RegistrationFieldTypeEnum::TIME_PICKER->value,
+                                                RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                RegistrationFieldTypeEnum::BIRTH_DATE->value,
+                                                RegistrationFieldTypeEnum::GENDER->value,
+                                                RegistrationFieldTypeEnum::CATEGORY->value,
+                                            ])),
+                                    ]),
+                                    Tabs\Tab::make('EN')->schema([
+                                        TextInput::make('label.en')->label('Label (EN)'),
+                                        TextInput::make('placeholder.en')
+                                            ->label('Placeholder (EN)')
+                                            ->hidden(fn (Get $get): bool => in_array($get('type'), [
+                                                RegistrationFieldTypeEnum::SELECT->value,
+                                                RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                RegistrationFieldTypeEnum::DATE_PICKER->value,
+                                                RegistrationFieldTypeEnum::YEAR_PICKER->value,
+                                                RegistrationFieldTypeEnum::TIME_PICKER->value,
+                                                RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                RegistrationFieldTypeEnum::BIRTH_DATE->value,
+                                                RegistrationFieldTypeEnum::GENDER->value,
+                                                RegistrationFieldTypeEnum::CATEGORY->value,
+                                            ])),
+                                    ]),
+                                    Tabs\Tab::make('CS')->schema([
+                                        TextInput::make('label.cs')->label('Název pole (CS)'),
+                                        TextInput::make('placeholder.cs')
+                                            ->label('Placeholder (CS)')
+                                            ->hidden(fn (Get $get): bool => in_array($get('type'), [
+                                                RegistrationFieldTypeEnum::SELECT->value,
+                                                RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                                RegistrationFieldTypeEnum::DATE_PICKER->value,
+                                                RegistrationFieldTypeEnum::YEAR_PICKER->value,
+                                                RegistrationFieldTypeEnum::TIME_PICKER->value,
+                                                RegistrationFieldTypeEnum::FILE_INPUT->value,
+                                                RegistrationFieldTypeEnum::BIRTH_DATE->value,
+                                                RegistrationFieldTypeEnum::GENDER->value,
+                                                RegistrationFieldTypeEnum::CATEGORY->value,
+                                            ])),
+                                    ]),
+                                ])
+                                ->columnSpanFull(),
+                            TextInput::make('name')
                                 ->label('Kľúč')
                                 ->required()
                                 ->disabled()
-                                ->dehydrated(),
+                                ->dehydrated()
+                                ->live(),
                             Select::make('type')
-                                ->label('Typ')
+                                ->label('Typ poľa')
                                 ->options(RegistrationFieldTypeEnum::class)
                                 ->required()
+                                ->default(RegistrationFieldTypeEnum::TEXT_INPUT)
                                 ->live()
                                 ->disabled(fn (Get $get): bool => in_array($get('type'), [
                                     RegistrationFieldTypeEnum::FIRST_NAME->value,
@@ -325,20 +396,23 @@ class EventForm
                                 ]))
                                 ->dehydrated()
                                 ->afterStateUpdated(function (Get $get, Set $set, mixed $state): void {
-                                    $label = $get('label');
+                                    $label = $get('label.sk');
                                     if ($label) {
-                                        $set('key', Str::slug($label, '_'));
+                                        $set('name', Str::slug($label, '_'));
                                     } elseif ($state) {
-                                        $set('key', $state instanceof RegistrationFieldTypeEnum ? $state->value : $state);
+                                        $set('name', $state instanceof RegistrationFieldTypeEnum ? $state->value : $state);
                                     }
                                 }),
-                            TextInput::make('label')
-                                ->label('Označenie')
-                                ->required()
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(fn (Set $set, ?string $state) => $set('key', Str::slug($state ?? '', '_'))),
+                            Select::make('width')
+                                ->label('Šírka')
+                                ->options([
+                                    'half' => 'Polovica',
+                                    'full' => 'Celý riadok',
+                                ])
+                                ->default('half'),
                             Toggle::make('required')
                                 ->label('Povinné')
+                                ->inline(false)
                                 ->default(fn (Get $get): bool => in_array($get('type'), [
                                     RegistrationFieldTypeEnum::FIRST_NAME->value,
                                     RegistrationFieldTypeEnum::LAST_NAME->value,
@@ -352,15 +426,47 @@ class EventForm
                                     RegistrationFieldTypeEnum::PHONE->value,
                                 ]))
                                 ->dehydrated(),
-                            Textarea::make('options')
-                                ->label('Možnosti (jedna na riadok)')
-                                ->rows(3)
-                                ->helperText('Pre select/multi_select')
+                            Repeater::make('options')
+                                ->label('Možnosti')
+                                ->columnSpanFull()
+                                ->table([
+                                    TableColumn::make('Kľúč'),
+                                    TableColumn::make('Názov (SK)'),
+                                    TableColumn::make('Názov (EN)'),
+                                    TableColumn::make('Název (CZ)'),
+                                ])
+                                ->schema([
+                                    TextInput::make('value')
+                                        ->required()
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function (?string $state, Set $set): void {
+                                            if ($state) {
+                                                $set('value', Str::slug($state, '_'));
+                                            }
+                                        }),
+                                    TextInput::make('label.sk')
+                                        ->required()
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
+                                            if ($state && empty($get('value'))) {
+                                                $set('value', Str::slug($state, '_'));
+                                            }
+                                        }),
+                                    TextInput::make('label.en'),
+                                    TextInput::make('label.cs'),
+                                ])
+                                ->defaultItems(0)
+                                ->reorderable()
+                                ->required(fn (Get $get): bool => in_array($get('type'), [
+                                    RegistrationFieldTypeEnum::SELECT->value,
+                                    RegistrationFieldTypeEnum::MULTI_SELECT->value,
+                                ]))
                                 ->visible(fn (Get $get): bool => in_array($get('type'), [
                                     RegistrationFieldTypeEnum::SELECT->value,
                                     RegistrationFieldTypeEnum::MULTI_SELECT->value,
                                 ])),
                         ])
+                        ->addActionLabel('Pridať pole')
                         ->deleteAction(fn ($action) => $action
                             ->requiresConfirmation()
                             ->hidden(function (array $arguments, Repeater $component): bool {
@@ -374,7 +480,11 @@ class EventForm
                                     RegistrationFieldTypeEnum::PHONE->value,
                                 ]);
                             }))
-                        ->defaultItems(0)
+                        ->default(RegistrationFieldOptions::defaultRequiredFields())
+                        ->reorderable()
+                        ->reorderableWithButtons()
+                        ->cloneable()
+                        ->collapsible()
                         ->columnSpanFull(),
                 ]),
         ];
@@ -522,6 +632,34 @@ class EventForm
         }
 
         return EventPricingTypeEnum::tryFrom((string) $value) === EventPricingTypeEnum::Paid;
+    }
+
+    /**
+     * Resolve the timezone for a date/time picker bound to an Event or its
+     * organization relationship. Falls back to the form's `timezone` field
+     * during create and to Europe/Bratislava as a final default.
+     */
+    private static function resolveEventTimezone(): \Closure
+    {
+        return function (?Model $record, Get $get): string {
+            if ($record instanceof EventOrganization) {
+                $event = $record->event;
+                if ($event instanceof Event) {
+                    return $event->getTimezone();
+                }
+            }
+
+            if ($record instanceof Event) {
+                return $record->getTimezone();
+            }
+
+            $tz = $get('timezone');
+            if (! is_string($tz) || $tz === '') {
+                $tz = $get('../timezone');
+            }
+
+            return is_string($tz) && $tz !== '' ? $tz : 'Europe/Bratislava';
+        };
     }
 
     private static function reportContentTab(): array

@@ -19,6 +19,8 @@ class EventOrganization extends Model
         'price_amount',
         'price_currency',
         'payment_note',
+        'bank_account_iban',
+        'bank_account_name',
         'registration_form_schema',
         'registration_opens_at',
         'registration_closes_at',
@@ -46,5 +48,15 @@ class EventOrganization extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function effectiveBankAccountIban(): ?string
+    {
+        return $this->bank_account_iban ?: $this->event?->team?->bank_account_iban;
+    }
+
+    public function effectiveBankAccountName(): ?string
+    {
+        return $this->bank_account_name ?: $this->event?->team?->bank_account_name;
     }
 }

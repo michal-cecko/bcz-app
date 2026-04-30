@@ -10,6 +10,7 @@ return [
         'note' => 'Note:',
         'scan_qr' => 'Scan the QR code',
         'pay_by_square' => 'Pay by Square',
+        'qr_platba_sepa' => 'QR Platba / SEPA',
         'instructions_title' => 'Important instructions',
         'instruction_use_vs' => 'Use the correct variable symbol so we can match your payment automatically.',
         'instruction_processing' => 'The transfer may take 1-2 business days depending on your bank.',
@@ -39,4 +40,8 @@ return [
         'success_body' => 'Your membership has been activated.',
     ],
     'open_payment_page' => 'Open payment',
+    'bank_account_override' => [
+        'helper_text' => 'If empty, the team default IBAN will be used: :default',
+        'recipient_helper_text' => 'If empty, the team default recipient name will be used: :default',
+    ],
 ];

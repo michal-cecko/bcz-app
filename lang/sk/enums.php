@@ -148,6 +148,7 @@ return [
         RegistrationFieldTypeEnum::FULL_NAME->value => 'Celé meno',
         RegistrationFieldTypeEnum::BIRTH_DATE->value => 'Dátum narodenia',
         RegistrationFieldTypeEnum::GENDER->value => 'Pohlavie',
+        RegistrationFieldTypeEnum::CATEGORY->value => 'Kategória',
     ],
     RoleEnum::class => [
         RoleEnum::SUPER_ADMIN->value => 'Super Admin',

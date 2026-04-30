@@ -6,6 +6,7 @@
     $schema = $event?->organization?->registration_form_schema ?? [];
     $valuesByKey = $registration->fieldValues->keyBy('field_key');
     $dateTypes = ['birth_date', 'date_picker'];
+    $optionTypes = ['select', 'multi_select', 'category'];
 
     $fieldRows = [];
     foreach ($schema as $field) {
@@ -24,6 +25,8 @@
             } catch (\Throwable $e) {
                 // keep raw value
             }
+        } elseif (in_array($type, $optionTypes, true)) {
+            $value = \App\Support\RegistrationFieldOptions::labelFor($field, $value, $locale, $event);
         }
         $rawLabel = $field['label'] ?? $key;
         $label = is_array($rawLabel) ? ($rawLabel[$locale] ?? $rawLabel['sk'] ?? $key) : $rawLabel;

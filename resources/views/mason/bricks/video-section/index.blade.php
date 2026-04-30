@@ -27,7 +27,7 @@
  </div>
  @elseif($videoSource === 'url' && ! empty($video_url))
  <div class="w-full max-w-[900px] aspect-video overflow-hidden">
- <iframe src="{{ $video_url }}"class="w-full h-full"frameborder="0"allowfullscreen></iframe>
+ <iframe src="{{ embed_video_url($video_url) }}"class="w-full h-full"frameborder="0"allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"allowfullscreen></iframe>
  </div>
  @else
  <div class="w-full max-w-[900px] aspect-video bg-[#0D0D0D] border border-[#222222] flex flex-col items-center justify-center">

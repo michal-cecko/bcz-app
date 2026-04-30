@@ -87,19 +87,34 @@
                         </div>
                         @if($team?->bank_account_iban)
                             @php
-                                $qrImage = \App\Services\QrPaymentService::payBySquare(
-                                    iban: $team->bank_account_iban,
-                                    amount: (float) $feeAmount,
-                                    currency: $feeCurrency,
-                                    variableSymbol: $variableSymbol ?? '',
-                                );
+                                $qrArgs = [
+                                    'iban' => $team->bank_account_iban,
+                                    'amount' => (float) $feeAmount,
+                                    'currency' => $feeCurrency,
+                                    'variableSymbol' => $variableSymbol ?? '',
+                                    'recipientName' => $team->bank_account_name ?? '',
+                                ];
+                                $qrSk = \App\Services\QrPaymentService::payBySquare(...$qrArgs);
+                                $qrCz = \App\Services\QrPaymentService::qrPlatba(...$qrArgs);
                             @endphp
-                            @if($qrImage)
-                                <div class="flex flex-col items-center gap-1">
-                                    <div class="rounded-lg bg-white p-1.5">
-                                        <img src="data:image/png;base64,{{ $qrImage }}" alt="QR" class="h-24 w-24">
-                                    </div>
-                                    <span class="text-[10px] text-gray-400">{{ __('payments.bank_transfer.pay_by_square') }}</span>
+                            @if($qrSk || $qrCz)
+                                <div class="flex flex-row items-start gap-3">
+                                    @if($qrSk)
+                                        <div class="flex flex-col items-center gap-1">
+                                            <div class="rounded-lg bg-white p-1.5">
+                                                <img src="data:image/png;base64,{{ $qrSk }}" alt="Pay by Square" class="h-24 w-24">
+                                            </div>
+                                            <span class="text-[10px] text-gray-400">{{ __('payments.bank_transfer.pay_by_square') }}</span>
+                                        </div>
+                                    @endif
+                                    @if($qrCz)
+                                        <div class="flex flex-col items-center gap-1">
+                                            <div class="rounded-lg bg-white p-1.5">
+                                                <img src="data:image/png;base64,{{ $qrCz }}" alt="QR Platba / SEPA" class="h-24 w-24">
+                                            </div>
+                                            <span class="text-[10px] text-gray-400">{{ __('payments.bank_transfer.qr_platba_sepa') }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
                         @endif

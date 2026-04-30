@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7633c7f164b757034d766550364d115a",
+    "content-hash": "0d9f2a1b40069187f34b701c863e5da1",
     "packages": [
         {
             "name": "awcodes/filament-badgeable-column",
@@ -903,16 +903,16 @@
         },
         {
             "name": "cheesegrits/filament-google-maps",
-            "version": "v5.0.2",
+            "version": "v5.x-dev",
             "source": {
                 "type": "git",
-                "url": "https://github.com/cheesegrits/filament-google-maps.git",
-                "reference": "048197e7faf1a2eabae9e85a7776d71fc1ed859a"
+                "url": "https://github.com/michal-cecko/filament-google-maps.git",
+                "reference": "1fa6fcee8cdd4df97ff04a6692db538597378289"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cheesegrits/filament-google-maps/zipball/048197e7faf1a2eabae9e85a7776d71fc1ed859a",
-                "reference": "048197e7faf1a2eabae9e85a7776d71fc1ed859a",
+                "url": "https://api.github.com/repos/michal-cecko/filament-google-maps/zipball/1fa6fcee8cdd4df97ff04a6692db538597378289",
+                "reference": "1fa6fcee8cdd4df97ff04a6692db538597378289",
                 "shasum": ""
             },
             "require": {
@@ -950,7 +950,6 @@
                     "Cheesegrits\\FilamentGoogleMaps\\Tests\\Database\\Factories\\": "tests/database/factories"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -963,10 +962,9 @@
             "description": "A Google Maps package for Filament PHP with field, column and widget",
             "homepage": "https://github.com/cheesegrits/filament-google-maps",
             "support": {
-                "issues": "https://github.com/cheesegrits/filament-google-maps/issues",
-                "source": "https://github.com/cheesegrits/filament-google-maps/tree/v5.0.2"
+                "source": "https://github.com/michal-cecko/filament-google-maps/tree/v5"
             },
-            "time": "2026-04-13T22:11:01+00:00"
+            "time": "2026-04-30T13:38:52+00:00"
         },
         {
             "name": "chillerlan/php-qrcode",
@@ -3832,16 +3830,16 @@
         },
         {
             "name": "laravel/prompts",
-            "version": "v0.3.16",
+            "version": "v0.3.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/prompts.git",
-                "reference": "11e7d5f93803a2190b00e145142cb00a33d17ad2"
+                "reference": "6a82ac19a28b916ae0885828795dbd4c59d9a818"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/prompts/zipball/11e7d5f93803a2190b00e145142cb00a33d17ad2",
-                "reference": "11e7d5f93803a2190b00e145142cb00a33d17ad2",
+                "url": "https://api.github.com/repos/laravel/prompts/zipball/6a82ac19a28b916ae0885828795dbd4c59d9a818",
+                "reference": "6a82ac19a28b916ae0885828795dbd4c59d9a818",
                 "shasum": ""
             },
             "require": {
@@ -3885,9 +3883,9 @@
             "description": "Add beautiful and user-friendly forms to your command-line applications.",
             "support": {
                 "issues": "https://github.com/laravel/prompts/issues",
-                "source": "https://github.com/laravel/prompts/tree/v0.3.16"
+                "source": "https://github.com/laravel/prompts/tree/v0.3.17"
             },
-            "time": "2026-03-23T14:35:33+00:00"
+            "time": "2026-04-20T16:07:33+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -10988,7 +10986,7 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "v1.34.0",
+            "version": "v1.37.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
@@ -11047,7 +11045,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.37.0"
             },
             "funding": [
                 {
@@ -11071,16 +11069,16 @@
         },
         {
             "name": "symfony/polyfill-intl-grapheme",
-            "version": "v1.34.0",
+            "version": "v1.37.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-grapheme.git",
-                "reference": "ad1b7b9092976d6c948b8a187cec9faaea9ec1df"
+                "reference": "4864388bfbd3001ce88e234fab652acd91fdc57e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/ad1b7b9092976d6c948b8a187cec9faaea9ec1df",
-                "reference": "ad1b7b9092976d6c948b8a187cec9faaea9ec1df",
+                "url": "https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/4864388bfbd3001ce88e234fab652acd91fdc57e",
+                "reference": "4864388bfbd3001ce88e234fab652acd91fdc57e",
                 "shasum": ""
             },
             "require": {
@@ -11129,7 +11127,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.37.0"
             },
             "funding": [
                 {
@@ -11149,11 +11147,11 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-04-10T16:19:22+00:00"
+            "time": "2026-04-26T13:13:48+00:00"
         },
         {
             "name": "symfony/polyfill-intl-idn",
-            "version": "v1.34.0",
+            "version": "v1.37.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-idn.git",
@@ -11216,7 +11214,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.37.0"
             },
             "funding": [
                 {
@@ -11240,7 +11238,7 @@
         },
         {
             "name": "symfony/polyfill-intl-normalizer",
-            "version": "v1.34.0",
+            "version": "v1.37.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-normalizer.git",
@@ -11301,7 +11299,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.37.0"
             },
             "funding": [
                 {
@@ -11325,7 +11323,7 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.34.0",
+            "version": "v1.37.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
@@ -11386,7 +11384,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.37.0"
             },
             "funding": [
                 {
@@ -11410,7 +11408,7 @@
         },
         {
             "name": "symfony/polyfill-php80",
-            "version": "v1.34.0",
+            "version": "v1.37.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php80.git",
@@ -11470,7 +11468,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-php80/tree/v1.34.0"
+                "source": "https://github.com/symfony/polyfill-php80/tree/v1.37.0"
             },
             "funding": [
                 {
@@ -15602,9 +15600,18 @@
             "time": "2025-11-17T20:03:58+00:00"
         }
     ],
-    "aliases": [],
+    "aliases": [
+        {
+            "package": "cheesegrits/filament-google-maps",
+            "version": "5.9999999.9999999.9999999-dev",
+            "alias": "5.0.2",
+            "alias_normalized": "5.0.2.0"
+        }
+    ],
     "minimum-stability": "beta",
-    "stability-flags": {},
+    "stability-flags": {
+        "cheesegrits/filament-google-maps": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

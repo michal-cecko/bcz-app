@@ -162,6 +162,45 @@ if (! function_exists('brick_link')) {
     }
 }
 
+if (! function_exists('embed_video_url')) {
+    /**
+     * Normalize a YouTube / Vimeo share URL into the iframe-embeddable form.
+     * Returns the original URL unchanged if it is already an embed URL or
+     * doesn't match a known provider — callers should still validate it.
+     *
+     * Why: pasting `youtube.com/watch?v=...` or `youtu.be/...` directly into
+     * an <iframe src> triggers a "youtube refused to connect" error because
+     * YouTube serves those URLs with `X-Frame-Options: SAMEORIGIN`.
+     */
+    function embed_video_url(?string $url): ?string
+    {
+        if ($url === null || $url === '') {
+            return $url;
+        }
+
+        $patterns = [
+            // youtu.be/VIDEO_ID
+            '#(?:https?://)?youtu\.be/([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube.com/embed/$1',
+            // youtube.com/watch?v=VIDEO_ID
+            '#(?:https?://)?(?:www\.)?youtube\.com/watch\?(?:.*&)?v=([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube.com/embed/$1',
+            // youtube.com/shorts/VIDEO_ID
+            '#(?:https?://)?(?:www\.)?youtube\.com/shorts/([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube.com/embed/$1',
+            // youtube.com/live/VIDEO_ID
+            '#(?:https?://)?(?:www\.)?youtube\.com/live/([A-Za-z0-9_-]{6,})#i' => 'https://www.youtube.com/embed/$1',
+            // vimeo.com/VIDEO_ID (numeric)
+            '#(?:https?://)?(?:www\.)?vimeo\.com/(\d+)#i' => 'https://player.vimeo.com/video/$1',
+        ];
+
+        foreach ($patterns as $pattern => $replacement) {
+            if (preg_match($pattern, $url)) {
+                return preg_replace($pattern, $replacement, $url);
+            }
+        }
+
+        return $url;
+    }
+}
+
 if (! function_exists('sk_plural')) {
     /**
      * Slovak pluralization: 1 = singular, 2-4 = few, 5+ = many.

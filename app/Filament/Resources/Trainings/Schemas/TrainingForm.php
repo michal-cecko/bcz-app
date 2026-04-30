@@ -14,12 +14,15 @@ use App\Mason\EmailBricks\EmailImageBrick;
 use App\Mason\EmailBricks\EmailRichTextBrick;
 use App\Mason\EmailBricks\EmailSpacerBrick;
 use App\Models\TeamSeason;
+use App\Support\RegistrationFieldOptions;
 use Awcodes\Mason\Mason;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -287,6 +290,16 @@ class TrainingForm
                                             ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{nazov_treningu}}, {{mesto}}, {{miesto}}, {{cas}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
                                             ->maxLength(140)
                                             ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
+                                        TextInput::make('bank_account_iban')
+                                            ->label('IBAN (override)')
+                                            ->placeholder(fn (): string => Filament::getTenant()?->bank_account_iban ?? '')
+                                            ->helperText(fn (): string => __('payments.bank_account_override.helper_text', ['default' => Filament::getTenant()?->bank_account_iban ?: '—']))
+                                            ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
+                                        TextInput::make('bank_account_name')
+                                            ->label('Názov príjemcu (override)')
+                                            ->placeholder(fn (): string => Filament::getTenant()?->bank_account_name ?? '')
+                                            ->helperText(fn (): string => __('payments.bank_account_override.recipient_helper_text', ['default' => Filament::getTenant()?->bank_account_name ?: '—']))
+                                            ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
                                     ]),
                             ]),
 
@@ -389,7 +402,10 @@ class TrainingForm
                                                     ->live(),
                                                 Select::make('type')
                                                     ->label('Typ poľa')
-                                                    ->options(RegistrationFieldTypeEnum::class)
+                                                    ->options(collect(RegistrationFieldTypeEnum::cases())
+                                                        ->reject(fn (RegistrationFieldTypeEnum $case): bool => $case === RegistrationFieldTypeEnum::CATEGORY)
+                                                        ->mapWithKeys(fn (RegistrationFieldTypeEnum $case) => [$case->value => $case->getLabel()])
+                                                        ->all())
                                                     ->required()
                                                     ->default(RegistrationFieldTypeEnum::TEXT_INPUT)
                                                     ->live()
@@ -431,15 +447,42 @@ class TrainingForm
                                                         RegistrationFieldTypeEnum::PHONE->value,
                                                     ]))
                                                     ->dehydrated(),
-                                                TextInput::make('options')
+                                                Repeater::make('options')
                                                     ->label('Možnosti')
-                                                    ->placeholder('Čiarkou oddelené')
                                                     ->columnSpanFull()
+                                                    ->table([
+                                                        TableColumn::make('Kľúč'),
+                                                        TableColumn::make('Názov (SK)'),
+                                                        TableColumn::make('Názov (EN)'),
+                                                        TableColumn::make('Název (CZ)'),
+                                                    ])
+                                                    ->schema([
+                                                        TextInput::make('value')
+                                                            ->required()
+                                                            ->live(onBlur: true)
+                                                            ->afterStateUpdated(function (?string $state, Set $set): void {
+                                                                if ($state) {
+                                                                    $set('value', Str::slug($state, '_'));
+                                                                }
+                                                            }),
+                                                        TextInput::make('label.sk')
+                                                            ->required()
+                                                            ->live(onBlur: true)
+                                                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
+                                                                if ($state && empty($get('value'))) {
+                                                                    $set('value', Str::slug($state, '_'));
+                                                                }
+                                                            }),
+                                                        TextInput::make('label.en'),
+                                                        TextInput::make('label.cs'),
+                                                    ])
+                                                    ->defaultItems(0)
+                                                    ->reorderable()
                                                     ->required(fn (Get $get): bool => in_array($get('type'), [
                                                         RegistrationFieldTypeEnum::SELECT->value,
                                                         RegistrationFieldTypeEnum::MULTI_SELECT->value,
                                                     ]))
-                                                    ->hidden(fn (Get $get): bool => ! in_array($get('type'), [
+                                                    ->visible(fn (Get $get): bool => in_array($get('type'), [
                                                         RegistrationFieldTypeEnum::SELECT->value,
                                                         RegistrationFieldTypeEnum::MULTI_SELECT->value,
                                                     ])),
@@ -495,7 +538,7 @@ class TrainingForm
                                                         RegistrationFieldTypeEnum::PHONE->value,
                                                     ]);
                                                 }))
-                                            ->defaultItems(0)
+                                            ->default(RegistrationFieldOptions::defaultRequiredFields())
                                             ->reorderable()
                                             ->reorderableWithButtons()
                                             ->cloneable()

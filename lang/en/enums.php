@@ -148,6 +148,7 @@ return [
         RegistrationFieldTypeEnum::FULL_NAME->value => 'Full Name',
         RegistrationFieldTypeEnum::BIRTH_DATE->value => 'Date of Birth',
         RegistrationFieldTypeEnum::GENDER->value => 'Gender',
+        RegistrationFieldTypeEnum::CATEGORY->value => 'Category',
     ],
     RoleEnum::class => [
         RoleEnum::SUPER_ADMIN->value => 'Super Admin',

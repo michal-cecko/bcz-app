@@ -1,5 +1,18 @@
 import './bootstrap';
 
+import flatpickr from 'flatpickr';
+import { Slovak } from 'flatpickr/dist/l10n/sk.js';
+import { Czech } from 'flatpickr/dist/l10n/cs.js';
+
+const htmlLang = (document.documentElement.lang || 'sk').toLowerCase();
+if (htmlLang.startsWith('sk')) {
+    flatpickr.localize(Slovak);
+} else if (htmlLang.startsWith('cs')) {
+    flatpickr.localize(Czech);
+}
+
+window.flatpickr = flatpickr;
+
 window.countdown = function (targetIso) {
     return {
         days: 0,

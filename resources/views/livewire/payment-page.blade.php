@@ -177,10 +177,11 @@
                                         <span class="text-white text-[13px] font-semibold">{{ __('payments.bank_transfer.details_title') }}</span>
                                     </div>
 
-                                    @if($payment->team?->bank_account_iban)
+                                    @php $payoutIban = $payment->payable?->getPayoutIban(); $payoutName = $payment->payable?->getPayoutRecipientName(); @endphp
+                                    @if($payoutIban)
                                         <div class="flex items-center gap-1.5">
                                             <span class="text-[#666666] text-[11px] font-medium">{{ __('payments.bank_transfer.iban') }}</span>
-                                            <span class="text-white text-xs font-bold tracking-wide">{{ $payment->team->bank_account_iban }}</span>
+                                            <span class="text-white text-xs font-bold tracking-wide">{{ $payoutIban }}</span>
                                         </div>
                                     @endif
 
@@ -196,10 +197,10 @@
                                         <span class="text-white text-xs font-bold">{{ $this->formattedAmount }}</span>
                                     </div>
 
-                                    @if($payment->team?->bank_account_name)
+                                    @if($payoutName)
                                         <div class="flex items-center gap-1.5">
                                             <span class="text-[#666666] text-[11px] font-medium">{{ __('payments.bank_transfer.recipient') }}</span>
-                                            <span class="text-[#AAAAAA] text-xs font-semibold">{{ $payment->team->bank_account_name }}</span>
+                                            <span class="text-[#AAAAAA] text-xs font-semibold">{{ $payoutName }}</span>
                                         </div>
                                     @endif
 
@@ -212,12 +213,24 @@
                                     @endif
                                 </div>
 
-                                @if($qrCodeImage)
-                                    <div class="flex flex-col items-center gap-1.5">
-                                        <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
-                                            <img src="data:image/png;base64,{{ $qrCodeImage }}" alt="QR" class="w-full h-full">
-                                        </div>
-                                        <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.scan_qr') }}</span>
+                                @if($qrCodeImage || $qrCodeImageCz)
+                                    <div class="flex flex-row items-start gap-3">
+                                        @if($qrCodeImage)
+                                            <div class="flex flex-col items-center gap-1.5">
+                                                <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
+                                                    <img src="data:image/png;base64,{{ $qrCodeImage }}" alt="Pay by Square" class="w-full h-full">
+                                                </div>
+                                                <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.pay_by_square') }}</span>
+                                            </div>
+                                        @endif
+                                        @if($qrCodeImageCz)
+                                            <div class="flex flex-col items-center gap-1.5">
+                                                <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
+                                                    <img src="data:image/png;base64,{{ $qrCodeImageCz }}" alt="QR Platba / SEPA" class="w-full h-full">
+                                                </div>
+                                                <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.qr_platba_sepa') }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 @endif
                             </div>

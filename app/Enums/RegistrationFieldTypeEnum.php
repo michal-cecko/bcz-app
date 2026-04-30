@@ -25,4 +25,5 @@ enum RegistrationFieldTypeEnum: string implements HasLabel
     case FULL_NAME = 'full_name';
     case BIRTH_DATE = 'birth_date';
     case GENDER = 'gender';
+    case CATEGORY = 'category';
 }

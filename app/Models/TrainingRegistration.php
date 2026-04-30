@@ -20,6 +20,7 @@ class TrainingRegistration extends Model implements Payable
         'user_id',
         'form_data',
         'status',
+        'locale',
         'cancellation_reason',
         'registered_at',
         'payment_due_at',
@@ -93,5 +94,15 @@ class TrainingRegistration extends Model implements Payable
             'miesto' => (string) ($this->training?->getTranslation('place_name', app()->getLocale()) ?? ''),
             'cas' => $schedule?->start_time ? mb_substr((string) $schedule->start_time, 0, 5) : '',
         ]);
+    }
+
+    public function getPayoutIban(): ?string
+    {
+        return $this->training?->effectiveBankAccountIban();
+    }
+
+    public function getPayoutRecipientName(): ?string
+    {
+        return $this->training?->effectiveBankAccountName();
     }
 }

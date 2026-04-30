@@ -96,7 +96,8 @@ class RegistrationsRelationManager extends RelationManager
                     ->visible(fn (): bool => $this->getOwnerRecord()->event_type === EventTypeEnum::Competition),
                 DateTimePicker::make('registered_at')
                     ->label('Dátum registrácie')
-                    ->default(now()),
+                    ->default(now())
+                    ->timezone(fn (): string => $this->getOwnerRecord()->getTimezone()),
             ]);
     }
 
@@ -162,12 +163,14 @@ class RegistrationsRelationManager extends RelationManager
                             );
                         }
 
+                        $regLocale = $record->locale ?: 'sk';
                         RegistrationService::sendConfirmation(
-                            user: $user,
-                            registrationType: 'podujatie',
-                            registrationTitle: $event->getTranslation('title', 'sk'),
+                            userOrEmail: $user,
+                            registrationKind: 'event',
+                            registrationTitle: $event->getTranslation('title', $regLocale),
                             team: $event->team,
                             customEmailContent: $org?->confirmation_email_content,
+                            locale: $regLocale,
                             attachments: $event->getMedia('email_attachments'),
                             payment: $payment,
                         );

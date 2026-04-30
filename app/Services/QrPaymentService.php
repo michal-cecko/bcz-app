@@ -23,18 +23,18 @@ class QrPaymentService
      */
     public function generatePayBySquareForPayment(Payment $payment): ?string
     {
-        $team = $payment->team;
+        $iban = $payment->payable?->getPayoutIban();
 
-        if (! $team->bank_account_iban) {
+        if (! $iban) {
             return null;
         }
 
         return self::payBySquare(
-            iban: $team->bank_account_iban,
+            iban: $iban,
             amount: (float) $payment->amount,
             currency: $payment->currency,
             variableSymbol: $payment->variable_symbol ?? '',
-            recipientName: $team->bank_account_name ?? '',
+            recipientName: $payment->payable?->getPayoutRecipientName() ?? '',
             note: $payment->payable?->getQrPaymentNote(),
         );
     }
@@ -44,18 +44,18 @@ class QrPaymentService
      */
     public function generateQrPlatbaForPayment(Payment $payment): ?string
     {
-        $team = $payment->team;
+        $iban = $payment->payable?->getPayoutIban();
 
-        if (! $team->bank_account_iban) {
+        if (! $iban) {
             return null;
         }
 
         return self::qrPlatba(
-            iban: $team->bank_account_iban,
+            iban: $iban,
             amount: (float) $payment->amount,
             currency: $payment->currency,
             variableSymbol: $payment->variable_symbol ?? '',
-            recipientName: $team->bank_account_name ?? '',
+            recipientName: $payment->payable?->getPayoutRecipientName() ?? '',
             note: $payment->payable?->getQrPaymentNote(),
         );
     }
@@ -102,13 +102,15 @@ class QrPaymentService
     }
 
     /**
-     * Generate Czech QR Platba (Short Payment Descriptor) QR code from raw data.
-     * Format: SPD*1.0*ACC:IBAN*AM:amount*CC:currency*X-VS:variableSymbol*RN:recipientName
+     * Generate a QR readable by Czech (and EU) banking apps.
      *
-     * @param  float|null  $amount  Optional — omit for donation QR without fixed amount.
-     */
-    /**
+     * Auto-switches by IBAN country, since CZ bank apps read both formats
+     * through the same scanner but reject SPAYD with non-CZ IBANs:
+     *  - CZ IBAN → SPAYD / QR Platba (native domestic format)
+     *  - non-CZ IBAN → EPC QR (EPC069-12, the European SEPA standard)
+     *
      * @param  string  $iban  IBAN or Czech account number (e.g. "1503666677/5500").
+     * @param  float|null  $amount  Optional — omit for open-amount donation QR (SPAYD only).
      */
     public static function qrPlatba(
         string $iban,
@@ -117,8 +119,23 @@ class QrPaymentService
         string $variableSymbol = '',
         string $recipientName = '',
         ?string $note = null,
+        ?string $bic = null,
     ): ?string {
-        $payload = self::qrPlatbaPayload($iban, $amount, $currency, $variableSymbol, $recipientName, $note);
+        $normalizedIban = strtoupper(str_replace(' ', '', $iban));
+        $isCzAccount = str_contains($normalizedIban, '/') || str_starts_with($normalizedIban, 'CZ');
+
+        if (! $isCzAccount && $amount !== null) {
+            return self::epcQr(
+                iban: $normalizedIban,
+                amount: $amount,
+                currency: $currency,
+                beneficiaryName: $recipientName,
+                bic: $bic,
+                remittanceText: $note,
+            );
+        }
+
+        $payload = self::qrPlatbaPayload($iban, $amount, $currency, $variableSymbol, $recipientName, $note, $bic);
 
         if ($payload === null) {
             return null;
@@ -138,6 +155,7 @@ class QrPaymentService
         string $variableSymbol = '',
         string $recipientName = '',
         ?string $note = null,
+        ?string $bic = null,
     ): ?string {
         $iban = str_replace(' ', '', $iban);
 
@@ -149,9 +167,14 @@ class QrPaymentService
             $iban = self::czechAccountToIban($iban);
         }
 
+        $acc = $iban;
+        if ($bic !== null && $bic !== '') {
+            $acc .= '+'.str_replace(' ', '', $bic);
+        }
+
         $parts = [
             'SPD*1.0',
-            'ACC:'.$iban,
+            'ACC:'.$acc,
         ];
 
         if ($amount !== null) {
@@ -161,18 +184,111 @@ class QrPaymentService
         $parts[] = 'CC:'.$currency;
 
         if ($variableSymbol) {
-            $parts[] = 'X-VS:'.$variableSymbol;
+            $parts[] = 'X-VS:'.self::spaydEncode($variableSymbol);
         }
 
         if ($recipientName) {
-            $parts[] = 'RN:'.mb_substr($recipientName, 0, 35);
+            $parts[] = 'RN:'.self::spaydEncode(mb_substr($recipientName, 0, 35));
         }
 
         if ($note !== null && $note !== '') {
-            $parts[] = 'MSG:'.mb_substr($note, 0, 60);
+            $parts[] = 'MSG:'.self::spaydEncode(mb_substr($note, 0, 60));
         }
 
         return implode('*', $parts);
+    }
+
+    /**
+     * Generate an EPC QR Code (EPC069-12, also known as GiroCode) for a SEPA
+     * Credit Transfer. This is the European standard for cross-border SEPA QR
+     * payments — read by most EU banking apps (incl. Raiffeisen CZ) through
+     * the same scanner that reads SPAYD/QR Platba.
+     *
+     * Use this when the recipient IBAN is not a domestic CZ account but the
+     * payer is in CZ (or any SEPA country) — SPAYD won't work for that case.
+     */
+    public static function epcQr(
+        string $iban,
+        float $amount,
+        string $currency = 'EUR',
+        string $beneficiaryName = '',
+        ?string $bic = null,
+        ?string $remittanceText = null,
+        ?string $remittanceReference = null,
+    ): ?string {
+        $payload = self::epcQrPayload($iban, $amount, $currency, $beneficiaryName, $bic, $remittanceText, $remittanceReference);
+
+        if ($payload === null) {
+            return null;
+        }
+
+        return self::buildQrPng($payload);
+    }
+
+    /**
+     * Build the raw EPC QR payload (12 LF-separated lines per spec).
+     * Total max 331 bytes; field length limits enforced via mb_substr.
+     */
+    public static function epcQrPayload(
+        string $iban,
+        float $amount,
+        string $currency = 'EUR',
+        string $beneficiaryName = '',
+        ?string $bic = null,
+        ?string $remittanceText = null,
+        ?string $remittanceReference = null,
+    ): ?string {
+        $iban = strtoupper(str_replace(' ', '', $iban));
+        if ($iban === '') {
+            return null;
+        }
+
+        $bic = $bic !== null ? strtoupper(str_replace(' ', '', $bic)) : '';
+        $name = mb_substr($beneficiaryName, 0, 70);
+
+        // EPC permits either structured reference OR unstructured text, not both.
+        $reference = $remittanceReference !== null ? mb_substr($remittanceReference, 0, 25) : '';
+        $text = ($remittanceText !== null && $reference === '') ? mb_substr($remittanceText, 0, 140) : '';
+
+        // Version 002 makes BIC optional; 001 requires it. We always include BIC if provided.
+        $version = $bic === '' ? '002' : '001';
+
+        $lines = [
+            'BCD',                                                 // Service tag
+            $version,                                              // Version
+            '1',                                                   // Charset 1 = UTF-8
+            'SCT',                                                 // SEPA Credit Transfer
+            $bic,                                                  // BIC
+            $name,                                                 // Beneficiary name
+            $iban,                                                 // IBAN
+            $currency.number_format($amount, 2, '.', ''),          // e.g. EUR12.50
+            '',                                                    // Purpose (4-char code, optional)
+            $reference,                                            // Structured remittance reference
+            $text,                                                 // Unstructured remittance text
+        ];
+
+        // Trim trailing empty lines (spec allows omitting unused trailing fields).
+        while (count($lines) > 0 && end($lines) === '') {
+            array_pop($lines);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Percent-encode a SPAYD value. Per the Short Payment Descriptor spec,
+     * only [A-Za-z0-9+\-./:] are safe inside values; everything else (including
+     * space, asterisk, diacritics) must be %XX-encoded.
+     */
+    private static function spaydEncode(string $value): string
+    {
+        $encoded = preg_replace_callback(
+            '/[^A-Za-z0-9+\-.\/:]/',
+            fn (array $m): string => '%'.strtoupper(bin2hex($m[0])),
+            $value,
+        );
+
+        return $encoded ?? $value;
     }
 
     /**

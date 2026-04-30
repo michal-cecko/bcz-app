@@ -10,9 +10,11 @@ use App\Models\Team;
 use App\Models\Training;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Throwable;
 
 class RegistrationService
 {
@@ -46,14 +48,31 @@ class RegistrationService
     /**
      * Send registration confirmation with magic login link.
      *
+     * Accepts either a User (full account, magic-login link generated) or a
+     * raw email string (guest registrations where no User record was created).
+     * Logs every attempt so silent mail failures on production are diagnosable
+     * via storage/logs/laravel.log.
+     *
+     * @param  User|string  $userOrEmail  User instance or guest email address
+     * @param  string  $registrationKind  'training' or 'event' — translated via lang file
      * @param  array<string, list<array<string, mixed>>>|null  $customEmailContent  Locale-keyed Mason brick content
-     */
-    /**
      * @param  Collection<int, Media>|null  $attachments
      */
-    public static function sendConfirmation(User $user, string $registrationType, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null, ?Collection $attachments = null, ?Payment $payment = null): void
+    public static function sendConfirmation(User|string $userOrEmail, string $registrationKind, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null, ?Collection $attachments = null, ?Payment $payment = null): void
     {
-        $resolvedLocale = $locale ?? $user->locale ?? app()->getLocale() ?? 'sk';
+        $user = $userOrEmail instanceof User ? $userOrEmail : null;
+        $email = $user?->email ?? (is_string($userOrEmail) ? $userOrEmail : null);
+
+        if (! $email) {
+            Log::warning('registration_confirmation.skipped_no_email', [
+                'registration_kind' => $registrationKind,
+                'registration_title' => $registrationTitle,
+            ]);
+
+            return;
+        }
+
+        $resolvedLocale = $locale ?? $user?->locale ?? app()->getLocale() ?? 'sk';
         $bricks = $customEmailContent[$resolvedLocale] ?? $customEmailContent['sk'] ?? null;
 
         $customHtml = null;
@@ -63,13 +82,15 @@ class RegistrationService
 
         $mail = new RegistrationConfirmationMail(
             user: $user,
-            registrationType: $registrationType,
+            registrationKind: $registrationKind,
             registrationTitle: $registrationTitle,
             isNewUser: $isNewUser,
             team: $team,
             customContent: $customHtml,
             payment: $payment,
         );
+
+        $mail->locale($resolvedLocale);
 
         if ($attachments && $attachments->isNotEmpty()) {
             foreach ($attachments as $media) {
@@ -80,7 +101,26 @@ class RegistrationService
             }
         }
 
-        Mail::to($user->email)->queue($mail);
+        try {
+            Log::info('registration_confirmation.queued', [
+                'user_id' => $user?->id,
+                'email' => $email,
+                'registration_kind' => $registrationKind,
+                'locale' => $resolvedLocale,
+                'is_new_user' => $isNewUser,
+            ]);
+
+            Mail::to($email)->queue($mail);
+        } catch (Throwable $e) {
+            Log::error('registration_confirmation.failed', [
+                'user_id' => $user?->id,
+                'email' => $email,
+                'registration_kind' => $registrationKind,
+                'exception' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 
     /**

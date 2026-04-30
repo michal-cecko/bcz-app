@@ -10,6 +10,7 @@ return [
         'note' => 'Poznámka:',
         'scan_qr' => 'Naskenuj QR kód',
         'pay_by_square' => 'Pay by Square',
+        'qr_platba_sepa' => 'QR Platba / SEPA',
         'instructions_title' => 'Dôležité pokyny',
         'instruction_use_vs' => 'Použite správny variabilný symbol pre automatické priradenie platby.',
         'instruction_processing' => 'Platba môže trvať 1-2 pracovné dni v závislosti od vašej banky.',
@@ -39,4 +40,8 @@ return [
         'success_body' => 'Vaše členstvo bolo aktivované.',
     ],
     'open_payment_page' => 'Otvoriť platbu',
+    'bank_account_override' => [
+        'helper_text' => 'Ak prázdne, použije sa predvolený IBAN tímu: :default',
+        'recipient_helper_text' => 'Ak prázdne, použije sa predvolený názov príjemcu tímu: :default',
+    ],
 ];

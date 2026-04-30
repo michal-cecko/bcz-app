@@ -7,31 +7,55 @@
         <textarea wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" rows="3" @if($isRequired) required @endif class="{{ $inputClass }}"></textarea>
         @break
     @case('select')
+    @case('category')
         <select wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
             <option value="">{{ $placeholder ?: '---' }}</option>
-            @foreach($options as $opt)
-                <option value="{{ $opt }}">{{ $opt }}</option>
+            @foreach($options as $optValue => $optLabel)
+                <option value="{{ $optValue }}">{{ $optLabel }}</option>
             @endforeach
         </select>
         @break
     @case('multi_select')
         <select wire:model="{{ $wireModel }}" multiple @if($isRequired) required @endif class="{{ $inputClass }}">
-            @foreach($options as $opt)
-                <option value="{{ $opt }}">{{ $opt }}</option>
+            @foreach($options as $optValue => $optLabel)
+                <option value="{{ $optValue }}">{{ $optLabel }}</option>
             @endforeach
         </select>
         @break
     @case('date_picker')
-        <input type="date" wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
+        <input
+            type="date"
+            wire:model="{{ $wireModel }}"
+            @if($isRequired) required @endif
+            class="{{ $inputClass }}"
+            x-data
+            x-init="window.flatpickr && window.flatpickr($el, { dateFormat: 'Y-m-d', allowInput: true, disableMobile: false })"
+        >
         @break
     @case('year_picker')
-        <input type="number" wire:model="{{ $wireModel }}" min="1900" max="2100" placeholder="{{ $placeholder ?: 'YYYY' }}" @if($isRequired) required @endif class="{{ $inputClass }}">
+        @php
+            $minYear = 1900;
+            $maxYear = (int) date('Y');
+        @endphp
+        <select wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
+            <option value="">{{ $placeholder ?: 'YYYY' }}</option>
+            @for($y = $maxYear; $y >= $minYear; $y--)
+                <option value="{{ $y }}">{{ $y }}</option>
+            @endfor
+        </select>
         @break
     @case('number_input')
         <input type="number" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" @if($isRequired) required @endif class="{{ $inputClass }}">
         @break
     @case('time_picker')
-        <input type="time" wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
+        <input
+            type="time"
+            wire:model="{{ $wireModel }}"
+            @if($isRequired) required @endif
+            class="{{ $inputClass }}"
+            x-data
+            x-init="window.flatpickr && window.flatpickr($el, { enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true, allowInput: true, disableMobile: false })"
+        >
         @break
     @case('phone')
         <input type="tel" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder ?: '+421 XXX XXX XXX' }}" @if($isRequired) required @endif class="{{ $inputClass }}">
@@ -45,7 +69,20 @@
         <input type="text" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" @if($isRequired) required @endif class="{{ $inputClass }}">
         @break
     @case('birth_date')
-        <input type="date" wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
+        <input
+            type="date"
+            wire:model="{{ $wireModel }}"
+            @if($isRequired) required @endif
+            class="{{ $inputClass }}"
+            x-data
+            x-init="window.flatpickr && window.flatpickr($el, {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                disableMobile: false,
+                maxDate: 'today',
+                defaultDate: $el.value || null,
+            })"
+        >
         @break
     @case('gender')
         <select wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">

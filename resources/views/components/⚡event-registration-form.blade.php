@@ -46,13 +46,7 @@ new class extends Component
             return;
         }
 
-        // Admin-level users (admin/editor/team_admin/coach) cannot register — read-only view
         $user = auth()->user();
-        if ($user && ! $user->isMemberLevel()) {
-            $this->registrationState = 'not_eligible';
-
-            return;
-        }
 
         // Check if already registered (logged-in users)
         if ($user) {
@@ -122,13 +116,6 @@ new class extends Component
 
     public function submit(): void
     {
-        $authCheck = auth()->user();
-        if ($authCheck && ! $authCheck->isMemberLevel()) {
-            $this->registrationState = 'not_eligible';
-
-            return;
-        }
-
         $org = $this->event->organization;
         $schema = $org->registration_form_schema ?? [];
         $rules = [];
@@ -230,15 +217,32 @@ new class extends Component
             }
         }
 
-        $isPaid = $org && $org->pricing_type === EventPricingTypeEnum::Paid && $org->price_amount > 0;
+        // Resolve a per-category fee override (if the form has a CATEGORY field
+        // pointing at a configured RegistrationFee on the competition).
+        $selectedCategoryId = $this->resolveSelectedCategoryId($schema);
+        $registrationFee = $this->resolveRegistrationFee($selectedCategoryId);
+
+        $effectiveAmount = $registrationFee
+            ? (float) $registrationFee->amount
+            : (float) ($org?->price_amount ?? 0);
+        $effectiveCurrency = $registrationFee?->currency
+            ?? $org?->price_currency
+            ?? 'EUR';
+
+        $isPaid = $org
+            && $org->pricing_type === EventPricingTypeEnum::Paid
+            && $effectiveAmount > 0;
         $status = $isPaid ? RegistrationStatusEnum::Pending : RegistrationStatusEnum::Approved;
 
         $registration = EventRegistration::create([
             'event_id' => $this->event->id,
             'user_id' => $user?->id,
             'status' => $status->value,
+            'locale' => app()->getLocale(),
             'registered_at' => now(),
             'payment_due_at' => $isPaid ? now()->addDays(14) : null,
+            'athlete_category_id' => $selectedCategoryId,
+            'registration_fee_id' => $registrationFee?->id,
         ]);
 
         // Store field values
@@ -260,21 +264,24 @@ new class extends Component
                 user: $user,
                 team: $this->event->team,
                 payable: $registration,
-                amount: (float) $org->price_amount,
-                currency: $org->price_currency ?? 'EUR',
+                amount: $effectiveAmount,
+                currency: $effectiveCurrency,
             );
             $this->pendingPaymentId = $payment->id;
         }
 
-        if ($user) {
+        $confirmationRecipient = $user
+            ?? RegistrationService::extractEmailFromFormData($this->fields, $schema);
+
+        if ($confirmationRecipient) {
             RegistrationService::sendConfirmation(
-                user: $user,
-                registrationType: 'podujatie',
-                registrationTitle: $this->event->getTranslation('title', app()->getLocale()),
+                userOrEmail: $confirmationRecipient,
+                registrationKind: 'event',
+                registrationTitle: $this->event->getTranslation('title', $registration->locale),
                 isNewUser: $isNewUser,
                 team: $this->event->team,
                 customEmailContent: $org->confirmation_email_content,
-                locale: app()->getLocale(),
+                locale: $registration->locale,
                 attachments: $this->event->getMedia('email_attachments'),
                 payment: $payment,
             );
@@ -360,11 +367,63 @@ new class extends Component
     {
         $org = $this->event->organization;
 
-        if (! $org || $org->pricing_type === EventPricingTypeEnum::Free || ! $org->price_amount) {
+        if (! $org || $org->pricing_type === EventPricingTypeEnum::Free) {
+            return 'free_approved';
+        }
+
+        // If a registration was just created with a per-category fee, prefer
+        // its effective amount over the organization's flat price.
+        if ($user) {
+            $registration = EventRegistration::where('event_id', $this->event->id)
+                ->where('user_id', $user->id)
+                ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
+                ->latest('created_at')
+                ->first();
+
+            if ($registration && $registration->getTotalPriceAmount() <= 0) {
+                return 'free_approved';
+            }
+        }
+
+        if (! $org->price_amount) {
             return 'free_approved';
         }
 
         return 'payment_needed';
+    }
+
+    protected function resolveSelectedCategoryId(array $schema): ?string
+    {
+        foreach ($schema as $field) {
+            if (($field['type'] ?? null) !== 'category') {
+                continue;
+            }
+
+            $name = $field['name'] ?? $field['key'] ?? null;
+            $value = $name ? ($this->fields[$name] ?? null) : null;
+
+            if (! empty($value)) {
+                return (string) $value;
+            }
+        }
+
+        return null;
+    }
+
+    protected function resolveRegistrationFee(?string $categoryId): ?\App\Models\RegistrationFee
+    {
+        if (! $categoryId) {
+            return null;
+        }
+
+        $detail = $this->event->competitionDetail;
+        if (! $detail) {
+            return null;
+        }
+
+        return $detail->registrationFees()
+            ->where('athlete_category_id', $categoryId)
+            ->first();
     }
 
     protected function getEmailFieldName(array $schema): string
@@ -522,6 +581,21 @@ new class extends Component
         </div>
 
     @elseif($registrationState === 'free_approved')
+        @php
+            $freeMessage = null;
+            if (auth()->check()) {
+                $latestRegistration = \App\Models\EventRegistration::where('event_id', $event->id)
+                    ->where('user_id', auth()->id())
+                    ->whereNotIn('status', [\App\Enums\RegistrationStatusEnum::Cancelled->value])
+                    ->latest('created_at')
+                    ->first();
+                $fee = $latestRegistration?->registrationFee;
+                if ($fee) {
+                    $freeMessage = $fee->getTranslation('description', $locale, false)
+                        ?: $fee->getTranslation('description', 'sk', false);
+                }
+            }
+        @endphp
         <div class="bg-[#111111] rounded-2xl border border-emerald-500/30 p-10 flex flex-col items-center gap-6 text-center">
             <div class="w-[72px] h-[72px] rounded-full bg-[#22C55E]/10 flex items-center justify-center">
                 <svg class="w-9 h-9 text-[#22C55E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -529,7 +603,7 @@ new class extends Component
                 </svg>
             </div>
             <h3 class="font-display font-bold text-[28px] text-white">{{ __('event_detail.registration_success_title') }}</h3>
-            <p class="text-[#888888] text-sm leading-relaxed">{{ __('event_detail.registration_success_message') }}</p>
+            <p class="text-[#888888] text-sm leading-relaxed whitespace-pre-line">{{ $freeMessage ?: __('event_detail.registration_success_message') }}</p>
 
             <div class="w-full h-px bg-[#222222]"></div>
 
@@ -610,11 +684,7 @@ new class extends Component
                             $isRequired = $field['required'] ?? false;
                             $label = is_array($field['label'] ?? null) ? ($field['label'][$locale] ?? $field['label']['sk'] ?? '') : ($field['label'] ?? '');
                             $placeholder = is_array($field['placeholder'] ?? null) ? ($field['placeholder'][$locale] ?? $field['placeholder']['sk'] ?? '') : ($field['placeholder'] ?? '');
-                            $options = [];
-                            if (!empty($field['options'])) {
-                                $opts = is_array($field['options']) ? $field['options'] : preg_split('/\r\n|\r|\n/', $field['options']);
-                                $options = array_map('trim', $opts);
-                            }
+                            $options = \App\Support\RegistrationFieldOptions::resolve($field, $locale, $event);
                             $hasCondition = $field['has_condition'] ?? false;
                             $conditionField = $field['condition_field'] ?? null;
                             $conditionValue = $field['condition_value'] ?? null;
@@ -637,11 +707,7 @@ new class extends Component
                                             $hfRequired = $hf['required'] ?? false;
                                             $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                             $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
-                                            $hfOptions = [];
-                                            if (!empty($hf['options'])) {
-                                                $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
-                                                $hfOptions = array_map('trim', $hfOpts);
-                                            }
+                                            $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale, $event);
                                         @endphp
                                         <div class="flex flex-col gap-2">
                                             <label class="text-[#AAAAAA] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>
@@ -663,11 +729,7 @@ new class extends Component
                                             $hfRequired = $hf['required'] ?? false;
                                             $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                             $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
-                                            $hfOptions = [];
-                                            if (!empty($hf['options'])) {
-                                                $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
-                                                $hfOptions = array_map('trim', $hfOpts);
-                                            }
+                                            $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale, $event);
                                         @endphp
                                         <div class="flex flex-col gap-2">
                                             <label class="text-[#AAAAAA] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>
@@ -697,11 +759,7 @@ new class extends Component
                                     $hfRequired = $hf['required'] ?? false;
                                     $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                     $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
-                                    $hfOptions = [];
-                                    if (!empty($hf['options'])) {
-                                        $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
-                                        $hfOptions = array_map('trim', $hfOpts);
-                                    }
+                                    $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale, $event);
                                 @endphp
                                 <div class="flex flex-col gap-2">
                                     <label class="text-[#AAAAAA] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>

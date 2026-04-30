@@ -9,6 +9,7 @@ use App\Filament\Resources\Events\Pages\ListEvents;
 use App\Filament\Resources\Events\Pages\ViewEvent;
 use App\Filament\Resources\Events\RelationManagers\EventPaymentMethodsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\JudgesRelationManager;
+use App\Filament\Resources\Events\RelationManagers\RegistrationFeesRelationManager;
 use App\Filament\Resources\Events\RelationManagers\RegistrationsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\RoundsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\TimetableRelationManager;
@@ -77,6 +78,7 @@ class EventResource extends Resource
             TimetableRelationManager::class,
             RoundsRelationManager::class,
             RegistrationsRelationManager::class,
+            RegistrationFeesRelationManager::class,
             JudgesRelationManager::class,
             EventPaymentMethodsRelationManager::class,
         ];

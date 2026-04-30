@@ -45,13 +45,7 @@ new class extends Component
             return;
         }
 
-        // Admin-level users (admin/editor/team_admin/coach) cannot register — read-only view
         $user = auth()->user();
-        if ($user && ! $user->isMemberLevel()) {
-            $this->registrationState = 'not_eligible';
-
-            return;
-        }
 
         // Check if already registered (logged-in users)
         if ($user) {
@@ -123,13 +117,6 @@ new class extends Component
 
     public function submit(): void
     {
-        $authCheck = auth()->user();
-        if ($authCheck && ! $authCheck->isMemberLevel()) {
-            $this->registrationState = 'not_eligible';
-
-            return;
-        }
-
         $rules = [];
         $attributes = [];
         $locale = app()->getLocale();
@@ -243,6 +230,7 @@ new class extends Component
             'user_id' => $user?->id,
             'form_data' => $this->fields,
             'status' => $status->value,
+            'locale' => app()->getLocale(),
             'registered_at' => now(),
             'payment_due_at' => $paymentDueAt,
         ]);
@@ -260,15 +248,18 @@ new class extends Component
             $this->pendingPaymentId = $payment->id;
         }
 
-        if ($user) {
+        $confirmationRecipient = $user
+            ?? RegistrationService::extractEmailFromFormData($this->fields, $schema);
+
+        if ($confirmationRecipient) {
             RegistrationService::sendConfirmation(
-                user: $user,
-                registrationType: 'tréning',
-                registrationTitle: $this->training->getTranslation('title', app()->getLocale()),
+                userOrEmail: $confirmationRecipient,
+                registrationKind: 'training',
+                registrationTitle: $this->training->getTranslation('title', $registration->locale),
                 isNewUser: $isNewUser,
                 team: $this->training->team,
                 customEmailContent: $this->training->confirmation_email_content,
-                locale: app()->getLocale(),
+                locale: $registration->locale,
                 attachments: $this->training->getMedia('email_attachments'),
                 payment: $payment,
             );
@@ -685,11 +676,7 @@ new class extends Component
                         $isRequired = $field['required'] ?? false;
                         $label = is_array($field['label'] ?? null) ? ($field['label'][$locale] ?? $field['label']['sk'] ?? '') : ($field['label'] ?? '');
                         $placeholder = is_array($field['placeholder'] ?? null) ? ($field['placeholder'][$locale] ?? $field['placeholder']['sk'] ?? '') : ($field['placeholder'] ?? '');
-                        $options = [];
-                        if (!empty($field['options'])) {
-                            $opts = is_array($field['options']) ? $field['options'] : preg_split('/\r\n|\r|\n/', $field['options']);
-                            $options = array_map('trim', $opts);
-                        }
+                        $options = \App\Support\RegistrationFieldOptions::resolve($field, $locale);
                         $hasCondition = $field['has_condition'] ?? false;
                         $conditionField = $field['condition_field'] ?? null;
                         $conditionValue = $field['condition_value'] ?? null;
@@ -712,11 +699,7 @@ new class extends Component
                                         $hfRequired = $hf['required'] ?? false;
                                         $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                         $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
-                                        $hfOptions = [];
-                                        if (!empty($hf['options'])) {
-                                            $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
-                                            $hfOptions = array_map('trim', $hfOpts);
-                                        }
+                                        $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale);
                                     @endphp
                                     <div class="flex flex-col gap-2">
                                         <label class="text-[#888888] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>
@@ -738,11 +721,7 @@ new class extends Component
                                         $hfRequired = $hf['required'] ?? false;
                                         $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                         $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
-                                        $hfOptions = [];
-                                        if (!empty($hf['options'])) {
-                                            $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
-                                            $hfOptions = array_map('trim', $hfOpts);
-                                        }
+                                        $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale);
                                     @endphp
                                     <div class="flex flex-col gap-2">
                                         <label class="text-[#888888] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>
@@ -772,11 +751,7 @@ new class extends Component
                                 $hfRequired = $hf['required'] ?? false;
                                 $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                 $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
-                                $hfOptions = [];
-                                if (!empty($hf['options'])) {
-                                    $hfOpts = is_array($hf['options']) ? $hf['options'] : preg_split('/\r\n|\r|\n/', $hf['options']);
-                                    $hfOptions = array_map('trim', $hfOpts);
-                                }
+                                $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale);
                             @endphp
                             <div class="flex flex-col gap-2">
                                 <label class="text-[#888888] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>

@@ -22,6 +22,7 @@ use App\Services\EmailService;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use App\Services\TrainingCapacityService;
+use App\Support\RegistrationFieldOptions;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteBulkAction;
@@ -235,13 +236,15 @@ class RegistrationsRelationManager extends RelationManager
                             );
                         }
 
+                        $regLocale = $record->locale ?: 'sk';
                         RegistrationService::sendConfirmation(
-                            user: $user,
-                            registrationType: 'tréning',
-                            registrationTitle: $training->getTranslation('title', 'sk'),
+                            userOrEmail: $user,
+                            registrationKind: 'training',
+                            registrationTitle: $training->getTranslation('title', $regLocale),
                             isNewUser: $data['_is_new_user'] ?? false,
                             team: $training->team,
                             customEmailContent: $training->confirmation_email_content,
+                            locale: $regLocale,
                             attachments: $training->getMedia('email_attachments'),
                             payment: $payment,
                         );
@@ -535,11 +538,11 @@ class RegistrationsRelationManager extends RelationManager
                     ->rows(3),
                 RegistrationFieldTypeEnum::SELECT => Select::make($name)
                     ->label($label)
-                    ->options($this->parseOptions($fieldDef['options'] ?? '')),
+                    ->options(RegistrationFieldOptions::resolve($fieldDef, app()->getLocale())),
                 RegistrationFieldTypeEnum::MULTI_SELECT => Select::make($name)
                     ->label($label)
                     ->multiple()
-                    ->options($this->parseOptions($fieldDef['options'] ?? '')),
+                    ->options(RegistrationFieldOptions::resolve($fieldDef, app()->getLocale())),
                 RegistrationFieldTypeEnum::DATE_PICKER => DatePicker::make($name)
                     ->label($label),
                 RegistrationFieldTypeEnum::YEAR_PICKER => Select::make($name)
@@ -588,20 +591,6 @@ class RegistrationsRelationManager extends RelationManager
         }
 
         return $fields;
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function parseOptions(string|array $options): array
-    {
-        if (is_array($options)) {
-            return array_combine($options, $options);
-        }
-
-        $items = array_map('trim', explode(',', $options));
-
-        return array_combine($items, $items);
     }
 
     protected function sendCancellationNotification(TrainingRegistration $record, ?string $reason = null): void

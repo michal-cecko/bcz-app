@@ -53,6 +53,8 @@ class Training extends Model implements HasMedia, Linkable
         'pricing_type',
         'price_amount',
         'payment_note',
+        'bank_account_iban',
+        'bank_account_name',
         'registration_form_schema',
         'gallery_images',
         'is_active',
@@ -218,6 +220,16 @@ class Training extends Model implements HasMedia, Linkable
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function effectiveBankAccountIban(): ?string
+    {
+        return $this->bank_account_iban ?: $this->team?->bank_account_iban;
+    }
+
+    public function effectiveBankAccountName(): ?string
+    {
+        return $this->bank_account_name ?: $this->team?->bank_account_name;
     }
 
     public function coaches(): BelongsToMany

@@ -34,6 +34,8 @@ class PaymentPage extends Component
 
     public ?string $qrCodeImage = null;
 
+    public ?string $qrCodeImageCz = null;
+
     public function mount(Payment $payment): void
     {
         $this->payment = $payment->load(['team', 'payable', 'user']);
@@ -62,6 +64,7 @@ class PaymentPage extends Component
         $this->selectedMethod = $method;
         $this->errorMessage = null;
         $this->qrCodeImage = null;
+        $this->qrCodeImageCz = null;
 
         if ($method === 'bank_transfer') {
             $this->ensureBankTransferDetails();
@@ -164,15 +167,13 @@ class PaymentPage extends Component
 
     protected function generateQrCode(): void
     {
-        $team = $this->payment->team;
-
-        if (! $team?->bank_account_iban) {
+        if (! $this->payment->payable?->getPayoutIban()) {
             return;
         }
 
-        $country = $this->payment->currency === 'CZK' ? 'CZ' : 'SK';
         $qrService = app(QrPaymentService::class);
-        $this->qrCodeImage = $qrService->generateQrCode($this->payment, $country);
+        $this->qrCodeImage = $qrService->generatePayBySquareForPayment($this->payment);
+        $this->qrCodeImageCz = $qrService->generateQrPlatbaForPayment($this->payment);
     }
 
     /**

@@ -20,8 +20,6 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
 
     public string $magicUrl;
 
-    public string $emailSubject;
-
     public ?string $teamName;
 
     public ?string $teamLogoUrl;
@@ -40,22 +38,21 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
 
     public ?string $paymentUrl = null;
 
+    /**
+     * @param  string  $registrationKind  'training' or 'event' (translated via lang file)
+     */
     public function __construct(
-        public User $user,
-        public string $registrationType,
+        public ?User $user,
+        public string $registrationKind,
         public string $registrationTitle,
         public bool $isNewUser = false,
         public ?Team $team = null,
         public ?string $customContent = null,
         public ?Payment $payment = null,
     ) {
-        $this->magicUrl = $isNewUser
+        $this->magicUrl = ($isNewUser && $user)
             ? URL::temporarySignedRoute('magic-login', now()->addDays(7), ['user' => $user->id])
             : '';
-
-        $this->emailSubject = $this->isNewUser
-            ? "Váš účet bol vytvorený — {$this->registrationTitle}"
-            : "Potvrdenie registrácie — {$this->registrationTitle}";
 
         $this->teamName = $this->team?->getTranslation('name', 'sk');
         $this->teamLogoUrl = $this->team?->getFirstMediaUrl('logo') ?: null;
@@ -75,7 +72,9 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: $this->emailSubject);
+        return new Envelope(
+            subject: __('emails.registration_confirmation.subject', ['title' => $this->registrationTitle]),
+        );
     }
 
     public function content(): Content

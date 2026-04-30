@@ -167,13 +167,17 @@ class MembershipStatusWidget extends Widget
             return [];
         }
 
+        $args = [
+            'iban' => $team->bank_account_iban,
+            'amount' => (float) $membership->fee_amount,
+            'currency' => $membership->fee_currency ?? 'EUR',
+            'variableSymbol' => $this->pendingPayment?->formattedVariableSymbol() ?? '',
+            'recipientName' => $team->bank_account_name ?? '',
+        ];
+
         return [
-            'sk' => QrPaymentService::payBySquare(
-                iban: $team->bank_account_iban,
-                amount: (float) $membership->fee_amount,
-                currency: $membership->fee_currency ?? 'EUR',
-                variableSymbol: $this->pendingPayment?->formattedVariableSymbol() ?? '',
-            ),
+            'sk' => QrPaymentService::payBySquare(...$args),
+            'cz' => QrPaymentService::qrPlatba(...$args),
         ];
     }
 

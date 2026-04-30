@@ -6,10 +6,14 @@ use App\Models\Concerns\HasUuidV7;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Translatable\HasTranslations;
 
 class RegistrationFee extends Model
 {
-    use HasFactory, HasUuidV7;
+    use HasFactory, HasTranslations, HasUuidV7;
+
+    /** @var list<string> */
+    public array $translatable = ['description'];
 
     protected $fillable = [
         'competition_detail_id',

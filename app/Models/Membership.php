@@ -102,4 +102,14 @@ class Membership extends Model implements Payable
             'nazov_timu' => (string) ($this->team?->getTranslation('name', app()->getLocale()) ?? ''),
         ]);
     }
+
+    public function getPayoutIban(): ?string
+    {
+        return $this->team?->bank_account_iban;
+    }
+
+    public function getPayoutRecipientName(): ?string
+    {
+        return $this->team?->bank_account_name;
+    }
 }

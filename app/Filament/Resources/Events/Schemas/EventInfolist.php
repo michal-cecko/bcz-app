@@ -201,7 +201,7 @@ class EventInfolist
                     RepeatableEntry::make('organization.registration_form_schema')
                         ->label('Schéma formuláru')
                         ->schema([
-                            TextEntry::make('label')
+                            TextEntry::make('label.sk')
                                 ->label('Označenie'),
                             TextEntry::make('type')
                                 ->label('Typ')
