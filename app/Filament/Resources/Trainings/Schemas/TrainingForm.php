@@ -291,7 +291,7 @@ class TrainingForm
                                             ->maxLength(140)
                                             ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
                                         TextInput::make('bank_account_iban')
-                                            ->label('IBAN (override)')
+                                            ->label('IBAN')
                                             ->placeholder(fn (): string => Filament::getTenant()?->bank_account_iban ?? '')
                                             ->helperText(fn (): string => __('payments.bank_account_override.helper_text', ['default' => Filament::getTenant()?->bank_account_iban ?: '—']))
                                             ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),

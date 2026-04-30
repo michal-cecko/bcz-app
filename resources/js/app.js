@@ -13,6 +13,91 @@ if (htmlLang.startsWith('sk')) {
 
 window.flatpickr = flatpickr;
 
+window.prettyPicker = function ({ options, multiple, placeholder, searchPlaceholder, emptyLabel }) {
+    return {
+        options,
+        multiple,
+        placeholder,
+        searchPlaceholder,
+        emptyLabel,
+        open: false,
+        search: '',
+        // `value` is x-modelable-bound; Livewire syncs it via wire:model.live.
+        // Single mode: string (or empty). Multi mode: array.
+        value: multiple ? [] : '',
+
+        get selected() {
+            if (this.multiple) {
+                if (!Array.isArray(this.value)) return [];
+                return this.value.map((v) => String(v));
+            }
+            if (this.value === null || this.value === undefined || this.value === '') return [];
+            return [String(this.value)];
+        },
+
+        labelFor(value) {
+            return this.options[value] ?? value;
+        },
+
+        isSelected(value) {
+            return this.selected.includes(String(value));
+        },
+
+        select(value) {
+            const stringValue = String(value);
+            if (this.multiple) {
+                const current = Array.isArray(this.value) ? [...this.value] : [];
+                const idx = current.findIndex((v) => String(v) === stringValue);
+                if (idx === -1) {
+                    current.push(stringValue);
+                } else {
+                    current.splice(idx, 1);
+                }
+                this.value = current;
+            } else {
+                this.value = this.value === stringValue ? '' : stringValue;
+                this.close();
+            }
+        },
+
+        remove(value) {
+            if (!this.multiple) {
+                this.value = '';
+                return;
+            }
+            this.value = (Array.isArray(this.value) ? this.value : []).filter(
+                (v) => String(v) !== String(value),
+            );
+        },
+
+        toggle() {
+            this.open = !this.open;
+            if (this.open) {
+                this.$nextTick(() => this.$refs.searchInput?.focus());
+            } else {
+                this.search = '';
+            }
+        },
+
+        close() {
+            this.open = false;
+            this.search = '';
+        },
+
+        filteredOptions() {
+            const query = this.search.trim().toLowerCase();
+            if (!query) return this.options;
+            const result = {};
+            for (const [value, label] of Object.entries(this.options)) {
+                if (String(label).toLowerCase().includes(query)) {
+                    result[value] = label;
+                }
+            }
+            return result;
+        },
+    };
+};
+
 window.countdown = function (targetIso) {
     return {
         days: 0,

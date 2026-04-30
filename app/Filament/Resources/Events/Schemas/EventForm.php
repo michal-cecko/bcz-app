@@ -247,7 +247,8 @@ class EventForm
                                 ->required()
                                 ->live(),
                             TextInput::make('price_amount')
-                                ->label('Suma')
+                                ->label('Suma (základná)')
+                                ->helperText('Základná cena pre všetky kategórie. Pre konkrétne kategórie ju môžete prepísať v záložke "Poplatky za kategórie" (viditeľná po uložení súťažného podujatia).')
                                 ->numeric()
                                 ->minValue(0.01)
                                 ->required(fn (Get $get): bool => self::isPaid($get('pricing_type')))
@@ -267,7 +268,7 @@ class EventForm
                                 ->maxLength(140)
                                 ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             TextInput::make('bank_account_iban')
-                                ->label('IBAN (override)')
+                                ->label('IBAN')
                                 ->placeholder(fn (): string => Filament::getTenant()?->bank_account_iban ?? '')
                                 ->helperText(fn (): string => __('payments.bank_account_override.helper_text', ['default' => Filament::getTenant()?->bank_account_iban ?: '—']))
                                 ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),

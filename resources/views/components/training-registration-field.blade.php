@@ -8,19 +8,22 @@
         @break
     @case('select')
     @case('category')
-        <select wire:model="{{ $wireModel }}" @if($isRequired) required @endif class="{{ $inputClass }}">
-            <option value="">{{ $placeholder ?: '---' }}</option>
-            @foreach($options as $optValue => $optLabel)
-                <option value="{{ $optValue }}">{{ $optLabel }}</option>
-            @endforeach
-        </select>
+        <x-pretty-picker
+            :wire-model="$wireModel"
+            :options="$options"
+            :placeholder="$placeholder ?: '---'"
+            :is-required="$isRequired"
+            :multiple="false"
+        />
         @break
     @case('multi_select')
-        <select wire:model="{{ $wireModel }}" multiple @if($isRequired) required @endif class="{{ $inputClass }}">
-            @foreach($options as $optValue => $optLabel)
-                <option value="{{ $optValue }}">{{ $optLabel }}</option>
-            @endforeach
-        </select>
+        <x-pretty-picker
+            :wire-model="$wireModel"
+            :options="$options"
+            :placeholder="$placeholder ?: '---'"
+            :is-required="$isRequired"
+            :multiple="true"
+        />
         @break
     @case('date_picker')
         <input
@@ -29,7 +32,7 @@
             @if($isRequired) required @endif
             class="{{ $inputClass }}"
             x-data
-            x-init="window.flatpickr && window.flatpickr($el, { dateFormat: 'Y-m-d', allowInput: true, disableMobile: false })"
+            x-init="window.flatpickr && window.flatpickr($el, { dateFormat: 'Y-m-d', altInput: true, altFormat: 'd.m.Y', altInputClass: '{{ $inputClass }}', allowInput: true, disableMobile: false })"
         >
         @break
     @case('year_picker')
@@ -77,6 +80,9 @@
             x-data
             x-init="window.flatpickr && window.flatpickr($el, {
                 dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd.m.Y',
+                altInputClass: '{{ $inputClass }}',
                 allowInput: true,
                 disableMobile: false,
                 maxDate: 'today',
