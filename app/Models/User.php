@@ -112,6 +112,39 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
+     * Per-instance memo of team_id => list<role string>. Filament list pages
+     * trigger policy checks 100+ times per render; a fresh EXISTS query for
+     * each one was the dominant N+1 in production. Loaded once on first call,
+     * lives only as long as the User model instance.
+     *
+     * @var array<string, list<string>>|null
+     */
+    private ?array $teamRolesCache = null;
+
+    /**
+     * @return list<string>
+     */
+    private function cachedTeamRoles(string $teamId): array
+    {
+        if ($this->teamRolesCache === null) {
+            $cache = [];
+            // Eagerly load all team-role rows for this user in a single query.
+            // Goes through the BelongsToMany so soft-deleted teams are excluded
+            // (matching the prior `where teams.deleted_at is null` semantic).
+            // The pivot's `role` column is cast to RoleEnum on TeamUser, so
+            // unwrap to its string value to keep the cache comparable via
+            // array_intersect against scalar role values.
+            foreach ($this->teams()->select('teams.id')->get() as $team) {
+                $role = $team->pivot->role;
+                $cache[$team->id][] = $role instanceof RoleEnum ? $role->value : (string) $role;
+            }
+            $this->teamRolesCache = $cache;
+        }
+
+        return $this->teamRolesCache[$teamId] ?? [];
+    }
+
+    /**
      * Check if user has a team-scoped role in the given team (defaults to current Filament tenant).
      */
     public function hasTeamRole(RoleEnum|array $roles, ?Team $team = null): bool
@@ -121,13 +154,21 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             return false;
         }
 
-        $roles = Arr::wrap($roles);
-        $roleValues = collect($roles)->map(fn ($r) => $r instanceof RoleEnum ? $r->value : $r);
+        $roleValues = collect(Arr::wrap($roles))
+            ->map(fn ($r) => $r instanceof RoleEnum ? $r->value : $r)
+            ->all();
 
-        return $this->teams()
-            ->where('teams.id', $team->id)
-            ->wherePivotIn('role', $roleValues)
-            ->exists();
+        return (bool) array_intersect($roleValues, $this->cachedTeamRoles($team->id));
+    }
+
+    /**
+     * Drop the in-memory team-roles cache. Call after attaching/detaching a
+     * team_user pivot if the same User instance will be reused for an
+     * authorization check within the same request.
+     */
+    public function flushTeamRolesCache(): void
+    {
+        $this->teamRolesCache = null;
     }
 
     /**
