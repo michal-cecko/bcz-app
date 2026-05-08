@@ -94,7 +94,7 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertStringContainsString('X-VS:00000123', $payload);
     }
 
-    public function test_qr_platba_payload_includes_vs_prefix_in_msg(): void
+    public function test_qr_platba_payload_msg_carries_only_note_without_vs_prefix(): void
     {
         $payload = QrPaymentService::qrPlatbaPayload(
             iban: 'CZ6508000000192000145399',
@@ -104,12 +104,13 @@ class QrPaymentServiceNoteTest extends TestCase
             note: 'Členské 2026',
         );
 
-        // /VS prefix is encoded — '/' is safe, but the space and 'Č' get %-encoded.
-        // "/VS00000123 Členské 2026" → "/VS00000123%20%C4%8Clensk%C3%A9%202026"
-        $this->assertStringContainsString('MSG:/VS00000123%20', $payload);
+        // VS lives in X-VS (and RF for digit-only) — never in MSG.
+        $this->assertStringNotContainsString('/VS', $payload);
+        // MSG carries the encoded note only: "Členské 2026" → "%C4%8Clensk%C3%A9%202026"
+        $this->assertStringContainsString('MSG:%C4%8Clensk%C3%A9%202026', $payload);
     }
 
-    public function test_qr_platba_payload_includes_vs_prefix_when_note_is_empty(): void
+    public function test_qr_platba_payload_omits_msg_when_note_is_empty_even_with_vs(): void
     {
         $payload = QrPaymentService::qrPlatbaPayload(
             iban: 'CZ6508000000192000145399',
@@ -117,10 +118,11 @@ class QrPaymentServiceNoteTest extends TestCase
             variableSymbol: '12345',
         );
 
-        $this->assertStringContainsString('*MSG:/VS12345', $payload);
+        $this->assertStringNotContainsString('MSG:', $payload);
+        $this->assertStringContainsString('*X-VS:12345', $payload);
     }
 
-    public function test_qr_platba_payload_includes_vs_ss_ks_prefix_in_msg(): void
+    public function test_qr_platba_payload_emits_vs_ss_ks_in_dedicated_tags_only(): void
     {
         $payload = QrPaymentService::qrPlatbaPayload(
             iban: 'CZ6508000000192000145399',
@@ -130,9 +132,12 @@ class QrPaymentServiceNoteTest extends TestCase
             constantSymbol: '0308',
         );
 
-        $this->assertStringContainsString('*MSG:/VS12345/SS67/KS0308', $payload);
+        $this->assertStringContainsString('*X-VS:12345', $payload);
         $this->assertStringContainsString('*X-SS:67', $payload);
         $this->assertStringContainsString('*X-KS:0308', $payload);
+        $this->assertStringNotContainsString('/VS', $payload);
+        $this->assertStringNotContainsString('/SS', $payload);
+        $this->assertStringNotContainsString('/KS', $payload);
     }
 
     public function test_qr_platba_payload_omits_vs_prefix_and_rf_when_vs_is_empty(): void
@@ -176,14 +181,12 @@ class QrPaymentServiceNoteTest extends TestCase
         );
 
         $this->assertStringContainsString('*X-VS:DAR2026', $payload);
-        $this->assertStringContainsString('*MSG:/VSDAR2026', $payload);
         $this->assertStringNotContainsString('RF:', $payload);
+        $this->assertStringNotContainsString('/VS', $payload);
     }
 
-    public function test_qr_platba_msg_truncation_preserves_vs_prefix(): void
+    public function test_qr_platba_msg_truncates_note_to_60_chars_without_prefix(): void
     {
-        // When prefix + note exceed 60 UTF-8 chars, the note tail is cut while
-        // the /VS prefix stays intact.
         $payload = QrPaymentService::qrPlatbaPayload(
             iban: 'CZ6508000000192000145399',
             amount: 100.0,
@@ -194,11 +197,28 @@ class QrPaymentServiceNoteTest extends TestCase
         preg_match('/\*MSG:([^*]+)/u', $payload, $match);
         $msg = $match[1] ?? '';
 
-        // Decode percent-encoding (only space and other non-safe chars are encoded;
-        // 'x', digits, '/' are safe, so the prefix appears verbatim).
-        $decoded = rawurldecode($msg);
+        // 'x' is SPAYD-safe so no percent-encoding; expect 60 raw chars, no /VS prefix.
+        $this->assertSame(str_repeat('x', 60), $msg);
+        $this->assertStringNotContainsString('/VS', $payload);
+    }
 
-        $this->assertStringStartsWith('/VS00000123 ', $decoded);
-        $this->assertSame(60, mb_strlen($decoded));
+    public function test_qr_platba_routes_non_cz_iban_to_epc_qr(): void
+    {
+        // Non-CZ IBAN must emit EPC (SEPA) format so Revolut and CZ banking
+        // apps that interpret SPAYD strictly can still parse it.
+        $payload = QrPaymentService::epcQrPayload(
+            iban: 'SK7111000000001234567890',
+            amount: 12.50,
+            currency: 'EUR',
+            beneficiaryName: 'BCZ Test',
+            remittanceReference: 'RF18539007547034',
+        );
+
+        $lines = explode("\n", $payload);
+        $this->assertSame('BCD', $lines[0]);
+        $this->assertSame('SCT', $lines[3]);
+        $this->assertSame('SK7111000000001234567890', $lines[6]);
+        $this->assertSame('EUR12.50', $lines[7]);
+        $this->assertSame('RF18539007547034', $lines[9]);
     }
 }

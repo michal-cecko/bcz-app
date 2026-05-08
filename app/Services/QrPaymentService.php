@@ -10,11 +10,16 @@ use Endroid\QrCode\ErrorCorrectionLevel;
 class QrPaymentService
 {
     /**
-     * Generate a SPAYD ("CZ Platba") QR code from a Payment model. Read by SK,
-     * CZ and most EU bank apps; pre-fills the variable symbol via three layers:
-     *   - native SPAYD X-VS tag,
-     *   - ISO 11649 RF structured creditor reference,
-     *   - "/VS{vs}" prefix in MSG (Czech banking convention for SEPA mode).
+     * Generate a payment QR for the given Payment model. Auto-switches format
+     * by IBAN country, since CZ banking apps + Revolut reject SPAYD with
+     * non-CZ IBANs (they expect a SEPA-style payload):
+     *  - CZ IBAN → SPAYD / QR Platba (native domestic format, read by CZ/SK apps)
+     *  - non-CZ IBAN → EPC QR (EPC069-12, the European SEPA standard,
+     *    read by Revolut, CZ Raiffeisen, SK apps, and any EU SEPA app)
+     *
+     * In SPAYD, MSG carries only the raw "Poznámka" — VS goes in X-VS and (when
+     * digits-only) ISO 11649 RF. In EPC, the same VS is exposed via the structured
+     * remittanceReference field so receiving apps pre-fill the reference field.
      */
     public function generateQrForPayment(Payment $payment): ?string
     {
@@ -51,6 +56,28 @@ class QrPaymentService
         string $specificSymbol = '',
         string $constantSymbol = '',
     ): ?string {
+        $normalizedIban = strtoupper(str_replace(' ', '', $iban));
+        $isCzAccount = str_contains($normalizedIban, '/') || str_starts_with($normalizedIban, 'CZ');
+
+        // Non-CZ IBANs (incl. SK teams collecting via Revolut etc.): emit EPC
+        // QR, the European SEPA standard. CZ apps + Revolut reject SPAYD when
+        // the IBAN isn't Czech, but read EPC reliably via the same scanner.
+        if (! $isCzAccount && $amount !== null) {
+            $reference = $variableSymbol !== '' && ctype_digit($variableSymbol)
+                ? self::iso11649Reference($variableSymbol)
+                : null;
+
+            return self::epcQr(
+                iban: $normalizedIban,
+                amount: $amount,
+                currency: $currency,
+                beneficiaryName: $recipientName,
+                bic: $bic,
+                remittanceText: $note,
+                remittanceReference: $reference,
+            );
+        }
+
         $payload = self::qrPlatbaPayload(
             $iban,
             $amount,
@@ -68,6 +95,82 @@ class QrPaymentService
         }
 
         return self::buildQrPng($payload);
+    }
+
+    /**
+     * Generate an EPC QR Code (EPC069-12, also known as GiroCode) for a SEPA
+     * Credit Transfer. This is the European standard for cross-border SEPA QR
+     * payments — read by most EU banking apps (incl. Revolut and Raiffeisen CZ)
+     * through the same scanner that reads SPAYD/QR Platba.
+     */
+    public static function epcQr(
+        string $iban,
+        float $amount,
+        string $currency = 'EUR',
+        string $beneficiaryName = '',
+        ?string $bic = null,
+        ?string $remittanceText = null,
+        ?string $remittanceReference = null,
+    ): ?string {
+        $payload = self::epcQrPayload($iban, $amount, $currency, $beneficiaryName, $bic, $remittanceText, $remittanceReference);
+
+        if ($payload === null) {
+            return null;
+        }
+
+        return self::buildQrPng($payload);
+    }
+
+    /**
+     * Build the raw EPC QR payload (LF-separated lines per EPC069-12 spec).
+     * Per spec, EPC permits either a structured remittance reference (ISO
+     * 11649) OR an unstructured remittance text — not both. When VS is set,
+     * we prefer the structured reference so receiving apps pre-fill the
+     * payment reference field.
+     */
+    public static function epcQrPayload(
+        string $iban,
+        float $amount,
+        string $currency = 'EUR',
+        string $beneficiaryName = '',
+        ?string $bic = null,
+        ?string $remittanceText = null,
+        ?string $remittanceReference = null,
+    ): ?string {
+        $iban = strtoupper(str_replace(' ', '', $iban));
+        if ($iban === '') {
+            return null;
+        }
+
+        $bic = $bic !== null ? strtoupper(str_replace(' ', '', $bic)) : '';
+        $name = mb_substr($beneficiaryName, 0, 70);
+
+        $reference = $remittanceReference !== null ? mb_substr($remittanceReference, 0, 25) : '';
+        $text = ($remittanceText !== null && $reference === '') ? mb_substr($remittanceText, 0, 140) : '';
+
+        // Version 002 makes BIC optional; 001 requires it. We always include BIC if provided.
+        $version = $bic === '' ? '002' : '001';
+
+        $lines = [
+            'BCD',                                                 // Service tag
+            $version,                                              // Version
+            '1',                                                   // Charset 1 = UTF-8
+            'SCT',                                                 // SEPA Credit Transfer
+            $bic,                                                  // BIC
+            $name,                                                 // Beneficiary name
+            $iban,                                                 // IBAN
+            $currency.number_format($amount, 2, '.', ''),          // e.g. EUR12.50
+            '',                                                    // Purpose (4-char code, optional)
+            $reference,                                            // Structured remittance reference
+            $text,                                                 // Unstructured remittance text
+        ];
+
+        // Trim trailing empty lines (spec allows omitting unused trailing fields).
+        while (count($lines) > 0 && end($lines) === '') {
+            array_pop($lines);
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -136,61 +239,14 @@ class QrPaymentService
             $parts[] = 'RN:'.self::spaydEncode(mb_substr($recipientName, 0, 35));
         }
 
-        $msg = self::buildMessage($note, $variableSymbol, $specificSymbol, $constantSymbol);
-        if ($msg !== '') {
-            $parts[] = 'MSG:'.self::spaydEncode($msg);
+        // MSG carries only the user-supplied "Poznámka". VS/SS/KS go in their
+        // dedicated SPAYD tags (X-VS / X-SS / X-KS) and the ISO 11649 RF
+        // structured reference — never in MSG.
+        if ($note !== null && $note !== '') {
+            $parts[] = 'MSG:'.self::spaydEncode(mb_substr($note, 0, 60));
         }
 
         return implode('*', $parts);
-    }
-
-    /**
-     * Compose the SPAYD MSG content. The /VS/SS/KS prefix lets SEPA-mode bank
-     * apps fill the "payment reference" field even when they ignore X-VS.
-     */
-    private static function buildMessage(
-        ?string $note,
-        string $variableSymbol,
-        string $specificSymbol,
-        string $constantSymbol,
-    ): string {
-        $prefixSegments = [];
-        if ($variableSymbol !== '') {
-            $prefixSegments[] = '/VS'.$variableSymbol;
-        }
-        if ($specificSymbol !== '') {
-            $prefixSegments[] = '/SS'.$specificSymbol;
-        }
-        if ($constantSymbol !== '') {
-            $prefixSegments[] = '/KS'.$constantSymbol;
-        }
-
-        $prefix = implode('', $prefixSegments);
-        $note = $note ?? '';
-
-        if ($prefix === '' && $note === '') {
-            return '';
-        }
-
-        if ($prefix === '') {
-            return mb_substr($note, 0, 60);
-        }
-
-        if (mb_strlen($prefix) >= 60) {
-            return mb_substr($prefix, 0, 60);
-        }
-
-        if ($note === '') {
-            return $prefix;
-        }
-
-        $remaining = 60 - mb_strlen($prefix) - 1; // -1 for the separating space
-
-        if ($remaining <= 0) {
-            return $prefix;
-        }
-
-        return $prefix.' '.mb_substr($note, 0, $remaining);
     }
 
     /**
