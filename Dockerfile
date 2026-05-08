@@ -25,6 +25,7 @@ WORKDIR /var/www
 RUN apk add --no-cache \
     bash curl libpng oniguruma libxml2 libpq \
     icu-libs libzip xz \
+    libjpeg-turbo libwebp freetype \
     jpegoptim pngquant optipng gifsicle libwebp-tools libavif-apps
 
 # Copy compiled PHP extensions from build stage
