@@ -10,6 +10,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Image\Enums\Fit;
+use Spatie\Image\Image;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Throwable;
@@ -33,6 +35,23 @@ class OptimizeImageJob implements ShouldQueue
         'image/gif',
         'image/avif',
         'image/svg+xml',
+    ];
+
+    /**
+     * Cap any single dimension at this many pixels. Aspect ratio is preserved
+     * and images already smaller than this are left untouched (Fit::Max).
+     */
+    private const MAX_DIMENSION = 2560;
+
+    /**
+     * Mime types we attempt to resize via Spatie\Image (GD-backed). SVG is a
+     * vector format with no pixel dimensions, AVIF isn't supported by GD.
+     */
+    private const RESIZABLE_MIMES = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/gif',
     ];
 
     public function __construct(
@@ -89,7 +108,7 @@ class OptimizeImageJob implements ShouldQueue
             return;
         }
 
-        $result = $this->roundTripOptimize($disk, $relativePath);
+        $result = $this->roundTripOptimize($disk, $relativePath, (string) $media->mime_type);
 
         if ($result === null) {
             return;
@@ -120,25 +139,48 @@ class OptimizeImageJob implements ShouldQueue
             return;
         }
 
-        $this->roundTripOptimize($disk, $this->path);
+        $this->roundTripOptimize($disk, $this->path, (string) $mime);
     }
 
     /**
-     * Download the file from the disk to a temp path, run the optimizer chain,
-     * and re-upload only when the optimized output is smaller.
+     * Download the file from the disk to a temp path, optionally downscale it
+     * if either dimension exceeds MAX_DIMENSION, run the optimizer chain, and
+     * re-upload only when the resulting bytes are smaller than the original.
      *
      * Required because optimizers (jpegoptim/pngquant/optipng/...) operate on
      * local filesystem paths only, while this app stores media on S3.
      *
      * @return array{originalSize: ?int, optimizedSize: ?int}|null
      */
-    private function roundTripOptimize(Filesystem $disk, string $relativePath): ?array
+    private function roundTripOptimize(Filesystem $disk, string $relativePath, string $mime): ?array
     {
         $tmpPath = tempnam(sys_get_temp_dir(), 'opt-');
 
         if ($tmpPath === false) {
             return null;
         }
+
+        // Spatie\Image and the optimizer chain pick the output format from
+        // the file extension. tempnam() returns an extensionless path, so
+        // append the original extension (or fall back to a mime-derived one).
+        $extension = pathinfo($relativePath, PATHINFO_EXTENSION) ?: match ($mime) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+            'image/avif' => 'avif',
+            'image/svg+xml' => 'svg',
+            default => 'bin',
+        };
+        $tmpWithExt = $tmpPath.'.'.$extension;
+
+        if (! @rename($tmpPath, $tmpWithExt)) {
+            @unlink($tmpPath);
+
+            return null;
+        }
+
+        $tmpPath = $tmpWithExt;
 
         try {
             if (! $this->downloadToTemp($disk, $relativePath, $tmpPath)) {
@@ -147,6 +189,8 @@ class OptimizeImageJob implements ShouldQueue
 
             clearstatcache(true, $tmpPath);
             $originalSize = filesize($tmpPath) ?: null;
+
+            $this->capDimensions($tmpPath, $mime);
 
             OptimizerChainFactory::create(config('media-library.image_optimizers') ?? [])->optimize($tmpPath);
 
@@ -220,6 +264,45 @@ class OptimizeImageJob implements ShouldQueue
             if (is_resource($stream)) {
                 fclose($stream);
             }
+        }
+    }
+
+    /**
+     * If either dimension exceeds MAX_DIMENSION, downscale in place via
+     * Spatie\Image's Fit::Max (preserves aspect ratio, never upsizes). A
+     * resize failure is logged but does not abort the optimizer step that
+     * follows — the bytes on disk remain untouched in that case.
+     */
+    private function capDimensions(string $tmpPath, string $mime): void
+    {
+        if (! in_array($mime, self::RESIZABLE_MIMES, true)) {
+            return;
+        }
+
+        $info = @getimagesize($tmpPath);
+
+        if ($info === false) {
+            return;
+        }
+
+        [$width, $height] = $info;
+
+        if ($width <= self::MAX_DIMENSION && $height <= self::MAX_DIMENSION) {
+            return;
+        }
+
+        try {
+            Image::load($tmpPath)
+                ->fit(Fit::Max, self::MAX_DIMENSION, self::MAX_DIMENSION)
+                ->save($tmpPath);
+        } catch (Throwable $e) {
+            Log::warning('OptimizeImageJob: dimension cap failed, leaving original size', [
+                'path' => $tmpPath,
+                'mime' => $mime,
+                'width' => $width,
+                'height' => $height,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

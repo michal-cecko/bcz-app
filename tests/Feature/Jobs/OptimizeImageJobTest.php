@@ -111,6 +111,39 @@ class OptimizeImageJobTest extends TestCase
         $this->assertLessThanOrEqual($sizeBefore, $sizeAfter);
     }
 
+    public function test_for_path_caps_oversized_image_to_max_dimension(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put(
+            'bricks/oversized.png',
+            UploadedFile::fake()->image('oversized.png', 4000, 3000)->getContent(),
+        );
+
+        OptimizeImageJob::forPath('public', 'bricks/oversized.png')->handle();
+
+        $bytes = Storage::disk('public')->get('bricks/oversized.png');
+        $info = getimagesizefromstring($bytes);
+        $this->assertNotFalse($info);
+        // 4000x3000 (4:3) capped at 2560 on the longer side → 2560x1920.
+        $this->assertSame(2560, $info[0]);
+        $this->assertSame(1920, $info[1]);
+    }
+
+    public function test_for_path_leaves_already_small_image_alone(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put(
+            'bricks/small.png',
+            UploadedFile::fake()->image('small.png', 800, 600)->getContent(),
+        );
+
+        OptimizeImageJob::forPath('public', 'bricks/small.png')->handle();
+
+        $info = getimagesizefromstring(Storage::disk('public')->get('bricks/small.png'));
+        $this->assertSame(800, $info[0]);
+        $this->assertSame(600, $info[1]);
+    }
+
     public function test_for_media_marks_optimized_even_when_disk_is_not_local(): void
     {
         $team = Team::factory()->create();
