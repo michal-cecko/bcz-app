@@ -811,13 +811,25 @@
  <span class="text-white text-sm font-sans">
  {{ $fee->athleteCategory ? $fee->athleteCategory->getTranslation('name', $locale) : ($fee->description ?? __('event_detail.standard_fee')) }}
  </span>
- <span class="font-bold text-sm font-sans" style="color: {{ $categoryColor }}">{{ number_format($fee->amount, 2) }} {{ $fee->currency }}</span>
+ <span class="font-bold text-sm font-sans" style="color: {{ $categoryColor }}">
+ @if((float) $fee->amount <= 0)
+ {{ __('event_detail.free') }}
+ @else
+ {{ number_format($fee->amount, 2) }} {{ $fee->currency }}
+ @endif
+ </span>
  </div>
  @endforeach
  @if($hasDefault)
  <div class="flex items-center justify-between py-2">
  <span class="text-white text-sm font-sans">{{ __($defaultLabelKey) }}</span>
- <span class="font-bold text-sm font-sans" style="color: {{ $categoryColor }}">{{ number_format($org->price_amount, 2) }} {{ $org->price_currency ?? 'EUR' }}</span>
+ <span class="font-bold text-sm font-sans" style="color: {{ $categoryColor }}">
+ @if((float) $org->price_amount <= 0)
+ {{ __('event_detail.free') }}
+ @else
+ {{ number_format($org->price_amount, 2) }} {{ $org->price_currency ?? 'EUR' }}
+ @endif
+ </span>
  </div>
  @endif
  </div>
