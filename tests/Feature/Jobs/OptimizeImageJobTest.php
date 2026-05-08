@@ -80,7 +80,7 @@ class OptimizeImageJobTest extends TestCase
 
     public function test_for_media_does_nothing_when_media_id_missing(): void
     {
-        OptimizeImageJob::forMedia('00000000-0000-0000-0000-000000000000')->handle();
+        OptimizeImageJob::forMedia(999999999)->handle();
 
         // Should complete without throwing.
         $this->assertTrue(true);
