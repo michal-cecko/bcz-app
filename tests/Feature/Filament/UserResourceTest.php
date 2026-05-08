@@ -26,6 +26,7 @@ class UserResourceTest extends TestCase
         foreach (RoleEnum::cases() as $role) {
             Role::firstOrCreate(['name' => $role->value, 'guard_name' => 'web']);
         }
+        Role::firstOrCreate(['name' => 'panel_user', 'guard_name' => 'web']);
 
         $this->team = Team::factory()->create();
     }
@@ -125,6 +126,39 @@ class UserResourceTest extends TestCase
             'team_id' => $teamB->id,
             'role' => RoleEnum::ATHLETE->value,
         ]);
+    }
+
+    public function test_sync_team_scoped_roles_preserves_hidden_panel_user_role(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('panel_user');
+        $user->assignRole(RoleEnum::CUSTOMER);
+
+        $athleteRoleId = Role::query()->where('name', RoleEnum::ATHLETE->value)->value('id');
+
+        UserResource::syncTeamScopedRoles($user, [$athleteRoleId], [$this->team->id]);
+
+        $user->refresh();
+
+        // panel_user is a hidden bookkeeping role — must survive the form save.
+        $this->assertTrue($user->hasRole('panel_user'));
+        // Form-managed global role is replaced by the new selection (none of those given here).
+        $this->assertFalse($user->hasRole(RoleEnum::CUSTOMER));
+    }
+
+    public function test_sync_team_scoped_roles_preserves_hidden_super_admin_role(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole(RoleEnum::SUPER_ADMIN);
+
+        $editorRoleId = Role::query()->where('name', RoleEnum::EDITOR->value)->value('id');
+
+        UserResource::syncTeamScopedRoles($user, [$editorRoleId], []);
+
+        $user->refresh();
+
+        $this->assertTrue($user->hasRole(RoleEnum::SUPER_ADMIN));
+        $this->assertTrue($user->hasRole(RoleEnum::EDITOR));
     }
 
     public function test_sync_team_scoped_roles_is_no_op_when_team_ids_empty(): void

@@ -79,7 +79,7 @@ class UserForm
                                     ->visible(fn (?User $record): bool => self::canEditPrivilegedFields($record))
                                     ->options(
                                         Role::query()
-                                            ->whereNotIn('name', ['panel_user', RoleEnum::SUPER_ADMIN->value])
+                                            ->whereNotIn('name', self::hiddenRoleNames())
                                             ->pluck('name', 'id')
                                             ->map(fn (string $name): string => RoleEnum::tryFrom($name)?->getLabel() ?? $name)
                                     )
@@ -92,7 +92,15 @@ class UserForm
                                         }
 
                                         // Global roles live on Spatie model_has_roles, team-scoped roles on team_user pivot.
-                                        // Surface both as selected option IDs in the roles Select.
+                                        // Surface both as selected option IDs in the roles Select — but only IDs that
+                                        // are actually in the visible options list. Roles like `panel_user` or
+                                        // SUPER_ADMIN are managed elsewhere; including them here would render the
+                                        // raw numeric ID as a chip (no matching option to look up the label).
+                                        $visibleIds = Role::query()
+                                            ->whereNotIn('name', self::hiddenRoleNames())
+                                            ->pluck('id')
+                                            ->all();
+
                                         $globalRoleIds = $record->roles()->pluck('id')->all();
 
                                         $teamRoleNames = $record->teams()
@@ -104,7 +112,8 @@ class UserForm
                                             ? Role::query()->whereIn('name', $teamRoleNames)->pluck('id')->all()
                                             : [];
 
-                                        $component->state(array_values(array_unique(array_merge($globalRoleIds, $teamRoleIds))));
+                                        $allIds = array_values(array_unique(array_merge($globalRoleIds, $teamRoleIds)));
+                                        $component->state(array_values(array_intersect($allIds, $visibleIds)));
                                     })
                                     ->afterStateUpdated(function (Set $set, $state): void {
                                         // Non-members (admin/editor only) always get the free flag forced on.
@@ -340,6 +349,19 @@ class UserForm
             ]);
 
         return $tabs;
+    }
+
+    /**
+     * Roles that the form intentionally hides from the Roles Select. Filament
+     * panel access (`panel_user`) is bookkeeping; SUPER_ADMIN is reserved and
+     * granted by other means. Both must be preserved across saves so a hidden
+     * role isn't silently revoked when the form is submitted.
+     *
+     * @return list<string>
+     */
+    public static function hiddenRoleNames(): array
+    {
+        return ['panel_user', RoleEnum::SUPER_ADMIN->value];
     }
 
     /**

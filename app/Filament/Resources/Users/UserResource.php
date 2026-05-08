@@ -271,8 +271,18 @@ class UserResource extends Resource
 
         [$teamScoped, $global] = $roles->partition(fn ($r) => in_array($r->name, $teamScopedValues, true));
 
-        // Keep only the chosen global roles (Spatie-managed).
-        $user->syncRoles($global->pluck('name')->all());
+        // Keep only the chosen global roles (Spatie-managed). The form hides
+        // `panel_user` and SUPER_ADMIN from the Select; preserve any of those
+        // already assigned so a save doesn't silently revoke them.
+        $hiddenAssigned = $user->roles()
+            ->whereIn('name', UserForm::hiddenRoleNames())
+            ->pluck('name')
+            ->all();
+
+        $user->syncRoles(array_values(array_unique(array_merge(
+            $global->pluck('name')->all(),
+            $hiddenAssigned,
+        ))));
 
         $teamIds = array_values(array_filter(is_array($teamIds) ? $teamIds : [$teamIds]));
 
