@@ -345,14 +345,14 @@ new class extends Component
                 return;
             }
 
-            $org = $this->event->organization;
             $registration = EventRegistration::query()
                 ->where('event_id', $this->event->id)
                 ->where('user_id', $user->id)
                 ->latest()
                 ->first();
 
-            if (! $registration || ! $org?->price_amount) {
+            $amount = $registration?->getTotalPriceAmount() ?? 0;
+            if (! $registration || $amount <= 0) {
                 return;
             }
 
@@ -362,8 +362,8 @@ new class extends Component
                     user: $user,
                     team: $this->event->team,
                     payable: $registration,
-                    amount: (float) $org->price_amount,
-                    currency: $org->price_currency ?? 'EUR',
+                    amount: (float) $amount,
+                    currency: $registration->getPriceCurrency(),
                 );
 
                 $this->redirect($result['url']);
@@ -651,8 +651,22 @@ new class extends Component
         @php
             $team = $event->team;
             $enabledMethods = $event->effectivePaymentMethodKeys();
-            $priceLabel = number_format($org->price_amount, 2) . ' ' . ($org->price_currency ?? 'EUR');
             $pendingPayment = $pendingPaymentId ? \App\Models\Payment::find($pendingPaymentId) : null;
+            $registrationForFee = $pendingPayment?->payable instanceof \App\Models\EventRegistration
+                ? $pendingPayment->payable
+                : \App\Models\EventRegistration::where('event_id', $event->id)
+                    ->where('user_id', auth()->id())
+                    ->whereNotIn('status', [\App\Enums\RegistrationStatusEnum::Cancelled->value])
+                    ->latest('created_at')
+                    ->first();
+            $effectiveAmount = $pendingPayment?->amount
+                ?? $registrationForFee?->getTotalPriceAmount()
+                ?? $org->price_amount;
+            $effectiveCurrency = $pendingPayment?->currency
+                ?? $registrationForFee?->getPriceCurrency()
+                ?? $org->price_currency
+                ?? 'EUR';
+            $priceLabel = number_format((float) $effectiveAmount, 2) . ' ' . $effectiveCurrency;
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
             <span class="text-[#F59E0B] text-[10px] font-bold tracking-[2px]">{{ __('event_detail.state_payment_needed') }}</span>
@@ -670,8 +684,8 @@ new class extends Component
                 'enabledMethods' => $enabledMethods,
                 'selectedPaymentMethod' => $selectedPaymentMethod,
                 'feeLabel' => $priceLabel,
-                'feeAmount' => $org->price_amount,
-                'feeCurrency' => $org->price_currency ?? 'EUR',
+                'feeAmount' => $effectiveAmount,
+                'feeCurrency' => $effectiveCurrency,
                 'team' => $team,
                 'season' => null,
                 'payable' => $event,
