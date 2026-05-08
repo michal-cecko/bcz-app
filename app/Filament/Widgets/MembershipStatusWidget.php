@@ -153,32 +153,28 @@ class MembershipStatusWidget extends Widget
     }
 
     #[Computed]
-    public function qrCodes(): array
+    public function qrCode(): ?string
     {
         $membership = $this->membership;
 
         if (! $membership || $membership->status !== MembershipStatusEnum::PENDING) {
-            return [];
+            return null;
         }
 
         $team = Filament::getTenant();
 
         if (! $team?->bank_account_iban) {
-            return [];
+            return null;
         }
 
-        $args = [
-            'iban' => $team->bank_account_iban,
-            'amount' => (float) $membership->fee_amount,
-            'currency' => $membership->fee_currency ?? 'EUR',
-            'variableSymbol' => $this->pendingPayment?->formattedVariableSymbol() ?? '',
-            'recipientName' => $team->bank_account_name ?? '',
-        ];
-
-        return [
-            'sk' => QrPaymentService::payBySquare(...$args),
-            'cz' => QrPaymentService::qrPlatba(...$args),
-        ];
+        return QrPaymentService::qrPlatba(
+            iban: $team->bank_account_iban,
+            amount: (float) $membership->fee_amount,
+            currency: $membership->fee_currency ?? 'EUR',
+            variableSymbol: $this->pendingPayment?->formattedVariableSymbol() ?? '',
+            recipientName: $team->bank_account_name ?? '',
+            note: $membership->getQrPaymentNote(),
+        );
     }
 
     #[Computed]

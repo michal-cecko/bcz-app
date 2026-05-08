@@ -213,24 +213,11 @@
                                     @endif
                                 </div>
 
-                                @if($qrCodeImage || $qrCodeImageCz)
-                                    <div class="flex flex-col items-center gap-3">
-                                        @if($qrCodeImage)
-                                            <div class="flex flex-col items-center gap-1.5">
-                                                <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
-                                                    <img src="data:image/png;base64,{{ $qrCodeImage }}" alt="Pay by Square" class="w-full h-full">
-                                                </div>
-                                                <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.pay_by_square') }}</span>
-                                            </div>
-                                        @endif
-                                        @if($qrCodeImageCz)
-                                            <div class="flex flex-col items-center gap-1.5">
-                                                <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
-                                                    <img src="data:image/png;base64,{{ $qrCodeImageCz }}" alt="QR Platba / SEPA" class="w-full h-full">
-                                                </div>
-                                                <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.qr_platba_sepa') }}</span>
-                                            </div>
-                                        @endif
+                                @if($qrCodeImage)
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        <div class="w-[140px] h-[140px] rounded-lg bg-white flex items-center justify-center p-1.5">
+                                            <img src="data:image/png;base64,{{ $qrCodeImage }}" alt="QR Platba" class="w-full h-full">
+                                        </div>
                                     </div>
                                 @endif
                             </div>

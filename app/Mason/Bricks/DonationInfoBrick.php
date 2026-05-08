@@ -85,16 +85,8 @@ class DonationInfoBrick extends Brick
                                                 ->label('Variabilný symbol (voliteľný)'),
                                             TextInput::make("qr_note.{$locale}")
                                                 ->label('Poznámka platby (voliteľná)')
-                                                ->helperText('Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
-                                                ->maxLength(140),
-                                            Select::make("qr_format.{$locale}")
-                                                ->label('Formát QR kódu')
-                                                ->options([
-                                                    'pay_by_square' => 'Pay by Square — SK (EUR)',
-                                                    'qr_platba' => 'QR Platba / SPD — CZ (CZK)',
-                                                ])
-                                                ->default('pay_by_square')
-                                                ->native(false),
+                                                ->helperText('Max 60 znakov.')
+                                                ->maxLength(60),
                                         ]),
                                     ])
                                     ->columns(1),

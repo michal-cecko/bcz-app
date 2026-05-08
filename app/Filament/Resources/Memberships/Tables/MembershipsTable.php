@@ -163,33 +163,19 @@ class MembershipsTable
                     ->icon('heroicon-o-qr-code')
                     ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->modalContent(function (Membership $record): HtmlString {
-                        $qrService = app(QrPaymentService::class);
-
                         $latestPayment = $record->payments()->latest()->first();
 
                         if (! $latestPayment) {
                             return new HtmlString('<p class="text-gray-500">Žiadna platba na generovanie QR kódu.</p>');
                         }
 
-                        $html = '<div class="space-y-4">';
+                        $qr = app(QrPaymentService::class)->generateQrForPayment($latestPayment);
 
-                        $skQr = $qrService->generatePayBySquareForPayment($latestPayment);
-                        if ($skQr) {
-                            $html .= '<div><h3 class="font-semibold mb-2">Pay by Square</h3><img src="data:image/png;base64,'.$skQr.'" alt="Pay by Square" class="w-48"></div>';
+                        if (! $qr) {
+                            return new HtmlString('<p class="text-gray-500">IBAN nie je nastavený v nastaveniach tímu.</p>');
                         }
 
-                        $czQr = $qrService->generateQrPlatbaForPayment($latestPayment);
-                        if ($czQr) {
-                            $html .= '<div><h3 class="font-semibold mb-2">QR Platba (CZ)</h3><img src="data:image/png;base64,'.$czQr.'" alt="QR Platba" class="w-48"></div>';
-                        }
-
-                        if (! $skQr && ! $czQr) {
-                            $html .= '<p class="text-gray-500">IBAN nie je nastavený v nastaveniach tímu.</p>';
-                        }
-
-                        $html .= '</div>';
-
-                        return new HtmlString($html);
+                        return new HtmlString('<div class="flex justify-center"><img src="data:image/png;base64,'.$qr.'" alt="QR Platba" class="w-64"></div>');
                     })
                     ->modalSubmitAction(false),
             ])

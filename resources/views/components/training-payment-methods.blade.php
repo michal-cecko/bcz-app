@@ -139,37 +139,23 @@
                 @endif
             </div>
 
-            {{-- Right: QR codes (Pay by Square for SK banks, QR Platba/SEPA for CZ/EU banks) --}}
+            {{-- Right: QR code (SPAYD/QR Platba — works for SK, CZ and EU bank apps) --}}
             @if($payoutIban)
                 @php
-                    $qrArgs = [
-                        'iban' => $payoutIban,
-                        'amount' => (float) $feeAmount,
-                        'currency' => $feeCurrency,
-                        'variableSymbol' => $variableSymbol ?? '',
-                        'recipientName' => $payoutName ?? '',
-                    ];
-                    $qrSk = \App\Services\QrPaymentService::payBySquare(...$qrArgs);
-                    $qrCz = \App\Services\QrPaymentService::qrPlatba(...$qrArgs);
+                    $qrCode = \App\Services\QrPaymentService::qrPlatba(
+                        iban: $payoutIban,
+                        amount: (float) $feeAmount,
+                        currency: $feeCurrency,
+                        variableSymbol: $variableSymbol ?? '',
+                        recipientName: $payoutName ?? '',
+                        note: $paymentNote ?? null,
+                    );
                 @endphp
-                @if($qrSk || $qrCz)
-                    <div class="flex flex-col items-center gap-3">
-                        @if($qrSk)
-                            <div class="flex flex-col items-center gap-1.5">
-                                <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
-                                    <img src="data:image/png;base64,{{ $qrSk }}" alt="Pay by Square" class="w-full h-full">
-                                </div>
-                                <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.pay_by_square') }}</span>
-                            </div>
-                        @endif
-                        @if($qrCz)
-                            <div class="flex flex-col items-center gap-1.5">
-                                <div class="w-[100px] h-[100px] rounded-lg bg-white flex items-center justify-center p-1.5">
-                                    <img src="data:image/png;base64,{{ $qrCz }}" alt="QR Platba / SEPA" class="w-full h-full">
-                                </div>
-                                <span class="text-[#666666] text-[10px] font-medium">{{ __('payments.bank_transfer.qr_platba_sepa') }}</span>
-                            </div>
-                        @endif
+                @if($qrCode)
+                    <div class="flex flex-col items-center gap-1.5">
+                        <div class="w-[140px] h-[140px] rounded-lg bg-white flex items-center justify-center p-1.5">
+                            <img src="data:image/png;base64,{{ $qrCode }}" alt="QR Platba" class="w-full h-full">
+                        </div>
                     </div>
                 @endif
             @endif

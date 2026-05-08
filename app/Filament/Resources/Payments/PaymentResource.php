@@ -119,22 +119,12 @@ class PaymentResource extends Resource
 
                                 Section::make('QR kód')
                                     ->schema([
-                                        TextEntry::make('qr_pay_by_square')
-                                            ->label('Pay by Square')
+                                        TextEntry::make('qr_code')
+                                            ->hiddenLabel()
                                             ->state(function ($record): ?HtmlString {
-                                                $qrService = app(QrPaymentService::class);
-                                                $qr = $qrService->generatePayBySquareForPayment($record);
+                                                $qr = app(QrPaymentService::class)->generateQrForPayment($record);
 
-                                                return $qr ? new HtmlString('<img src="data:image/png;base64,'.$qr.'" alt="Pay by Square" class="w-48">') : null;
-                                            })
-                                            ->placeholder('IBAN nie je nastavený'),
-                                        TextEntry::make('qr_platba')
-                                            ->label('QR Platba (CZ)')
-                                            ->state(function ($record): ?HtmlString {
-                                                $qrService = app(QrPaymentService::class);
-                                                $qr = $qrService->generateQrPlatbaForPayment($record);
-
-                                                return $qr ? new HtmlString('<img src="data:image/png;base64,'.$qr.'" alt="QR Platba" class="w-48">') : null;
+                                                return $qr ? new HtmlString('<img src="data:image/png;base64,'.$qr.'" alt="QR Platba" class="w-64">') : null;
                                             })
                                             ->placeholder('IBAN nie je nastavený'),
                                     ])

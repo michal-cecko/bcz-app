@@ -26,7 +26,6 @@ class ViewTeamPayout extends ViewRecord
                     && ! auth()->user()?->isMemberLevel())
                 ->modalContent(function (): HtmlString {
                     $payout = $this->record;
-                    $isCzk = strtoupper($payout->currency) === 'CZK';
 
                     $html = '<div class="space-y-4">';
                     $html .= '<p class="text-sm text-gray-500">Naskenujte QR kód na úhradu výplaty pre tím.</p>';
@@ -39,28 +38,16 @@ class ViewTeamPayout extends ViewRecord
                     }
                     $html .= '</div>';
 
-                    if ($isCzk) {
-                        $qr = QrPaymentService::qrPlatba(
-                            iban: $payout->bank_account_iban,
-                            amount: (float) $payout->net_amount,
-                            currency: 'CZK',
-                            variableSymbol: $payout->reference ?? '',
-                            recipientName: $payout->bank_account_name ?? '',
-                        );
-                        $label = 'QR Platba (CZ)';
-                    } else {
-                        $qr = QrPaymentService::payBySquare(
-                            iban: $payout->bank_account_iban,
-                            amount: (float) $payout->net_amount,
-                            currency: $payout->currency,
-                            variableSymbol: $payout->reference ?? '',
-                            recipientName: $payout->bank_account_name ?? '',
-                        );
-                        $label = 'Pay by Square';
-                    }
+                    $qr = QrPaymentService::qrPlatba(
+                        iban: $payout->bank_account_iban,
+                        amount: (float) $payout->net_amount,
+                        currency: $payout->currency,
+                        variableSymbol: $payout->reference ?? '',
+                        recipientName: $payout->bank_account_name ?? '',
+                    );
 
                     if ($qr) {
-                        $html .= '<div><h3 class="font-semibold mb-2">'.$label.'</h3><img src="data:image/png;base64,'.$qr.'" alt="'.$label.'" class="w-48"></div>';
+                        $html .= '<div class="flex justify-center"><img src="data:image/png;base64,'.$qr.'" alt="QR Platba" class="w-64"></div>';
                     } else {
                         $html .= '<p class="text-gray-500">IBAN nie je nastavený.</p>';
                     }
