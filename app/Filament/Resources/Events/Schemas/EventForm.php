@@ -351,7 +351,9 @@ class EventForm
                                             ->columnSpanFull(),
                                     ]),
                                     Tabs\Tab::make('EN')->schema([
-                                        TextInput::make('label.en')->label('Label (EN)'),
+                                        TextInput::make('label.en')
+                                            ->label('Label (EN)')
+                                            ->live(onBlur: true),
                                         TextInput::make('placeholder.en')
                                             ->label('Placeholder (EN)')
                                             ->hidden(fn (Get $get): bool => in_array($get('type'), [
@@ -371,7 +373,9 @@ class EventForm
                                             ->columnSpanFull(),
                                     ]),
                                     Tabs\Tab::make('CS')->schema([
-                                        TextInput::make('label.cs')->label('Název pole (CS)'),
+                                        TextInput::make('label.cs')
+                                            ->label('Název pole (CS)')
+                                            ->live(onBlur: true),
                                         TextInput::make('placeholder.cs')
                                             ->label('Placeholder (CS)')
                                             ->hidden(fn (Get $get): bool => in_array($get('type'), [
@@ -483,13 +487,15 @@ class EventForm
                                     RegistrationFieldTypeEnum::SELECT->value,
                                     RegistrationFieldTypeEnum::MULTI_SELECT->value,
                                 ])),
-                            Section::make('Podmienka zobrazenia')
+                            Section::make('Podmienené zobrazovanie')
+                                ->columns(2)
                                 ->schema([
                                     Toggle::make('has_condition')
-                                        ->label('Podmienené zobrazenie')
+                                        ->label('Aktivovať podmienené zobrazovanie')
                                         ->helperText('Zobraziť toto pole len ak iné pole má niektorú zo zadaných hodnôt (logický OR).')
                                         ->default(false)
-                                        ->live(),
+                                        ->live()
+                                        ->columnSpanFull(),
                                     Select::make('condition_field')
                                         ->label('Pole')
                                         ->helperText('Pole, od ktorého závisí zobrazenie')
@@ -508,6 +514,7 @@ class EventForm
 
                                             return $options;
                                         })
+                                        ->live()
                                         ->required(fn (Get $get): bool => (bool) $get('has_condition'))
                                         ->hidden(fn (Get $get): bool => ! $get('has_condition')),
                                     TagsInput::make('condition_values')
