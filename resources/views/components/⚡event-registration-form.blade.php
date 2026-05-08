@@ -141,7 +141,6 @@ new class extends Component
             match ($type) {
                 RegistrationFieldTypeEnum::EMAIL => $fieldRules[] = 'email',
                 RegistrationFieldTypeEnum::NUMBER_INPUT => $fieldRules[] = 'numeric',
-                RegistrationFieldTypeEnum::FILE_INPUT => array_push($fieldRules, 'file', 'max:10240'),
                 default => null,
             };
 

@@ -63,8 +63,19 @@
 .filepond--root .filepond--file {
     color: #ffffff;
 }
-.filepond--root .filepond--progress-indicator {
-    color: #FF2D2D;
+/* Loading / progress indicator: white stroke spinning inside a red filled circle. */
+.filepond--root .filepond--progress-indicator,
+.filepond--root .filepond--load-indicator,
+.filepond--root .filepond--process-indicator {
+    color: #FFFFFF;
+    background: #FF2D2D;
+    border-radius: 50%;
+}
+.filepond--root .filepond--progress-indicator svg,
+.filepond--root .filepond--load-indicator svg,
+.filepond--root .filepond--process-indicator svg {
+    stroke: #FFFFFF;
+    color: #FFFFFF;
 }
 .filepond--root .filepond--drip-blob {
     background-color: #FF2D2D;

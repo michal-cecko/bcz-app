@@ -796,18 +796,30 @@
  </div>
 
  {{-- Registration Fees Table --}}
- @if($detail?->registrationFees->isNotEmpty())
+ @php
+ $overrideFees = $detail?->registrationFees ?? collect();
+ $hasOverrides = $overrideFees->isNotEmpty();
+ $hasDefault = $org && $org->pricing_type === \App\Enums\EventPricingTypeEnum::Paid && $org->price_amount > 0;
+ $defaultLabelKey = $hasOverrides ? 'event_detail.fee_label_others' : 'event_detail.fee_label_all';
+ @endphp
+ @if($hasOverrides || $hasDefault)
  <div class="bg-[#111111] border border-[#222222] p-6 flex flex-col gap-4">
  <h3 class="text-white text-lg font-bold font-sans">{{ __('event_detail.registration_fees') }}</h3>
  <div class="flex flex-col gap-2">
- @foreach($detail->registrationFees as $fee)
- <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-[#1A1A1A]' : '' }}">
+ @foreach($overrideFees as $fee)
+ <div class="flex items-center justify-between py-2 border-b border-[#1A1A1A]">
  <span class="text-white text-sm font-sans">
  {{ $fee->athleteCategory ? $fee->athleteCategory->getTranslation('name', $locale) : ($fee->description ?? __('event_detail.standard_fee')) }}
  </span>
- <span class="font-bold text-sm font-sans"style="color: {{ $categoryColor }}">{{ number_format($fee->amount, 2) }} {{ $fee->currency }}</span>
+ <span class="font-bold text-sm font-sans" style="color: {{ $categoryColor }}">{{ number_format($fee->amount, 2) }} {{ $fee->currency }}</span>
  </div>
  @endforeach
+ @if($hasDefault)
+ <div class="flex items-center justify-between py-2">
+ <span class="text-white text-sm font-sans">{{ __($defaultLabelKey) }}</span>
+ <span class="font-bold text-sm font-sans" style="color: {{ $categoryColor }}">{{ number_format($org->price_amount, 2) }} {{ $org->price_currency ?? 'EUR' }}</span>
+ </div>
+ @endif
  </div>
  </div>
  @endif

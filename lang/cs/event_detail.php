@@ -87,6 +87,8 @@ return [
     // Competition registration fees
     'registration_fees' => 'Registrační poplatky',
     'standard_fee' => 'Standardní poplatek',
+    'fee_label_others' => 'Ostatní kategorie',
+    'fee_label_all' => 'Všichni',
     'fee_from' => 'od',
 
     // Competition timetable

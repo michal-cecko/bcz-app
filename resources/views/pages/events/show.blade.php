@@ -238,21 +238,34 @@
  @endif
 
  {{-- Registration Fees (Competition only) --}}
- @if($isCompetition && $event->competitionDetail?->registrationFees->isNotEmpty())
+ @php
+ $org2 = $event->organization;
+ $overrideFees2 = $isCompetition ? ($event->competitionDetail?->registrationFees ?? collect()) : collect();
+ $hasOverrides2 = $overrideFees2->isNotEmpty();
+ $hasDefault2 = $isCompetition && $org2 && $org2->pricing_type === \App\Enums\EventPricingTypeEnum::Paid && $org2->price_amount > 0;
+ $defaultLabelKey2 = $hasOverrides2 ? 'event_detail.fee_label_others' : 'event_detail.fee_label_all';
+ @endphp
+ @if($hasOverrides2 || $hasDefault2)
  <section class="bg-[#0A0A0A]">
  <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 py-[60px]">
  <div class="max-w-[900px]">
  <div class="bg-[#111111] border border-[#222222] p-6">
  <h2 class="text-white text-xl font-bold mb-4">{{ __('event_detail.registration_fees') }}</h2>
  <div class="flex flex-col gap-2">
- @foreach($event->competitionDetail->registrationFees as $fee)
- <div class="flex items-center justify-between py-2 {{ !$loop->last ? 'border-b border-[#1A1A1A]' : '' }}">
+ @foreach($overrideFees2 as $fee)
+ <div class="flex items-center justify-between py-2 border-b border-[#1A1A1A]">
  <span class="text-white text-sm">
- {{ $fee->athleteCategory ? $fee->athleteCategory->getTranslation('name', $locale) : $fee->description ?? __('event_detail.standard_fee') }}
+ {{ $fee->athleteCategory ? $fee->athleteCategory->getTranslation('name', $locale) : ($fee->description ?? __('event_detail.standard_fee')) }}
  </span>
- <span class="font-bold text-sm"style="color: {{ $categoryColor }}">{{ number_format($fee->amount, 2) }} {{ $fee->currency }}</span>
+ <span class="font-bold text-sm" style="color: {{ $categoryColor }}">{{ number_format($fee->amount, 2) }} {{ $fee->currency }}</span>
  </div>
  @endforeach
+ @if($hasDefault2)
+ <div class="flex items-center justify-between py-2">
+ <span class="text-white text-sm">{{ __($defaultLabelKey2) }}</span>
+ <span class="font-bold text-sm" style="color: {{ $categoryColor }}">{{ number_format($org2->price_amount, 2) }} {{ $org2->price_currency ?? 'EUR' }}</span>
+ </div>
+ @endif
  </div>
  </div>
  </div>

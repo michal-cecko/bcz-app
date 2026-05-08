@@ -87,6 +87,8 @@ return [
     // Competition registration fees
     'registration_fees' => 'Registration Fees',
     'standard_fee' => 'Standard Fee',
+    'fee_label_others' => 'Other categories',
+    'fee_label_all' => 'Everyone',
     'fee_from' => 'from',
 
     // Competition timetable
