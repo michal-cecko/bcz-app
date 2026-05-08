@@ -9,9 +9,23 @@
     font-family: 'DM Sans', system-ui, sans-serif;
     margin-bottom: 0;
 }
+.filepond--root,
+.filepond--root .filepond--drop-label,
+.filepond--root .filepond--drop-label label {
+    cursor: pointer;
+}
 .filepond--root .filepond--drop-label {
     color: #AAAAAA;
     font-size: 13px;
+}
+.filepond--root .filepond--drop-label label {
+    position: absolute;
+    inset: 0;
+    display: block;
+    padding: 0 1em;
+    line-height: 4.75em;
+    text-align: center;
+    white-space: normal;
 }
 .filepond--root .filepond--label-action {
     color: #FF2D2D;

@@ -27,6 +27,10 @@ window.bczFilepond = function ({ statePath, accept = null, maxSizeMb = 10, label
     return {
         pond: null,
         init() {
+            const inputEl = this.$el.querySelector('input[type="file"]');
+            if (!inputEl) {
+                return;
+            }
             const livewireRoot = this.$el.closest('[wire\\:id]');
             const $wire = livewireRoot ? window.Livewire.find(livewireRoot.getAttribute('wire:id')) : null;
 
@@ -34,7 +38,7 @@ window.bczFilepond = function ({ statePath, accept = null, maxSizeMb = 10, label
                 return;
             }
 
-            this.pond = FilePond.create(this.$el, {
+            this.pond = FilePond.create(inputEl, {
                 acceptedFileTypes: accept ? accept.split(',').map((s) => s.trim()).filter(Boolean) : null,
                 maxFileSize: `${maxSizeMb}MB`,
                 allowMultiple: false,
