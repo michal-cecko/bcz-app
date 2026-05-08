@@ -75,15 +75,35 @@ jobs:
 
     steps:
       - name: Wait for Dokploy app deploy
-        run: sleep 90
+        run: sleep 30
 
       - name: Redeploy worker
         run: |
-          curl -sf -X POST \
-            -H "x-api-key: ${{ secrets.DOKPLOY_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{"json":{"applicationId":"OsY6WzDMyF2x2YXXD_2W1"}}' \
-            "${{ secrets.DOKPLOY_URL }}/api/trpc/application.deploy"
+          set +e
+          MAX_ATTEMPTS=6
+          SLEEP_SECONDS=30
+          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+            HTTP_BODY=$(mktemp)
+            HTTP_CODE=$(curl -sS -o "$HTTP_BODY" -w '%{http_code}' -X POST \
+              -H "x-api-key: ${{ secrets.DOKPLOY_API_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d '{"json":{"applicationId":"OsY6WzDMyF2x2YXXD_2W1"}}' \
+              "${{ secrets.DOKPLOY_URL }}/api/trpc/application.deploy")
+            echo "Attempt $attempt: HTTP $HTTP_CODE"
+            cat "$HTTP_BODY"
+            echo
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              exit 0
+            fi
+            # 409 (in progress) and 5xx are worth retrying; 4xx are fatal config errors.
+            if [ "$HTTP_CODE" -ne 409 ] && [ "$HTTP_CODE" -lt 500 ]; then
+              echo "Non-retryable status $HTTP_CODE — failing fast"
+              exit 1
+            fi
+            sleep "$SLEEP_SECONDS"
+          done
+          echo "Worker redeploy did not succeed after $MAX_ATTEMPTS attempts"
+          exit 1
 
   notify:
     needs: [test, deploy-worker]

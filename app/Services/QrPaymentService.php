@@ -253,12 +253,16 @@ class QrPaymentService
     }
 
     /**
-     * Compose the EPC remittanceText as a pure CZ-banking VS reference:
-     *   "/VS{vs}[/SS{ss}][/KS{ks}]"
+     * Compose the EPC remittanceText as a CZ-banking VS reference:
+     *   "/VS{vs}/SS{ss}/KS{ks}"
      *
-     * CZ banking apps + Revolut parse this prefix to pre-fill the variable-
-     * symbol input. The Poznámka is intentionally NOT appended here — adding
-     * free-text after the slash directives breaks parsing in some apps.
+     * Always emits all three segments (with empty SS / KS when not supplied)
+     * — Czech banking apps and Revolut detect this fixed shape to parse the
+     * variable symbol; an isolated "/VS…" without trailing /SS/KS slips
+     * through some parsers and ends up displayed as plain message text
+     * instead of populating the VS field.
+     *
+     * Returns "" when no VS/SS/KS at all (no slashes emitted then).
      * Truncated to 140 UTF-8 chars (EPC spec limit).
      */
     private static function buildCzechSepaRemittance(
@@ -266,18 +270,13 @@ class QrPaymentService
         string $specificSymbol,
         string $constantSymbol,
     ): string {
-        $segments = [];
-        if ($variableSymbol !== '') {
-            $segments[] = '/VS'.$variableSymbol;
-        }
-        if ($specificSymbol !== '') {
-            $segments[] = '/SS'.$specificSymbol;
-        }
-        if ($constantSymbol !== '') {
-            $segments[] = '/KS'.$constantSymbol;
+        if ($variableSymbol === '' && $specificSymbol === '' && $constantSymbol === '') {
+            return '';
         }
 
-        return mb_substr(implode('', $segments), 0, 140);
+        $text = '/VS'.$variableSymbol.'/SS'.$specificSymbol.'/KS'.$constantSymbol;
+
+        return mb_substr($text, 0, 140);
     }
 
     /**

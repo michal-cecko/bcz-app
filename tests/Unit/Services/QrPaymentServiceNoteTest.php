@@ -206,8 +206,9 @@ class QrPaymentServiceNoteTest extends TestCase
     {
         // Non-CZ IBAN (SK team) must emit EPC (SEPA) format so Revolut and
         // CZ banking apps can read it. VS goes into the unstructured remittance
-        // text as the Czech "/VS{vs}" convention so apps pre-fill the VS field.
-        // No ISO 11649 RF reference (apps would display it verbatim as "RF59…").
+        // text as the Czech "/VS{vs}/SS/KS" convention (full shape, even with
+        // empty SS / KS) so apps pre-fill the VS field. No ISO 11649 RF
+        // reference (apps would display it verbatim as "RF59…").
         $base64 = QrPaymentService::qrPlatba(
             iban: 'SK7111000000001234567890',
             amount: 12.50,
@@ -227,7 +228,7 @@ class QrPaymentServiceNoteTest extends TestCase
             amount: 12.50,
             currency: 'EUR',
             beneficiaryName: 'BCZ Test',
-            remittanceText: '/VS00000077',
+            remittanceText: '/VS00000077/SS/KS',
         );
 
         $lines = explode("\n", $payload);
@@ -235,7 +236,7 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertSame('SCT', $lines[3]);
         $this->assertSame('SK7111000000001234567890', $lines[6]);
         $this->assertSame('EUR12.50', $lines[7]);
-        $this->assertSame('', $lines[9]);                  // structured ref empty
-        $this->assertSame('/VS00000077', $lines[10]);      // unstructured text holds /VS
+        $this->assertSame('', $lines[9]);                          // structured ref empty
+        $this->assertSame('/VS00000077/SS/KS', $lines[10]);        // unstructured text holds full /VS/SS/KS
     }
 }
