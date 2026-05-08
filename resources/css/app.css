@@ -9,23 +9,31 @@
     font-family: 'DM Sans', system-ui, sans-serif;
     margin-bottom: 0;
 }
-.filepond--root,
-.filepond--root .filepond--drop-label,
-.filepond--root .filepond--drop-label label {
+.filepond--root {
     cursor: pointer;
 }
 .filepond--root .filepond--drop-label {
     color: #AAAAAA;
     font-size: 13px;
 }
-.filepond--root .filepond--drop-label label {
-    position: absolute;
-    inset: 0;
-    display: block;
-    padding: 0 1em;
-    line-height: 4.75em;
-    text-align: center;
-    white-space: normal;
+/* Make the entire FilePond box click-through to the underlying file input.
+   Visual layers (drop-label / label / span) get pointer-events: none so the
+   click lands directly on the <input type="file">, which we lift to fill the
+   whole pond. A direct user click on the file input opens the OS file dialog
+   reliably across every browser (no programmatic label.click() that some
+   browsers, notably Safari, reject as a non-trusted gesture). */
+.filepond--root .filepond--drop-label,
+.filepond--root .filepond--drop-label * {
+    pointer-events: none;
+}
+.filepond--root .filepond--browser {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 2;
 }
 .filepond--root .filepond--label-action {
     color: #FF2D2D;
