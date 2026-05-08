@@ -51,6 +51,7 @@ return [
     'form_submit' => 'ODOSLAŤ PRIHLÁŠKU',
     'form_submitting' => 'ODOSIELAM...',
     'file_uploading' => 'Nahrávam súbor…',
+    'file_upload_idle' => 'Pretiahnite súbor sem alebo <span class="filepond--label-action">vyberte</span>',
     'continuous_membership_label' => 'Automaticky obnovovať členstvo',
     'continuous_membership_help' => 'Pred začiatkom každej novej sezóny ti pošleme pripomienku na úhradu členského. Kedykoľvek to môžeš vypnúť v dashboarde.',
     'form_consent' => 'Odoslaním súhlasíš so spracovaním osobných údajov.',

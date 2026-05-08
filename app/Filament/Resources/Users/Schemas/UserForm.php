@@ -76,6 +76,7 @@ class UserForm
                                 Select::make('roles')
                                     ->label('Roly')
                                     ->dehydrated(false)
+                                    ->visible(fn (?User $record): bool => self::canEditPrivilegedFields($record))
                                     ->options(
                                         Role::query()
                                             ->whereNotIn('name', ['panel_user', RoleEnum::SUPER_ADMIN->value])
@@ -112,23 +113,25 @@ class UserForm
                                         }
                                     })
                                     ->required(),
-                                Select::make('team_id')
-                                    ->label('Tím')
-                                    ->helperText('Povinné pre rolu Tímový admin, Tréner alebo Športovec.')
+                                Select::make('team_ids')
+                                    ->label('Tímy')
+                                    ->helperText('Povinné pre rolu Tímový admin, Tréner alebo Športovec. Vybrané tímy získajú zvolené tímové roly.')
+                                    ->visible(fn (?User $record): bool => self::canEditPrivilegedFields($record))
                                     ->options(fn () => Team::query()->pluck('name', 'id')->map(fn ($name) => is_array($name) ? ($name['sk'] ?? reset($name)) : $name))
+                                    ->multiple()
                                     ->searchable()
                                     ->preload()
                                     ->dehydrated(false)
                                     ->afterStateHydrated(function (Select $component, ?User $record): void {
                                         if ($record) {
-                                            $component->state($record->teams()->first()?->id);
+                                            $component->state($record->teams()->pluck('teams.id')->all());
                                         }
                                     })
                                     ->required(fn (Get $get): bool => self::hasTeamScopedRole($get('roles') ?? []))
                                     ->rule(function (Get $get) {
                                         return function (string $attribute, $value, \Closure $fail) use ($get): void {
-                                            if (self::hasTeamScopedRole($get('roles') ?? []) && ! $value) {
-                                                $fail('Pre tímovú rolu je potrebné zvoliť tím.');
+                                            if (self::hasTeamScopedRole($get('roles') ?? []) && empty($value)) {
+                                                $fail('Pre tímovú rolu je potrebné zvoliť aspoň jeden tím.');
                                             }
                                         };
                                     }),
@@ -149,6 +152,8 @@ class UserForm
                                     ->label('Oslobodený od platby členstva')
                                     ->helperText('Pri otvorení sezóny dostane bezplatné členstvo bez notifikácie. Automaticky zapnuté pre admina, editora a porotcu.')
                                     ->default(false)
+                                    ->visible(fn (?User $record): bool => self::canEditPrivilegedFields($record))
+                                    ->dehydrated(fn (?User $record): bool => self::canEditPrivilegedFields($record))
                                     ->disabled(fn (Get $get): bool => ! self::hasMembershipEligibleRole($get('roles') ?? []))
                                     ->afterStateHydrated(function (Toggle $component, Get $get, $state) {
                                         if (! self::hasMembershipEligibleRole($get('roles') ?? [])) {
@@ -335,6 +340,34 @@ class UserForm
             ]);
 
         return $tabs;
+    }
+
+    /**
+     * Returns true if the authenticated user is allowed to manage privileged
+     * fields (Roles, Teams, has_free_membership) on the given target record.
+     * Self-edit by non-global-admins is denied; admins and team admins editing
+     * other users are allowed.
+     */
+    public static function canEditPrivilegedFields(?User $record): bool
+    {
+        /** @var User|null $authUser */
+        $authUser = auth()->user();
+
+        if (! $authUser) {
+            return false;
+        }
+
+        if ($authUser->hasAnyAppRole([RoleEnum::SUPER_ADMIN, RoleEnum::ADMIN])) {
+            return true;
+        }
+
+        // Self-edit by anyone other than a global admin: no privileged fields.
+        if ($record !== null && $authUser->id === $record->id) {
+            return false;
+        }
+
+        // Editing a different user — allow if the actor has any team-admin authority.
+        return $authUser->hasAnyAppRole([RoleEnum::TEAM_ADMIN]);
     }
 
     /**

@@ -3,6 +3,10 @@ import './bootstrap';
 import flatpickr from 'flatpickr';
 import { Slovak } from 'flatpickr/dist/l10n/sk.js';
 import { Czech } from 'flatpickr/dist/l10n/cs.js';
+import * as FilePond from 'filepond';
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
+import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 
 const htmlLang = (document.documentElement.lang || 'sk').toLowerCase();
 if (htmlLang.startsWith('sk')) {
@@ -12,6 +16,71 @@ if (htmlLang.startsWith('sk')) {
 }
 
 window.flatpickr = flatpickr;
+
+FilePond.registerPlugin(
+    FilePondPluginImagePreview,
+    FilePondPluginFileValidateSize,
+    FilePondPluginFileValidateType,
+);
+
+window.bczFilepond = function ({ statePath, accept = null, maxSizeMb = 10, labelIdle = null }) {
+    return {
+        pond: null,
+        init() {
+            const livewireRoot = this.$el.closest('[wire\\:id]');
+            const $wire = livewireRoot ? window.Livewire.find(livewireRoot.getAttribute('wire:id')) : null;
+
+            if (!$wire) {
+                return;
+            }
+
+            this.pond = FilePond.create(this.$el, {
+                acceptedFileTypes: accept ? accept.split(',').map((s) => s.trim()).filter(Boolean) : null,
+                maxFileSize: `${maxSizeMb}MB`,
+                allowMultiple: false,
+                credits: false,
+                imagePreviewMaxHeight: 200,
+                labelIdle: labelIdle ?? 'Pretiahnite súbor sem alebo <span class="filepond--label-action">vyberte</span>',
+                labelFileLoading: 'Nahrávam',
+                labelFileProcessing: 'Nahrávam',
+                labelFileProcessingComplete: 'Hotovo',
+                labelFileProcessingError: 'Chyba',
+                labelTapToCancel: 'klepnutím zrušiť',
+                labelTapToRetry: 'klepnutím skúsiť znova',
+                labelTapToUndo: 'klepnutím zrušiť',
+                labelButtonRemoveItem: 'Odstrániť',
+                labelMaxFileSizeExceeded: 'Súbor je príliš veľký',
+                labelMaxFileSize: `Maximálna veľkosť: ${maxSizeMb}MB`,
+                labelFileTypeNotAllowed: 'Nepovolený typ súboru',
+                server: {
+                    process: (fieldName, file, metadata, load, error, progress, abort) => {
+                        $wire.upload(
+                            statePath,
+                            file,
+                            (uploadedFilename) => load(uploadedFilename),
+                            () => error('Nahrávanie zlyhalo'),
+                            (event) => progress(event.detail.lengthComputable, event.detail.loaded, event.detail.total),
+                        );
+
+                        return {
+                            abort: () => abort(),
+                        };
+                    },
+                    revert: (uniqueFileId, load) => {
+                        $wire.set(statePath, null);
+                        load();
+                    },
+                },
+            });
+        },
+        destroy() {
+            if (this.pond) {
+                this.pond.destroy();
+                this.pond = null;
+            }
+        },
+    };
+};
 
 window.prettyPicker = function ({ options, multiple, placeholder, searchPlaceholder, emptyLabel, statePath, initialValue }) {
     const normalizeInitial = (raw) => {

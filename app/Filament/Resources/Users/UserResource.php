@@ -259,11 +259,12 @@ class UserResource extends Resource
 
     /**
      * Split selected Spatie role IDs into global (stay on model_has_roles) and team-scoped
-     * (replace rows on the given team only — other teams' pivots are never touched).
+     * (replace rows on each given team only — teams not in $teamIds keep their existing pivots).
      *
      * @param  array<int|string>  $roleIds
+     * @param  array<int, string>|string|null  $teamIds  Single ID, list of IDs, or null to skip pivot sync.
      */
-    public static function syncTeamScopedRoles(User $user, array $roleIds, ?string $teamId): void
+    public static function syncTeamScopedRoles(User $user, array $roleIds, array|string|null $teamIds): void
     {
         $roles = $roleIds ? Role::query()->whereIn('id', $roleIds)->get() : collect();
         $teamScopedValues = array_map(fn (RoleEnum $r) => $r->value, RoleEnum::teamScopedCases());
@@ -273,27 +274,29 @@ class UserResource extends Resource
         // Keep only the chosen global roles (Spatie-managed).
         $user->syncRoles($global->pluck('name')->all());
 
-        // Without a team, we can't know which team to update — preserve existing pivots to
-        // avoid wiping a user's membership on other teams.
-        if (! $teamId) {
+        $teamIds = array_values(array_filter(is_array($teamIds) ? $teamIds : [$teamIds]));
+
+        if (empty($teamIds)) {
             return;
         }
 
-        // Rebuild rows ONLY for this team (other teams are untouched).
-        DB::table('team_user')
-            ->where('user_id', $user->id)
-            ->where('team_id', $teamId)
-            ->delete();
+        // Rebuild rows ONLY for the selected teams; teams outside this list are untouched.
+        foreach ($teamIds as $teamId) {
+            DB::table('team_user')
+                ->where('user_id', $user->id)
+                ->where('team_id', $teamId)
+                ->delete();
 
-        foreach ($teamScoped as $role) {
-            DB::table('team_user')->insert([
-                'team_id' => $teamId,
-                'user_id' => $user->id,
-                'role' => $role->name,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            foreach ($teamScoped as $role) {
+                DB::table('team_user')->insert([
+                    'team_id' => $teamId,
+                    'user_id' => $user->id,
+                    'role' => $role->name,
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 }

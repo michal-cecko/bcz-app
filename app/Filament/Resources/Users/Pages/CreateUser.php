@@ -26,10 +26,10 @@ class CreateUser extends CreateRecord
     {
         /** @var User $user */
         $user = $this->record;
-        $teamId = $this->data['team_id'] ?? null;
+        $teamIds = $this->data['team_ids'] ?? [];
         $roleIds = $this->data['roles'] ?? [];
 
-        UserResource::syncTeamScopedRoles($user, $roleIds, $teamId);
+        UserResource::syncTeamScopedRoles($user, $roleIds, $teamIds);
 
         if (! empty($this->data['send_welcome_notification'])) {
             $user->notify(new WelcomeToApp);

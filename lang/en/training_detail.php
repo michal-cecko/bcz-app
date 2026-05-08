@@ -51,6 +51,7 @@ return [
     'form_submit' => 'SUBMIT REGISTRATION',
     'form_submitting' => 'SUBMITTING...',
     'file_uploading' => 'Uploading file…',
+    'file_upload_idle' => 'Drop a file here or <span class="filepond--label-action">browse</span>',
     'continuous_membership_label' => 'Auto-renew membership',
     'continuous_membership_help' => 'We will remind you to pay the membership fee before each new season starts. You can disable this anytime in your dashboard.',
     'form_consent' => 'By submitting you agree to the processing of personal data.',

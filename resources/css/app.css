@@ -1,5 +1,52 @@
 @import 'tailwindcss';
 @import 'flatpickr/dist/flatpickr.min.css';
+@import 'filepond/dist/filepond.min.css';
+@import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css';
+
+/* Filepond — public BCZ theme (dark surface, BCZ red accent) */
+.filepond--root {
+    --filepond--color-primary: #FF2D2D;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    margin-bottom: 0;
+}
+.filepond--root .filepond--drop-label {
+    color: #AAAAAA;
+    font-size: 13px;
+}
+.filepond--root .filepond--label-action {
+    color: #FF2D2D;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 45, 45, 0.4);
+    text-underline-offset: 2px;
+}
+.filepond--root .filepond--label-action:hover {
+    text-decoration-color: #FF2D2D;
+}
+.filepond--root .filepond--panel-root {
+    background: #111111;
+    border: 1px solid #222222;
+    border-radius: 0;
+}
+.filepond--root .filepond--item-panel {
+    background: #1a1a1a;
+}
+.filepond--root .filepond--file-action-button {
+    background: rgba(255, 45, 45, 0.95);
+    color: #ffffff;
+}
+.filepond--root .filepond--file-action-button:hover,
+.filepond--root .filepond--file-action-button:focus {
+    background: #FF2D2D;
+}
+.filepond--root .filepond--file {
+    color: #ffffff;
+}
+.filepond--root .filepond--progress-indicator {
+    color: #FF2D2D;
+}
+.filepond--root .filepond--drip-blob {
+    background-color: #FF2D2D;
+}
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';

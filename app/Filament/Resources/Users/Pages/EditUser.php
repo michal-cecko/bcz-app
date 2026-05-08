@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Pages;
 
 use App\Enums\DraftStatusEnum;
 use App\Enums\RoleEnum;
+use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
@@ -165,10 +166,14 @@ class EditUser extends EditRecord
         /** @var User $record */
         $record = $this->record;
 
-        // Admin path: move team-scoped roles from Spatie to the team_user pivot.
-        $teamId = $this->data['team_id'] ?? null;
-        $roleIds = $this->data['roles'] ?? [];
-        UserResource::syncTeamScopedRoles($record, $roleIds, $teamId);
+        // Sync team-scoped roles only when the actor is allowed to manage privileged
+        // fields — this matches the form-level visibility gate and prevents a non-admin
+        // self-edit from rewriting their own roles even with crafted form data.
+        if (UserForm::canEditPrivilegedFields($record)) {
+            $teamIds = $this->data['team_ids'] ?? [];
+            $roleIds = $this->data['roles'] ?? [];
+            UserResource::syncTeamScopedRoles($record, $roleIds, $teamIds);
+        }
 
         // Only apply draft workflow when user edits themselves and is not admin
         if ($authUser->id !== $record->id) {

@@ -14,6 +14,7 @@ use App\Mason\EmailBricks\EmailImageBrick;
 use App\Mason\EmailBricks\EmailRichTextBrick;
 use App\Mason\EmailBricks\EmailSpacerBrick;
 use App\Models\TeamSeason;
+use App\Support\ConditionFieldOptions;
 use App\Support\RegistrationFieldOptions;
 use Awcodes\Mason\Mason;
 use Cheesegrits\FilamentGoogleMaps\Fields\Map;
@@ -31,6 +32,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
@@ -517,21 +519,7 @@ class TrainingForm
                                                         Select::make('condition_field')
                                                             ->label('Pole')
                                                             ->helperText('Pole, od ktorého závisí zobrazenie')
-                                                            ->options(function (Get $get): array {
-                                                                $items = $get('../../');
-                                                                if (! is_array($items)) {
-                                                                    return [];
-                                                                }
-                                                                $options = [];
-                                                                foreach ($items as $item) {
-                                                                    if (! empty($item['name']) && ! empty($item['label'])) {
-                                                                        $label = is_array($item['label']) ? ($item['label']['sk'] ?? reset($item['label'])) : $item['label'];
-                                                                        $options[$item['name']] = $label;
-                                                                    }
-                                                                }
-
-                                                                return $options;
-                                                            })
+                                                            ->options(fn (Component $component): array => ConditionFieldOptions::forCurrent($component))
                                                             ->live()
                                                             ->required(fn (Get $get): bool => (bool) $get('has_condition'))
                                                             ->hidden(fn (Get $get): bool => ! $get('has_condition')),
