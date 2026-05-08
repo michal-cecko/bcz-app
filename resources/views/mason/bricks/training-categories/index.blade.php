@@ -37,7 +37,7 @@
  <span class="font-display font-bold text-5xl text-bcz-red/20">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
  <h3 class="font-display font-bold text-[28px] tracking-wide">{{ $category->name }}</h3>
  @if($category->description)
- <p class="text-bcz-muted text-[15px] leading-relaxed">{!! $category->description !!}</p>
+ <div class="text-bcz-muted text-[15px] leading-relaxed">{!! $category->description !!}</div>
  @endif
  @if($category->slug)
  <a href="{{ route('treningy') }}#{{ $category->slug }}"class="flex items-center gap-2 text-bcz-red text-xs font-bold tracking-widest hover:gap-3 transition-all">

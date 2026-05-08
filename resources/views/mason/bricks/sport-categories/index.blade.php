@@ -38,7 +38,7 @@
  <h3 class="font-display font-bold text-[28px] tracking-wide">{{ brick_trans($category['title']) }}</h3>
  @endif
  @if(! empty($category['description']))
- <p class="text-bcz-muted text-[15px] leading-relaxed">{!! brick_trans($category['description']) !!}</p>
+ <div class="text-bcz-muted text-[15px] leading-relaxed">{!! brick_trans($category['description']) !!}</div>
  @endif
  @php
  $catLinkHref = brick_link(['link_type' => $category['link_link_type'] ?? '', 'link_model_id' => $category['link_link_model_id'] ?? '', 'link_url' => $category['link_link_url'] ?? '']) ?? brick_trans($category['link_url'] ?? []);

@@ -15,7 +15,7 @@
                 @endif
                 <h2 class="font-display text-[48px] font-bold text-white leading-tight tracking-wide">{{ $team->getTranslation('name', app()->getLocale()) }}</h2>
                 @if($team->getTranslation('story', app()->getLocale()))
-                    <p class="text-bcz-muted text-[15px] leading-relaxed max-w-[420px]">{{ Str::limit(strip_tags($team->getTranslation('story', app()->getLocale())), 150) }}</p>
+                    <div class="text-bcz-muted text-[15px] leading-relaxed max-w-[420px]">{{ Str::limit(strip_tags($team->getTranslation('story', app()->getLocale())), 150) }}</div>
                 @endif
                 <div class="flex items-center gap-3 text-bcz-muted text-sm">
                     <svg class="w-5 h-5 text-bcz-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
