@@ -186,7 +186,6 @@ return [
     'dr_amount' => 'Suma',
     'dr_payment_method' => 'Platba',
     'dr_membership' => 'Členstvo',
-    'error_email_exists' => 'Tento e-mail je už zaregistrovaný. Prihláste sa pre pokračovanie.',
     'error_phone_exists' => 'Toto telefónne číslo je už priradené k inému účtu.',
 
     // Index page

@@ -199,9 +199,9 @@ class TrainingRegistrationFlowTest extends TestCase
         $this->assertEquals(RegistrationStatusEnum::Pending, $registration->status);
     }
 
-    public function test_guest_with_existing_email_gets_validation_error(): void
+    public function test_guest_with_existing_email_can_register_attaching_to_existing_user(): void
     {
-        User::factory()->create(['email' => 'existing@test.com']);
+        $existing = User::factory()->create(['email' => 'existing@test.com']);
 
         $training = $this->createTraining();
 
@@ -212,7 +212,12 @@ class TrainingRegistrationFlowTest extends TestCase
             ->set('fields.telefon', '+421900123456')
             ->set('gdprAgreed', true)
             ->call('submit')
-            ->assertHasErrors(['fields.email']);
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('training_registrations', [
+            'training_id' => $training->id,
+            'user_id' => $existing->id,
+        ]);
     }
 
     public function test_guest_with_duplicate_phone_gets_validation_error(): void

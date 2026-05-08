@@ -144,7 +144,6 @@ return [
     'season_prorated_note' => 'Poměrná cena za zbývající měsíce aktuální sezóny',
 
     // Validation errors
-    'error_email_exists' => 'Účet s touto emailovou adresou již existuje. <a href="/login" class="underline text-bcz-red hover:text-red-400">Přihlaste se</a>.',
     'error_phone_exists' => 'Telefonní číslo je již přiřazeno k jinému účtu.',
 
     'days' => [

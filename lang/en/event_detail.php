@@ -186,7 +186,6 @@ return [
     'dr_amount' => 'Amount',
     'dr_payment_method' => 'Payment',
     'dr_membership' => 'Membership',
-    'error_email_exists' => 'This email is already registered. Please sign in to continue.',
     'error_phone_exists' => 'This phone number is already assigned to another account.',
 
     // Index page

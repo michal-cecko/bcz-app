@@ -186,7 +186,6 @@ return [
     'dr_amount' => 'Částka',
     'dr_payment_method' => 'Platba',
     'dr_membership' => 'Členství',
-    'error_email_exists' => 'Tento e-mail je již registrován. Přihlaste se pro pokračování.',
     'error_phone_exists' => 'Toto telefonní číslo je již přiřazeno k jinému účtu.',
 
     // Index page

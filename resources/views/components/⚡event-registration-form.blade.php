@@ -179,14 +179,7 @@ new class extends Component
             $birthDate = RegistrationService::extractBirthDateFromFormData($this->fields, $schema);
             $gender = RegistrationService::extractGenderFromFormData($this->fields, $schema);
 
-            // Duplicate email check for guests
-            if ($email && User::where('email', $email)->exists()) {
-                $this->addError('fields.' . $this->getEmailFieldName($schema), __('event_detail.error_email_exists'));
-
-                return;
-            }
-
-            // Duplicate phone check for guests
+            // Duplicate phone check for guests (block when phone is registered to a *different* email — fraud prevention).
             if ($phone && $email && User::where('phone', $phone)->where('email', '!=', $email)->exists()) {
                 $this->addError('fields.' . $this->getPhoneFieldName($schema), __('event_detail.error_phone_exists'));
 
@@ -438,17 +431,6 @@ new class extends Component
         return $detail->registrationFees()
             ->where('athlete_category_id', $categoryId)
             ->first();
-    }
-
-    protected function getEmailFieldName(array $schema): string
-    {
-        foreach ($schema as $field) {
-            if (($field['type'] ?? '') === 'email') {
-                return $field['name'] ?? $field['key'] ?? 'email';
-            }
-        }
-
-        return 'email';
     }
 
     protected function getPhoneFieldName(array $schema): string

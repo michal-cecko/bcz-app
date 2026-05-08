@@ -144,7 +144,6 @@ return [
     'season_prorated_note' => 'Prorated fee for the remaining months of the current season',
 
     // Validation errors
-    'error_email_exists' => 'An account with this email already exists. <a href="/login" class="underline text-bcz-red hover:text-red-400">Log in</a>.',
     'error_phone_exists' => 'This phone number is already assigned to another account.',
 
     'days' => [
