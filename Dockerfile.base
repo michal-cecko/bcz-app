@@ -10,6 +10,7 @@ RUN apk add --no-cache \
     libpng-dev oniguruma-dev libxml2-dev postgresql-dev \
     icu-dev libzip-dev sqlite-dev xz linux-headers \
     autoconf gcc g++ make \
+    jpegoptim optipng pngquant gifsicle libwebp-tools \
     && pecl install redis && docker-php-ext-enable redis \
     && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
     && docker-php-ext-configure intl \
