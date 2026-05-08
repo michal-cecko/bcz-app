@@ -2,11 +2,98 @@
 
 namespace App\Support;
 
+use App\Enums\GenderEnum;
+use App\Enums\RegistrationFieldTypeEnum;
+use App\Models\Event;
+use App\Models\Training;
 use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Utilities\Get;
 
 class ConditionFieldOptions
 {
+    /**
+     * Find a sibling field's schema (in the same registration_form_schema Repeater)
+     * by its `name`. Used by the conditional-visibility "Očakávané hodnoty" input
+     * to discover the source field's type/options at form-render time.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function findSourceField(Get $get, ?string $sourceFieldName): ?array
+    {
+        if ($sourceFieldName === null || $sourceFieldName === '') {
+            return null;
+        }
+
+        // From within the condition Section (sibling of has_condition / condition_field):
+        // ../  → field item, ../../ → repeater items array.
+        $items = $get('../../');
+        if (! is_array($items)) {
+            return null;
+        }
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            if (($item['name'] ?? null) === $sourceFieldName) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $sourceField
+     */
+    public static function isOptionBased(?array $sourceField): bool
+    {
+        return in_array($sourceField['type'] ?? null, [
+            RegistrationFieldTypeEnum::SELECT->value,
+            RegistrationFieldTypeEnum::MULTI_SELECT->value,
+            RegistrationFieldTypeEnum::CATEGORY->value,
+            RegistrationFieldTypeEnum::GENDER->value,
+        ], true);
+    }
+
+    /**
+     * Build the [value => label] options for the condition_values Select based on
+     * the source field's type:
+     *  - select/multi_select → the field's own options array
+     *  - gender              → male / female from GenderEnum
+     *  - category            → athlete categories from the Event (when available)
+     *  - anything else       → empty (caller should fall back to TagsInput)
+     *
+     * @param  array<string, mixed>|null  $sourceField
+     * @return array<string, string>
+     */
+    public static function valueOptionsForSource(?array $sourceField, string $locale, Event|Training|null $owner = null): array
+    {
+        if ($sourceField === null) {
+            return [];
+        }
+
+        $type = $sourceField['type'] ?? null;
+
+        if ($type === RegistrationFieldTypeEnum::GENDER->value) {
+            return [
+                GenderEnum::MALE->value => GenderEnum::MALE->getLabel(),
+                GenderEnum::FEMALE->value => GenderEnum::FEMALE->getLabel(),
+            ];
+        }
+
+        if (in_array($type, [
+            RegistrationFieldTypeEnum::SELECT->value,
+            RegistrationFieldTypeEnum::MULTI_SELECT->value,
+            RegistrationFieldTypeEnum::CATEGORY->value,
+        ], true)) {
+            return RegistrationFieldOptions::resolve($sourceField, $locale, $owner);
+        }
+
+        return [];
+    }
+
     /**
      * Build the option list for the conditional-visibility "Pole" Select inside
      * a registration_form_schema Repeater item. Walks up the schema tree to find

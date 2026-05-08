@@ -9,9 +9,10 @@ use App\Filament\Resources\TrainingRegistrations\Pages\ListTrainingRegistrations
 use App\Filament\Resources\TrainingRegistrations\Pages\ViewTrainingRegistration;
 use App\Filament\Resources\TrainingRegistrations\Tables\TrainingRegistrationsTable;
 use App\Models\TrainingRegistration;
-use App\Support\RegistrationFieldOptions;
+use App\Support\RegistrationFieldFormatter;
 use BackedEnum;
 use Filament\Facades\Filament;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -20,7 +21,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Storage;
 
 class TrainingRegistrationResource extends Resource
 {
@@ -122,7 +122,9 @@ class TrainingRegistrationResource extends Resource
                         }
 
                         $locale = app()->getLocale();
+                        $training = $record->training;
                         $entries = [];
+
                         foreach ($schema as $field) {
                             $key = $field['name'] ?? $field['key'] ?? '';
                             $value = $formData[$key] ?? null;
@@ -130,27 +132,31 @@ class TrainingRegistrationResource extends Resource
                                 continue;
                             }
 
-                            $label = is_array($field['label'] ?? null)
-                                ? ($field['label'][$locale] ?? $field['label']['sk'] ?? reset($field['label']))
-                                : ($field['label'] ?? $key);
+                            $formatted = RegistrationFieldFormatter::format($field, $value, $locale, $training);
 
-                            $type = $field['type'] ?? null;
-                            if (in_array($type, ['select', 'multi_select', 'category'], true)) {
-                                $displayValue = RegistrationFieldOptions::labelFor($field, $value, $locale);
-                                $entries[] = TextEntry::make("form_data.{$key}")
-                                    ->label($label)
-                                    ->state($displayValue);
-                            } elseif ($type === 'file_input' && is_string($value)) {
-                                $entries[] = TextEntry::make("form_data.{$key}")
-                                    ->label($label)
-                                    ->state(basename($value))
-                                    ->url(Storage::disk('public')->url($value), shouldOpenInNewTab: true)
-                                    ->color('primary');
-                            } else {
-                                $entries[] = TextEntry::make("form_data.{$key}")
-                                    ->label($label)
-                                    ->state($value);
+                            if ($formatted['isImage'] && $formatted['fileUrl']) {
+                                $entries[] = ImageEntry::make("form_data.{$key}")
+                                    ->label($formatted['label'])
+                                    ->state($formatted['fileUrl'])
+                                    ->size(160)
+                                    ->extraAttributes(['class' => 'object-cover']);
+
+                                continue;
                             }
+
+                            if ($formatted['isFile']) {
+                                $entries[] = TextEntry::make("form_data.{$key}")
+                                    ->label($formatted['label'])
+                                    ->state($formatted['value'])
+                                    ->url($formatted['fileUrl'], shouldOpenInNewTab: true)
+                                    ->color('primary');
+
+                                continue;
+                            }
+
+                            $entries[] = TextEntry::make("form_data.{$key}")
+                                ->label($formatted['label'])
+                                ->state($formatted['value']);
                         }
 
                         return $entries;

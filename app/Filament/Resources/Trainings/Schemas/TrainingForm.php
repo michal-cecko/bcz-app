@@ -523,10 +523,37 @@ class TrainingForm
                                                             ->live()
                                                             ->required(fn (Get $get): bool => (bool) $get('has_condition'))
                                                             ->hidden(fn (Get $get): bool => ! $get('has_condition')),
+                                                        Select::make('condition_values')
+                                                            ->label('Očakávané hodnoty')
+                                                            ->multiple()
+                                                            ->helperText('Pole sa zobrazí, ak referenčné pole má niektorú z vybraných hodnôt.')
+                                                            ->options(function (Get $get): array {
+                                                                $sourceField = ConditionFieldOptions::findSourceField($get, $get('condition_field'));
+
+                                                                return ConditionFieldOptions::valueOptionsForSource($sourceField, app()->getLocale());
+                                                            })
+                                                            ->afterStateHydrated(function ($component, $state, Get $get): void {
+                                                                if (filled($state)) {
+                                                                    return;
+                                                                }
+                                                                $legacy = $get('condition_value');
+                                                                if (filled($legacy)) {
+                                                                    $component->state(is_array($legacy) ? array_values($legacy) : [(string) $legacy]);
+                                                                }
+                                                            })
+                                                            ->required(fn (Get $get): bool => (bool) $get('has_condition'))
+                                                            ->visible(function (Get $get): bool {
+                                                                if (! $get('has_condition')) {
+                                                                    return false;
+                                                                }
+                                                                $sourceField = ConditionFieldOptions::findSourceField($get, $get('condition_field'));
+
+                                                                return ConditionFieldOptions::isOptionBased($sourceField);
+                                                            }),
                                                         TagsInput::make('condition_values')
                                                             ->label('Očakávané hodnoty')
-                                                            ->placeholder('napr. zena_50')
-                                                            ->helperText('Pole sa zobrazí, ak referenčné pole má niektorú z týchto hodnôt. Pre select polia zadajte hodnoty (kľúče), nie zobrazované názvy.')
+                                                            ->placeholder('napr. áno')
+                                                            ->helperText('Pole sa zobrazí, ak referenčné pole má niektorú z týchto hodnôt.')
                                                             ->afterStateHydrated(function (TagsInput $component, $state, Get $get): void {
                                                                 if (filled($state)) {
                                                                     return;
@@ -537,7 +564,14 @@ class TrainingForm
                                                                 }
                                                             })
                                                             ->required(fn (Get $get): bool => (bool) $get('has_condition'))
-                                                            ->hidden(fn (Get $get): bool => ! $get('has_condition')),
+                                                            ->visible(function (Get $get): bool {
+                                                                if (! $get('has_condition')) {
+                                                                    return false;
+                                                                }
+                                                                $sourceField = ConditionFieldOptions::findSourceField($get, $get('condition_field'));
+
+                                                                return ! ConditionFieldOptions::isOptionBased($sourceField);
+                                                            }),
                                                     ])
                                                     ->collapsible()
                                                     ->collapsed()

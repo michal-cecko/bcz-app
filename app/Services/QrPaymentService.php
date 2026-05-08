@@ -62,10 +62,14 @@ class QrPaymentService
         // Non-CZ IBANs (incl. SK teams collecting via Revolut etc.): emit EPC
         // QR, the European SEPA standard. CZ apps + Revolut reject SPAYD when
         // the IBAN isn't Czech, but read EPC reliably via the same scanner.
+        //
+        // VS/SS/KS go into the unstructured remittance text as the Czech
+        // banking convention "/VS{vs}[/SS{ss}][/KS{ks}]" — CZ bank apps parse
+        // this prefix and pre-fill the variable-symbol input. We avoid the
+        // structured ISO 11649 RF reference because apps display it verbatim
+        // ("RF59…") instead of extracting the underlying VS digits.
         if (! $isCzAccount && $amount !== null) {
-            $reference = $variableSymbol !== '' && ctype_digit($variableSymbol)
-                ? self::iso11649Reference($variableSymbol)
-                : null;
+            $remittanceText = self::buildCzechSepaRemittance($variableSymbol, $specificSymbol, $constantSymbol);
 
             return self::epcQr(
                 iban: $normalizedIban,
@@ -73,8 +77,7 @@ class QrPaymentService
                 currency: $currency,
                 beneficiaryName: $recipientName,
                 bic: $bic,
-                remittanceText: $note,
-                remittanceReference: $reference,
+                remittanceText: $remittanceText !== '' ? $remittanceText : null,
             );
         }
 
@@ -247,6 +250,34 @@ class QrPaymentService
         }
 
         return implode('*', $parts);
+    }
+
+    /**
+     * Compose the EPC remittanceText as a pure CZ-banking VS reference:
+     *   "/VS{vs}[/SS{ss}][/KS{ks}]"
+     *
+     * CZ banking apps + Revolut parse this prefix to pre-fill the variable-
+     * symbol input. The Poznámka is intentionally NOT appended here — adding
+     * free-text after the slash directives breaks parsing in some apps.
+     * Truncated to 140 UTF-8 chars (EPC spec limit).
+     */
+    private static function buildCzechSepaRemittance(
+        string $variableSymbol,
+        string $specificSymbol,
+        string $constantSymbol,
+    ): string {
+        $segments = [];
+        if ($variableSymbol !== '') {
+            $segments[] = '/VS'.$variableSymbol;
+        }
+        if ($specificSymbol !== '') {
+            $segments[] = '/SS'.$specificSymbol;
+        }
+        if ($constantSymbol !== '') {
+            $segments[] = '/KS'.$constantSymbol;
+        }
+
+        return mb_substr(implode('', $segments), 0, 140);
     }
 
     /**

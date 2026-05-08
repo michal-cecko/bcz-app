@@ -8,9 +8,10 @@ use App\Filament\Resources\EventRegistrations\Pages\ListEventRegistrations;
 use App\Filament\Resources\EventRegistrations\Pages\ViewEventRegistration;
 use App\Filament\Resources\EventRegistrations\Tables\EventRegistrationsTable;
 use App\Models\EventRegistration;
-use App\Models\RegistrationFieldValue;
+use App\Support\RegistrationFieldFormatter;
 use BackedEnum;
 use Filament\Facades\Filament;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -116,10 +117,46 @@ class EventRegistrationResource extends Resource
                             ];
                         }
 
-                        return $fieldValues->map(fn (RegistrationFieldValue $fv) => TextEntry::make("field_value_{$fv->id}")
-                            ->label($fv->field_key)
-                            ->state($fv->value)
-                        )->toArray();
+                        $locale = app()->getLocale();
+                        $event = $record->event;
+                        $schema = $event?->organization?->registration_form_schema ?? [];
+                        $schemaByKey = collect($schema)->keyBy(fn ($f) => $f['name'] ?? $f['key'] ?? '');
+
+                        $entries = [];
+                        foreach ($fieldValues as $fv) {
+                            $field = $schemaByKey->get($fv->field_key);
+                            if (! $field) {
+                                $field = ['name' => $fv->field_key, 'type' => $fv->field_type, 'label' => $fv->field_key];
+                            }
+
+                            $formatted = RegistrationFieldFormatter::format($field, $fv->value, $locale, $event);
+
+                            if ($formatted['isImage'] && $formatted['fileUrl']) {
+                                $entries[] = ImageEntry::make("field_value_{$fv->id}")
+                                    ->label($formatted['label'])
+                                    ->state($formatted['fileUrl'])
+                                    ->size(160)
+                                    ->extraAttributes(['class' => 'object-cover']);
+
+                                continue;
+                            }
+
+                            if ($formatted['isFile']) {
+                                $entries[] = TextEntry::make("field_value_{$fv->id}")
+                                    ->label($formatted['label'])
+                                    ->state($formatted['value'])
+                                    ->url($formatted['fileUrl'], shouldOpenInNewTab: true)
+                                    ->color('primary');
+
+                                continue;
+                            }
+
+                            $entries[] = TextEntry::make("field_value_{$fv->id}")
+                                ->label($formatted['label'])
+                                ->state($formatted['value']);
+                        }
+
+                        return $entries;
                     })
                     ->columns(3)
                     ->collapsible(),

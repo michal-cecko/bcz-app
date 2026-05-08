@@ -5,12 +5,10 @@
 
     $schema = $event?->organization?->registration_form_schema ?? [];
     $valuesByKey = $registration->fieldValues->keyBy('field_key');
-    $dateTypes = ['birth_date', 'date_picker'];
-    $optionTypes = ['select', 'multi_select', 'category'];
 
     $fieldRows = [];
     foreach ($schema as $field) {
-        $key = $field['key'] ?? $field['name'] ?? null;
+        $key = $field['name'] ?? $field['key'] ?? null;
         if (! $key) {
             continue;
         }
@@ -18,23 +16,13 @@
         if ($value === null || $value === '') {
             continue;
         }
-        $type = $field['type'] ?? null;
-        $fileUrl = null;
-        if (in_array($type, $dateTypes, true)) {
-            try {
-                $value = \Illuminate\Support\Carbon::parse($value)->translatedFormat('j. F Y');
-            } catch (\Throwable $e) {
-                // keep raw value
-            }
-        } elseif (in_array($type, $optionTypes, true)) {
-            $value = \App\Support\RegistrationFieldOptions::labelFor($field, $value, $locale, $event);
-        } elseif ($type === 'file_input' && is_string($value)) {
-            $fileUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($value);
-            $value = basename($value);
-        }
-        $rawLabel = $field['label'] ?? $key;
-        $label = is_array($rawLabel) ? ($rawLabel[$locale] ?? $rawLabel['sk'] ?? $key) : $rawLabel;
-        $fieldRows[] = ['label' => $label, 'value' => $value, 'fileUrl' => $fileUrl];
+        $formatted = \App\Support\RegistrationFieldFormatter::format($field, $value, $locale, $event);
+        $fieldRows[] = [
+            'label' => $formatted['label'],
+            'value' => $formatted['value'],
+            'fileUrl' => $formatted['fileUrl'],
+            'isImage' => $formatted['isImage'],
+        ];
     }
 @endphp
 
@@ -73,7 +61,11 @@
                 @foreach($fieldRows as $row)
                     <div>
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $row['label'] }}</p>
-                        @if(! empty($row['fileUrl']))
+                        @if(! empty($row['fileUrl']) && $row['isImage'])
+                            <a href="{{ $row['fileUrl'] }}" target="_blank" rel="noopener" class="mt-1 inline-block">
+                                <img src="{{ $row['fileUrl'] }}" alt="{{ $row['value'] }}" class="h-32 w-32 rounded-md border border-gray-200 object-cover dark:border-gray-700">
+                            </a>
+                        @elseif(! empty($row['fileUrl']))
                             <a href="{{ $row['fileUrl'] }}" target="_blank" rel="noopener" class="text-sm text-primary-600 hover:underline dark:text-primary-400">{{ $row['value'] }}</a>
                         @else
                             <p class="text-sm text-gray-900 dark:text-white whitespace-pre-line">{{ $row['value'] }}</p>

@@ -202,16 +202,32 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertStringNotContainsString('/VS', $payload);
     }
 
-    public function test_qr_platba_routes_non_cz_iban_to_epc_qr(): void
+    public function test_qr_platba_routes_non_cz_iban_to_epc_qr_with_vs_in_remittance_text(): void
     {
-        // Non-CZ IBAN must emit EPC (SEPA) format so Revolut and CZ banking
-        // apps that interpret SPAYD strictly can still parse it.
+        // Non-CZ IBAN (SK team) must emit EPC (SEPA) format so Revolut and
+        // CZ banking apps can read it. VS goes into the unstructured remittance
+        // text as the Czech "/VS{vs}" convention so apps pre-fill the VS field.
+        // No ISO 11649 RF reference (apps would display it verbatim as "RF59…").
+        $base64 = QrPaymentService::qrPlatba(
+            iban: 'SK7111000000001234567890',
+            amount: 12.50,
+            currency: 'EUR',
+            variableSymbol: '00000077',
+            recipientName: 'BCZ Test',
+            note: 'Členské 2026',
+        );
+
+        // qrPlatba returns base64-encoded PNG; assert it produced something.
+        $this->assertNotNull($base64);
+        $this->assertNotFalse(base64_decode($base64, true));
+
+        // Inspect the underlying EPC payload directly via the dedicated builder.
         $payload = QrPaymentService::epcQrPayload(
             iban: 'SK7111000000001234567890',
             amount: 12.50,
             currency: 'EUR',
             beneficiaryName: 'BCZ Test',
-            remittanceReference: 'RF18539007547034',
+            remittanceText: '/VS00000077',
         );
 
         $lines = explode("\n", $payload);
@@ -219,6 +235,7 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertSame('SCT', $lines[3]);
         $this->assertSame('SK7111000000001234567890', $lines[6]);
         $this->assertSame('EUR12.50', $lines[7]);
-        $this->assertSame('RF18539007547034', $lines[9]);
+        $this->assertSame('', $lines[9]);                  // structured ref empty
+        $this->assertSame('/VS00000077', $lines[10]);      // unstructured text holds /VS
     }
 }
