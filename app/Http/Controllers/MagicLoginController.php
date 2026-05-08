@@ -11,6 +11,12 @@ class MagicLoginController extends Controller
 {
     public function __invoke(Request $request, User $user): RedirectResponse
     {
+        if (Auth::check() && Auth::id() !== $user->id) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
         Auth::login($user, remember: true);
 
         $request->session()->regenerate();

@@ -20,6 +20,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 
 class TrainingRegistrationResource extends Resource
 {
@@ -133,13 +134,23 @@ class TrainingRegistrationResource extends Resource
                                 ? ($field['label'][$locale] ?? $field['label']['sk'] ?? reset($field['label']))
                                 : ($field['label'] ?? $key);
 
-                            $displayValue = in_array($field['type'] ?? null, ['select', 'multi_select', 'category'], true)
-                                ? RegistrationFieldOptions::labelFor($field, $value, $locale)
-                                : $value;
-
-                            $entries[] = TextEntry::make("form_data.{$key}")
-                                ->label($label)
-                                ->state($displayValue);
+                            $type = $field['type'] ?? null;
+                            if (in_array($type, ['select', 'multi_select', 'category'], true)) {
+                                $displayValue = RegistrationFieldOptions::labelFor($field, $value, $locale);
+                                $entries[] = TextEntry::make("form_data.{$key}")
+                                    ->label($label)
+                                    ->state($displayValue);
+                            } elseif ($type === 'file_input' && is_string($value)) {
+                                $entries[] = TextEntry::make("form_data.{$key}")
+                                    ->label($label)
+                                    ->state(basename($value))
+                                    ->url(Storage::disk('public')->url($value), shouldOpenInNewTab: true)
+                                    ->color('primary');
+                            } else {
+                                $entries[] = TextEntry::make("form_data.{$key}")
+                                    ->label($label)
+                                    ->state($value);
+                            }
                         }
 
                         return $entries;

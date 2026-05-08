@@ -38,8 +38,10 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -342,6 +344,11 @@ class EventForm
                                                 RegistrationFieldTypeEnum::GENDER->value,
                                                 RegistrationFieldTypeEnum::CATEGORY->value,
                                             ])),
+                                        RichEditor::make('helper_text.sk')
+                                            ->label('Pomocný text (SK)')
+                                            ->helperText('Zobrazí sa pod poľom v registračnom formulári.')
+                                            ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                            ->columnSpanFull(),
                                     ]),
                                     Tabs\Tab::make('EN')->schema([
                                         TextInput::make('label.en')->label('Label (EN)'),
@@ -358,6 +365,10 @@ class EventForm
                                                 RegistrationFieldTypeEnum::GENDER->value,
                                                 RegistrationFieldTypeEnum::CATEGORY->value,
                                             ])),
+                                        RichEditor::make('helper_text.en')
+                                            ->label('Helper text (EN)')
+                                            ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                            ->columnSpanFull(),
                                     ]),
                                     Tabs\Tab::make('CS')->schema([
                                         TextInput::make('label.cs')->label('Název pole (CS)'),
@@ -374,6 +385,10 @@ class EventForm
                                                 RegistrationFieldTypeEnum::GENDER->value,
                                                 RegistrationFieldTypeEnum::CATEGORY->value,
                                             ])),
+                                        RichEditor::make('helper_text.cs')
+                                            ->label('Pomocný text (CS)')
+                                            ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                            ->columnSpanFull(),
                                     ]),
                                 ])
                                 ->columnSpanFull(),
@@ -385,7 +400,9 @@ class EventForm
                                 ->live(),
                             Select::make('type')
                                 ->label('Typ poľa')
-                                ->options(RegistrationFieldTypeEnum::class)
+                                ->options(collect(RegistrationFieldTypeEnum::cases())
+                                    ->mapWithKeys(fn (RegistrationFieldTypeEnum $case) => [$case->value => $case->getLabel()])
+                                    ->all())
                                 ->required()
                                 ->default(RegistrationFieldTypeEnum::TEXT_INPUT)
                                 ->live()
@@ -466,6 +483,52 @@ class EventForm
                                     RegistrationFieldTypeEnum::SELECT->value,
                                     RegistrationFieldTypeEnum::MULTI_SELECT->value,
                                 ])),
+                            Section::make('Podmienka zobrazenia')
+                                ->schema([
+                                    Toggle::make('has_condition')
+                                        ->label('Podmienené zobrazenie')
+                                        ->helperText('Zobraziť toto pole len ak iné pole má niektorú zo zadaných hodnôt (logický OR).')
+                                        ->default(false)
+                                        ->live(),
+                                    Select::make('condition_field')
+                                        ->label('Pole')
+                                        ->helperText('Pole, od ktorého závisí zobrazenie')
+                                        ->options(function (Get $get): array {
+                                            $items = $get('../../');
+                                            if (! is_array($items)) {
+                                                return [];
+                                            }
+                                            $options = [];
+                                            foreach ($items as $item) {
+                                                if (! empty($item['name']) && ! empty($item['label'])) {
+                                                    $label = is_array($item['label']) ? ($item['label']['sk'] ?? reset($item['label'])) : $item['label'];
+                                                    $options[$item['name']] = $label;
+                                                }
+                                            }
+
+                                            return $options;
+                                        })
+                                        ->required(fn (Get $get): bool => (bool) $get('has_condition'))
+                                        ->hidden(fn (Get $get): bool => ! $get('has_condition')),
+                                    TagsInput::make('condition_values')
+                                        ->label('Očakávané hodnoty')
+                                        ->placeholder('napr. zena_50')
+                                        ->helperText('Pole sa zobrazí, ak referenčné pole má niektorú z týchto hodnôt. Pre select polia zadajte hodnoty (kľúče), nie zobrazované názvy.')
+                                        ->afterStateHydrated(function (TagsInput $component, $state, Get $get): void {
+                                            if (filled($state)) {
+                                                return;
+                                            }
+                                            $legacy = $get('condition_value');
+                                            if (filled($legacy)) {
+                                                $component->state(is_array($legacy) ? array_values($legacy) : [(string) $legacy]);
+                                            }
+                                        })
+                                        ->required(fn (Get $get): bool => (bool) $get('has_condition'))
+                                        ->hidden(fn (Get $get): bool => ! $get('has_condition')),
+                                ])
+                                ->collapsible()
+                                ->collapsed()
+                                ->columnSpanFull(),
                         ])
                         ->addActionLabel('Pridať pole')
                         ->deleteAction(fn ($action) => $action

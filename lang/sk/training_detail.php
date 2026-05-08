@@ -50,6 +50,7 @@ return [
     'form_phone_placeholder' => '+421 XXX XXX XXX',
     'form_submit' => 'ODOSLAŤ PRIHLÁŠKU',
     'form_submitting' => 'ODOSIELAM...',
+    'file_uploading' => 'Nahrávam súbor…',
     'continuous_membership_label' => 'Automaticky obnovovať členstvo',
     'continuous_membership_help' => 'Pred začiatkom každej novej sezóny ti pošleme pripomienku na úhradu členského. Kedykoľvek to môžeš vypnúť v dashboarde.',
     'form_consent' => 'Odoslaním súhlasíš so spracovaním osobných údajov.',

@@ -23,8 +23,10 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
@@ -361,6 +363,11 @@ class TrainingForm
                                                                     RegistrationFieldTypeEnum::BIRTH_DATE->value,
                                                                     RegistrationFieldTypeEnum::GENDER->value,
                                                                 ])),
+                                                            RichEditor::make('helper_text.sk')
+                                                                ->label('Pomocný text (SK)')
+                                                                ->helperText('Zobrazí sa pod poľom v registračnom formulári.')
+                                                                ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                                                ->columnSpanFull(),
                                                         ]),
                                                         Tabs\Tab::make('EN')->schema([
                                                             TextInput::make('label.en')->label('Label (EN)'),
@@ -376,6 +383,10 @@ class TrainingForm
                                                                     RegistrationFieldTypeEnum::BIRTH_DATE->value,
                                                                     RegistrationFieldTypeEnum::GENDER->value,
                                                                 ])),
+                                                            RichEditor::make('helper_text.en')
+                                                                ->label('Helper text (EN)')
+                                                                ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                                                ->columnSpanFull(),
                                                         ]),
                                                         Tabs\Tab::make('CS')->schema([
                                                             TextInput::make('label.cs')->label('Název pole (CS)'),
@@ -391,6 +402,10 @@ class TrainingForm
                                                                     RegistrationFieldTypeEnum::BIRTH_DATE->value,
                                                                     RegistrationFieldTypeEnum::GENDER->value,
                                                                 ])),
+                                                            RichEditor::make('helper_text.cs')
+                                                                ->label('Pomocný text (CS)')
+                                                                ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'orderedList'])
+                                                                ->columnSpanFull(),
                                                         ]),
                                                     ])
                                                     ->columnSpanFull(),
@@ -490,7 +505,7 @@ class TrainingForm
                                                     ->schema([
                                                         Toggle::make('has_condition')
                                                             ->label('Podmienené zobrazenie')
-                                                            ->helperText('Zobraziť toto pole len ak iné pole má konkrétnu hodnotu')
+                                                            ->helperText('Zobraziť toto pole len ak iné pole má niektorú zo zadaných hodnôt (logický OR).')
                                                             ->default(false)
                                                             ->live(),
                                                         Select::make('condition_field')
@@ -513,10 +528,19 @@ class TrainingForm
                                                             })
                                                             ->required(fn (Get $get): bool => (bool) $get('has_condition'))
                                                             ->hidden(fn (Get $get): bool => ! $get('has_condition')),
-                                                        TextInput::make('condition_value')
-                                                            ->label('Očakávaná hodnota')
-                                                            ->placeholder('napr. áno')
-                                                            ->helperText('Pole sa zobrazí len ak referenčné pole má túto hodnotu')
+                                                        TagsInput::make('condition_values')
+                                                            ->label('Očakávané hodnoty')
+                                                            ->placeholder('napr. zena_50')
+                                                            ->helperText('Pole sa zobrazí, ak referenčné pole má niektorú z týchto hodnôt. Pre select polia zadajte hodnoty (kľúče), nie zobrazované názvy.')
+                                                            ->afterStateHydrated(function (TagsInput $component, $state, Get $get): void {
+                                                                if (filled($state)) {
+                                                                    return;
+                                                                }
+                                                                $legacy = $get('condition_value');
+                                                                if (filled($legacy)) {
+                                                                    $component->state(is_array($legacy) ? array_values($legacy) : [(string) $legacy]);
+                                                                }
+                                                            })
                                                             ->required(fn (Get $get): bool => (bool) $get('has_condition'))
                                                             ->hidden(fn (Get $get): bool => ! $get('has_condition')),
                                                     ])

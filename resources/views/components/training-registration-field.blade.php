@@ -68,6 +68,17 @@
     @case('phone')
         <input type="tel" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder ?: '+421 XXX XXX XXX' }}" @if($isRequired) required @endif class="{{ $inputClass }}">
         @break
+    @case('file_input')
+        <div class="flex flex-col gap-2">
+            <input
+                type="file"
+                wire:model="{{ $wireModel }}"
+                @if($isRequired) required @endif
+                class="{{ $inputClass }} file:bg-bcz-red file:text-white file:border-0 file:px-4 file:py-2 file:mr-4 file:cursor-pointer file:font-bold file:tracking-wider file:text-xs hover:file:bg-red-700"
+            >
+            <div wire:loading wire:target="{{ $wireModel }}" class="text-xs text-[#999999]">{{ __('training_detail.file_uploading') }}</div>
+        </div>
+        @break
     @case('email')
         <input type="email" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" @if($isRequired) required @endif class="{{ $inputClass }}">
         @break

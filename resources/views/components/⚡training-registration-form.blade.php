@@ -10,9 +10,13 @@ use App\Models\User;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 new class extends Component
 {
+    use WithFileUploads;
+
     public Training $training;
 
     public array $fields = [];
@@ -135,6 +139,7 @@ new class extends Component
             match ($type) {
                 RegistrationFieldTypeEnum::EMAIL => $fieldRules[] = 'email',
                 RegistrationFieldTypeEnum::NUMBER_INPUT => $fieldRules[] = 'numeric',
+                RegistrationFieldTypeEnum::FILE_INPUT => array_push($fieldRules, 'file', 'max:10240'),
                 default => null,
             };
 
@@ -152,6 +157,17 @@ new class extends Component
         $this->validate($rules, [], $attributes);
 
         $schema = $this->training->registration_form_schema ?? [];
+
+        foreach ($schema as $field) {
+            if (($field['type'] ?? null) !== RegistrationFieldTypeEnum::FILE_INPUT->value) {
+                continue;
+            }
+            $value = $this->fields[$field['name']] ?? null;
+            if ($value instanceof TemporaryUploadedFile) {
+                $this->fields[$field['name']] = $value->store('registrations', 'public');
+            }
+        }
+
         $authUser = auth()->user();
 
         if ($authUser) {
@@ -676,15 +692,26 @@ new class extends Component
                         $isRequired = $field['required'] ?? false;
                         $label = is_array($field['label'] ?? null) ? ($field['label'][$locale] ?? $field['label']['sk'] ?? '') : ($field['label'] ?? '');
                         $placeholder = is_array($field['placeholder'] ?? null) ? ($field['placeholder'][$locale] ?? $field['placeholder']['sk'] ?? '') : ($field['placeholder'] ?? '');
+                        $helperText = is_array($field['helper_text'] ?? null) ? ($field['helper_text'][$locale] ?? $field['helper_text']['sk'] ?? '') : ($field['helper_text'] ?? '');
                         $options = \App\Support\RegistrationFieldOptions::resolve($field, $locale);
                         $hasCondition = $field['has_condition'] ?? false;
                         $conditionField = $field['condition_field'] ?? null;
-                        $conditionValue = $field['condition_value'] ?? null;
+                        $conditionValues = $field['condition_values'] ?? null;
+                        if (! is_array($conditionValues) || empty($conditionValues)) {
+                            $legacy = $field['condition_value'] ?? null;
+                            $conditionValues = ($legacy !== null && $legacy !== '') ? [$legacy] : [];
+                        }
+                        $conditionValues = array_map('strval', $conditionValues);
                         $inputClass = 'bg-[#0A0A0A] border border-[#333333] text-white text-sm px-4 py-3.5 focus:border-bcz-red focus:ring-0 outline-none w-full placeholder-[#555555]';
                     @endphp
 
-                    @if($hasCondition && $conditionField)
-                        @php $show = ($this->fields[$conditionField] ?? '') == $conditionValue; @endphp
+                    @if($hasCondition && $conditionField && ! empty($conditionValues))
+                        @php
+                            $current = $this->fields[$conditionField] ?? null;
+                            $show = is_array($current)
+                                ? (bool) array_intersect(array_map('strval', $current), $conditionValues)
+                                : in_array((string) ($current ?? ''), $conditionValues, true);
+                        @endphp
                         @if(!$show) @continue @endif
                     @endif
 
@@ -699,12 +726,16 @@ new class extends Component
                                         $hfRequired = $hf['required'] ?? false;
                                         $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                         $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
+                                        $hfHelper = is_array($hf['helper_text'] ?? null) ? ($hf['helper_text'][$locale] ?? $hf['helper_text']['sk'] ?? '') : ($hf['helper_text'] ?? '');
                                         $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale);
                                     @endphp
                                     <div class="flex flex-col gap-2">
                                         <label class="text-[#888888] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>
                                         @include('components.training-registration-field', ['fieldName' => $hfName, 'fieldType' => $hfType, 'placeholder' => $hfPlaceholder, 'options' => $hfOptions, 'isRequired' => $hfRequired, 'inputClass' => $inputClass, 'isDisabled' => $isLoggedIn && in_array($hfType, $prefillableTypes)])
                                         @error('fields.' . $hfName) <span class="text-red-500 text-xs">{!! $message !!}</span> @enderror
+                                        @if(trim(strip_tags((string) $hfHelper)) !== '')
+                                            <div class="text-[#888888] text-[12px] leading-[1.6] [&>p]:m-0 [&_a]:text-bcz-red [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4">{!! $hfHelper !!}</div>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>
@@ -721,12 +752,16 @@ new class extends Component
                                         $hfRequired = $hf['required'] ?? false;
                                         $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                         $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
+                                        $hfHelper = is_array($hf['helper_text'] ?? null) ? ($hf['helper_text'][$locale] ?? $hf['helper_text']['sk'] ?? '') : ($hf['helper_text'] ?? '');
                                         $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale);
                                     @endphp
                                     <div class="flex flex-col gap-2">
                                         <label class="text-[#888888] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>
                                         @include('components.training-registration-field', ['fieldName' => $hfName, 'fieldType' => $hfType, 'placeholder' => $hfPlaceholder, 'options' => $hfOptions, 'isRequired' => $hfRequired, 'inputClass' => $inputClass, 'isDisabled' => $isLoggedIn && in_array($hfType, $prefillableTypes)])
                                         @error('fields.' . $hfName) <span class="text-red-500 text-xs">{!! $message !!}</span> @enderror
+                                        @if(trim(strip_tags((string) $hfHelper)) !== '')
+                                            <div class="text-[#888888] text-[12px] leading-[1.6] [&>p]:m-0 [&_a]:text-bcz-red [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4">{!! $hfHelper !!}</div>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>
@@ -737,6 +772,9 @@ new class extends Component
                             <label class="text-[#888888] text-[13px] font-medium">{{ $label }} @if($isRequired)<span class="text-bcz-red">*</span>@endif</label>
                             @include('components.training-registration-field', ['fieldName' => $fieldName, 'fieldType' => $fieldType, 'placeholder' => $placeholder, 'options' => $options, 'isRequired' => $isRequired, 'inputClass' => $inputClass, 'isDisabled' => $isLoggedIn && in_array($fieldType, $prefillableTypes)])
                             @error('fields.' . $fieldName) <span class="text-red-500 text-xs">{!! $message !!}</span> @enderror
+                            @if(trim(strip_tags((string) $helperText)) !== '')
+                                <div class="text-[#888888] text-[12px] leading-[1.6] [&>p]:m-0 [&_a]:text-bcz-red [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4">{!! $helperText !!}</div>
+                            @endif
                         </div>
                     @endif
                 @endforeach
@@ -751,12 +789,16 @@ new class extends Component
                                 $hfRequired = $hf['required'] ?? false;
                                 $hfLabel = is_array($hf['label'] ?? null) ? ($hf['label'][$locale] ?? $hf['label']['sk'] ?? '') : ($hf['label'] ?? '');
                                 $hfPlaceholder = is_array($hf['placeholder'] ?? null) ? ($hf['placeholder'][$locale] ?? $hf['placeholder']['sk'] ?? '') : ($hf['placeholder'] ?? '');
+                                $hfHelper = is_array($hf['helper_text'] ?? null) ? ($hf['helper_text'][$locale] ?? $hf['helper_text']['sk'] ?? '') : ($hf['helper_text'] ?? '');
                                 $hfOptions = \App\Support\RegistrationFieldOptions::resolve($hf, $locale);
                             @endphp
                             <div class="flex flex-col gap-2">
                                 <label class="text-[#888888] text-[13px] font-medium">{{ $hfLabel }} @if($hfRequired)<span class="text-bcz-red">*</span>@endif</label>
                                 @include('components.training-registration-field', ['fieldName' => $hfName, 'fieldType' => $hfType, 'placeholder' => $hfPlaceholder, 'options' => $hfOptions, 'isRequired' => $hfRequired, 'inputClass' => $inputClass, 'isDisabled' => $isLoggedIn && in_array($hfType, $prefillableTypes)])
                                 @error('fields.' . $hfName) <span class="text-red-500 text-xs">{!! $message !!}</span> @enderror
+                                @if(trim(strip_tags((string) $hfHelper)) !== '')
+                                    <div class="text-[#888888] text-[12px] leading-[1.6] [&>p]:m-0 [&_a]:text-bcz-red [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4">{!! $hfHelper !!}</div>
+                                @endif
                             </div>
                         @endforeach
                     </div>

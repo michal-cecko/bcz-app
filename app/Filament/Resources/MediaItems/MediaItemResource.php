@@ -13,14 +13,16 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Js;
 use Illuminate\Support\Number;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MediaItemResource extends Resource
 {
@@ -74,6 +76,9 @@ class MediaItemResource extends Resource
                 SpatieMediaLibraryImageColumn::make('file')
                     ->label('')
                     ->collection('file')
+                    ->filterMediaUsing(fn (Collection $media) => $media->filter(
+                        fn (Media $item): bool => str_starts_with((string) $item->mime_type, 'image/'),
+                    ))
                     ->width(48)
                     ->height(48)
                     ->rounded(),
@@ -117,17 +122,18 @@ class MediaItemResource extends Resource
                     ->label('Kopírovať URL')
                     ->icon(Heroicon::OutlinedClipboard)
                     ->color('gray')
-                    ->action(function (MediaItem $record): void {
-                        $url = $record->getFirstMediaUrl('file');
-                        Notification::make()
-                            ->title('URL skopírovaná')
-                            ->body($url)
-                            ->success()
-                            ->send();
+                    ->alpineClickHandler(function (MediaItem $record): string {
+                        $url = Js::from($record->getFirstMediaUrl('file'));
+                        $message = Js::from('URL skopírovaná');
+
+                        return <<<JS
+                            window.navigator.clipboard.writeText({$url})
+                            \$tooltip({$message}, {
+                                theme: \$store.theme,
+                                timeout: 2000,
+                            })
+                            JS;
                     })
-                    ->extraAttributes(fn (MediaItem $record): array => [
-                        'x-on:click' => "navigator.clipboard.writeText('".str_replace("'", "\\'", $record->getFirstMediaUrl('file'))."')",
-                    ])
                     ->visible(fn (MediaItem $record): bool => (bool) $record->getFirstMedia('file')),
                 Action::make('download')
                     ->label('Stiahnuť')
