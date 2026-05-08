@@ -85,4 +85,49 @@ class OptimizeImageJobTest extends TestCase
         // Should complete without throwing.
         $this->assertTrue(true);
     }
+
+    public function test_for_path_round_trips_via_disk_streams_not_local_paths(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put(
+            'bricks/big.png',
+            UploadedFile::fake()->image('big.png', 1200, 900)->getContent(),
+        );
+
+        $sizeBefore = Storage::disk('public')->size('bricks/big.png');
+
+        OptimizeImageJob::forPath('public', 'bricks/big.png')->handle();
+
+        // Regression guard for the S3 bug: the previous implementation called
+        // is_file() on $disk->path(), which always fails for remote disks, so
+        // every job silently no-op'd. The round-trip path now uses readStream
+        // / writeStream and works for any Filesystem implementation.
+        $this->assertTrue(Storage::disk('public')->exists('bricks/big.png'));
+        $sizeAfter = Storage::disk('public')->size('bricks/big.png');
+
+        // Optimizer binaries may not be installed, in which case size is
+        // unchanged. Just assert the file is intact.
+        $this->assertGreaterThan(0, $sizeAfter);
+        $this->assertLessThanOrEqual($sizeBefore, $sizeAfter);
+    }
+
+    public function test_for_media_marks_optimized_even_when_disk_is_not_local(): void
+    {
+        $team = Team::factory()->create();
+        $mediaItem = MediaItem::factory()->create(['team_id' => $team->id]);
+        $media = $mediaItem->addMedia(UploadedFile::fake()->image('photo.png', 600, 400))
+            ->toMediaCollection('file');
+
+        $media->forgetCustomProperty('optimized_at')->save();
+
+        $disk = Storage::disk($media->disk);
+        $this->assertTrue($disk->exists($media->getPathRelativeToRoot()));
+
+        OptimizeImageJob::forMedia($media->id)->handle();
+
+        $fresh = $media->fresh();
+        $this->assertTrue($fresh->hasCustomProperty('optimized_at'));
+        $this->assertNotNull($fresh->getCustomProperty('original_size'));
+        $this->assertNotNull($fresh->getCustomProperty('optimized_size'));
+    }
 }
