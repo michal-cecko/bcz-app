@@ -6,8 +6,9 @@ WORKDIR /var/www
 COPY package*.json ./
 RUN npm ci --no-audit
 
+ARG COMPOSER_AUTH
 COPY composer.json composer.lock ./
-RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
+RUN COMPOSER_AUTH="$COMPOSER_AUTH" composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
 
 COPY . /var/www
 
