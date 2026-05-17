@@ -43,6 +43,8 @@ jobs:
           cache: 'npm'
 
       - name: Install Composer dependencies
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
         run: composer install --no-scripts --no-interaction --prefer-dist
 
       - name: Install NPM dependencies and build assets
