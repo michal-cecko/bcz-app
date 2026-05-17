@@ -8,4 +8,5 @@ return [
     'join_us' => 'JOIN US',
     'contact' => 'CONTACT',
     'all_rights_reserved' => 'All rights reserved.',
+    'made_by' => 'Made by',
 ];

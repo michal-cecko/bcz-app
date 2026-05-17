@@ -8,4 +8,5 @@ return [
     'join_us' => 'PRIDAJ SA',
     'contact' => 'KONTAKT',
     'all_rights_reserved' => 'Všetky práva vyhradené.',
+    'made_by' => 'Vyrobil',
 ];

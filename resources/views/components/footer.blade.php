@@ -72,7 +72,7 @@
 
     {{-- Footer Bottom --}}
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 lg:mt-10">
-        <span class="text-[#666666] text-[13px]">&copy; {{ date('Y') }} BCZ Club. {{ __('layout.all_rights_reserved') }}</span>
+        <span class="text-[#666666] text-[13px]">&copy; {{ date('Y') }} BCZ Club. {{ __('layout.all_rights_reserved') }} | {{ __('layout.made_by') }} <a href="https://cecko.dev" target="_blank" rel="noopener" class="hover:text-white transition-colors">Michal Čečko</a></span>
         <div class="flex items-center gap-5">
             <span class="text-bcz-subtle text-[11px] font-medium">BCZ = Beyond Comfort Zone</span>
             <span class="w-1 h-1 rounded-full bg-bcz-faint"></span>

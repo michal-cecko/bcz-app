@@ -8,4 +8,5 @@ return [
     'join_us' => 'PŘIDEJ SE',
     'contact' => 'KONTAKT',
     'all_rights_reserved' => 'Všechna práva vyhrazena.',
+    'made_by' => 'Vytvořil',
 ];
