@@ -1,59 +1,72 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# BCZ Club
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SaaS platform for sports clubs — athlete management, event registrations, memberships, online payments and a Filament-based admin.
 
-## About Laravel
+> Built for [Boj-cross Žilina](https://bcz.club), with multi-tenant architecture so other clubs can be onboarded.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## What it does
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Athletes & disciplines** — categories, profiles, judge assignments
+- **Events** — public sign-up flow, paid/free events, capacity limits, waitlists
+- **Memberships** — seasonal billing periods, member-only pricing, role-based perks
+- **Payments** — GoPay integration (SK card processor), invoices, payment history
+- **CMS** — pages, banners, FAQ, inquiries inbox, menu builder, media library
+- **Public site + admin** — single Laravel app serves both `/` (Blade pages) and `/admin` (Filament panel)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Stack
 
-## Learning Laravel
+| Layer | Tech |
+|---|---|
+| Backend | **Laravel 12** on PHP 8.5, **Octane** + RoadRunner |
+| Admin | **Filament v5** + Shield (RBAC), Apex Charts, Google Maps, Mason design system, RicherEditor |
+| Media | Spatie MediaLibrary → AWS S3 |
+| Payments | GoPay SDK |
+| Errors | Sentry |
+| Tests | PHPUnit + ParaTest |
+| Code style | Laravel Pint |
+| Build | Vite (Tailwind 4) |
+| Deploy | Docker → Dokploy |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Local dev
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+cp .env.example .env
+docker compose up -d                  # Postgres + Redis + the app via Sail
+vendor/bin/sail composer install
+vendor/bin/sail npm install
+vendor/bin/sail artisan key:generate
+vendor/bin/sail artisan migrate --seed
+vendor/bin/sail npm run dev
+```
 
-## Laravel Sponsors
+App at `http://localhost`, admin at `/admin`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Composer auth
 
-### Premium Partners
+This project pulls Filament Pro packages from `packages.filamentphp.com` and needs a Filament Pro license. Locally, create an `auth.json` (gitignored):
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```json
+{ "http-basic": { "packages.filamentphp.com": { "username": "<email>", "password": "<token>" } } }
+```
 
-## Contributing
+CI and Dokploy receive the same value via a `COMPOSER_AUTH` env var (build arg).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## CI
 
-## Code of Conduct
+GitHub Actions `ci.yml` runs on push to `main`:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. **test** — Pint style check + PHPUnit feature tests against a real Postgres service
+2. **deploy-worker** — re-deploys the queue worker on Dokploy via `application.deploy` API
+3. **notify** — Telegram bot pings on failure
 
-## Security Vulnerabilities
+Secrets required: `COMPOSER_AUTH`, `DOKPLOY_API_KEY`, `DOKPLOY_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Deploy
+
+Two-stage `Dockerfile` (build stage installs deps + builds assets; runtime stage is a lean PHP 8.4 alpine with Octane). Dokploy pulls on git push.
+
+Worker, scheduler and web are separate services in `docker-compose.prod.yml`.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+[MIT](LICENSE) © Michal Čečko
