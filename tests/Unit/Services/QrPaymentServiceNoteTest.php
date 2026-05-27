@@ -240,13 +240,16 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertSame('/VS00000077/SS/KS', $lines[10]);        // unstructured text holds full /VS/SS/KS
     }
 
-    public function test_pay_by_square_raw_data_keeps_vs_reference_and_note_in_separate_fields(): void
+    public function test_pay_by_square_raw_data_keeps_vs_in_native_field_and_note_separate(): void
     {
         // The reported bug: on SK QR codes the variable symbol ended up in the
-        // note. Pay by Square (bysquare Table 15) has dedicated fields for the
-        // VS, the structured reference, and the note, so they never mix —
-        // provided the originatorsReferenceInformation field at index 9 is not
-        // omitted (which would shift every later field by one).
+        // note. For a domestic SK transfer the VS belongs in the dedicated
+        // VariableSymbol field (native "variabilný symbol"); the note keeps its
+        // own field. The originatorsReferenceInformation slot (index 9) is left
+        // empty — SK apps render it as the on-screen note and it would crowd
+        // out the real note — but the slot must still be present so the later
+        // fields (note, IBAN, beneficiary) keep their bysquare Table 15
+        // positions.
         $data = QrPaymentService::payBySquareRawData(
             iban: 'SK7111000000001234567890',
             amount: 12.50,
@@ -258,16 +261,16 @@ class QrPaymentServiceNoteTest extends TestCase
 
         $fields = explode("\t", $data);
 
-        $this->assertSame('00000077', $fields[6]);             // Variable symbol field
-        $this->assertSame('/VS00000077/SS/KS', $fields[9]);    // Payment reference — the VS, not the note
+        $this->assertSame('00000077', $fields[6]);             // Variable symbol field — the native reference
+        $this->assertSame('', $fields[9]);                     // Originator's reference info — empty, not the VS
         $this->assertSame('Členské 2026', $fields[10]);        // Note field — the configured note, not the VS
         $this->assertSame('SK7111000000001234567890', $fields[12]);
     }
 
-    public function test_pay_by_square_raw_data_omits_vs_reference_when_no_variable_symbol(): void
+    public function test_pay_by_square_raw_data_leaves_reference_empty_without_variable_symbol(): void
     {
-        // Open-amount donation with no VS: the reference field stays empty
-        // rather than emitting a bare "/VS/SS/KS".
+        // Open-amount donation with no VS: VS field and reference both stay
+        // empty; the note keeps its own field.
         $data = QrPaymentService::payBySquareRawData(
             iban: 'SK7111000000001234567890',
             note: 'Dar',

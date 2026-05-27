@@ -59,11 +59,14 @@ class QrPaymentService
         $normalizedIban = strtoupper(str_replace(' ', '', $iban));
         $isCzAccount = str_contains($normalizedIban, '/') || str_starts_with($normalizedIban, 'CZ');
 
-        // Slovak IBANs → Pay by Square, the SK-native format. Unlike EPC and
-        // SPAYD it has dedicated variable-symbol, structured-reference AND note
-        // fields, so the VS goes into the reference ("/VS{vs}/SS/KS") while the
-        // configured payment note keeps its own field instead of being crowded
-        // out of a single remittance field.
+        // Slovak IBANs → Pay by Square, the SK-native format read by SK/CZ
+        // banking apps. It has a dedicated variable-symbol field AND a dedicated
+        // note field, so the VS lands in "variabilný symbol" (the native
+        // reference for a domestic SK transfer) while the configured note keeps
+        // its own field. We do NOT emit a "/VS/SS/KS" SEPA reference here — SK
+        // apps surface that field as the on-screen note and it crowds out the
+        // real note. The "/VS/SS/KS" convention is only for the EPC path below,
+        // which targets foreign SEPA accounts and Revolut that have no VS field.
         if (str_starts_with($normalizedIban, 'SK')) {
             return self::payBySquare(
                 iban: $normalizedIban,
@@ -161,16 +164,19 @@ class QrPaymentService
 
     /**
      * Build the raw tab-separated Pay by Square data string, following the
-     * bysquare Table 15 field order exactly. Two consecutive fields are easy
-     * to confuse — originatorsReferenceInformation sits *between*
-     * specificSymbol and paymentNote; omitting it shifts every later field
-     * (note, IBAN, beneficiary) by one and makes banking apps misread the QR.
+     * bysquare Table 15 field order exactly. Field order is fragile —
+     * originatorsReferenceInformation sits *between* specificSymbol and
+     * paymentNote; omitting the slot entirely shifts every later field (note,
+     * IBAN, beneficiary) by one and makes banking apps misread the QR, so it is
+     * always emitted, just left empty.
      *
-     * The variable symbol is emitted two ways SK banking apps understand: the
-     * dedicated VariableSymbol field (prefills "variabilný symbol" for a
-     * domestic transfer) and the OriginatorsReferenceInformation field, which
-     * carries the SEPA structured payment reference "/VS{vs}/SS/KS". The note
-     * keeps its own PaymentNote field, so the VS never crowds into the note.
+     * For a domestic SK transfer the variable symbol belongs in the dedicated
+     * VariableSymbol field, which apps surface as "variabilný symbol" — that is
+     * the native reference. originatorsReferenceInformation (the SEPA
+     * structured reference) is deliberately left empty: SK apps render it as
+     * the on-screen note/message and it would crowd out the configured
+     * PaymentNote. The "/VS{vs}/SS/KS" SEPA reference is reserved for the EPC
+     * path, which targets foreign accounts and Revolut that lack a VS field.
      * Extracted for testability.
      */
     public static function payBySquareRawData(
@@ -182,7 +188,6 @@ class QrPaymentService
         ?string $note = null,
     ): string {
         $noteField = mb_substr((string) ($note ?? ''), 0, 140);
-        $reference = self::buildCzechSepaRemittance($variableSymbol, '', '');
 
         return implode("\t", [
             '',                                          // Invoice ID
@@ -191,10 +196,10 @@ class QrPaymentService
             $amount !== null ? $amount : '',             // Amount (empty = open)
             $currency,                                   // Currency
             '',                                          // Due date
-            $variableSymbol,                             // Variable symbol
+            $variableSymbol,                             // Variable symbol (native SK reference)
             '',                                          // Constant symbol
             '',                                          // Specific symbol
-            $reference,                                  // Originator's reference info ("/VS{vs}/SS/KS")
+            '',                                          // Originator's reference info — empty (see docblock)
             $noteField,                                  // Payment note
             '1',                                         // Bank accounts count
             $iban,                                       // IBAN
