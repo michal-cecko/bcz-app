@@ -240,10 +240,13 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertSame('/VS00000077/SS/KS', $lines[10]);        // unstructured text holds full /VS/SS/KS
     }
 
-    public function test_pay_by_square_raw_data_keeps_vs_and_note_in_separate_fields(): void
+    public function test_pay_by_square_raw_data_keeps_vs_reference_and_note_in_separate_fields(): void
     {
         // The reported bug: on SK QR codes the variable symbol ended up in the
-        // note. Pay by Square has dedicated fields for each, so they never mix.
+        // note. Pay by Square (bysquare Table 15) has dedicated fields for the
+        // VS, the structured reference, and the note, so they never mix —
+        // provided the originatorsReferenceInformation field at index 9 is not
+        // omitted (which would shift every later field by one).
         $data = QrPaymentService::payBySquareRawData(
             iban: 'SK7111000000001234567890',
             amount: 12.50,
@@ -255,9 +258,26 @@ class QrPaymentServiceNoteTest extends TestCase
 
         $fields = explode("\t", $data);
 
-        $this->assertSame('00000077', $fields[6]);      // Variable symbol field
-        $this->assertSame('Členské 2026', $fields[9]);  // Note field — the configured note, not the VS
-        $this->assertSame('SK7111000000001234567890', $fields[11]);
+        $this->assertSame('00000077', $fields[6]);             // Variable symbol field
+        $this->assertSame('/VS00000077/SS/KS', $fields[9]);    // Payment reference — the VS, not the note
+        $this->assertSame('Členské 2026', $fields[10]);        // Note field — the configured note, not the VS
+        $this->assertSame('SK7111000000001234567890', $fields[12]);
+    }
+
+    public function test_pay_by_square_raw_data_omits_vs_reference_when_no_variable_symbol(): void
+    {
+        // Open-amount donation with no VS: the reference field stays empty
+        // rather than emitting a bare "/VS/SS/KS".
+        $data = QrPaymentService::payBySquareRawData(
+            iban: 'SK7111000000001234567890',
+            note: 'Dar',
+        );
+
+        $fields = explode("\t", $data);
+
+        $this->assertSame('', $fields[6]);    // Variable symbol field
+        $this->assertSame('', $fields[9]);    // Reference field
+        $this->assertSame('Dar', $fields[10]); // Note field
     }
 
     public function test_pay_by_square_raw_data_truncates_note_to_140_chars(): void
@@ -270,7 +290,7 @@ class QrPaymentServiceNoteTest extends TestCase
 
         $fields = explode("\t", $data);
 
-        $this->assertSame(str_repeat('x', 140), $fields[9]);
+        $this->assertSame(str_repeat('x', 140), $fields[10]);
     }
 
     public function test_qr_platba_routes_sk_iban_to_pay_by_square(): void

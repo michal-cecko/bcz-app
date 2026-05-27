@@ -60,9 +60,10 @@ class QrPaymentService
         $isCzAccount = str_contains($normalizedIban, '/') || str_starts_with($normalizedIban, 'CZ');
 
         // Slovak IBANs → Pay by Square, the SK-native format. Unlike EPC and
-        // SPAYD it has dedicated variable-symbol AND note fields, so the
-        // configured payment note is preserved instead of being crowded out of
-        // the single remittance field by the VS reference.
+        // SPAYD it has dedicated variable-symbol, structured-reference AND note
+        // fields, so the VS goes into the reference ("/VS{vs}/SS/KS") while the
+        // configured payment note keeps its own field instead of being crowded
+        // out of a single remittance field.
         if (str_starts_with($normalizedIban, 'SK')) {
             return self::payBySquare(
                 iban: $normalizedIban,
@@ -159,9 +160,18 @@ class QrPaymentService
     }
 
     /**
-     * Build the raw tab-separated Pay by Square data string. The variable
-     * symbol and the note occupy distinct fields, so neither overwrites the
-     * other. Extracted for testability.
+     * Build the raw tab-separated Pay by Square data string, following the
+     * bysquare Table 15 field order exactly. Two consecutive fields are easy
+     * to confuse — originatorsReferenceInformation sits *between*
+     * specificSymbol and paymentNote; omitting it shifts every later field
+     * (note, IBAN, beneficiary) by one and makes banking apps misread the QR.
+     *
+     * The variable symbol is emitted two ways SK banking apps understand: the
+     * dedicated VariableSymbol field (prefills "variabilný symbol" for a
+     * domestic transfer) and the OriginatorsReferenceInformation field, which
+     * carries the SEPA structured payment reference "/VS{vs}/SS/KS". The note
+     * keeps its own PaymentNote field, so the VS never crowds into the note.
+     * Extracted for testability.
      */
     public static function payBySquareRawData(
         string $iban,
@@ -172,6 +182,7 @@ class QrPaymentService
         ?string $note = null,
     ): string {
         $noteField = mb_substr((string) ($note ?? ''), 0, 140);
+        $reference = self::buildCzechSepaRemittance($variableSymbol, '', '');
 
         return implode("\t", [
             '',                                          // Invoice ID
@@ -183,7 +194,8 @@ class QrPaymentService
             $variableSymbol,                             // Variable symbol
             '',                                          // Constant symbol
             '',                                          // Specific symbol
-            $noteField,                                  // Note
+            $reference,                                  // Originator's reference info ("/VS{vs}/SS/KS")
+            $noteField,                                  // Payment note
             '1',                                         // Bank accounts count
             $iban,                                       // IBAN
             '',                                          // BIC/SWIFT
