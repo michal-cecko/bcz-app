@@ -154,16 +154,19 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertStringNotContainsString('X-VS:', $payload);
     }
 
-    public function test_qr_platba_payload_emits_iso_11649_rf_reference(): void
+    public function test_qr_platba_payload_does_not_emit_iso_11649_rf_reference(): void
     {
-        // ISO 11649 example: RF18539007547034 (check digits 18 for ref "539007547034").
+        // SPAYD is used only for domestic CZ payments, where the RF reference is
+        // meaningless and makes Raiffeisen reject the QR. The VS lives in X-VS;
+        // no RF is emitted even for a digit-only VS.
         $payload = QrPaymentService::qrPlatbaPayload(
             iban: 'CZ6508000000192000145399',
             amount: 100.0,
             variableSymbol: '539007547034',
         );
 
-        $this->assertStringContainsString('*RF:RF18539007547034', $payload);
+        $this->assertStringContainsString('*X-VS:539007547034', $payload);
+        $this->assertStringNotContainsString('RF:', $payload);
     }
 
     public function test_iso_11649_reference_matches_known_vector(): void
@@ -203,14 +206,15 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertStringNotContainsString('/VS', $payload);
     }
 
-    public function test_qr_platba_routes_other_non_cz_iban_to_epc_qr_with_vs_in_remittance_text(): void
+    public function test_qr_platba_routes_non_cz_iban_to_epc_with_structured_reference_and_note(): void
     {
-        // A non-CZ, non-SK IBAN (e.g. a German account) emits EPC (SEPA) format
-        // so Revolut and EU banking apps can read it. VS goes into the
-        // unstructured remittance text as the Czech "/VS{vs}/SS/KS" convention
-        // (full shape, even with empty SS / KS) so apps pre-fill the VS field.
+        // A non-CZ IBAN (SK, LT/Revolut, or any SEPA IBAN) emits EPC so SK apps,
+        // Revolut and CZ apps paying abroad can read it. The VS rides in the
+        // STRUCTURED reference as "/VS{vs}/SS/KS" (which SK/CZ banks turn back
+        // into a variabilný symbol) and the note keeps the separate unstructured
+        // field — both verified loading in Tatra banka, Raiffeisen and Revolut.
         $base64 = QrPaymentService::qrPlatba(
-            iban: 'DE89370400440532013000',
+            iban: 'SK5611000000002931568998',
             amount: 12.50,
             currency: 'EUR',
             variableSymbol: '00000077',
@@ -222,22 +226,41 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertNotNull($base64);
         $this->assertNotFalse(base64_decode($base64, true));
 
-        // Inspect the underlying EPC payload directly via the dedicated builder.
+        // Inspect the underlying EPC payload directly via the dedicated builder,
+        // mirroring exactly what qrPlatba() passes for a non-CZ IBAN.
         $payload = QrPaymentService::epcQrPayload(
-            iban: 'DE89370400440532013000',
+            iban: 'SK5611000000002931568998',
             amount: 12.50,
             currency: 'EUR',
             beneficiaryName: 'BCZ Test',
-            remittanceText: '/VS00000077/SS/KS',
+            remittanceText: 'Členské 2026',
+            remittanceReference: '/VS00000077/SS/KS',
         );
 
         $lines = explode("\n", $payload);
         $this->assertSame('BCD', $lines[0]);
         $this->assertSame('SCT', $lines[3]);
-        $this->assertSame('DE89370400440532013000', $lines[6]);
+        $this->assertSame('SK5611000000002931568998', $lines[6]);
         $this->assertSame('EUR12.50', $lines[7]);
-        $this->assertSame('', $lines[9]);                          // structured ref empty
-        $this->assertSame('/VS00000077/SS/KS', $lines[10]);        // unstructured text holds full /VS/SS/KS
+        $this->assertSame('/VS00000077/SS/KS', $lines[9]);   // structured reference holds the VS
+        $this->assertSame('Členské 2026', $lines[10]);       // unstructured text holds the human note
+    }
+
+    public function test_epc_payload_blanks_amount_when_null(): void
+    {
+        // Open-amount donation QR: the amount line is left blank so the payer
+        // enters the amount, while the structured reference still carries the VS.
+        $payload = QrPaymentService::epcQrPayload(
+            iban: 'SK5611000000002931568998',
+            amount: null,
+            currency: 'EUR',
+            beneficiaryName: 'BCZ Test',
+            remittanceReference: '/VS00000077/SS/KS',
+        );
+
+        $lines = explode("\n", $payload);
+        $this->assertSame('', $lines[7]);                    // amount blank = payer enters it
+        $this->assertSame('/VS00000077/SS/KS', $lines[9]);
     }
 
     public function test_pay_by_square_raw_data_keeps_vs_in_native_field_and_note_separate(): void
@@ -296,11 +319,11 @@ class QrPaymentServiceNoteTest extends TestCase
         $this->assertSame(str_repeat('x', 140), $fields[10]);
     }
 
-    public function test_qr_platba_routes_sk_iban_to_pay_by_square(): void
+    public function test_qr_platba_routes_sk_iban_to_epc_not_pay_by_square(): void
     {
-        // SK IBANs must produce a Pay by Square QR (the SK-native format with
-        // separate VS and note fields), not SPAYD or EPC. The full pipeline
-        // depends on the system `xz` binary for LZMA1 compression.
+        // SK IBANs now route to EPC (works on SK apps + Raiffeisen + Revolut),
+        // not Pay by Square. EPC needs no system `xz` binary, so generation must
+        // succeed regardless of the environment.
         $base64 = QrPaymentService::qrPlatba(
             iban: 'SK7111000000001234567890',
             amount: 12.50,
@@ -310,7 +333,7 @@ class QrPaymentServiceNoteTest extends TestCase
             note: 'Členské 2026',
         );
 
-        $this->assertNotNull($base64, 'Pay by Square generation failed — is the xz binary available?');
+        $this->assertNotNull($base64);
         $this->assertNotFalse(base64_decode($base64, true));
     }
 }

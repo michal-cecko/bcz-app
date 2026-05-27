@@ -10,16 +10,10 @@ use Endroid\QrCode\ErrorCorrectionLevel;
 class QrPaymentService
 {
     /**
-     * Generate a payment QR for the given Payment model. Auto-switches format
-     * by IBAN country, since CZ banking apps + Revolut reject SPAYD with
-     * non-CZ IBANs (they expect a SEPA-style payload):
-     *  - CZ IBAN → SPAYD / QR Platba (native domestic format, read by CZ/SK apps)
-     *  - non-CZ IBAN → EPC QR (EPC069-12, the European SEPA standard,
-     *    read by Revolut, CZ Raiffeisen, SK apps, and any EU SEPA app)
-     *
-     * In SPAYD, MSG carries only the raw "Poznámka" — VS goes in X-VS and (when
-     * digits-only) ISO 11649 RF. In EPC, the same VS is exposed via the structured
-     * remittanceReference field so receiving apps pre-fill the reference field.
+     * Generate a payment QR for the given Payment model. The format is chosen
+     * by the recipient IBAN (see qrPlatba()): CZ accounts get SPAYD/QR Platba,
+     * everything else (SK, LT/Revolut, any SEPA IBAN) gets an EPC QR. Both were
+     * verified loading correctly in Tatra banka, Raiffeisen and Revolut.
      */
     public function generateQrForPayment(Payment $payment): ?string
     {
@@ -59,64 +53,47 @@ class QrPaymentService
         $normalizedIban = strtoupper(str_replace(' ', '', $iban));
         $isCzAccount = str_contains($normalizedIban, '/') || str_starts_with($normalizedIban, 'CZ');
 
-        // Slovak IBANs → Pay by Square, the SK-native format read by SK/CZ
-        // banking apps. It has a dedicated variable-symbol field AND a dedicated
-        // note field, so the VS lands in "variabilný symbol" (the native
-        // reference for a domestic SK transfer) while the configured note keeps
-        // its own field. We do NOT emit a "/VS/SS/KS" SEPA reference here — SK
-        // apps surface that field as the on-screen note and it crowds out the
-        // real note. The "/VS/SS/KS" convention is only for the EPC path below,
-        // which targets foreign SEPA accounts and Revolut that have no VS field.
-        if (str_starts_with($normalizedIban, 'SK')) {
-            return self::payBySquare(
-                iban: $normalizedIban,
-                amount: $amount,
-                currency: $currency,
-                variableSymbol: $variableSymbol,
-                recipientName: $recipientName,
-                note: $note,
+        // CZ accounts → SPAYD / QR Platba, the Czech domestic standard. CZ
+        // banking apps only send domestically to a CZ account (they refuse a
+        // SEPA transfer to a CZ IBAN), and read SPAYD natively: X-VS →
+        // variabilní symbol, MSG → zpráva. The amount should be CZK for the app
+        // to accept it. We do NOT emit the ISO-11649 RF reference: it is
+        // meaningless for a domestic payment and Raiffeisen rejects the QR when
+        // it is present.
+        if ($isCzAccount) {
+            $payload = self::qrPlatbaPayload(
+                $iban,
+                $amount,
+                $currency,
+                $variableSymbol,
+                $recipientName,
+                $note,
+                $bic,
+                $specificSymbol,
+                $constantSymbol,
             );
+
+            return $payload === null ? null : self::buildQrPng($payload);
         }
 
-        // Non-CZ IBANs (incl. SK teams collecting via Revolut etc.): emit EPC
-        // QR, the European SEPA standard. CZ apps + Revolut reject SPAYD when
-        // the IBAN isn't Czech, but read EPC reliably via the same scanner.
-        //
-        // VS/SS/KS go into the unstructured remittance text as the Czech
-        // banking convention "/VS{vs}[/SS{ss}][/KS{ks}]" — CZ bank apps parse
-        // this prefix and pre-fill the variable-symbol input. We avoid the
-        // structured ISO 11649 RF reference because apps display it verbatim
-        // ("RF59…") instead of extracting the underlying VS digits.
-        if (! $isCzAccount && $amount !== null) {
-            $remittanceText = self::buildCzechSepaRemittance($variableSymbol, $specificSymbol, $constantSymbol);
+        // Everything else (SK, LT/Revolut, any SEPA IBAN) → EPC / SEPA GiroCode,
+        // the single format read by SK apps, CZ apps paying abroad AND Revolut.
+        // The variable symbol rides in the EPC *structured* reference as the
+        // "/VS{vs}/SS/KS" convention that SK/CZ receiving banks turn back into a
+        // variabilný symbol, while the human note keeps the separate
+        // unstructured field. Both fields populated and displayed correctly in
+        // Tatra banka, Raiffeisen and Revolut.
+        $reference = self::buildCzechSepaRemittance($variableSymbol, $specificSymbol, $constantSymbol);
 
-            return self::epcQr(
-                iban: $normalizedIban,
-                amount: $amount,
-                currency: $currency,
-                beneficiaryName: $recipientName,
-                bic: $bic,
-                remittanceText: $remittanceText !== '' ? $remittanceText : null,
-            );
-        }
-
-        $payload = self::qrPlatbaPayload(
-            $iban,
-            $amount,
-            $currency,
-            $variableSymbol,
-            $recipientName,
-            $note,
-            $bic,
-            $specificSymbol,
-            $constantSymbol,
+        return self::epcQr(
+            iban: $normalizedIban,
+            amount: $amount,
+            currency: $currency,
+            beneficiaryName: $recipientName,
+            bic: $bic,
+            remittanceText: $note,
+            remittanceReference: $reference !== '' ? $reference : null,
         );
-
-        if ($payload === null) {
-            return null;
-        }
-
-        return self::buildQrPng($payload);
     }
 
     /**
@@ -220,7 +197,7 @@ class QrPaymentService
      */
     public static function epcQr(
         string $iban,
-        float $amount,
+        ?float $amount = null,
         string $currency = 'EUR',
         string $beneficiaryName = '',
         ?string $bic = null,
@@ -238,14 +215,19 @@ class QrPaymentService
 
     /**
      * Build the raw EPC QR payload (LF-separated lines per EPC069-12 spec).
-     * Per spec, EPC permits either a structured remittance reference (ISO
-     * 11649) OR an unstructured remittance text — not both. When VS is set,
-     * we prefer the structured reference so receiving apps pre-fill the
-     * payment reference field.
+     *
+     * The spec nominally allows either a structured reference OR an unstructured
+     * text, but SK/CZ/EU apps (Tatra banka, Raiffeisen, Revolut) all read BOTH
+     * when present, so we populate them together: the structured reference
+     * carries the "/VS{vs}/SS/KS" payment reference (which receiving SK/CZ banks
+     * convert back into a variabilný symbol) and the unstructured text carries
+     * the human note — landing in separate fields in the payer's app.
+     *
+     * @param  float|null  $amount  Null leaves the amount field blank so the payer enters it (open-amount donation QR).
      */
     public static function epcQrPayload(
         string $iban,
-        float $amount,
+        ?float $amount = null,
         string $currency = 'EUR',
         string $beneficiaryName = '',
         ?string $bic = null,
@@ -260,8 +242,10 @@ class QrPaymentService
         $bic = $bic !== null ? strtoupper(str_replace(' ', '', $bic)) : '';
         $name = mb_substr($beneficiaryName, 0, 70);
 
-        $reference = $remittanceReference !== null ? mb_substr($remittanceReference, 0, 25) : '';
-        $text = ($remittanceText !== null && $reference === '') ? mb_substr($remittanceText, 0, 140) : '';
+        // Structured reference holds "/VS{vs}/SS/KS" (not ISO-11649 RF), so the
+        // 35-char EPC limit applies rather than the 25-char RF limit.
+        $reference = $remittanceReference !== null ? mb_substr($remittanceReference, 0, 35) : '';
+        $text = $remittanceText !== null ? mb_substr($remittanceText, 0, 140) : '';
 
         // Version 002 makes BIC optional; 001 requires it. We always include BIC if provided.
         $version = $bic === '' ? '002' : '001';
@@ -274,7 +258,7 @@ class QrPaymentService
             $bic,                                                  // BIC
             $name,                                                 // Beneficiary name
             $iban,                                                 // IBAN
-            $currency.number_format($amount, 2, '.', ''),          // e.g. EUR12.50
+            $amount !== null ? $currency.number_format($amount, 2, '.', '') : '', // e.g. EUR12.50; blank = open amount
             '',                                                    // Purpose (4-char code, optional)
             $reference,                                            // Structured remittance reference
             $text,                                                 // Unstructured remittance text
@@ -290,10 +274,9 @@ class QrPaymentService
 
     /**
      * Build the raw SPAYD payload string that qrPlatba() encodes into the QR.
-     *
-     * MSG capacity is 60 UTF-8 chars total. When VS/SS/KS are present, a
-     * "/VS{vs}[/SS{ss}][/KS{ks}]" prefix is prepended to the note before
-     * truncation — the prefix is preserved, only the note tail is cut.
+     * Used for CZ domestic payments: the variable symbol goes in the dedicated
+     * X-VS tag (CZ apps surface it as "variabilní symbol") and the note in MSG
+     * (capacity 60 UTF-8 chars). The two never mix.
      */
     public static function qrPlatbaPayload(
         string $iban,
@@ -344,19 +327,14 @@ class QrPaymentService
             $parts[] = 'X-KS:'.self::spaydEncode($constantSymbol);
         }
 
-        // ISO 11649 structured creditor reference — used by SEPA-strict apps
-        // (e.g. CZ bank app paying in EUR which interprets SPAYD as SEPA).
-        if ($variableSymbol !== '' && ctype_digit($variableSymbol)) {
-            $parts[] = 'RF:'.self::iso11649Reference($variableSymbol);
-        }
-
         if ($recipientName !== '') {
             $parts[] = 'RN:'.self::spaydEncode(mb_substr($recipientName, 0, 35));
         }
 
         // MSG carries only the user-supplied "Poznámka". VS/SS/KS go in their
-        // dedicated SPAYD tags (X-VS / X-SS / X-KS) and the ISO 11649 RF
-        // structured reference — never in MSG.
+        // dedicated SPAYD tags (X-VS / X-SS / X-KS) — never in MSG. No ISO-11649
+        // RF reference: SPAYD is used only for domestic CZ payments now, where
+        // RF is meaningless and makes Raiffeisen reject the QR.
         if ($note !== null && $note !== '') {
             $parts[] = 'MSG:'.self::spaydEncode(mb_substr($note, 0, 60));
         }

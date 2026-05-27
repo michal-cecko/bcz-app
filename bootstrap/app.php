@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\RedirectToHomePanel;
 use App\Http\Middleware\SetLocale;
 use Filament\Notifications\Notification;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +22,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
         ]);
+
+        // Run the panel-routing redirect before authentication so a teamless
+        // user on the admin panel is bounced to the customer panel instead of
+        // being 403'd by canAccessPanel. Filament's Authenticate extends the
+        // Illuminate one, so anchoring before that parent governs the sort slot.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: RedirectToHomePanel::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (FileUnacceptableForCollection $e) {
