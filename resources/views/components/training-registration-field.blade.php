@@ -6,6 +6,19 @@
     @case('textarea')
         <textarea wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" rows="3" @if($isRequired) required @endif class="{{ $inputClass }}"></textarea>
         @break
+    @case('checkbox')
+        <label class="flex items-start gap-3 cursor-pointer select-none">
+            <input
+                type="checkbox"
+                wire:model="{{ $wireModel }}"
+                @if($isRequired) required @endif
+                class="mt-0.5 w-4 h-4 rounded-none border-[#333333] bg-bcz-dark text-bcz-red focus:ring-bcz-red focus:ring-offset-0 shrink-0 cursor-pointer"
+            >
+            @if(trim((string) $placeholder) !== '')
+                <span class="text-[#888888] text-[13px] leading-[1.6]">{{ $placeholder }}</span>
+            @endif
+        </label>
+        @break
     @case('select')
     @case('category')
         <x-pretty-picker

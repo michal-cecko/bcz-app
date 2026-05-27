@@ -131,18 +131,19 @@ new class extends Component
             $key = 'fields.' . $fieldKey;
             $fieldRules = [];
 
-            if ($field['required'] ?? false) {
-                $fieldRules[] = 'required';
-            } else {
-                $fieldRules[] = 'nullable';
-            }
-
             $type = RegistrationFieldTypeEnum::tryFrom($field['type'] ?? '');
-            match ($type) {
-                RegistrationFieldTypeEnum::EMAIL => $fieldRules[] = 'email',
-                RegistrationFieldTypeEnum::NUMBER_INPUT => $fieldRules[] = 'numeric',
-                default => null,
-            };
+
+            if ($type === RegistrationFieldTypeEnum::CHECKBOX) {
+                $fieldRules[] = ($field['required'] ?? false) ? 'accepted' : 'nullable';
+            } else {
+                $fieldRules[] = ($field['required'] ?? false) ? 'required' : 'nullable';
+
+                match ($type) {
+                    RegistrationFieldTypeEnum::EMAIL => $fieldRules[] = 'email',
+                    RegistrationFieldTypeEnum::NUMBER_INPUT => $fieldRules[] = 'numeric',
+                    default => null,
+                };
+            }
 
             $rules[$key] = $fieldRules;
 
@@ -156,6 +157,15 @@ new class extends Component
         $attributes['gdprAgreed'] = __('consent.privacy_policy');
 
         $this->validate($rules, [], $attributes);
+
+        // Normalize checkbox values to a stable string for storage ('1' when checked, '' otherwise).
+        foreach ($schema as $field) {
+            if (($field['type'] ?? null) !== RegistrationFieldTypeEnum::CHECKBOX->value) {
+                continue;
+            }
+            $checkboxKey = $field['name'] ?? $field['key'] ?? '';
+            $this->fields[$checkboxKey] = filter_var($this->fields[$checkboxKey] ?? null, FILTER_VALIDATE_BOOLEAN) ? '1' : '';
+        }
 
         foreach ($schema as $field) {
             if (($field['type'] ?? null) !== RegistrationFieldTypeEnum::FILE_INPUT->value) {
@@ -200,23 +210,11 @@ new class extends Component
                     ], fn ($v) => $v !== null));
                 }
 
-                // Attach new user to team
+                // New users get the global CUSTOMER role but are intentionally
+                // left without any team — event registration does not enroll
+                // them into the organizing team.
                 if ($isNewUser) {
                     $user->assignRole(RoleEnum::CUSTOMER);
-
-                    $alreadyHasRole = $user->teams()
-                        ->where('teams.id', $this->event->team_id)
-                        ->wherePivot('role', RoleEnum::ATHLETE->value)
-                        ->exists();
-
-                    if (! $alreadyHasRole) {
-                        $user->teams()->attach($this->event->team_id, [
-                            'role' => RoleEnum::ATHLETE->value,
-                            'is_active' => true,
-                            'joined_at' => now(),
-                            'continuous_membership' => false,
-                        ]);
-                    }
                 }
             } else {
                 $user = null;

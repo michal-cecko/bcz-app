@@ -56,6 +56,8 @@ class RegistrationFieldFormatter
 
             $type === RegistrationFieldTypeEnum::GENDER->value => self::genderLabel($value),
 
+            $type === RegistrationFieldTypeEnum::CHECKBOX->value => self::booleanLabel($value),
+
             in_array($type, [
                 RegistrationFieldTypeEnum::DATE_PICKER->value,
                 RegistrationFieldTypeEnum::BIRTH_DATE->value,
@@ -100,6 +102,13 @@ class RegistrationFieldFormatter
         }
 
         return (string) $label;
+    }
+
+    private static function booleanLabel(mixed $value): string
+    {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN)
+            ? __('enums.boolean.yes')
+            : __('enums.boolean.no');
     }
 
     private static function genderLabel(mixed $value): string

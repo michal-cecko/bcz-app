@@ -102,6 +102,13 @@ class PaymentsTable
             ->recordActions([
                 EditAction::make()
                     ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
+                    ->mutateRecordDataUsing(function (array $data): array {
+                        // The notify toggle is virtual (not a column); seed it checked so
+                        // marking a payment paid sends the thank-you email by default.
+                        $data['notify_customer'] = true;
+
+                        return $data;
+                    })
                     ->schema([
                         TextInput::make('amount')
                             ->label('Suma')
@@ -133,17 +140,21 @@ class PaymentsTable
                             ->rows(2),
                         Toggle::make('notify_customer')
                             ->label('Upozorniť zákazníka?')
-                            ->helperText('Pošle e-mail s potvrdením platby.')
-                            ->default(false),
+                            ->helperText('Pošle e-mail s poďakovaním a potvrdením platby.')
+                            ->default(true),
                     ])
                     ->after(function (Payment $record, array $data): void {
-                        if ($record->status === PaymentStatusEnum::COMPLETED) {
-                            $record->load('payable');
-                            app(PaymentService::class)->processPaymentCompleted(
-                                $record,
-                                ! empty($data['notify_customer']),
-                            );
+                        if ($record->status !== PaymentStatusEnum::COMPLETED) {
+                            return;
                         }
+
+                        $justMarkedPaid = $record->wasChanged('status');
+                        $record->load('payable');
+
+                        app(PaymentService::class)->processPaymentCompleted(
+                            $record,
+                            $justMarkedPaid && ! empty($data['notify_customer']),
+                        );
                     }),
                 DeleteAction::make(),
             ])

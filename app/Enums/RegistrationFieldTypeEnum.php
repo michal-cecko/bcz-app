@@ -11,6 +11,7 @@ enum RegistrationFieldTypeEnum: string implements HasLabel
 
     case TEXT_INPUT = 'text_input';
     case TEXTAREA = 'textarea';
+    case CHECKBOX = 'checkbox';
     case SELECT = 'select';
     case MULTI_SELECT = 'multi_select';
     case DATE_PICKER = 'date_picker';

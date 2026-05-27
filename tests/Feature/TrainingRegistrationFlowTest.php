@@ -265,10 +265,39 @@ class TrainingRegistrationFlowTest extends TestCase
                 && $mail->hasTo('newuser@test.com');
         });
 
-        // Verify user was created and attached to team
+        // Verify user was created but NOT attached to any team — free
+        // trainings do not enroll registrants into the team.
         $user = User::where('email', 'newuser@test.com')->first();
         $this->assertNotNull($user);
-        $this->assertTrue($user->teams()->where('teams.id', $this->team->id)->exists());
+        $this->assertSame(0, $user->teams()->count());
+        $this->assertTrue($user->hasRole(RoleEnum::CUSTOMER->value));
+    }
+
+    public function test_membership_required_training_enrolls_new_user_into_team(): void
+    {
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        Livewire::test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', 'Member')
+            ->set('fields.priezvisko', 'Required')
+            ->set('fields.email', 'memberreq@test.com')
+            ->set('fields.telefon', '+421900111000')
+            ->set('gdprAgreed', true)
+            ->call('submit');
+
+        $user = User::where('email', 'memberreq@test.com')->first();
+        $this->assertNotNull($user);
+        // Membership-required trainings enroll the user as a continuous member.
+        $this->assertTrue(
+            $user->teams()
+                ->where('teams.id', $this->team->id)
+                ->wherePivot('continuous_membership', true)
+                ->exists()
+        );
     }
 
     public function test_gopay_payment_approves_training_registration(): void

@@ -4,6 +4,7 @@ use App\Enums\PaymentMethodEnum;
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
+use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
@@ -22,8 +23,6 @@ new class extends Component
     public array $fields = [];
 
     public bool $gdprAgreed = false;
-
-    public bool $continuousMembership = true;
 
     public string $registrationState = 'form';
 
@@ -129,18 +128,19 @@ new class extends Component
             $key = 'fields.' . $field['name'];
             $fieldRules = [];
 
-            if ($field['required'] ?? false) {
-                $fieldRules[] = 'required';
-            } else {
-                $fieldRules[] = 'nullable';
-            }
-
             $type = RegistrationFieldTypeEnum::tryFrom($field['type'] ?? '');
-            match ($type) {
-                RegistrationFieldTypeEnum::EMAIL => $fieldRules[] = 'email',
-                RegistrationFieldTypeEnum::NUMBER_INPUT => $fieldRules[] = 'numeric',
-                default => null,
-            };
+
+            if ($type === RegistrationFieldTypeEnum::CHECKBOX) {
+                $fieldRules[] = ($field['required'] ?? false) ? 'accepted' : 'nullable';
+            } else {
+                $fieldRules[] = ($field['required'] ?? false) ? 'required' : 'nullable';
+
+                match ($type) {
+                    RegistrationFieldTypeEnum::EMAIL => $fieldRules[] = 'email',
+                    RegistrationFieldTypeEnum::NUMBER_INPUT => $fieldRules[] = 'numeric',
+                    default => null,
+                };
+            }
 
             $rules[$key] = $fieldRules;
 
@@ -156,6 +156,15 @@ new class extends Component
         $this->validate($rules, [], $attributes);
 
         $schema = $this->training->registration_form_schema ?? [];
+
+        // Normalize checkbox values to a stable string for storage ('1' when checked, '' otherwise).
+        foreach ($schema as $field) {
+            if (($field['type'] ?? null) !== RegistrationFieldTypeEnum::CHECKBOX->value) {
+                continue;
+            }
+            $checkboxKey = $field['name'] ?? $field['key'] ?? '';
+            $this->fields[$checkboxKey] = filter_var($this->fields[$checkboxKey] ?? null, FILTER_VALIDATE_BOOLEAN) ? '1' : '';
+        }
 
         foreach ($schema as $field) {
             if (($field['type'] ?? null) !== RegistrationFieldTypeEnum::FILE_INPUT->value) {
@@ -200,23 +209,11 @@ new class extends Component
                     ], fn ($v) => $v !== null));
                 }
 
-                // Attach new user to team
+                // New users get the global CUSTOMER role. Team enrollment is
+                // handled below and only happens for membership-required
+                // trainings.
                 if ($isNewUser) {
                     $user->assignRole(RoleEnum::CUSTOMER);
-
-                    $alreadyHasRole = $user->teams()
-                        ->where('teams.id', $this->training->team_id)
-                        ->wherePivot('role', RoleEnum::ATHLETE->value)
-                        ->exists();
-
-                    if (! $alreadyHasRole) {
-                        $user->teams()->attach($this->training->team_id, [
-                            'role' => RoleEnum::ATHLETE->value,
-                            'is_active' => true,
-                            'joined_at' => now(),
-                            'continuous_membership' => $this->resolveContinuousMembership(),
-                        ]);
-                    }
                 }
             } else {
                 $user = null;
@@ -224,9 +221,11 @@ new class extends Component
             }
         }
 
-        // Set continuous_membership on pivot for every training registration (new or existing user)
-        if ($user) {
-            $this->setContinuousMembershipOnPivot($user);
+        // Only membership-required trainings enroll the registrant into the
+        // team (as a continuous member). Free and paid trainings never assign
+        // a team.
+        if ($user && $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
+            $this->enrollAsContinuousMember($user);
         }
 
         $status = RegistrationService::determineRegistrationStatus($this->training, $user);
@@ -283,28 +282,12 @@ new class extends Component
     }
 
     /**
-     * Resolve the continuous_membership pivot value for this training registration.
-     * Membership-required trainings always force it to true; paid/free respect the user's choice.
+     * Enroll the user into the training's team as a continuous member.
+     * Called only for membership-required trainings; attaches the ATHLETE
+     * pivot when missing, otherwise flips continuous_membership to true.
      */
-    protected function resolveContinuousMembership(): bool
+    protected function enrollAsContinuousMember(User $user): void
     {
-        if ($this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
-            return true;
-        }
-
-        return $this->continuousMembership;
-    }
-
-    /**
-     * Promote the user's team_user pivot to continuous_membership = true when appropriate.
-     * Only flips false → true; never demotes an already-opted-in user from a single registration.
-     */
-    protected function setContinuousMembershipOnPivot(User $user): void
-    {
-        if (! $this->resolveContinuousMembership()) {
-            return;
-        }
-
         $teamId = $this->training->team_id;
 
         $pivotExists = $user->teams()
@@ -787,21 +770,6 @@ new class extends Component
             @endif
 
             <div class="h-px bg-[#222222]"></div>
-
-            @if($training->pricing_type !== \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED)
-                <div class="flex items-start gap-3">
-                    <input
-                        type="checkbox"
-                        wire:model="continuousMembership"
-                        id="continuousMembership"
-                        class="mt-1 w-4 h-4 rounded-none border-[#333333] bg-bcz-dark text-bcz-red focus:ring-bcz-red focus:ring-offset-0 shrink-0 cursor-pointer"
-                    >
-                    <label for="continuousMembership" class="text-[#888888] text-[13px] leading-[1.6] cursor-pointer">
-                        {{ __('training_detail.continuous_membership_label') }}
-                        <span class="block text-[#666666] text-[11px] mt-1">{{ __('training_detail.continuous_membership_help') }}</span>
-                    </label>
-                </div>
-            @endif
 
             <x-gdpr-checkbox />
 

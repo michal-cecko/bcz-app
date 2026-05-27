@@ -36,6 +36,10 @@ use App\Enums\TimetableEntryStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 
 return [
+    'boolean' => [
+        'yes' => 'Ano',
+        'no' => 'Ne',
+    ],
     BannerTypeEnum::class => [
         BannerTypeEnum::Topbar->value => 'Horní lišta',
         BannerTypeEnum::Floating->value => 'Plovoucí',
@@ -134,6 +138,7 @@ return [
     RegistrationFieldTypeEnum::class => [
         RegistrationFieldTypeEnum::TEXT_INPUT->value => 'Textové pole',
         RegistrationFieldTypeEnum::TEXTAREA->value => 'Textová oblast',
+        RegistrationFieldTypeEnum::CHECKBOX->value => 'Zaškrtávací pole',
         RegistrationFieldTypeEnum::SELECT->value => 'Výběr',
         RegistrationFieldTypeEnum::MULTI_SELECT->value => 'Vícenásobný výběr',
         RegistrationFieldTypeEnum::DATE_PICKER->value => 'Výběr data',

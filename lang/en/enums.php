@@ -36,6 +36,10 @@ use App\Enums\TimetableEntryStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 
 return [
+    'boolean' => [
+        'yes' => 'Yes',
+        'no' => 'No',
+    ],
     BannerTypeEnum::class => [
         BannerTypeEnum::Topbar->value => 'Top Bar',
         BannerTypeEnum::Floating->value => 'Floating',
@@ -134,6 +138,7 @@ return [
     RegistrationFieldTypeEnum::class => [
         RegistrationFieldTypeEnum::TEXT_INPUT->value => 'Text Input',
         RegistrationFieldTypeEnum::TEXTAREA->value => 'Text Area',
+        RegistrationFieldTypeEnum::CHECKBOX->value => 'Checkbox',
         RegistrationFieldTypeEnum::SELECT->value => 'Select',
         RegistrationFieldTypeEnum::MULTI_SELECT->value => 'Multi Select',
         RegistrationFieldTypeEnum::DATE_PICKER->value => 'Date Picker',
