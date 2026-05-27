@@ -21,11 +21,15 @@ class MagicLoginController extends Controller
 
         $request->session()->regenerate();
 
+        // Teamless users (e.g. guest registrants) land in the tenant-free
+        // customer panel; team members and admins in the tenant admin panel.
+        $panelId = $user->homePanelId();
+
         // If user has no real password (created via guest registration), prompt them to set one
         if ($user->password_set_at === null) {
-            return redirect()->route('filament.admin.auth.setup-wizard');
+            return redirect()->route("filament.{$panelId}.auth.setup-wizard");
         }
 
-        return redirect('/admin');
+        return redirect("/{$panelId}");
     }
 }

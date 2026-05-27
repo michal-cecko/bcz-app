@@ -198,6 +198,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             return true;
         }
 
+        // The customer panel is the tenant-free personal area: any authenticated
+        // user may use it (including teamless customers from event registration).
+        if ($panel->getId() === 'customer') {
+            return true;
+        }
+
         if ($this->hasRole([RoleEnum::ADMIN, RoleEnum::EDITOR])) {
             return true;
         }
@@ -208,6 +214,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         }
 
         return false;
+    }
+
+    /**
+     * The Filament panel a user should land on after authenticating: the
+     * tenant-scoped admin panel when they belong to a team (or are a global
+     * admin), otherwise the tenant-free customer panel.
+     */
+    public function homePanelId(): string
+    {
+        return ($this->isGlobalAdmin() || $this->teams()->exists()) ? 'admin' : 'customer';
     }
 
     public function getTenants(Panel $panel): Collection
