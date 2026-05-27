@@ -7,6 +7,7 @@ use App\Filament\Pages\Auth\UserSetupWizard;
 use App\Filament\Resources\Settings\SettingResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Http\Middleware\RedirectToHomePanel;
 use App\Models\Team;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
@@ -125,6 +126,7 @@ class AdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                RedirectToHomePanel::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,

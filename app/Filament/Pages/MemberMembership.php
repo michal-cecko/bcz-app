@@ -280,6 +280,14 @@ class MemberMembership extends Page implements HasTable
 
     public function content(Schema $schema): Schema
     {
+        // Teamless users (customer panel) have no tenant to manage a membership
+        // against — prompt them to join a team first instead of an empty UI.
+        if (! Filament::getTenant()) {
+            return $schema->components([
+                View::make('filament.components.membership-no-team'),
+            ]);
+        }
+
         $membership = $this->currentMembership;
         $continuousEnabled = $this->continuousMembershipEnabled;
         $continuousLocked = $this->continuousMembershipLocked;

@@ -300,6 +300,34 @@ class TrainingRegistrationFlowTest extends TestCase
         );
     }
 
+    public function test_membership_required_training_enrolls_existing_logged_in_user_into_team(): void
+    {
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        // A logged-in user who is not yet part of the team.
+        $user = User::factory()->create();
+        $this->assertSame(0, $user->teams()->count());
+
+        Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit');
+
+        $this->assertTrue(
+            $user->teams()
+                ->where('teams.id', $this->team->id)
+                ->wherePivot('role', RoleEnum::ATHLETE->value)
+                ->wherePivot('continuous_membership', true)
+                ->exists()
+        );
+    }
+
     public function test_gopay_payment_approves_training_registration(): void
     {
         Notification::fake();

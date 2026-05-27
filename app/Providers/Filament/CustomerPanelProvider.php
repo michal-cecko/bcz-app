@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Enums\RoleEnum;
 use App\Filament\Pages\Auth\UserSetupWizard;
 use App\Filament\Resources\Users\UserResource;
+use App\Http\Middleware\RedirectToHomePanel;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
@@ -107,6 +108,7 @@ class CustomerPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                RedirectToHomePanel::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,

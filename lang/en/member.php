@@ -3,6 +3,9 @@
 return [
     'membership' => [
         'title' => 'Membership',
+        'no_team_heading' => 'You are not a member of any team yet',
+        'no_team_description' => 'You can manage membership and fees once you join a team. You join by registering for a training that requires membership.',
+        'no_team_cta' => 'Browse teams',
         'season' => 'Season',
         'fee' => 'Fee',
         'free' => 'Free',

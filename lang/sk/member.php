@@ -3,6 +3,9 @@
 return [
     'membership' => [
         'title' => 'Členstvo',
+        'no_team_heading' => 'Zatiaľ nie ste členom žiadneho tímu',
+        'no_team_description' => 'Členstvo a poplatky spravujete až po pripojení k tímu. Pripojíte sa registráciou na tréning, ktorý vyžaduje členstvo.',
+        'no_team_cta' => 'Prehliadať tímy',
         'season' => 'Sezóna',
         'fee' => 'Poplatok',
         'free' => 'Zadarmo',
