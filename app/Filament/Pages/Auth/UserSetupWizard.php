@@ -47,13 +47,23 @@ class UserSetupWizard extends SimplePage
                 || $user->hasRole([RoleEnum::ATHLETE->value]));
     }
 
+    /**
+     * Home of the panel the wizard is being served from. Teamless customers run
+     * it in the tenant-free customer panel, so we must not hard-redirect to the
+     * tenant admin panel (which would 403 them for lacking a tenant).
+     */
+    protected function panelHomeUrl(): string
+    {
+        return '/'.filament()->getCurrentPanel()->getPath();
+    }
+
     public function mount(): void
     {
         /** @var User|null $user */
         $user = auth()->user();
 
         if (! $user) {
-            redirect('/admin');
+            redirect($this->panelHomeUrl());
 
             return;
         }
@@ -109,7 +119,7 @@ class UserSetupWizard extends SimplePage
                     ->cancelAction(
                         Action::make('cancel')
                             ->label('Zrušiť')
-                            ->url('/admin')
+                            ->url(fn (): string => $this->panelHomeUrl())
                             ->color('gray')
                     )
                     ->submitAction(
@@ -306,7 +316,7 @@ class UserSetupWizard extends SimplePage
             ->title('Profil bol úspešne nastavený')
             ->send();
 
-        redirect('/admin');
+        redirect($this->panelHomeUrl());
     }
 
     /**
