@@ -1,3 +1,25 @@
+@php
+    // Resolve the logged-in user's panel + profile-edit URL once. The admin
+    // panel is tenant-scoped, so its UserResource edit route needs a {tenant};
+    // teamless customers live on the tenant-free customer panel. Picking the
+    // wrong panel (or passing a null tenant) throws UrlGenerationException and
+    // 500s the whole frontend, so only use admin when a tenant actually exists.
+    $homePanelId = auth()->check() ? auth()->user()->homePanelId() : 'admin';
+    $profileUrl = null;
+
+    if (auth()->check()) {
+        $profileTenant = auth()->user()->teams->first();
+        $useAdminPanel = $homePanelId === 'admin' && $profileTenant !== null;
+
+        $profileUrl = \App\Filament\Resources\Users\UserResource::getUrl(
+            'edit',
+            ['record' => auth()->user()],
+            panel: $useAdminPanel ? 'admin' : 'customer',
+            tenant: $useAdminPanel ? $profileTenant : null,
+        );
+    }
+@endphp
+
 {{-- Header --}}
 <header x-data="{ mobileOpen: false }" class="w-full bg-bcz-dark sticky top-0 z-50 border-b border-bcz-border/30">
     <div class="max-w-[1440px] mx-auto h-16 lg:h-20 flex items-center justify-between px-5 md:px-10 lg:px-20">
@@ -40,7 +62,7 @@
                         @endif
                         <svg class="w-3.5 h-3.5 text-bcz-muted transition-transform" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <a href="/admin" class="bg-bcz-red text-white text-[11px] font-bold tracking-widest px-5 py-2.5 hover:bg-red-700 transition-colors">
+                    <a href="{{ '/'.$homePanelId }}" class="bg-bcz-red text-white text-[11px] font-bold tracking-widest px-5 py-2.5 hover:bg-red-700 transition-colors">
                         {{ __('layout.user_zone') }}
                     </a>
 
@@ -61,7 +83,7 @@
                             <p class="text-white text-[13px] font-medium leading-tight truncate">{{ auth()->user()->name }}</p>
                             <p class="text-bcz-dim text-[11px] leading-tight truncate">{{ auth()->user()->email }}</p>
                         </div>
-                        <a href="{{ \App\Filament\Resources\Users\UserResource::getUrl('edit', ['record' => auth()->user(), 'tenant' => auth()->user()->teams->first()]) }}" class="flex items-center gap-2 px-5 py-3 text-bcz-muted text-[13px] font-medium hover:bg-white/10 hover:text-white transition-all">
+                        <a href="{{ $profileUrl }}" class="flex items-center gap-2 px-5 py-3 text-bcz-muted text-[13px] font-medium hover:bg-white/10 hover:text-white transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                             {{ __('layout.profile') }}
                         </a>
@@ -126,10 +148,10 @@
                         <p class="text-bcz-dim text-[12px] leading-tight truncate">{{ auth()->user()->email }}</p>
                     </div>
                 </div>
-                <a href="/admin" class="bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center w-full block">
+                <a href="{{ '/'.$homePanelId }}" class="bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center w-full block">
                     {{ __('layout.user_zone') }}
                 </a>
-                <a href="{{ \App\Filament\Resources\Users\UserResource::getUrl('edit', ['record' => auth()->user(), 'tenant' => auth()->user()->teams->first()]) }}" class="flex items-center gap-2 text-bcz-muted text-sm font-medium tracking-widest uppercase hover:text-white transition-colors py-1 mt-2">
+                <a href="{{ $profileUrl }}" class="flex items-center gap-2 text-bcz-muted text-sm font-medium tracking-widest uppercase hover:text-white transition-colors py-1 mt-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     {{ __('layout.profile') }}
                 </a>
