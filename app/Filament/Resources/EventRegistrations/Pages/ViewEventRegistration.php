@@ -9,10 +9,12 @@ use App\Enums\RegistrationStatusEnum;
 use App\Filament\Resources\EventRegistrations\EventRegistrationResource;
 use App\Models\EventRegistration;
 use App\Models\Payment;
+use App\Notifications\PaymentConfirmed;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
@@ -104,6 +106,10 @@ class ViewEventRegistration extends ViewRecord
                     Textarea::make('notes')
                         ->label('Poznámka')
                         ->rows(2),
+                    Toggle::make('notify_customer')
+                        ->label('Odoslať potvrdenie zákazníkovi')
+                        ->helperText('Pošle e-mail s potvrdením platby.')
+                        ->default(true),
                 ])
                 ->action(function (array $data) use ($record, $event, $org): void {
                     $user = $record->user;
@@ -111,7 +117,7 @@ class ViewEventRegistration extends ViewRecord
                         ? $data['payment_status']
                         : PaymentStatusEnum::from($data['payment_status']);
 
-                    Payment::create([
+                    $payment = Payment::create([
                         'team_id' => $event->team_id,
                         'user_id' => $record->user_id,
                         'payer_name' => $user?->name,
@@ -128,6 +134,10 @@ class ViewEventRegistration extends ViewRecord
 
                     if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
                         $record->update(['status' => RegistrationStatusEnum::Approved]);
+                    }
+
+                    if (! empty($data['notify_customer']) && $paymentStatus === PaymentStatusEnum::COMPLETED && $user) {
+                        $user->notify(new PaymentConfirmed($payment));
                     }
 
                     Notification::make()->success()->title('Platba bola zaznamenaná.')->send();

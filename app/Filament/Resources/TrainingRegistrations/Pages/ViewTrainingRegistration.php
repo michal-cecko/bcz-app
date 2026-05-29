@@ -9,10 +9,12 @@ use App\Enums\TrainingPricingTypeEnum;
 use App\Filament\Resources\TrainingRegistrations\TrainingRegistrationResource;
 use App\Models\Payment;
 use App\Models\TrainingRegistration;
+use App\Notifications\PaymentConfirmed;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Icons\Heroicon;
@@ -113,6 +115,10 @@ class ViewTrainingRegistration extends ViewRecord
                     Textarea::make('notes')
                         ->label('Poznámka')
                         ->rows(2),
+                    Toggle::make('notify_customer')
+                        ->label('Odoslať potvrdenie zákazníkovi')
+                        ->helperText('Pošle e-mail s potvrdením platby.')
+                        ->default(true),
                 ])
                 ->action(function (array $data) use ($record, $training): void {
                     $user = $record->user;
@@ -120,7 +126,7 @@ class ViewTrainingRegistration extends ViewRecord
                         ? $data['payment_status']
                         : PaymentStatusEnum::from($data['payment_status']);
 
-                    Payment::create([
+                    $payment = Payment::create([
                         'team_id' => $training->team_id,
                         'user_id' => $record->user_id,
                         'payer_name' => $user?->name,
@@ -137,6 +143,10 @@ class ViewTrainingRegistration extends ViewRecord
 
                     if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
                         $record->update(['status' => RegistrationStatusEnum::Approved, 'payment_due_at' => null]);
+                    }
+
+                    if (! empty($data['notify_customer']) && $paymentStatus === PaymentStatusEnum::COMPLETED && $user) {
+                        $user->notify(new PaymentConfirmed($payment));
                     }
 
                     Notification::make()->success()->title('Platba bola zaznamenaná.')->send();

@@ -14,6 +14,7 @@ use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Payment;
 use App\Models\User;
+use App\Notifications\PaymentConfirmed;
 use App\Services\EmailService;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
@@ -228,6 +229,10 @@ class RegistrationsRelationManager extends RelationManager
                             Textarea::make('notes')
                                 ->label('Poznámka')
                                 ->rows(2),
+                            Toggle::make('notify_customer')
+                                ->label('Odoslať potvrdenie zákazníkovi')
+                                ->helperText('Pošle e-mail s potvrdením platby.')
+                                ->default(true),
                         ];
                     })
                     ->action(function (array $data, EventRegistration $record): void {
@@ -239,7 +244,7 @@ class RegistrationsRelationManager extends RelationManager
                             ? $data['payment_status']
                             : PaymentStatusEnum::from($data['payment_status']);
 
-                        Payment::create([
+                        $payment = Payment::create([
                             'team_id' => $event->team_id,
                             'user_id' => $record->user_id,
                             'payer_name' => $user?->name,
@@ -256,6 +261,10 @@ class RegistrationsRelationManager extends RelationManager
 
                         if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
                             $record->update(['status' => RegistrationStatusEnum::Approved]);
+                        }
+
+                        if (! empty($data['notify_customer']) && $paymentStatus === PaymentStatusEnum::COMPLETED && $user) {
+                            $user->notify(new PaymentConfirmed($payment));
                         }
 
                         Notification::make()

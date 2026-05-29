@@ -9,11 +9,13 @@ use App\Filament\Resources\Payments\PaymentResource;
 use App\Models\Payment;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
+use App\Notifications\PaymentConfirmed;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Icons\Heroicon;
@@ -110,14 +112,21 @@ class PaymentsRelationManager extends RelationManager
                         Textarea::make('notes')
                             ->label('Poznámka')
                             ->rows(2),
+                        Toggle::make('notify_customer')
+                            ->label('Odoslať potvrdenie zákazníkovi')
+                            ->helperText('Pošle e-mail s potvrdením platby.')
+                            ->default(true),
                     ])
                     ->action(function (array $data): void {
                         $registration = TrainingRegistration::find($data['registration_id']);
                         $training = $this->getOwnerRecord();
 
                         $user = $registration->user;
+                        $paymentStatus = $data['status'] instanceof PaymentStatusEnum
+                            ? $data['status']
+                            : PaymentStatusEnum::from($data['status']);
 
-                        Payment::create([
+                        $payment = Payment::create([
                             'team_id' => $training->team_id,
                             'user_id' => $registration->user_id,
                             'payer_name' => $user?->name,
@@ -126,11 +135,15 @@ class PaymentsRelationManager extends RelationManager
                             'payable_id' => $registration->id,
                             'amount' => $data['amount'],
                             'currency' => 'EUR',
-                            'status' => $data['status'],
+                            'status' => $paymentStatus,
                             'payment_method' => $data['payment_method'],
                             'paid_at' => $data['paid_at'],
                             'notes' => $data['notes'] ?? null,
                         ]);
+
+                        if (! empty($data['notify_customer']) && $paymentStatus === PaymentStatusEnum::COMPLETED && $user) {
+                            $user->notify(new PaymentConfirmed($payment));
+                        }
 
                         Notification::make()
                             ->success()
