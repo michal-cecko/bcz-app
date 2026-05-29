@@ -160,14 +160,18 @@
                 </div>
             @endif
         @else
-            {{-- No active season at all --}}
+            @php $tenant = \Filament\Facades\Filament::getTenant(); @endphp
             <div class="flex items-center gap-3">
                 <x-filament::icon icon="heroicon-o-identification" class="h-5 w-5 text-gray-400" />
                 <span class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('member.membership.title') }}</span>
             </div>
             <div class="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
                 <x-filament::icon icon="heroicon-m-information-circle" class="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400" />
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('member.membership.no_active_season') }}</p>
+                @if(! $tenant)
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('member.membership.no_team_heading') }}</p>
+                @else
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('member.membership.no_active_season') }}</p>
+                @endif
             </div>
         @endif
     </x-filament::section>
