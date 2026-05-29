@@ -39,7 +39,10 @@ class UpcomingTrainingsWidget extends TableWidget
                 TrainingRegistration::query()
                     ->where('user_id', auth()->id())
                     ->whereIn('status', [RegistrationStatusEnum::Approved, RegistrationStatusEnum::Pending])
-                    ->whereHas('training', fn (Builder $q) => $q->where('team_id', $team?->id)->where('is_active', true))
+                    // Customer panel is tenant-free; only scope to a team in the
+                    // admin panel, otherwise a null team_id hid the customer's
+                    // own upcoming trainings.
+                    ->whereHas('training', fn (Builder $q) => $q->when($team, fn (Builder $q) => $q->where('team_id', $team->id))->where('is_active', true))
                     ->with(['training.sportCategory', 'training.coaches'])
                     ->latest()
                     ->limit(5)

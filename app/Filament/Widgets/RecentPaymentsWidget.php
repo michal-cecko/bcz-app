@@ -44,7 +44,10 @@ class RecentPaymentsWidget extends TableWidget
             ->query(
                 Payment::query()
                     ->where('user_id', auth()->id())
-                    ->where('team_id', $team?->id)
+                    // Customer panel is tenant-free: scoping to a null team_id
+                    // left the dashboard "recent payments" empty even though the
+                    // customer has payments. Only filter by team in the admin panel.
+                    ->when($team, fn ($query) => $query->where('team_id', $team->id))
                     ->with('payable')
                     ->orderByDesc('created_at')
                     ->limit(5)

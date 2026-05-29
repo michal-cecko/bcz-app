@@ -185,7 +185,7 @@ if (! function_exists('embed_video_url')) {
         $youtubeRegex = '#(?:https?://)?'.$youtubeHost.$youtubePathPrefix.'([A-Za-z0-9_-]{11})#i';
 
         if (preg_match($youtubeRegex, $url, $m)) {
-            return 'https://www.youtube.com/embed/'.$m[1];
+            return 'https://www.youtube-nocookie.com/embed/'.$m[1];
         }
 
         // Vimeo

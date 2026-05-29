@@ -8,6 +8,7 @@ use App\Filament\Pages\MemberEvents;
 use App\Filament\Pages\MemberMembership;
 use App\Filament\Pages\MemberPayments;
 use App\Filament\Pages\MyTrainings;
+use App\Filament\Widgets\RecentPaymentsWidget;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Payment;
@@ -105,6 +106,19 @@ class CustomerPanelDashboardTest extends TestCase
         $someoneElses = Payment::factory()->create();
 
         Livewire::test(MemberPayments::class)
+            ->assertOk()
+            ->assertCanSeeTableRecords([$mine])
+            ->assertCanNotSeeTableRecords([$someoneElses]);
+    }
+
+    public function test_recent_payments_widget_shows_the_customers_payment(): void
+    {
+        $customer = $this->actingAsCustomer();
+
+        $mine = Payment::factory()->create(['user_id' => $customer->id]);
+        $someoneElses = Payment::factory()->create();
+
+        Livewire::test(RecentPaymentsWidget::class)
             ->assertOk()
             ->assertCanSeeTableRecords([$mine])
             ->assertCanNotSeeTableRecords([$someoneElses]);
