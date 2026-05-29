@@ -55,7 +55,11 @@ class CustomerPanelProvider extends PanelProvider
             ->userMenuItems([
                 'profile' => fn (Action $action) => $action
                     ->label('Môj profil')
-                    ->url(fn (): string => UserResource::getUrl('edit', ['record' => auth()->user()]))
+                    // Pin the panel: this panel is the default's sibling and
+                    // UserResource::getUrl() would otherwise fall back to the
+                    // tenant-scoped admin panel (the ->default() one) whenever the
+                    // current panel isn't resolved, producing a broken /admin URL.
+                    ->url(fn (): string => UserResource::getUrl('edit', ['record' => auth()->user()], panel: 'customer'))
                     ->icon(Heroicon::OutlinedUserCircle),
                 Action::make('complete-profile')
                     ->label('Dokončiť profil')

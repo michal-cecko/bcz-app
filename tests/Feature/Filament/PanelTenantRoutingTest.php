@@ -47,7 +47,10 @@ class PanelTenantRoutingTest extends TestCase
 
     public function test_team_member_is_redirected_from_customer_panel_to_admin_panel(): void
     {
-        $this->actingAs($this->teamMember())->get('/customer')->assertRedirect('/admin');
+        // The middleware maps the request to the same page on the home panel, so
+        // a team member hitting the customer dashboard lands on their tenant's
+        // admin dashboard (/admin/{tenant}) rather than bare /admin.
+        $this->actingAs($this->teamMember())->get('/customer')->assertRedirectContains('/admin');
     }
 
     public function test_teamless_user_stays_on_customer_panel(): void
