@@ -12,6 +12,16 @@ class ListUsers extends ListRecords
 {
     protected static string $resource = UserResource::class;
 
+    /**
+     * UserResource::canAccess() lets any authenticated user reach their own
+     * profile, so re-assert the real list permission here: only users who may
+     * ViewAny:User see the user list.
+     */
+    protected function authorizeAccess(): void
+    {
+        abort_unless(static::getResource()::canViewAny(), 403);
+    }
+
     protected function getHeaderActions(): array
     {
         return [

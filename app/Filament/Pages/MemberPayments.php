@@ -56,7 +56,10 @@ class MemberPayments extends Page implements HasTable
             ->query(
                 Payment::query()
                     ->where('user_id', auth()->id())
-                    ->where('team_id', $team?->id)
+                    // Customer panel is tenant-free: scoping to a null team_id
+                    // hid the customer's payments. Only filter by team when a
+                    // tenant is present (admin panel).
+                    ->when($team, fn ($query) => $query->where('team_id', $team->id))
                     ->with('payable')
             )
             ->columns([

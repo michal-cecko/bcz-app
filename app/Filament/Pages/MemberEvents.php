@@ -118,15 +118,27 @@ class MemberEvents extends Page implements HasActions, HasSchemas
         $team = Filament::getTenant();
         $user = auth()->user();
 
+        $registrationScope = fn ($q) => $q->where('user_id', $user?->id)
+            ->where('status', '!=', RegistrationStatusEnum::Cancelled->value);
+
         $query = Event::query()
-            ->where('team_id', $team?->id)
             ->where('is_published', true)
             ->with([
                 'eventCategory',
-                'registrations' => fn ($q) => $q->where('user_id', $user?->id)
-                    ->where('status', '!=', RegistrationStatusEnum::Cancelled->value),
+                'registrations' => $registrationScope,
             ])
             ->orderBy('date');
+
+        if ($team) {
+            // Admin panel (tenant context): browse the team's published events.
+            $query->where('team_id', $team->id);
+        } else {
+            // Customer panel is tenant-free, so there is no team to scope by.
+            // Scoping to a null team_id matched nothing and hid the customer's
+            // registrations entirely — instead show the events they are actually
+            // registered for, across any team.
+            $query->whereHas('registrations', $registrationScope);
+        }
 
         if ($this->tab === 'upcoming') {
             $events = $query->where('date', '>=', now()->startOfDay())->get();

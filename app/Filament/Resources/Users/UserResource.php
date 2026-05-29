@@ -52,6 +52,20 @@ class UserResource extends Resource
     }
 
     /**
+     * Resource-level gate run on every page (Filament's authorizeResourceAccess).
+     * It defaults to canViewAny(), which 403s customers on their OWN profile
+     * page even though UserPolicy::view()/update() allow self-access. Let any
+     * authenticated user past this gate and rely on the per-record canView()/
+     * canEdit() checks instead; the user LIST stays gated by ViewAny:User in
+     * {@see ListUsers::authorizeAccess()}
+     * and creating users by Create:User.
+     */
+    public static function canAccess(): bool
+    {
+        return auth()->check();
+    }
+
+    /**
      * Platform admins see every user (including those on other teams or no team).
      * Everyone else stays scoped to the current tenant.
      */

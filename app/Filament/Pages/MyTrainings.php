@@ -88,7 +88,10 @@ class MyTrainings extends Page implements HasTable
                     ->where('user_id', auth()->id())
                     ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
                     ->whereHas('training', fn (Builder $q) => $q
-                        ->where('team_id', $team?->id)
+                        // Only scope by team in the tenant-bound admin panel; the
+                        // customer panel is tenant-free and a null team_id hid the
+                        // customer's own training registrations.
+                        ->when($team, fn (Builder $q) => $q->where('team_id', $team->id))
                         ->current()
                     )
                     ->with(['training.sportCategory', 'training.coaches', 'training.city', 'training.season'])
@@ -142,7 +145,7 @@ class MyTrainings extends Page implements HasTable
 
         $historyRegistrations = TrainingRegistration::query()
             ->where('user_id', auth()->id())
-            ->whereHas('training', fn (Builder $q) => $q->where('team_id', $team?->id))
+            ->whereHas('training', fn (Builder $q) => $q->when($team, fn (Builder $q) => $q->where('team_id', $team->id)))
             ->where(function (Builder $q) {
                 $q->where('status', RegistrationStatusEnum::Cancelled)
                     ->orWhereHas('training', fn ($tq) => $tq->archived());
