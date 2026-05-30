@@ -26,6 +26,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
+use MarcelWeidum\Passkeys\PasskeysPlugin;
 
 /**
  * Customer panel — a tenant-free mirror of the admin panel for users who do not
@@ -43,6 +44,7 @@ class CustomerPanelProvider extends PanelProvider
             ->path('customer')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
+            ->profile()
             ->spa()
             ->unsavedChangesAlerts()
             ->databaseTransactions()
@@ -127,6 +129,7 @@ class CustomerPanelProvider extends PanelProvider
                     ->scopeToTenant(false)
                     ->registerNavigation(false)
             )
-            ->plugin(FilamentApexChartsPlugin::make());
+            ->plugin(FilamentApexChartsPlugin::make())
+            ->plugin(PasskeysPlugin::make());
     }
 }

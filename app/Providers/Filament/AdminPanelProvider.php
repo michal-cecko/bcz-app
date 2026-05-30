@@ -30,6 +30,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
+use MarcelWeidum\Passkeys\PasskeysPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -41,6 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
+            ->profile()
             ->spa()
             ->unsavedChangesAlerts()
             ->databaseTransactions()
@@ -141,6 +143,7 @@ class AdminPanelProvider extends PanelProvider
                     ->scopeToTenant(false)
                     ->registerNavigation(false)
             )
-            ->plugin(FilamentApexChartsPlugin::make());
+            ->plugin(FilamentApexChartsPlugin::make())
+            ->plugin(PasskeysPlugin::make());
     }
 }
