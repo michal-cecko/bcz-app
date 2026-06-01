@@ -26,7 +26,6 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class UserSetupWizard extends SimplePage
@@ -180,7 +179,7 @@ class UserSetupWizard extends SimplePage
                 $state = $this->form->getState();
 
                 $user->update([
-                    'password' => Hash::make($state['password']),
+                    'password' => $state['password'],
                     'password_set_at' => now(),
                 ]);
 

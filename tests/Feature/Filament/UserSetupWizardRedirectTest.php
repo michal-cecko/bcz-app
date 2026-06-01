@@ -7,6 +7,7 @@ use App\Filament\Pages\Auth\UserSetupWizard;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -42,6 +43,22 @@ class UserSetupWizardRedirectTest extends TestCase
             ->set('data.locale', 'sk')
             ->call('save')
             ->assertRedirect('/customer');
+    }
+
+    public function test_password_set_via_wizard_is_not_double_hashed(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('customer'));
+
+        $user = $this->customer();
+
+        Livewire::actingAs($user);
+
+        Livewire::test(UserSetupWizard::class)
+            ->set('data.password', 'Password123!')
+            ->set('data.passwordConfirmation', 'Password123!')
+            ->goToNextWizardStep(); // triggers afterValidation on the password step
+
+        $this->assertTrue(Hash::check('Password123!', $user->fresh()->password));
     }
 
     public function test_completing_wizard_in_admin_panel_redirects_to_admin_panel(): void
