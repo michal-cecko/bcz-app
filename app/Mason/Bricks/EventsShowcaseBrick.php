@@ -39,7 +39,7 @@ class EventsShowcaseBrick extends Brick
             'category' => Event::query()
                 ->where('is_published', true)
                 ->where('event_category_id', $config['event_category_id'] ?? null)
-                ->with(['eventCategory', 'team'])
+                ->with(['eventCategory', 'team', 'media'])
                 ->inRandomOrder()
                 ->limit($count)
                 ->get(),
@@ -48,7 +48,7 @@ class EventsShowcaseBrick extends Brick
                 ? Event::query()
                     ->whereIn('id', $config['event_ids'])
                     ->where('is_published', true)
-                    ->with(['eventCategory', 'team'])
+                    ->with(['eventCategory', 'team', 'media'])
                     ->get()
                     ->sortBy(fn (Event $e) => array_search($e->id, $config['event_ids']))
                     ->values()
@@ -56,7 +56,7 @@ class EventsShowcaseBrick extends Brick
 
             default => Event::query()
                 ->where('is_published', true)
-                ->with(['eventCategory', 'team'])
+                ->with(['eventCategory', 'team', 'media'])
                 ->inRandomOrder()
                 ->limit($count)
                 ->get(),

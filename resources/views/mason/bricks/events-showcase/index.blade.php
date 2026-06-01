@@ -35,9 +35,7 @@
  $categoryTitle = $category ? $category->getTranslation('title', app()->getLocale()) : '';
  $eventTitle = $event->getTranslation('title', app()->getLocale());
  $eventDescription = $event->getTranslation('card_description', app()->getLocale());
- $eventImage = $event->card_image
- ? \Illuminate\Support\Facades\Storage::disk('public')->url($event->card_image)
- : null;
+ $eventImage = $event->getFirstMediaUrl('card_image') ?: null;
  $eventDate = $event->date
  ? $event->date->translatedFormat('F Y')
  : '';

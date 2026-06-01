@@ -164,9 +164,9 @@
                     </button>
                 </form>
             @else
-                <a href="{{ locale_url('/pridaj-sa') }}" class="md:hidden bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center mt-2 w-full block">
-                    {{ __('layout.join_us') }}
-                </a>
+{{--                <a href="{{ locale_url('/pridaj-sa') }}" class="md:hidden bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center mt-2 w-full block">--}}
+{{--                    {{ __('layout.join_us') }}--}}
+{{--                </a>--}}
             @endauth
             <div class="xl:hidden pt-2">
                 <x-locale-switcher />
