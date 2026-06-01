@@ -34,36 +34,39 @@
                     $userRegistration = $event->registrations->first();
                 @endphp
                 <x-filament::section>
-                    <div class="flex items-start gap-4">
-                        {{-- Date Badge --}}
-                        <div class="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
-                            <span class="text-lg font-bold leading-none text-gray-900 dark:text-white">{{ $event->date?->format('d') }}</span>
-                            <span class="text-xs uppercase text-gray-500 dark:text-gray-400">{{ $event->date?->translatedFormat('M') }}</span>
-                        </div>
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                        {{-- Date Badge + Event Info --}}
+                        <div class="flex min-w-0 flex-1 items-start gap-4">
+                            {{-- Date Badge --}}
+                            <div class="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <span class="text-lg font-bold leading-none text-gray-900 dark:text-white">{{ $event->date?->format('d') }}</span>
+                                <span class="text-xs uppercase text-gray-500 dark:text-gray-400">{{ $event->date?->translatedFormat('M') }}</span>
+                            </div>
 
-                        {{-- Event Info --}}
-                        <div class="min-w-0 flex-1">
-                            <h3 class="font-semibold text-gray-900 dark:text-white">
-                                {{ $event->getTranslation('title', app()->getLocale()) ?: $event->getTranslation('title', 'sk') }}
-                            </h3>
-                            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                                @if($event->eventCategory)
-                                    <span>{{ $event->eventCategory->getTranslation('title', app()->getLocale()) ?: $event->eventCategory->getTranslation('title', 'sk') }}</span>
-                                @endif
-                                @if($event->city)
-                                    <span class="flex items-center gap-1">
-                                        <x-filament::icon icon="heroicon-m-map-pin" class="h-3 w-3" />
-                                        {{ $event->city }}
-                                    </span>
-                                @endif
-                                @if($event->date)
-                                    <span>{{ $event->date->format('d.m.Y') }}@if($event->date_end && !$event->date_end->isSameDay($event->date)) - {{ $event->date_end->format('d.m.Y') }}@endif</span>
-                                @endif
+                            {{-- Event Info --}}
+                            <div class="min-w-0 flex-1">
+                                <h3 class="font-semibold text-gray-900 dark:text-white">
+                                    {{ $event->getTranslation('title', app()->getLocale()) ?: $event->getTranslation('title', 'sk') }}
+                                </h3>
+                                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                                    @if($event->eventCategory)
+                                        <span>{{ $event->eventCategory->getTranslation('title', app()->getLocale()) ?: $event->eventCategory->getTranslation('title', 'sk') }}</span>
+                                    @endif
+                                    @if($event->city)
+                                        <span class="flex items-center gap-1">
+                                            <x-filament::icon icon="heroicon-m-map-pin" class="h-3 w-3" />
+                                            {{ $event->city }}
+                                        </span>
+                                    @endif
+                                    @if($event->date)
+                                        <span>{{ $event->date->format('d.m.Y') }}@if($event->date_end && !$event->date_end->isSameDay($event->date)) - {{ $event->date_end->format('d.m.Y') }}@endif</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
                         {{-- Actions --}}
-                        <div class="flex flex-shrink-0 items-center gap-2">
+                        <div class="flex flex-shrink-0 flex-wrap items-center gap-2">
                             @if($userRegistration)
                                 <x-filament::badge :color="$userRegistration->status->getColor()">
                                     {{ $userRegistration->status->getLabel() }}

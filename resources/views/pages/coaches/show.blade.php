@@ -61,11 +61,7 @@
                     </div>
 
                     <div class="text-[#AAAAAA] text-base leading-relaxed space-y-4">
-                        @foreach(explode("\n", $biography) as $paragraph)
-                            @if(trim($paragraph))
-                                <p>{{ $paragraph }}</p>
-                            @endif
-                        @endforeach
+                        {!! $biography !!}
                     </div>
                 </div>
 
