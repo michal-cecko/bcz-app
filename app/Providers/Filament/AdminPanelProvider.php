@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Enums\RoleEnum;
+use App\Filament\Auth\Login;
 use App\Filament\Pages\Auth\UserSetupWizard;
 use App\Filament\Resources\Settings\SettingResource;
 use App\Filament\Resources\Teams\TeamResource;
@@ -41,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->login()
+            ->login(Login::class)
             ->profile()
             ->spa()
             ->unsavedChangesAlerts()

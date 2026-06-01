@@ -96,6 +96,37 @@ class CustomerLoginAccessTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_teamless_customer_at_admin_login_is_redirected_to_their_panel(): void
+    {
+        // Fallback: someone reaching /admin/login directly (bookmark, old link)
+        // with valid credentials but no admin access is logged in and forwarded
+        // to their home panel instead of seeing "credentials do not match".
+        $user = $this->teamlessCustomer();
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(\App\Filament\Auth\Login::class)
+            ->fillForm(['email' => $user->email, 'password' => self::PASSWORD])
+            ->call('authenticate')
+            ->assertHasNoFormErrors()
+            ->assertRedirect('/customer');
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_wrong_password_at_admin_login_still_errors(): void
+    {
+        // The fallback must never mask a genuinely wrong password.
+        $user = $this->teamlessCustomer();
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(\App\Filament\Auth\Login::class)
+            ->fillForm(['email' => $user->email, 'password' => 'wrong-password'])
+            ->call('authenticate')
+            ->assertHasFormErrors(['email']);
+
+        $this->assertGuest();
+    }
+
     public function test_header_sign_in_links_to_login_route_not_admin_panel(): void
     {
         // The site header's "Sign In" link must use the canonical login route
