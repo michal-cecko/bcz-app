@@ -239,7 +239,7 @@
                 @guest
                     <div class="text-center pt-4">
                         <span class="text-bcz-dim text-sm">Už máš účet?</span>
-                        <a href="/admin/login" class="text-bcz-red text-sm font-semibold hover:underline ml-1.5">Prihlásiť sa</a>
+                        <a href="{{ route('login') }}" class="text-bcz-red text-sm font-semibold hover:underline ml-1.5">Prihlásiť sa</a>
                     </div>
                 @endguest
             @endif

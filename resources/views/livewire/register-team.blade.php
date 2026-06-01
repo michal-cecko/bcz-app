@@ -84,7 +84,7 @@
                                 </button>
                                 <p class="text-center text-sm">
                                     <span class="text-bcz-dim">Už máte účet?</span>
-                                    <a href="/admin/login" class="text-bcz-red font-semibold hover:underline ml-1">Prihlásiť sa</a>
+                                    <a href="{{ route('login') }}" class="text-bcz-red font-semibold hover:underline ml-1">Prihlásiť sa</a>
                                 </p>
                             </div>
                         </div>

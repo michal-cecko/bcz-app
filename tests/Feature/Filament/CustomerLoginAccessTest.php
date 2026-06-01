@@ -96,6 +96,17 @@ class CustomerLoginAccessTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_header_sign_in_links_to_login_route_not_admin_panel(): void
+    {
+        // The site header's "Sign In" link must use the canonical login route
+        // (which lands on the customer panel), not a hardcoded /admin/login that
+        // rejects teamless customers.
+        $html = view('components.header')->render();
+
+        $this->assertStringContainsString(route('login'), $html);
+        $this->assertStringNotContainsString('/admin/login', $html);
+    }
+
     public function test_wrong_password_is_rejected(): void
     {
         $user = $this->teamlessCustomer();

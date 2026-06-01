@@ -99,7 +99,7 @@
                     </div>
                 </div>
             @else
-                <a href="/admin/login" class="hidden md:block text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">
+                <a href="{{ route('login') }}" class="hidden md:block text-bcz-muted text-xs font-medium tracking-widest hover:text-white transition-colors">
                     {{ __('layout.sign_in') }}
                 </a>
 {{--                <a href="{{ locale_url('/pridaj-sa') }}" class="hidden md:block bg-bcz-red text-white text-[11px] font-bold tracking-widest px-5 py-2.5 hover:bg-red-700 transition-colors">--}}
