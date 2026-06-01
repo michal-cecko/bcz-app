@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\MenuLocationEnum;
+use App\Http\Responses\FilamentLoginResponse;
 use App\Http\Responses\LogoutResponse;
 use App\Jobs\OptimizeImageJob;
 use App\Models\EventRegistration;
@@ -12,6 +13,7 @@ use App\Models\TeamSubscription;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Observers\TrainingObserver;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Forms\Components\BaseFileUpload;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -32,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \Filament\Auth\Http\Responses\Contracts\LogoutResponse::class,
             LogoutResponse::class,
+        );
+
+        $this->app->bind(
+            LoginResponse::class,
+            FilamentLoginResponse::class,
         );
     }
 

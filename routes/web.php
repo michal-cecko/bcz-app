@@ -89,7 +89,7 @@ $frontendRoutes = function () {
     Route::redirect('/tim/{any}', '/timy', 301)->where('any', '.+');
 
     Route::get('/{slug}', [PageController::class, 'show'])
-        ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|payment|en|cs|timy).*$');
+        ->where('slug', '^(?!admin|login|gopay|team-invitations|magic-login|payment|en|cs|timy).*$');
 };
 
 // Localized: /en/..., /cs/...
@@ -168,7 +168,7 @@ Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
 
 // Catch-all CMS page
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', '^(?!admin|gopay|team-invitations|magic-login|payment|en|cs|timy).*$')
+    ->where('slug', '^(?!admin|login|gopay|team-invitations|magic-login|payment|en|cs|timy).*$')
     ->name('page.show');
 
 /*
@@ -188,7 +188,13 @@ Route::middleware('signed')->group(function () {
         ->name('payment.page');
 });
 
-Route::get('/login', fn () => redirect('/admin/login'))->name('login');
+// Point the canonical login link at the customer panel: every authenticated
+// user can access it (canAccessPanel('customer') === true), whereas the admin
+// panel rejects teamless customers — sending them there made a correct password
+// surface as "these credentials do not match" (Filament reuses that error for a
+// failed canAccessPanel check). Post-login, FilamentLoginResponse routes team
+// members and admins on to /admin via User::homePanelId().
+Route::get('/login', fn () => redirect('/customer/login'))->name('login');
 
 Route::post('/logout', function () {
     Auth::logout();
