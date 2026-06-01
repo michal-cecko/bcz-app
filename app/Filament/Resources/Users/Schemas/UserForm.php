@@ -20,6 +20,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Spatie\Permission\Models\Role;
@@ -35,6 +36,7 @@ class UserForm
                         self::personalInfoTab(),
                         self::passwordTab()->visible(fn (string $operation): bool => $operation === 'edit'),
                         self::publicProfilesTab(),
+                        self::passkeysTab()->visible(fn (string $operation, ?User $record): bool => $operation === 'edit' && $record?->id === auth()->id()),
                     ])
                     ->persistTabInQueryString()
                     ->columnSpanFull(),
@@ -196,6 +198,15 @@ class UserForm
                             ->dehydrated(false)
                             ->requiredWith('password'),
                     ]),
+            ]);
+    }
+
+    protected static function passkeysTab(): Tab
+    {
+        return Tab::make('Passkeys')
+            ->icon('heroicon-o-finger-print')
+            ->schema([
+                View::make('filament.components.passkeys-section'),
             ]);
     }
 

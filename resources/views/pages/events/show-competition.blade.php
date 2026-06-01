@@ -218,7 +218,7 @@
  }
  $tabs['popis'] = __('event_detail.tab_description');
  $tabs['harmonogram'] = __('event_detail.tab_timetable');
- if ($detail?->rounds->isNotEmpty()) {
+ if ($detail?->rounds->contains(fn ($r) => $r->scores_published)) {
      $tabs['vysledky'] = __('event_detail.tab_results');
  }
  if ($status !== 'finished') {
