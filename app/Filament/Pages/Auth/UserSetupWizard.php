@@ -176,10 +176,9 @@ class UserSetupWizard extends SimplePage
             ->afterValidation(function () {
                 /** @var User $user */
                 $user = auth()->user();
-                $state = $this->form->getState();
 
                 $user->update([
-                    'password' => $state['password'],
+                    'password' => $this->data['password'],
                     'password_set_at' => now(),
                 ]);
 
