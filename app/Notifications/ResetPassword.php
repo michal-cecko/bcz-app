@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use Filament\Facades\Filament;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -23,10 +24,11 @@ class ResetPassword extends Notification implements ShouldQueue
     {
         $expireMinutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire', 60);
 
-        $resetUrl = route('filament.admin.auth.password-reset.reset', [
-            'token' => $this->token,
-            'email' => $notifiable->getEmailForPasswordReset(),
-        ]);
+        // Filament's password-reset route is protected by the `signed` middleware,
+        // so the link must carry a valid signature. Filament::getResetPasswordUrl()
+        // builds the same signed URL Filament's own forgot-password flow uses
+        // (resolving to the default panel when sent outside a request, e.g. queued).
+        $resetUrl = Filament::getResetPasswordUrl($this->token, $notifiable);
 
         $subject = __('emails.reset_password.subject');
 
