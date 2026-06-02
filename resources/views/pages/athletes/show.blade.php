@@ -14,6 +14,7 @@
     $gallery = $profile?->getMedia('gallery') ?? collect();
     $yearsExperience = $profile?->date_started_working_out ? (int) $profile->date_started_working_out->diffInYears(now()) : null;
     $country = $user->country_code ?? 'SK';
+    $specialization = ($profile?->getTranslation('specialization', $locale) ?: null) ?? 'Street Workout';
 @endphp
 
 @section('content')
@@ -39,7 +40,7 @@
                 </h1>
 
                 <span class="text-bcz-red text-lg font-medium tracking-[2px]">
-                    {{ $country }} &middot; {{ __('Parkour & Street Workout Atlet') }}
+                    {{ $country }} &middot; {{ $specialization }} {{ __('Atlét') }}
                 </span>
 
                 {{-- Stats --}}

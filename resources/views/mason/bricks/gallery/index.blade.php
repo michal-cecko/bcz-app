@@ -32,16 +32,16 @@
  @keydown.left.window="if(lightbox) current = (current - 1 + items.length) % items.length"
  @keydown.right.window="if(lightbox) current = (current + 1) % items.length"
  >
- <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"style="height: 500px">
+ <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
  @php $globalIdx = 0; @endphp
  @foreach($colImages as $colIndex => $col)
  @if(count($col) > 0)
- <div class="flex flex-col gap-5 h-full">
+ <div class="flex flex-col gap-5">
  @foreach($col as $imgIndex => $media)
  @php $ratio = $ratios[$colIndex][$imgIndex] ?? 6; @endphp
  <div
  class="overflow-hidden bg-[#1A1A1A] cursor-pointer relative group min-h-0"
- style="flex: {{ $ratio }}"
+ style="aspect-ratio: 6 / {{ $ratio }}"
  @if($media->url) @click="current = {{ $globalIdx }}; lightbox = true"@endif
  >
  @if($media->url)

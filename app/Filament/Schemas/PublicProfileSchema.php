@@ -52,16 +52,26 @@ class PublicProfileSchema
             Tabs::make('coach_bio_tabs')
                 ->tabs([
                     Tab::make('SK')->schema([
+                        TextInput::make('specialization.sk')
+                            ->label('Špecializácia (SK)')
+                            ->placeholder('napr. Parkour & Street Workout')
+                            ->helperText('Zobrazí sa pod menom ako "Tréner ...".'),
                         RichEditor::make('biography.sk')
                             ->label('Biografia (SK)')
                             ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
                     ]),
                     Tab::make('EN')->schema([
+                        TextInput::make('specialization.en')
+                            ->label('Specialization (EN)')
+                            ->placeholder('e.g. Parkour & Street Workout'),
                         RichEditor::make('biography.en')
                             ->label('Biography (EN)')
                             ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
                     ]),
                     Tab::make('CS')->schema([
+                        TextInput::make('specialization.cs')
+                            ->label('Specializace (CS)')
+                            ->placeholder('např. Parkour & Street Workout'),
                         RichEditor::make('biography.cs')
                             ->label('Biografie (CS)')
                             ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
@@ -100,16 +110,26 @@ class PublicProfileSchema
             Tabs::make('athlete_journey_tabs')
                 ->tabs([
                     Tab::make('SK')->schema([
+                        TextInput::make('specialization.sk')
+                            ->label('Špecializácia (SK)')
+                            ->placeholder('napr. Parkour & Street Workout')
+                            ->helperText('Zobrazí sa pod menom ako "... Atlét".'),
                         RichEditor::make('journey_text.sk')
                             ->label('Môj príbeh (SK)')
                             ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
                     ]),
                     Tab::make('EN')->schema([
+                        TextInput::make('specialization.en')
+                            ->label('Specialization (EN)')
+                            ->placeholder('e.g. Parkour & Street Workout'),
                         RichEditor::make('journey_text.en')
                             ->label('My story (EN)')
                             ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),
                     ]),
                     Tab::make('CS')->schema([
+                        TextInput::make('specialization.cs')
+                            ->label('Specializace (CS)')
+                            ->placeholder('např. Parkour & Street Workout'),
                         RichEditor::make('journey_text.cs')
                             ->label('Môj príbeh (CS)')
                             ->toolbarButtons(['bold', 'italic', 'link', 'orderedList', 'bulletList']),

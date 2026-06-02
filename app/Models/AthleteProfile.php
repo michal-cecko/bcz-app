@@ -16,12 +16,13 @@ class AthleteProfile extends Model implements HasMedia
     use HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
-    public array $translatable = ['journey_text'];
+    public array $translatable = ['journey_text', 'specialization'];
 
     protected $fillable = [
         'user_id',
         'date_started_working_out',
         'journey_text',
+        'specialization',
         'journey_image',
         'main_image',
         'draft_data',

@@ -12,6 +12,7 @@
     $certifications = $user->certifications->sortBy('sort_order');
     $gallery = $profile?->getMedia('gallery') ?? collect();
     $hasAthleteProfile = $hasAthleteProfile ?? false;
+    $specialization = ($profile?->getTranslation('specialization', $locale) ?: null) ?? 'Parkour & Street Workout';
 @endphp
 
 @section('content')
@@ -41,7 +42,7 @@
 
             {{-- Subtitle --}}
             <span class="text-bcz-red text-base font-medium tracking-[2px]">
-                {{ __('coach_detail.role_subtitle', ['name' => 'Parkour & Street Workout']) }}
+                {{ __('coach_detail.role_subtitle', ['name' => $specialization]) }}
             </span>
         </div>
     </section>

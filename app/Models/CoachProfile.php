@@ -16,12 +16,13 @@ class CoachProfile extends Model implements HasMedia
     use HasFactory, HasTranslations, HasUuidV7, InteractsWithMedia;
 
     /** @var list<string> */
-    public array $translatable = ['biography'];
+    public array $translatable = ['biography', 'specialization'];
 
     protected $fillable = [
         'user_id',
         'date_started_coaching',
         'biography',
+        'specialization',
         'main_background_image',
         'biography_image',
         'draft_data',
