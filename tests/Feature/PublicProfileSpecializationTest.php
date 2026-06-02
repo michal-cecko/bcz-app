@@ -54,7 +54,7 @@ class PublicProfileSpecializationTest extends TestCase
         $response = $this->get(route('coach.show', $user));
 
         $response->assertStatus(200);
-        $response->assertSee('Parkour & Street Workout', false);
+        $response->assertSee('Tréner Parkour &amp; Street Workout', false);
     }
 
     public function test_athlete_profile_shows_custom_specialization(): void
