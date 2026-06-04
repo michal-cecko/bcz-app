@@ -24,8 +24,8 @@ jobs:
 
           SITES = [
               "https://bcz-club.com",
-              "https://adminka.synapps.sk",
-              "https://synapps.sk",
+              "https://dashboard.cecko.dev",
+              "https://cecko.dev",
           ]
           GH_TOKEN = os.environ["GH_TOKEN"]
           REPO = os.environ["REPO"]
