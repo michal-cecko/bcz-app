@@ -3,6 +3,14 @@
 @import 'filepond/dist/filepond.min.css';
 @import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css';
 
+/* Native date/time inputs — Chrome renders a dark picker icon by default;
+   invert it to white so it's visible on the dark form surfaces. */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
 /* Filepond — public BCZ theme (dark surface, BCZ red accent) */
 .filepond--root {
     --filepond--color-primary: #FF2D2D;

@@ -41,6 +41,20 @@ class FrontendHeaderProfileLinkTest extends TestCase
         $response->assertSee($expectedUrl, false);
     }
 
+    public function test_guest_sees_login_link_in_both_desktop_and_mobile_nav(): void
+    {
+        // Regression: the mobile dropdown's guest branch had no login link at
+        // all (only the commented-out join-us button), so guests on small
+        // screens could not reach the login page from the header.
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+
+        $loginLinkCount = substr_count($response->getContent(), 'href="'.route('login').'"');
+
+        $this->assertSame(2, $loginLinkCount, 'Expected a login link in both the desktop nav and the mobile dropdown.');
+    }
+
     public function test_team_member_gets_admin_panel_profile_link(): void
     {
         $team = Team::factory()->create();

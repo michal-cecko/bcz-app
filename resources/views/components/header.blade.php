@@ -164,6 +164,10 @@
                     </button>
                 </form>
             @else
+                <a href="{{ route('login') }}" class="flex items-center gap-2 text-bcz-muted text-sm font-medium tracking-widest uppercase hover:text-white transition-colors py-1 border-t border-bcz-border/30 mt-2 pt-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    {{ __('layout.sign_in') }}
+                </a>
 {{--                <a href="{{ locale_url('/pridaj-sa') }}" class="md:hidden bg-bcz-red text-white text-sm font-bold tracking-widest px-7 py-3.5 hover:bg-red-700 transition-colors text-center mt-2 w-full block">--}}
 {{--                    {{ __('layout.join_us') }}--}}
 {{--                </a>--}}
