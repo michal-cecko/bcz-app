@@ -10,7 +10,7 @@
 @if ($pageOgImage)
     @section('og_image', $pageOgImage)
 @endif
-@section('og_type', 'article')
+@section('og_type', $page->slug === '/' ? 'website' : 'article')
 
 @section('content')
     {!! $renderedContent !!}
