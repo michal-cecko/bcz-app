@@ -230,8 +230,8 @@
                 @foreach($team->organizedCompetitions->take(3) as $competition)
                     <div class="rounded-2xl bg-[#111111] border border-[#1A1A1A] overflow-hidden group">
                         <div class="h-[180px] bg-[#1A1A1A] overflow-hidden">
-                            @if($competition->featured_image)
-                                <img src="{{ $competition->featured_image }}" alt="{{ $competition->getTranslation('name', app()->getLocale()) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            @if($competition->getFirstMediaUrl('card_image'))
+                                <img src="{{ $competition->getFirstMediaUrl('card_image') }}" alt="{{ $competition->getTranslation('title', app()->getLocale()) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
                                     <svg class="w-12 h-12 text-bcz-faint" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-4.52-1.978 6.003 6.003 0 01-4.52 1.978"/></svg>
@@ -239,12 +239,12 @@
                             @endif
                         </div>
                         <div class="px-5 py-4 flex flex-col gap-2.5">
-                            <h3 class="text-white text-[17px] font-bold">{{ $competition->getTranslation('name', app()->getLocale()) }}</h3>
-                            @if($competition->getTranslation('description', app()->getLocale()))
-                                <p class="text-bcz-muted text-[13px] leading-relaxed line-clamp-2">{{ $competition->getTranslation('description', app()->getLocale()) }}</p>
+                            <h3 class="text-white text-[17px] font-bold">{{ $competition->getTranslation('title', app()->getLocale()) }}</h3>
+                            @if($competition->getTranslation('card_description', app()->getLocale()))
+                                <p class="text-bcz-muted text-[13px] leading-relaxed line-clamp-2">{{ $competition->getTranslation('card_description', app()->getLocale()) }}</p>
                             @endif
-                            @if($competition->start_date)
-                                <p class="text-bcz-dim text-xs">{{ $competition->start_date->translatedFormat('F Y') }}</p>
+                            @if($competition->date)
+                                <p class="text-bcz-dim text-xs">{{ $competition->date->translatedFormat('F Y') }}</p>
                             @endif
                         </div>
                     </div>
