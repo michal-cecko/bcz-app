@@ -7,7 +7,7 @@
                 <img src="/logo/logo-horizontal-short-white.svg" alt="BCZ Club" class="h-10">
             </div>
             <p class="text-bcz-dim text-sm leading-relaxed">
-                Beyond Comfort Zone. Profesionálna asociácia parkouru a kalisteniky venovaná súťažiam, tréningom a spektakulárnym vystúpeniam.
+                Beyond Comfort Zone. Profesionálný klub kalisteniky venovaný súťažiam, tréningom a spektakulárnym vystúpeniam.
             </p>
         </div>
 

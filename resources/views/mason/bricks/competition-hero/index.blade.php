@@ -1,7 +1,7 @@
 @php
  $h1 = brick_trans($headline1 ?? ['sk' => 'BOJUJEME']);
  $h2 = brick_trans($headline2 ?? ['sk' => 'ZA VÍŤAZSTVO']);
- $sub = brick_trans($subtitle ?? ['sk' => 'Reprezentujeme Slovensko na medzinárodných súťažiach v parkour freestyle, speed a skill competition.']);
+ $sub = brick_trans($subtitle ?? ['sk' => 'Reprezentujeme Slovensko na medzinárodných aj domácich súťažiach. Organizujeme súťaže na svetovej úrovni.']);
  $badgeText = brick_trans($badge ?? ['sk' => 'SÚŤAŽNÝ TÍM BCZ']);
  $img = $heroImage ?? '';
 
