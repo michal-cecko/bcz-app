@@ -34,8 +34,15 @@ COPY . /var/www
 RUN git config --global --add safe.directory /var/www \
     && composer run post-autoload-dump \
     && npm run build \
-    && php artisan storage:link || true \
-    && vendor/bin/rr get-binary --location /usr/local/bin
+    && (php artisan storage:link || true) \
+    # RoadRunner binary is fetched from GitHub releases, which intermittently
+    # returns 5xx. Retry a few times so a transient failure doesn't fail the build.
+    && for i in 1 2 3 4 5; do \
+        vendor/bin/rr get-binary --location /usr/local/bin && break; \
+        [ "$i" = "5" ] && echo "RoadRunner download failed after 5 attempts" && exit 1; \
+        echo "RoadRunner download failed (attempt $i), retrying in 10s..."; \
+        sleep 10; \
+    done
 
 # ---- Production stage (lean runtime) ----
 FROM php:8.4-cli-alpine
