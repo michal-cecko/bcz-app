@@ -16,4 +16,5 @@ enum SettingTypeEnum: string implements HasLabel
     case MULTI_SELECT = 'multi_select';
     case TEAM_SELECT = 'team_select';
     case DATE = 'date';
+    case IMAGE = 'image';
 }

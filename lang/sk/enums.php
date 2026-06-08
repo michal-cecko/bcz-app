@@ -114,6 +114,7 @@ return [
         SettingTypeEnum::MULTI_SELECT->value => 'Viacnásobný výber',
         SettingTypeEnum::TEAM_SELECT->value => 'Výber tímu',
         SettingTypeEnum::DATE->value => 'Dátum',
+        SettingTypeEnum::IMAGE->value => 'Obrázok',
     ],
     SponsorTagEnum::class => [
         SponsorTagEnum::MAIN_SPONSOR->value => 'Hlavný sponzor',

@@ -1,6 +1,6 @@
 @php
     $schemaLocale = app()->getLocale();
-    $schemaImage = $event->getFirstMediaUrl('detail_image') ?: $event->getFirstMediaUrl('card_image') ?: asset('images/og-default.png');
+    $schemaImage = $event->getFirstMediaUrl('detail_image') ?: $event->getFirstMediaUrl('card_image') ?: seo_default_og_image();
     $eventSchema = array_filter([
         '@context' => 'https://schema.org',
         '@type' => 'Event',

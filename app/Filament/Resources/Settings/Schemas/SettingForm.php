@@ -6,6 +6,7 @@ use App\Enums\SettingTypeEnum;
 use App\Models\Setting;
 use App\Models\Team;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -82,6 +83,17 @@ class SettingForm
             ],
             SettingTypeEnum::DATE => [
                 DatePicker::make('value')->label('Hodnota')->nullable(),
+            ],
+            SettingTypeEnum::IMAGE => [
+                FileUpload::make('value')
+                    ->label('Náhľadový obrázok pre zdieľanie na sociálnych sieťach')
+                    ->image()
+                    ->disk('public')
+                    ->visibility('public')
+                    ->directory('settings')
+                    ->imageEditor()
+                    ->imageEditorAspectRatios(['1.91:1'])
+                    ->helperText('Zobrazí sa pri zdieľaní odkazu na stránku (Facebook, Instagram, X…). Odporúčaný rozmer 1200×630 px (pomer 1.91:1).'),
             ],
             default => [
                 TextInput::make('value')->label('Hodnota'),

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Filament;
 
 use App\Enums\RoleEnum;
+use App\Enums\SettingTypeEnum;
 use App\Filament\Resources\Settings\Pages\EditSetting;
 use App\Filament\Resources\Settings\Pages\ListSettings;
 use App\Filament\Resources\Settings\SettingResource;
@@ -11,6 +12,8 @@ use App\Models\Team;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -66,6 +69,30 @@ class SettingResourceTest extends TestCase
         $setting->refresh();
         $this->assertEquals('new_value', $setting->value);
         $this->assertEquals('original_key', $setting->key);
+    }
+
+    public function test_can_upload_image_setting(): void
+    {
+        Storage::fake('public');
+
+        $setting = Setting::factory()->create([
+            'key' => 'default_og_image',
+            'type' => SettingTypeEnum::IMAGE,
+            'value' => null,
+        ]);
+
+        $file = UploadedFile::fake()->image('og.png', 1200, 630);
+
+        Livewire::test(EditSetting::class, ['record' => $setting->getRouteKey()])
+            ->assertOk()
+            ->assertFormFieldExists('value')
+            ->fillForm(['value' => [$file]])
+            ->call('save')
+            ->assertNotified();
+
+        $setting->refresh();
+        $this->assertNotNull($setting->value);
+        Storage::disk('public')->assertExists($setting->value);
     }
 
     public function test_cannot_create_settings(): void

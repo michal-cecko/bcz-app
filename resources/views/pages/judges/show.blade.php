@@ -18,7 +18,7 @@
         'name' => $judge->name,
         'description' => seo_description($biography),
         'url' => url()->current(),
-        'image' => $ogImage ?: asset('images/og-default.png'),
+        'image' => $ogImage ?: seo_default_og_image(),
     ];
 @endphp
 

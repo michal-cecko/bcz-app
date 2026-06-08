@@ -23,7 +23,7 @@
         'jobTitle' => $specialization,
         'description' => seo_description($journeyText ?: $specialization),
         'url' => url()->current(),
-        'image' => $ogImage ?: asset('images/og-default.png'),
+        'image' => $ogImage ?: seo_default_og_image(),
     ];
 @endphp
 

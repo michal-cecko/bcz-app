@@ -74,6 +74,14 @@ class SettingSeeder extends Seeder
                 'is_exposed' => false,
             ],
             [
+                'key' => 'default_og_image',
+                'label' => ['sk' => 'Predvolený obrázok pre zdieľanie (OG)', 'en' => 'Default Sharing Image (OG)'],
+                'description' => ['sk' => 'Náhľadový obrázok, ktorý sa zobrazí pri zdieľaní odkazu na stránku na sociálnych sieťach (Facebook, Instagram, X…). Odporúčaný rozmer 1200×630 px.', 'en' => 'Preview image shown when a page link is shared on social media (Facebook, Instagram, X…). Recommended size 1200×630 px.'],
+                'type' => SettingTypeEnum::IMAGE,
+                'value' => null,
+                'is_exposed' => true,
+            ],
+            [
                 'key' => 'social_instagram_url',
                 'label' => ['sk' => 'Instagram URL', 'en' => 'Instagram URL'],
                 'description' => ['sk' => 'Predvolená URL adresa Instagram profilu.', 'en' => 'Default Instagram profile URL.'],

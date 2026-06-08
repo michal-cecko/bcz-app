@@ -42,6 +42,7 @@ class Setting extends Model
             SettingTypeEnum::TEAM_SELECT => Team::find($this->value)?->name,
             SettingTypeEnum::MULTI_SELECT => is_array($this->value) ? implode(', ', $this->value) : $this->value,
             SettingTypeEnum::BOOLEAN => $this->value ? 'Áno' : 'Nie',
+            SettingTypeEnum::IMAGE => $this->value ? 'Nastavený' : 'Nenastavený',
             default => is_array($this->value) ? json_encode($this->value) : (string) $this->value,
         };
     }

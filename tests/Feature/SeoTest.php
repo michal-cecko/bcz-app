@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Page;
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class SeoTest extends TestCase
@@ -61,6 +63,18 @@ class SeoTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee(__('seo.default_description'), false);
+    }
+
+    public function test_default_og_image_setting_overrides_bundled_default(): void
+    {
+        $this->publishHomepage();
+        Setting::set('default_og_image', 'settings/custom-og.png');
+
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee(Storage::disk('public')->url('settings/custom-og.png'), false);
+        $response->assertDontSee('og-default.png', false);
     }
 
     public function test_sitemap_returns_xml_with_published_pages(): void

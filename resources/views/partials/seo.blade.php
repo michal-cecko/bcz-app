@@ -5,7 +5,7 @@
     $seoDescription = trim($__env->yieldContent('meta_description'));
     $seoDescription = $seoDescription !== '' ? $seoDescription : __('seo.default_description');
     $seoImage = trim($__env->yieldContent('og_image'));
-    $seoImage = $seoImage !== '' ? $seoImage : asset('images/og-default.png');
+    $seoImage = $seoImage !== '' ? $seoImage : seo_default_og_image();
     $seoType = trim($__env->yieldContent('og_type')) ?: 'website';
     $seoUrl = url()->current();
     $seoLocale = app()->getLocale();

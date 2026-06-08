@@ -9,7 +9,7 @@
         'name' => $team->getTranslation('name', $seoLocale),
         'description' => seo_description($team->getTranslation('story', $seoLocale)),
         'url' => url()->current(),
-        'logo' => $teamOgImage ?: asset('images/og-default.png'),
+        'logo' => $teamOgImage ?: seo_default_og_image(),
     ];
 @endphp
 

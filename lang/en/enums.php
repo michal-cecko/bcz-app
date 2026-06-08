@@ -114,6 +114,7 @@ return [
         SettingTypeEnum::MULTI_SELECT->value => 'Multi Select',
         SettingTypeEnum::TEAM_SELECT->value => 'Team Select',
         SettingTypeEnum::DATE->value => 'Date',
+        SettingTypeEnum::IMAGE->value => 'Image',
     ],
     SponsorTagEnum::class => [
         SponsorTagEnum::MAIN_SPONSOR->value => 'Main Sponsor',

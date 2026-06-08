@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\SetLocale;
+use App\Models\Setting;
 use App\Services\LinkResolver;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -231,6 +232,23 @@ if (! function_exists('seo_description')) {
         }
 
         return Str::limit($clean, $length);
+    }
+}
+
+if (! function_exists('seo_default_og_image')) {
+    /**
+     * Resolve the default social-sharing (OG) image URL: the one uploaded in the
+     * panel Settings, falling back to the bundled default asset.
+     */
+    function seo_default_og_image(): string
+    {
+        $path = Setting::get('default_og_image');
+
+        if (is_string($path) && $path !== '') {
+            return Storage::disk('public')->url($path);
+        }
+
+        return asset('images/og-default.png');
     }
 }
 
