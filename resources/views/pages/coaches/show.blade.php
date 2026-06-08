@@ -13,7 +13,29 @@
     $gallery = $profile?->getMedia('gallery') ?? collect();
     $hasAthleteProfile = $hasAthleteProfile ?? false;
     $specialization = ($profile?->getTranslation('specialization', $locale) ?: null) ?? 'Parkour & Street Workout';
+    $ogImage = $user->getFirstMediaUrl('profile_image') ?: $heroImage ?: $biographyImage;
+    $personSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Person',
+        'name' => $user->name,
+        'jobTitle' => $specialization,
+        'description' => seo_description($biography ?: $specialization),
+        'url' => url()->current(),
+        'image' => $ogImage ?: asset('images/og-default.png'),
+    ];
 @endphp
+
+@section('meta_description', seo_description($biography ?: $specialization))
+@if ($ogImage)
+    @section('og_image', $ogImage)
+@endif
+@section('og_type', 'profile')
+
+@push('schema')
+    <script type="application/ld+json">
+        @json($personSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    </script>
+@endpush
 
 @section('content')
     {{-- Hero Section --}}

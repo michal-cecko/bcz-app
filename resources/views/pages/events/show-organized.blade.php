@@ -15,6 +15,14 @@
  $hasRegistration = $org && in_array($event->status, ['registering', 'countdown', 'upcoming']);
 @endphp
 
+@section('meta_description', seo_description($description))
+@if ($heroImage)
+    @section('og_image', $heroImage)
+@endif
+@section('og_type', 'article')
+
+@include('partials.event-schema')
+
 @section('content')
  @unless($event->is_published)
      <x-preview-banner />

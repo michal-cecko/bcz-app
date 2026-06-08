@@ -1,6 +1,30 @@
 @extends('layouts.public')
 
-@section('title', $team->getTranslation('name', app()->getLocale()) . ' | BCZ Club')
+@php
+    $seoLocale = app()->getLocale();
+    $teamOgImage = $team->getFilamentAvatarUrl() ?: $team->getFirstMediaUrl('logo');
+    $teamSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'SportsTeam',
+        'name' => $team->getTranslation('name', $seoLocale),
+        'description' => seo_description($team->getTranslation('story', $seoLocale)),
+        'url' => url()->current(),
+        'logo' => $teamOgImage ?: asset('images/og-default.png'),
+    ];
+@endphp
+
+@section('title', $team->getTranslation('name', $seoLocale) . ' | BCZ Club')
+@section('meta_description', seo_description($team->getTranslation('story', $seoLocale)))
+@if ($teamOgImage)
+    @section('og_image', $teamOgImage)
+@endif
+@section('og_type', 'profile')
+
+@push('schema')
+    <script type="application/ld+json">
+        @json($teamSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    </script>
+@endpush
 
 @section('content')
     {{-- Hero Section --}}

@@ -31,7 +31,14 @@
         $capacityPercent >= 65 => 'bg-orange-400',
         default => 'bg-emerald-500',
     };
+    $ogImage = $heroImage ?: $training->team?->getFirstMediaUrl('logo');
 @endphp
+
+@section('meta_description', seo_description($description))
+@if ($ogImage)
+    @section('og_image', $ogImage)
+@endif
+@section('og_type', 'article')
 
 @section('content')
     {{-- Hero Section --}}

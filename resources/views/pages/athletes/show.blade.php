@@ -15,7 +15,29 @@
     $yearsExperience = $profile?->date_started_working_out ? (int) $profile->date_started_working_out->diffInYears(now()) : null;
     $country = $user->country_code ?? 'SK';
     $specialization = ($profile?->getTranslation('specialization', $locale) ?: null) ?? 'Street Workout';
+    $ogImage = $user->getFirstMediaUrl('profile_image') ?: $heroImage ?: $journeyImage;
+    $personSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Person',
+        'name' => $user->name,
+        'jobTitle' => $specialization,
+        'description' => seo_description($journeyText ?: $specialization),
+        'url' => url()->current(),
+        'image' => $ogImage ?: asset('images/og-default.png'),
+    ];
 @endphp
+
+@section('meta_description', seo_description($journeyText ?: $specialization))
+@if ($ogImage)
+    @section('og_image', $ogImage)
+@endif
+@section('og_type', 'profile')
+
+@push('schema')
+    <script type="application/ld+json">
+        @json($personSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    </script>
+@endpush
 
 @section('content')
     {{-- Hero Section --}}

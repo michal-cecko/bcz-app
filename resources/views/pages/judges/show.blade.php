@@ -11,7 +11,28 @@
     $competitions = $judge->judgedCompetitionDetails ?? collect();
     $gallery = $judge->getMedia('gallery');
     $yearsJudging = $judge->date_started_judging ? (int) $judge->date_started_judging->diffInYears(now()) : null;
+    $ogImage = $judge->getFirstMediaUrl('profile_image') ?: $heroImage;
+    $personSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Person',
+        'name' => $judge->name,
+        'description' => seo_description($biography),
+        'url' => url()->current(),
+        'image' => $ogImage ?: asset('images/og-default.png'),
+    ];
 @endphp
+
+@section('meta_description', seo_description($biography))
+@if ($ogImage)
+    @section('og_image', $ogImage)
+@endif
+@section('og_type', 'profile')
+
+@push('schema')
+    <script type="application/ld+json">
+        @json($personSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    </script>
+@endpush
 
 @section('content')
     {{-- Hero Section --}}

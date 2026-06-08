@@ -10,11 +10,34 @@ use App\Http\Controllers\MagicLoginController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentPageController;
 use App\Http\Controllers\PricingController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TrainingController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+// SEO: single canonical sitemap (locale alternates are emitted inline via hreflang)
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+// SEO: robots.txt served dynamically so the Sitemap directive always uses the live host
+Route::get('/robots.txt', function () {
+    $lines = [
+        'User-agent: *',
+        'Disallow: /admin',
+        'Disallow: /customer',
+        'Disallow: /login',
+        'Disallow: /magic-login',
+        'Disallow: /team-invitations',
+        'Disallow: /payment',
+        'Disallow: /gopay',
+        '',
+        'Sitemap: '.url('/sitemap.xml'),
+        '',
+    ];
+
+    return response(implode("\n", $lines), 200)->header('Content-Type', 'text/plain');
+})->name('robots');
 
 /*
 |--------------------------------------------------------------------------
@@ -96,10 +119,6 @@ $frontendRoutes = function () {
 Route::prefix('{locale}')
     ->where(['locale' => 'en|cs'])
     ->group($frontendRoutes);
-
-// Temporary route for comparing static page
-Route::get('/temp-dominik-klimek-static', fn () => view('pages.dominik-klimek'))->name('temp-dominik-static');
-Route::get('/temp-dva-percenta-static', fn () => view('pages.dva-percenta'))->name('temp-dva-percenta-static');
 
 // Default Slovak (no prefix) — named routes live here
 Route::get('/', [PageController::class, 'show'])->defaults('slug', '/')->name('home');

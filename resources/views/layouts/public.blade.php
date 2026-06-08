@@ -4,12 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'BCZ Club')</title>
+
+    @include('partials.seo')
+
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
     <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
     <link rel="shortcut icon" href="/favicon/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
     <link rel="manifest" href="/favicon/site.webmanifest">
-    <meta name="robots" content="noindex, nofollow">
 
     <link rel="alternate" hreflang="sk" href="{{ url(locale_switch_url('sk')) }}">
     <link rel="alternate" hreflang="cs" href="{{ url(locale_switch_url('cs')) }}">

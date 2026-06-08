@@ -33,6 +33,14 @@
  $location = collect([$event->place_name, $event->city, $event->country])->filter()->join(', ');
 @endphp
 
+@section('meta_description', seo_description($description))
+@if ($heroImage)
+    @section('og_image', $heroImage)
+@endif
+@section('og_type', 'article')
+
+@include('partials.event-schema')
+
 @section('content')
  @unless($event->is_published)
      <x-preview-banner />

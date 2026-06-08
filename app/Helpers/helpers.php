@@ -3,6 +3,7 @@
 use App\Http\Middleware\SetLocale;
 use App\Services\LinkResolver;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 if (! function_exists('brick_trans')) {
     /**
@@ -213,5 +214,36 @@ if (! function_exists('sk_plural')) {
         }
 
         return "{$count} {$many}";
+    }
+}
+
+if (! function_exists('seo_description')) {
+    /**
+     * Normalize arbitrary content into a clean meta description: strip HTML/markup,
+     * collapse whitespace, and truncate to a search-engine-friendly length.
+     */
+    function seo_description(?string $text, int $length = 160): string
+    {
+        $clean = trim(preg_replace('/\s+/', ' ', strip_tags((string) $text)) ?? '');
+
+        if ($clean === '') {
+            return (string) __('seo.default_description');
+        }
+
+        return Str::limit($clean, $length);
+    }
+}
+
+if (! function_exists('seo_og_locale')) {
+    /**
+     * Map an internal locale key (sk/en/cs) to an Open Graph locale string.
+     */
+    function seo_og_locale(string $locale): string
+    {
+        return match ($locale) {
+            'en' => 'en_US',
+            'cs' => 'cs_CZ',
+            default => 'sk_SK',
+        };
     }
 }

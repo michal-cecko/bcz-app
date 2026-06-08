@@ -1,6 +1,16 @@
 @extends('layouts.public')
 
-@section('title', ($page->getTranslation('meta_title', app()->getLocale()) ?: $page->getTranslation('title', app()->getLocale())) . ' | BCZ Club')
+@php
+    $seoLocale = app()->getLocale();
+    $pageOgImage = $page->getFirstMediaUrl('featured_image');
+@endphp
+
+@section('title', ($page->getTranslation('meta_title', $seoLocale) ?: $page->getTranslation('title', $seoLocale)) . ' | BCZ Club')
+@section('meta_description', seo_description($page->getTranslation('meta_description', $seoLocale)))
+@if ($pageOgImage)
+    @section('og_image', $pageOgImage)
+@endif
+@section('og_type', 'article')
 
 @section('content')
     {!! $renderedContent !!}
