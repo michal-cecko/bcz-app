@@ -23,6 +23,30 @@ FilePond.registerPlugin(
     FilePondPluginFileValidateType,
 );
 
+// Phones (iPhones, and modern Android/Samsung) often shoot HEIC/HEIF, which the
+// server's image stack can't decode and browsers can't preview. Convert it to
+// JPEG in the browser before upload so the rest of the pipeline only ever sees a
+// JPEG. heic2any (~1.5 MB wasm) is imported on demand — only when a HEIC is
+// actually selected — so JPEG/PNG users never download it. Android frequently
+// reports HEIC with an empty or octet-stream MIME type, so we detect by extension
+// as well as MIME.
+const isHeic = (file) =>
+    /\.(heic|heif)$/i.test(file.name || '') ||
+    /image\/(heic|heif)/i.test(file.type || '');
+
+const heicToJpeg = async (file) => {
+    if (!isHeic(file)) {
+        return file;
+    }
+
+    const { default: heic2any } = await import('heic2any');
+    const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+    const blob = Array.isArray(converted) ? converted[0] : converted;
+    const name = (file.name || 'photo').replace(/\.(heic|heif)$/i, '') + '.jpg';
+
+    return new File([blob], name, { type: 'image/jpeg', lastModified: file.lastModified || Date.now() });
+};
+
 window.bczFilepond = function ({ statePath, accept = null, maxSizeMb = 10, labelIdle = null }) {
     return {
         pond: null,
@@ -58,16 +82,31 @@ window.bczFilepond = function ({ statePath, accept = null, maxSizeMb = 10, label
                 labelFileTypeNotAllowed: 'Nepovolený typ súboru',
                 server: {
                     process: (fieldName, file, metadata, load, error, progress, abort) => {
-                        $wire.upload(
-                            statePath,
-                            file,
-                            (uploadedFilename) => load(uploadedFilename),
-                            () => error('Nahrávanie zlyhalo'),
-                            (event) => progress(event.detail.lengthComputable, event.detail.loaded, event.detail.total),
-                        );
+                        let aborted = false;
+
+                        // Convert HEIC→JPEG first (no-op for normal images), then upload.
+                        // FilePond keeps showing its "Nahrávam" state for the whole span.
+                        heicToJpeg(file)
+                            .then((uploadFile) => {
+                                if (aborted) {
+                                    return;
+                                }
+
+                                $wire.upload(
+                                    statePath,
+                                    uploadFile,
+                                    (uploadedFilename) => load(uploadedFilename),
+                                    () => error('Nahrávanie zlyhalo'),
+                                    (event) => progress(event.detail.lengthComputable, event.detail.loaded, event.detail.total),
+                                );
+                            })
+                            .catch(() => error('Nahrávanie zlyhalo'));
 
                         return {
-                            abort: () => abort(),
+                            abort: () => {
+                                aborted = true;
+                                abort();
+                            },
                         };
                     },
                     revert: (uniqueFileId, load) => {
