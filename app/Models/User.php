@@ -31,6 +31,7 @@ use Laravel\Passkeys\Contracts\PasskeyUser;
 use Laravel\Passkeys\PasskeyAuthenticatable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
@@ -164,13 +165,54 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
+     * Per-instance memo of team_id => set of permission names (as keys) granted
+     * to the user via their team-scoped roles in that team. Built with a single
+     * query the first time a team-scoped gate check runs for a tenant, then
+     * reused for every subsequent ability check in the same request. Backs the
+     * Gate::before team-scoped authorization bridge, which Filament list pages
+     * fire hundreds of times per render.
+     *
+     * @var array<string, array<string, true>>|null
+     */
+    private ?array $teamPermissionsCache = null;
+
+    /**
+     * Whether any of the user's team-scoped roles in the given team grants the
+     * named permission ability. Memoized per tenant on the User instance to
+     * collapse what was a per-row N+1 (one roles + one permissions query for
+     * every authorization check) down to two queries per request.
+     */
+    public function grantsTeamPermission(string $ability, Team $team): bool
+    {
+        $teamId = (string) $team->getKey();
+
+        if ($this->teamPermissionsCache === null || ! array_key_exists($teamId, $this->teamPermissionsCache)) {
+            $roles = $this->cachedTeamRoles($teamId);
+
+            $permissionNames = $roles === []
+                ? []
+                : Permission::query()
+                    ->whereHas('roles', fn ($query) => $query->whereIn('name', $roles))
+                    ->pluck('name')
+                    ->all();
+
+            $this->teamPermissionsCache ??= [];
+            $this->teamPermissionsCache[$teamId] = array_fill_keys($permissionNames, true);
+        }
+
+        return isset($this->teamPermissionsCache[$teamId][$ability]);
+    }
+
+    /**
      * Drop the in-memory team-roles cache. Call after attaching/detaching a
      * team_user pivot if the same User instance will be reused for an
-     * authorization check within the same request.
+     * authorization check within the same request. Also clears the derived
+     * team-permissions memo, since permissions are resolved from pivot roles.
      */
     public function flushTeamRolesCache(): void
     {
         $this->teamRolesCache = null;
+        $this->teamPermissionsCache = null;
     }
 
     /**

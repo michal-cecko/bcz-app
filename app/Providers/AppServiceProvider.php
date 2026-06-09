@@ -9,9 +9,11 @@ use App\Jobs\OptimizeImageJob;
 use App\Models\EventRegistration;
 use App\Models\Membership;
 use App\Models\Menu;
+use App\Models\Team;
 use App\Models\TeamSubscription;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
+use App\Models\User;
 use App\Observers\TrainingObserver;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Forms\Components\BaseFileUpload;
@@ -25,7 +27,6 @@ use Illuminate\Support\ServiceProvider;
 use League\Flysystem\UnableToCheckFileExistence;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Spatie\MediaLibrary\MediaCollections\Events\MediaHasBeenAddedEvent;
-use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -136,26 +137,16 @@ class AppServiceProvider extends ServiceProvider
     protected function registerTeamScopedGate(): void
     {
         Gate::before(function ($user, string $ability) {
+            if (! $user instanceof User) {
+                return null;
+            }
+
             $tenant = filament()->getTenant();
-            if (! $tenant) {
+            if (! $tenant instanceof Team) {
                 return null;
             }
 
-            $teamRoles = $user->teams()
-                ->where('teams.id', $tenant->id)
-                ->pluck('team_user.role')
-                ->toArray();
-
-            if (empty($teamRoles)) {
-                return null;
-            }
-
-            $hasPermission = Role::query()
-                ->whereIn('name', $teamRoles)
-                ->whereHas('permissions', fn ($q) => $q->where('name', $ability))
-                ->exists();
-
-            return $hasPermission ?: null;
+            return $user->grantsTeamPermission($ability, $tenant) ?: null;
         });
     }
 }

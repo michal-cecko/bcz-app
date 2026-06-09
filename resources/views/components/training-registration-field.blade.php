@@ -39,14 +39,16 @@
         />
         @break
     @case('date_picker')
-        <input
-            type="date"
-            wire:model="{{ $wireModel }}"
-            @if($isRequired) required @endif
-            class="{{ $inputClass }}"
-            x-data
-            x-init="window.flatpickr && window.flatpickr($el, { dateFormat: 'Y-m-d', altInput: true, altFormat: 'd.m.Y', altInputClass: '{{ $inputClass }}', allowInput: true, disableMobile: false })"
-        >
+        <div wire:ignore>
+            <input
+                type="date"
+                wire:model="{{ $wireModel }}"
+                @if($isRequired) required @endif
+                class="{{ $inputClass }}"
+                x-data
+                x-init="window.flatpickr && window.flatpickr($el, { dateFormat: 'Y-m-d', altInput: true, altFormat: 'd.m.Y', altInputClass: '{{ $inputClass }}', allowInput: true, disableMobile: false })"
+            >
+        </div>
         @break
     @case('year_picker')
         @php
@@ -69,14 +71,16 @@
         <input type="number" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" @if($isRequired) required @endif class="{{ $inputClass }}">
         @break
     @case('time_picker')
-        <input
-            type="time"
-            wire:model="{{ $wireModel }}"
-            @if($isRequired) required @endif
-            class="{{ $inputClass }}"
-            x-data
-            x-init="window.flatpickr && window.flatpickr($el, { enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true, allowInput: true, disableMobile: false })"
-        >
+        <div wire:ignore>
+            <input
+                type="time"
+                wire:model="{{ $wireModel }}"
+                @if($isRequired) required @endif
+                class="{{ $inputClass }}"
+                x-data
+                x-init="window.flatpickr && window.flatpickr($el, { enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true, allowInput: true, disableMobile: false })"
+            >
+        </div>
         @break
     @case('phone')
         <input type="tel" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder ?: '+421 XXX XXX XXX' }}" @if($isRequired) required @endif class="{{ $inputClass }}">
@@ -105,23 +109,25 @@
         <input type="text" wire:model="{{ $wireModel }}" placeholder="{{ $placeholder }}" @if($isRequired) required @endif class="{{ $inputClass }}">
         @break
     @case('birth_date')
-        <input
-            type="date"
-            wire:model="{{ $wireModel }}"
-            @if($isRequired) required @endif
-            class="{{ $inputClass }}"
-            x-data
-            x-init="window.flatpickr && window.flatpickr($el, {
-                dateFormat: 'Y-m-d',
-                altInput: true,
-                altFormat: 'd.m.Y',
-                altInputClass: '{{ $inputClass }}',
-                allowInput: true,
-                disableMobile: false,
-                maxDate: 'today',
-                defaultDate: $el.value || null,
-            })"
-        >
+        <div wire:ignore>
+            <input
+                type="date"
+                wire:model="{{ $wireModel }}"
+                @if($isRequired) required @endif
+                class="{{ $inputClass }}"
+                x-data
+                x-init="window.flatpickr && window.flatpickr($el, {
+                    dateFormat: 'Y-m-d',
+                    altInput: true,
+                    altFormat: 'd.m.Y',
+                    altInputClass: '{{ $inputClass }}',
+                    allowInput: true,
+                    disableMobile: false,
+                    maxDate: 'today',
+                    defaultDate: $el.value || null,
+                })"
+            >
+        </div>
         @break
     @case('gender')
         @php
