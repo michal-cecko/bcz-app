@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Event;
 use App\Models\Page;
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,6 +99,36 @@ class SeoTest extends TestCase
         $response->assertSee('hreflang="en"', false);
         $response->assertSee('hreflang="x-default"', false);
         $response->assertDontSee(url('/draft-page'), false);
+    }
+
+    public function test_event_schema_includes_location_when_place_is_set(): void
+    {
+        $event = Event::factory()->create([
+            'title' => ['sk' => 'Testovacia súťaž'],
+            'place_name' => 'Športová hala',
+            'place_address' => 'Hlavná 1, Nitra',
+        ]);
+
+        $response = $this->get(route('event.show', $event));
+
+        $response->assertStatus(200);
+        $response->assertSee('"@type":"Event"', false);
+        $response->assertSee('"location":{"@type":"Place"', false);
+        $response->assertSee('Športová hala', false);
+    }
+
+    public function test_event_schema_is_omitted_when_location_is_missing(): void
+    {
+        $event = Event::factory()->create([
+            'title' => ['sk' => 'Reportáž bez miesta'],
+            'place_name' => null,
+            'place_address' => null,
+        ]);
+
+        $response = $this->get(route('event.show', $event));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('"@type":"Event"', false);
     }
 
     public function test_robots_txt_references_sitemap_and_blocks_admin(): void

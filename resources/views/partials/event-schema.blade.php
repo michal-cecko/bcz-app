@@ -1,7 +1,12 @@
 @php
     $schemaLocale = app()->getLocale();
     $schemaImage = $event->getFirstMediaUrl('detail_image') ?: $event->getFirstMediaUrl('card_image') ?: seo_default_og_image();
-    $eventSchema = array_filter([
+    $schemaLocation = $event->place_name ? array_filter([
+        '@type' => 'Place',
+        'name' => $event->place_name,
+        'address' => $event->place_address,
+    ]) : null;
+    $eventSchema = $schemaLocation ? array_filter([
         '@context' => 'https://schema.org',
         '@type' => 'Event',
         'name' => $event->getTranslation('title', $schemaLocale),
@@ -11,16 +16,14 @@
         'image' => $schemaImage,
         'eventStatus' => 'https://schema.org/EventScheduled',
         'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
-        'location' => $event->place_name ? array_filter([
-            '@type' => 'Place',
-            'name' => $event->place_name,
-            'address' => $event->place_address,
-        ]) : null,
+        'location' => $schemaLocation,
         'url' => url()->current(),
-    ], fn ($value) => $value !== null && $value !== '');
+    ], fn ($value) => $value !== null && $value !== '') : null;
 @endphp
-@push('schema')
-    <script type="application/ld+json">
-        @json($eventSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
-    </script>
-@endpush
+@if ($eventSchema)
+    @push('schema')
+        <script type="application/ld+json">
+            @json($eventSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        </script>
+    @endpush
+@endif
