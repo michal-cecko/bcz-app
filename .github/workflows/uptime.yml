@@ -20,13 +20,15 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           python3 << 'PYEOF'
-          import json, os, subprocess, urllib.request, urllib.error
+          import json, os, subprocess, time, urllib.request, urllib.error
 
           SITES = [
               "https://bcz-club.com",
               "https://dashboard.cecko.dev",
               "https://cecko.dev",
           ]
+          ATTEMPTS = 3          # retries before a site is declared DOWN
+          RETRY_SLEEP = 5       # seconds between attempts
           GH_TOKEN = os.environ["GH_TOKEN"]
           REPO = os.environ["REPO"]
           TG_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -34,18 +36,40 @@ jobs:
           API = f"https://api.github.com/repos/{REPO}/actions/variables/UPTIME_SITES"
           HEADERS = {"Authorization": f"Bearer {GH_TOKEN}", "Accept": "application/vnd.github+json"}
 
-          # ── Check each site ─────────────────────────────────────────
-          current = {}
-          for site in SITES:
+          def probe(site):
+              """Return HTTP code for one curl, 0 on connect/timeout failure."""
               try:
                   result = subprocess.run(
                       ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "10", site],
                       capture_output=True, text=True, timeout=15)
-                  code = int(result.stdout.strip() or "0")
+                  return int(result.stdout.strip() or "0")
               except Exception:
-                  code = 0
+                  return 0
+
+          # ── Check each site, retrying before declaring DOWN ─────────
+          # A transient blip on the GitHub runner's own egress must not page us,
+          # so a site is only DOWN if every attempt fails. First success wins.
+          current = {}
+          for site in SITES:
+              code = 0
+              for attempt in range(1, ATTEMPTS + 1):
+                  code = probe(site)
+                  if 200 <= code < 400:
+                      break
+                  if attempt < ATTEMPTS:
+                      print(f"{site} → HTTP {code} (attempt {attempt}/{ATTEMPTS}), retrying…")
+                      time.sleep(RETRY_SLEEP)
               current[site] = "UP" if 200 <= code < 400 else f"DOWN:{code}"
               print(f"{site} → {current[site]}")
+
+          # ── Prober-failure guard ────────────────────────────────────
+          # If EVERY site is DOWN with code 0 (connect/timeout, not a real HTTP
+          # status), that is the runner's network failing, not all apps dying in
+          # the same instant. Bail out without alarming or touching saved state.
+          if all(current[s] == "DOWN:0" for s in SITES):
+              print("All sites DOWN:0 across all retries — treating as runner-side "
+                    "network failure, not a real outage. No alert, state unchanged.")
+              exit(0)
 
           # ── Read previous per-site state ────────────────────────────
           prev = {}
