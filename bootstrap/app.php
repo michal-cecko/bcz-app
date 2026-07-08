@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Sentry\Laravel\Integration;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileUnacceptableForCollection;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -33,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        Integration::handles($exceptions);
+
         $exceptions->renderable(function (FileUnacceptableForCollection $e) {
             preg_match('/mime: ([^,`]+)/', $e->getMessage(), $matches);
             $mime = $matches[1] ?? null;

@@ -106,7 +106,7 @@ class SendEmailBulkAction extends BulkAction
 
     protected function buildBulkRecipientPlaceholder(): Placeholder
     {
-        $records = $this->getRecords();
+        $records = $this->getSelectedRecords();
         $allEmails = collect();
 
         foreach ($records as $record) {
@@ -136,7 +136,7 @@ class SendEmailBulkAction extends BulkAction
 
     protected function buildBulkConfirmationDescription(): string
     {
-        $records = $this->getRecords();
+        $records = $this->getSelectedRecords();
         $allEmails = collect();
 
         foreach ($records as $record) {

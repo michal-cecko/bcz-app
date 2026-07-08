@@ -10,6 +10,7 @@ use App\Models\Inquiry;
 use App\Models\Team;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -77,5 +78,21 @@ class InquiryResourceTest extends TestCase
             ->assertNotified();
 
         $this->assertDatabaseMissing('inquiries', ['id' => $inquiry->id]);
+    }
+
+    /**
+     * Mounting the bulk e-mail action builds the recipient placeholder, which reads
+     * the selected records. Before the fix this called the non-existent getRecords()
+     * and threw BadMethodCallException the moment the slide-over opened.
+     */
+    public function test_bulk_email_action_mounts_and_lists_selected_recipients(): void
+    {
+        $inquiries = Inquiry::factory()->count(2)->create(['team_id' => $this->team->id]);
+
+        Livewire::test(ListInquiries::class)
+            ->mountTableBulkAction('send_email_bulk', $inquiries)
+            ->assertActionMounted(TestAction::make('send_email_bulk')->table()->bulk())
+            ->assertSee($inquiries[0]->email)
+            ->assertSee($inquiries[1]->email);
     }
 }
