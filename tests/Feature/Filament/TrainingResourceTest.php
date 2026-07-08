@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Filament\Resources\Trainings\Pages\CreateTraining;
@@ -13,6 +14,7 @@ use App\Models\City;
 use App\Models\SportCategory;
 use App\Models\Team;
 use App\Models\Training;
+use App\Models\TrainingRegistration;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Filament\Facades\Filament;
@@ -161,5 +163,46 @@ class TrainingResourceTest extends TestCase
             'ownerRecord' => $training,
             'pageClass' => EditTraining::class,
         ])->assertOk();
+    }
+
+    public function test_registrations_relation_manager_filters_by_status(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+        ]);
+
+        $approved = TrainingRegistration::factory()->approved()->create(['training_id' => $training->id]);
+        $pending = TrainingRegistration::factory()->pending()->create(['training_id' => $training->id]);
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $training,
+            'pageClass' => EditTraining::class,
+        ])
+            ->filterTable('status', RegistrationStatusEnum::Approved->value)
+            ->assertCanSeeTableRecords([$approved])
+            ->assertCanNotSeeTableRecords([$pending]);
+    }
+
+    public function test_registrations_relation_manager_sorts_by_status(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+        ]);
+
+        $approved = TrainingRegistration::factory()->approved()->create(['training_id' => $training->id]);
+        $pending = TrainingRegistration::factory()->pending()->create(['training_id' => $training->id]);
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $training,
+            'pageClass' => EditTraining::class,
+        ])
+            ->sortTable('status')
+            ->assertCanSeeTableRecords([$approved, $pending], inOrder: true)
+            ->sortTable('status', 'desc')
+            ->assertCanSeeTableRecords([$pending, $approved], inOrder: true);
     }
 }

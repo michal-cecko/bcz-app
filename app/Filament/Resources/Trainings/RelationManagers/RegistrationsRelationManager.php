@@ -45,6 +45,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
@@ -99,6 +100,7 @@ class RegistrationsRelationManager extends RelationManager
         $columns = [
             TextColumn::make('user.name')
                 ->label('Používateľ')
+                ->sortable()
                 ->placeholder('Hosť'),
         ];
 
@@ -112,7 +114,8 @@ class RegistrationsRelationManager extends RelationManager
 
         $columns[] = TextColumn::make('status')
             ->label('Stav')
-            ->badge();
+            ->badge()
+            ->sortable();
 
         if ($pricingType === TrainingPricingTypeEnum::PAID) {
             $columns[] = TextColumn::make('payment_status')
@@ -179,6 +182,20 @@ class RegistrationsRelationManager extends RelationManager
             ->emptyStateHeading('Žiadne registrácie')
             ->emptyStateDescription('Zatiaľ nie sú žiadne registrácie na tento tréning.')
             ->columns($columns)
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Stav')
+                    ->options(RegistrationStatusEnum::class),
+                SelectFilter::make('payment_state')
+                    ->label('Platba')
+                    ->options(['paid' => 'Zaplatené', 'unpaid' => 'Nezaplatené'])
+                    ->query(fn ($query, array $data) => match ($data['value'] ?? null) {
+                        'paid' => $query->whereHas('payments', fn ($q) => $q->where('status', PaymentStatusEnum::COMPLETED)),
+                        'unpaid' => $query->whereDoesntHave('payments', fn ($q) => $q->where('status', PaymentStatusEnum::COMPLETED)),
+                        default => $query,
+                    })
+                    ->visible($pricingType === TrainingPricingTypeEnum::PAID),
+            ])
             ->headerActions([
                 $this->makeTrainingSendEmailAction(),
                 CreateAction::make()

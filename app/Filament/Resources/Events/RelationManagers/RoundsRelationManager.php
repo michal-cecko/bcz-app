@@ -8,9 +8,12 @@ use App\Enums\RoundAdvancementTypeEnum;
 use App\Enums\ScoringFormatEnum;
 use App\Filament\Resources\Events\Concerns\HasScoringActions;
 use App\Models\CompetitionRound;
+use App\Models\Discipline;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -123,7 +126,47 @@ class RoundsRelationManager extends RelationManager
                 ->label('Poradie')
                 ->numeric()
                 ->default(0),
+            Repeater::make('parts')
+                ->label('Časti (disciplíny)')
+                ->helperText('Za každú časť sa v bodovaní zobrazí samostatný stĺpec na skóre. Predvyplnené sú všetky disciplíny súťaže.')
+                ->relationship()
+                ->table([
+                    TableColumn::make('Názov'),
+                    TableColumn::make('Trvanie (s)'),
+                ])
+                ->schema([
+                    TextInput::make('name.sk')
+                        ->label('Názov')
+                        ->required(),
+                    TextInput::make('duration_seconds')
+                        ->label('Trvanie (s)')
+                        ->numeric()
+                        ->minValue(1),
+                ])
+                ->default(fn (): array => $this->getDefaultPartsFromDisciplines())
+                ->orderColumn('sort_order')
+                ->reorderableWithButtons()
+                ->addActionLabel('Pridať časť')
+                ->columnSpanFull(),
         ]);
+    }
+
+    /**
+     * Default round parts seeded from the competition's disciplines.
+     *
+     * @return list<array{name: array{sk: string}, duration_seconds: null}>
+     */
+    protected function getDefaultPartsFromDisciplines(): array
+    {
+        return $this->getOwnerRecord()->competitionDetail
+            ?->disciplines
+            ->sortBy('sort_order')
+            ->map(fn (Discipline $discipline): array => [
+                'name' => ['sk' => $discipline->getTranslation('name', 'sk')],
+                'duration_seconds' => null,
+            ])
+            ->values()
+            ->all() ?? [];
     }
 
     public function table(Table $table): Table

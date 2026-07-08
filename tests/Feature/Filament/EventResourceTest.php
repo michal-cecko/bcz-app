@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ListEvents;
+use App\Filament\Resources\Events\RelationManagers\RegistrationsRelationManager;
 use App\Models\Event;
 use App\Models\EventCategory;
+use App\Models\EventRegistration;
 use App\Models\Team;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
@@ -136,5 +139,63 @@ class EventResourceTest extends TestCase
             ])
             ->call('create')
             ->assertHasFormErrors(['date' => 'required']);
+    }
+
+    public function test_registrations_relation_manager_filters_by_status(): void
+    {
+        $event = Event::factory()->competition()->create([
+            'team_id' => $this->team->id,
+            'event_category_id' => EventCategory::factory()->create()->id,
+        ]);
+
+        $approved = EventRegistration::factory()->approved()->create(['event_id' => $event->id]);
+        $pending = EventRegistration::factory()->create(['event_id' => $event->id]);
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $event,
+            'pageClass' => EditEvent::class,
+        ])
+            ->filterTable('status', RegistrationStatusEnum::Approved->value)
+            ->assertCanSeeTableRecords([$approved])
+            ->assertCanNotSeeTableRecords([$pending]);
+    }
+
+    public function test_registrations_relation_manager_filters_by_weight_range(): void
+    {
+        $event = Event::factory()->competition()->create([
+            'team_id' => $this->team->id,
+            'event_category_id' => EventCategory::factory()->create()->id,
+        ]);
+
+        $light = EventRegistration::factory()->create(['event_id' => $event->id, 'weight_in' => 60]);
+        $heavy = EventRegistration::factory()->create(['event_id' => $event->id, 'weight_in' => 90]);
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $event,
+            'pageClass' => EditEvent::class,
+        ])
+            ->filterTable('weight_in', ['weight_from' => 80, 'weight_to' => 100])
+            ->assertCanSeeTableRecords([$heavy])
+            ->assertCanNotSeeTableRecords([$light]);
+    }
+
+    public function test_registrations_relation_manager_sorts_by_weight(): void
+    {
+        $event = Event::factory()->competition()->create([
+            'team_id' => $this->team->id,
+            'event_category_id' => EventCategory::factory()->create()->id,
+        ]);
+
+        $light = EventRegistration::factory()->create(['event_id' => $event->id, 'weight_in' => 60]);
+        $heavy = EventRegistration::factory()->create(['event_id' => $event->id, 'weight_in' => 90]);
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $event,
+            'pageClass' => EditEvent::class,
+        ])
+            ->sortTable('weight_in')
+            ->assertCanSeeTableRecords([$light, $heavy], inOrder: true)
+            ->sortTable('weight_in', 'desc')
+            ->assertCanSeeTableRecords([$heavy, $light], inOrder: true);
     }
 }

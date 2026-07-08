@@ -36,6 +36,8 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
@@ -110,27 +112,57 @@ class RegistrationsRelationManager extends RelationManager
                 TextColumn::make('user.name')
                     ->label('Meno')
                     ->searchable()
+                    ->sortable()
                     ->placeholder('Hosť'),
                 TextColumn::make('user.email')
                     ->label('E-mail')
+                    ->sortable()
                     ->placeholder('-'),
                 TextColumn::make('athleteCategory.name')
                     ->label('Kategória')
                     ->state(fn ($record): ?string => $record->athleteCategory?->getTranslation('name', 'sk'))
+                    ->sortable(query: fn ($query, string $direction) => $query->orderByRaw("(select name->>'sk' from athlete_categories where athlete_categories.id = event_registrations.athlete_category_id) {$direction}"))
                     ->placeholder('-')
                     ->visible(fn (): bool => $this->getOwnerRecord()->event_type === EventTypeEnum::Competition),
                 TextColumn::make('status')
                     ->label('Stav')
-                    ->badge(),
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('weight_in')
                     ->label('Váha')
                     ->suffix(' kg')
                     ->placeholder('-')
+                    ->sortable()
                     ->visible(fn (): bool => $this->getOwnerRecord()->event_type === EventTypeEnum::Competition),
                 TextColumn::make('registered_at')
                     ->label('Registrovaný')
                     ->dateTime()
                     ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Stav')
+                    ->options(RegistrationStatusEnum::class),
+                SelectFilter::make('athlete_category_id')
+                    ->label('Kategória')
+                    ->options(fn () => $this->getOwnerRecord()->registrations()
+                        ->with('athleteCategory')->get()
+                        ->pluck('athleteCategory')->filter()->unique('id')
+                        ->mapWithKeys(fn ($category) => [$category->id => $category->getTranslation('name', 'sk')])->all())
+                    ->visible(fn (): bool => $this->getOwnerRecord()->event_type === EventTypeEnum::Competition),
+                Filter::make('weight_in')
+                    ->schema([
+                        TextInput::make('weight_from')
+                            ->label('Váha od (kg)')
+                            ->numeric(),
+                        TextInput::make('weight_to')
+                            ->label('Váha do (kg)')
+                            ->numeric(),
+                    ])
+                    ->query(fn ($query, array $data) => $query
+                        ->when($data['weight_from'] ?? null, fn ($q, $value) => $q->where('weight_in', '>=', $value))
+                        ->when($data['weight_to'] ?? null, fn ($q, $value) => $q->where('weight_in', '<=', $value)))
+                    ->visible(fn (): bool => $this->getOwnerRecord()->event_type === EventTypeEnum::Competition),
             ])
             ->headerActions([
                 $this->makeEventSendEmailAction(),
