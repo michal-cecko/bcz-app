@@ -52,6 +52,10 @@ class RoundsRelationManagerPartsTest extends TestCase
     {
         [$event, $detail, $category] = $this->makeContext();
 
+        $statics = Discipline::factory()->create(['name' => ['sk' => 'Statika'], 'sort_order' => 1]);
+        $dynamics = Discipline::factory()->create(['name' => ['sk' => 'Dynamika'], 'sort_order' => 2]);
+        $detail->disciplines()->attach([$statics->id, $dynamics->id]);
+
         Livewire::test(RoundsRelationManager::class, [
             'ownerRecord' => $event->fresh(),
             'pageClass' => EditEvent::class,

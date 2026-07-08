@@ -131,13 +131,15 @@ class RoundsRelationManager extends RelationManager
                 ->helperText('Za každú časť sa v bodovaní zobrazí samostatný stĺpec na skóre. Predvyplnené sú všetky disciplíny súťaže.')
                 ->relationship()
                 ->table([
-                    TableColumn::make('Názov'),
+                    TableColumn::make('Disciplína'),
                     TableColumn::make('Trvanie (s)'),
                 ])
                 ->schema([
-                    TextInput::make('name.sk')
-                        ->label('Názov')
-                        ->required(),
+                    Select::make('name.sk')
+                        ->label('Disciplína')
+                        ->options(fn (): array => $this->getDisciplineOptions())
+                        ->required()
+                        ->searchable(),
                     TextInput::make('duration_seconds')
                         ->label('Trvanie (s)')
                         ->numeric()
@@ -166,6 +168,22 @@ class RoundsRelationManager extends RelationManager
                 'duration_seconds' => null,
             ])
             ->values()
+            ->all() ?? [];
+    }
+
+    /**
+     * Discipline name options (sk) for the competition, keyed by name.
+     *
+     * @return array<string, string>
+     */
+    protected function getDisciplineOptions(): array
+    {
+        return $this->getOwnerRecord()->competitionDetail
+            ?->disciplines
+            ->sortBy('sort_order')
+            ->mapWithKeys(fn (Discipline $discipline): array => [
+                $discipline->getTranslation('name', 'sk') => $discipline->getTranslation('name', 'sk'),
+            ])
             ->all() ?? [];
     }
 
