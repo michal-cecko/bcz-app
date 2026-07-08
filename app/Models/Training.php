@@ -30,6 +30,15 @@ class Training extends Model implements HasMedia, Linkable
     /** @var list<string> */
     public array $translatable = ['title', 'description', 'place_name', 'gathering_place'];
 
+    protected static function booted(): void
+    {
+        // Force-deleting cascades to registrations at the DB level, bypassing model
+        // events. Delete registrations through Eloquent first so their payments are purged.
+        static::forceDeleting(function (Training $training): void {
+            $training->registrations()->get()->each->delete();
+        });
+    }
+
     protected $fillable = [
         'sport_category_id',
         'team_id',

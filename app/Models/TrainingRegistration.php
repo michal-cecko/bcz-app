@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Contracts\Payable;
 use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
+use App\Models\Concerns\PurgesPaymentsOnDelete;
 use App\Services\EmailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class TrainingRegistration extends Model implements Payable
 {
-    use HasFactory, HasUuidV7;
+    use HasFactory, HasUuidV7, PurgesPaymentsOnDelete;
 
     protected $fillable = [
         'training_id',

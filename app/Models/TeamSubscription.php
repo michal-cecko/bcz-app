@@ -7,6 +7,7 @@ use App\Enums\BillingPeriodEnum;
 use App\Enums\SubscriptionStatusEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
+use App\Models\Concerns\PurgesPaymentsOnDelete;
 use App\Services\EmailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class TeamSubscription extends Model implements Payable
 {
-    use HasCreator, HasFactory, HasUuidV7;
+    use HasCreator, HasFactory, HasUuidV7, PurgesPaymentsOnDelete;
 
     protected $fillable = [
         'team_id',

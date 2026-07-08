@@ -31,6 +31,15 @@ class Event extends Model implements HasMedia, Linkable
     /** @var list<string> */
     public array $translatable = ['title', 'card_description', 'content', 'report_content'];
 
+    protected static function booted(): void
+    {
+        // Force-deleting cascades to registrations at the DB level, bypassing model
+        // events. Delete registrations through Eloquent first so their payments are purged.
+        static::forceDeleting(function (Event $event): void {
+            $event->registrations()->get()->each->delete();
+        });
+    }
+
     protected $fillable = [
         'event_type',
         'event_category_id',
