@@ -185,6 +185,24 @@
         } else {
             $competitors = $round->getOrderedCompetitors()->map(fn($reg, $i) => ['user' => $reg->user, 'parts' => [], 'total' => 0, 'place' => $i + 1])->values();
         }
+
+        // Only the competitors who advanced from the previous round belong here: a battle round
+        // feeds its winners, a score round feeds the top competitors by score. A first round is
+        // an open field (null → no restriction).
+        $advancedIds = $round->advancingCompetitorIds($catRounds);
+        if ($advancedIds !== null) {
+            $competitors = $competitors
+                ->filter(fn ($c) => $advancedIds->contains($c['user']?->id))
+                ->values()
+                ->map(function ($c, $i) use ($isPublished) {
+                    if (! $isPublished) {
+                        $c['place'] = $i + 1;
+                    }
+
+                    return $c;
+                })
+                ->values();
+        }
     @endphp
 
     @if($competitors->isNotEmpty())
@@ -328,7 +346,7 @@
                 @php
                     $isFinaleRound = $bracketIsCategoryFinale && $finaleRound && $round->id === $finaleRound->id;
                 @endphp
-                @if($isPublished && $round->battles->isNotEmpty())
+                @if($round->battles->isNotEmpty())
                 @foreach($round->battles as $battle)
                 @php
                     $aIsWinner = $battle->winner_side === 'a';
@@ -352,13 +370,13 @@
                 <div class="rounded-lg overflow-hidden" style="border: 1px solid {{ $battleBorderColor }};">
                     @foreach(['a' => 'sideA', 'b' => 'sideB'] as $sideKey => $sideRel)
                     @php
-                        $isWinnerSide = $battle->winner_side === $sideKey;
+                        $isWinnerSide = $isPublished && $battle->winner_side === $sideKey;
                         $firstPlace = $isFinaleRound && $battle->{$sideRel}->first()
                             ? ($placements[$battle->{$sideRel}->first()->user_id] ?? null)
                             : null;
                         $sidePlacementColor = $medalColor($firstPlace);
                         $sideLabel = $sideKey === 'a' ? $battle->getCompetitorALabel() : $battle->getCompetitorBLabel();
-                        $sideScore = $sideKey === 'a' ? $battle->side_a_score : $battle->side_b_score;
+                        $sideScore = $isPublished ? ($sideKey === 'a' ? $battle->side_a_score : $battle->side_b_score) : null;
                     @endphp
                     <div class="flex items-center gap-1 px-4 py-2.5 {{ $isWinnerSide ? 'bg-[#111111]' : '' }} {{ ! $loop->first ? 'border-t border-[#1A1A1A]' : '' }}">
                         <div class="flex-1 flex items-center gap-2 min-w-0">
@@ -374,7 +392,7 @@
                         @if($partAbbrevs->isNotEmpty())
                         @foreach($round->parts as $part)
                         @php
-                            $pw = ($battle->part_winners ?? [])[$part->id] ?? null;
+                            $pw = $isPublished ? (($battle->part_winners ?? [])[$part->id] ?? null) : null;
                             $partMark = match($pw) {
                                 $sideKey => ['text' => 'W', 'cls' => 'text-[#FF2D2D] font-bold'],
                                 'draw' => ['text' => 'X', 'cls' => 'text-[#888888]'],

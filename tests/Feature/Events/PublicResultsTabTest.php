@@ -132,4 +132,108 @@ class PublicResultsTabTest extends TestCase
         $response->assertOk();
         $response->assertSee('Finále — o 1. miesto', false);
     }
+
+    public function test_generated_but_unpublished_battles_show_matchups_not_tbd(): void
+    {
+        $event = Event::factory()->competition()->create(['is_published' => true]);
+        $detail = CompetitionDetail::factory()->create(['event_id' => $event->id]);
+        $category = AthleteCategory::factory()->create();
+
+        // Battles generated, but the round's scores are NOT published yet.
+        $suboje = CompetitionRound::factory()->battle()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'name' => 'Súboje',
+            'round_number' => 1,
+            'sort_order' => 1,
+            'scores_published' => false,
+        ]);
+        // A points finále follows, so Súboje is a real semifinal (not the bracket "finale").
+        CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'name' => 'Finále',
+            'round_number' => 2,
+            'sort_order' => 2,
+            'previous_round_id' => $suboje->id,
+        ]);
+
+        // User::name is derived from first_name/last_name via a save hook, so set first_name.
+        $f1 = User::factory()->create(['first_name' => 'FighterAlpha']);
+        $f2 = User::factory()->create(['first_name' => 'FighterBravo']);
+        $f3 = User::factory()->create(['first_name' => 'FighterCharlie']);
+        $f4 = User::factory()->create(['first_name' => 'FighterDelta']);
+        Battle::factory()->pair($f1, $f2)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 1]);
+        Battle::factory()->pair($f3, $f4)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 2]);
+
+        $response = $this->get(route('event.show', $event));
+
+        $response->assertOk();
+        // Matchups render as soon as battles exist — no "TBD vs TBD".
+        $response->assertSee('FighterAlpha', false);
+        $response->assertSee('FighterBravo', false);
+        $response->assertSee('FighterCharlie', false);
+        $response->assertSee('FighterDelta', false);
+    }
+
+    public function test_advancing_ids_are_the_previous_rounds_battle_winners(): void
+    {
+        $detail = CompetitionDetail::factory()->create();
+        $category = AthleteCategory::factory()->create();
+
+        $suboje = CompetitionRound::factory()->battle()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'sort_order' => 1,
+        ]);
+        $finale = CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'sort_order' => 2,
+            'previous_round_id' => $suboje->id,
+        ]);
+
+        [$a, $b, $c, $d] = User::factory()->count(4)->create()->all();
+        Battle::factory()->pair($a, $b, $a)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 1]);
+        Battle::factory()->pair($c, $d, $c)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 2]);
+
+        $ids = $finale->advancingCompetitorIds(collect([$suboje, $finale]));
+
+        // Only the two battle winners advance — not the losers.
+        $this->assertEqualsCanonicalizing([$a->id, $c->id], $ids->all());
+    }
+
+    public function test_advancing_ids_from_a_score_round_are_the_top_scorers(): void
+    {
+        $detail = CompetitionDetail::factory()->create();
+        $category = AthleteCategory::factory()->create();
+
+        $qual = CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'sort_order' => 1,
+        ]);
+        // Finále takes the top 2 by score.
+        $finale = CompetitionRound::factory()->qualification(2)->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'sort_order' => 2,
+            'previous_round_id' => $qual->id,
+        ]);
+
+        $part = RoundPart::factory()->create(['competition_round_id' => $qual->id, 'name' => ['sk' => 'Statika']]);
+        [$u0, $u1, $u2, $u3] = User::factory()->count(4)->create()->all();
+        foreach ([[$u0, 10], [$u1, 40], [$u2, 20], [$u3, 30]] as [$user, $score]) {
+            CompetitionResult::factory()->create([
+                'round_part_id' => $part->id,
+                'user_id' => $user->id,
+                'score' => $score,
+            ]);
+        }
+
+        $ids = $finale->advancingCompetitorIds(collect([$qual, $finale]));
+
+        // Top 2 by score, in rank order: u1 (40) then u3 (30).
+        $this->assertSame([$u1->id, $u3->id], $ids->all());
+    }
 }

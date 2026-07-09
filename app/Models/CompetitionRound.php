@@ -116,6 +116,50 @@ class CompetitionRound extends Model
     }
 
     /**
+     * User IDs advancing into this round from the immediately preceding round in the same
+     * category, or null when there is no preceding round (an open qualification field).
+     *
+     * A battle round advances its winners; a score round advances the top `competitor_count`
+     * competitors by total score.
+     *
+     * @param  Collection<int, CompetitionRound>  $categoryRounds
+     * @return Collection<int, string>|null
+     */
+    public function advancingCompetitorIds(Collection $categoryRounds): ?Collection
+    {
+        $previous = $categoryRounds
+            ->filter(fn (self $round): bool => $round->sort_order < $this->sort_order)
+            ->sortByDesc('sort_order')
+            ->first();
+
+        if (! $previous) {
+            return null;
+        }
+
+        if ($previous->isBattle()) {
+            return $previous->battles
+                ->flatMap(fn (Battle $battle): Collection => $battle->getWinners())
+                ->pluck('user_id')
+                ->unique()
+                ->values();
+        }
+
+        if (! $this->competitor_count) {
+            return null;
+        }
+
+        $totals = [];
+        foreach ($previous->parts as $part) {
+            foreach ($part->results as $result) {
+                $totals[$result->user_id] = ($totals[$result->user_id] ?? 0) + (float) $result->score;
+            }
+        }
+        arsort($totals);
+
+        return collect(array_keys($totals))->take($this->competitor_count)->values();
+    }
+
+    /**
      * Get total score for a user across all parts of this round.
      */
     public function getTotalScoreForUser(string $userId): ?float
