@@ -84,25 +84,55 @@
 @endif
 @endif
 
-{{-- Results Sub Nav --}}
-<div class="flex flex-col gap-5 mb-10">
+@php
+    /**
+     * Split a category's rounds into sequential stages:
+     *  - consecutive battle-type rounds merge into ONE bracket stage,
+     *  - every score round is its own stage.
+     * Each stage's tab identity is its (first) round's own name.
+     */
+    $buildStages = function ($catRounds) {
+        $stages = collect();
+        foreach ($catRounds->sortBy('sort_order')->values() as $round) {
+            $isBattle = $round->isBattle();
+            $last = $stages->last();
+            if ($isBattle && $last && $last['battle']) {
+                $last['rounds']->push($round);
+            } else {
+                $stages->push(['battle' => $isBattle, 'key' => (string) $round->name, 'rounds' => collect([$round])]);
+            }
+        }
+        return $stages;
+    };
+
+    $categoryStages = $allRounds->groupBy('athlete_category_id')->map($buildStages);
+
+    // Global, ordered, de-duplicated tab list. Same-named stages across categories share one tab.
+    $tabsRaw = collect();
+    foreach ($categoryStages as $stages) {
+        foreach ($stages as $stage) {
+            $tabsRaw->push(['key' => $stage['key'], 'minSort' => $stage['rounds']->min('sort_order')]);
+        }
+    }
+    $tabs = $tabsRaw->groupBy('key')
+        ->map(fn ($g, $key) => ['key' => (string) $key, 'label' => (string) $key, 'minSort' => $g->min('minSort')])
+        ->sortBy('minSort')
+        ->values();
+    $firstTabKey = $tabs->first()['key'] ?? null;
+@endphp
+
+{{-- Results Sub Nav — one tab per stage, in competition order --}}
+<div class="flex flex-col gap-5 mb-10" x-init="resultsTab = @js($firstTabKey)">
     <h2 class="text-white text-[32px] font-bold" style="font-family: 'Thunder', sans-serif; letter-spacing: 0.5px;">{{ __('event_detail.results_title') }}</h2>
-    @php
-        $hasQualRounds = $allRounds->contains(fn($r) => $r->isQualification());
-        $hasBattleRounds = $allRounds->contains(fn($r) => $r->isBattle());
-    @endphp
-    @if($hasQualRounds && $hasBattleRounds)
-    <div class="flex items-center gap-2">
-        <button @click="resultsTab = 'qualification'"
-            :class="resultsTab === 'qualification' ? 'bg-[#FF2D2D] text-white' : 'bg-[#1A1A1A] text-[#666666] hover:text-white'"
+    @if($tabs->count() > 1)
+    <div class="flex items-center gap-2 flex-wrap">
+        @foreach($tabs as $tab)
+        <button @click="resultsTab = @js($tab['key'])"
+            :class="resultsTab === @js($tab['key']) ? 'bg-[#FF2D2D] text-white' : 'bg-[#1A1A1A] text-[#666666] hover:text-white'"
             class="px-5 py-2 rounded-full text-sm font-semibold font-sans transition-colors">
-            {{ __('event_detail.results_qualification') }}
+            {{ $tab['label'] }}
         </button>
-        <button @click="resultsTab = 'bracket'"
-            :class="resultsTab === 'bracket' ? 'bg-[#FF2D2D] text-white' : 'bg-[#1A1A1A] text-[#666666] hover:text-white'"
-            class="px-5 py-2 rounded-full text-sm font-semibold font-sans transition-colors">
-            {{ __('event_detail.results_bracket') }}
-        </button>
+        @endforeach
     </div>
     @endif
 </div>
@@ -113,20 +143,11 @@
 @php
     $category = $catRounds->first()->athleteCategory;
     $categoryLabel = $category?->getTranslation('name', $locale) ?? __('event_detail.results_general');
-
-    $roundGroups = collect();
-    $lastType = null;
-    foreach ($catRounds->sortBy('sort_order') as $round) {
-        $type = $round->isBattle() ? 'battle' : 'qualification';
-        if ($type !== $lastType) {
-            $roundGroups->push(['type' => $type, 'rounds' => collect([$round])]);
-            $lastType = $type;
-        } else {
-            $roundGroups->last()['rounds']->push($round);
-        }
-    }
+    $stages = $categoryStages->get($catId);
+    $categoryTabKeys = $stages->pluck('key')->values()->all();
 @endphp
 
+<template x-if="@js($categoryTabKeys).includes(resultsTab)">
 <div class="flex flex-col gap-8">
     <div class="flex items-center gap-3">
         <div class="flex-1 h-px bg-[#333333]"></div>
@@ -134,11 +155,12 @@
         <div class="flex-1 h-px bg-[#333333]"></div>
     </div>
 
-    @foreach($roundGroups as $groupIdx => $group)
-    @if($group['type'] === 'qualification')
-    <template x-if="resultsTab === 'qualification'">
+    @foreach($stages as $stageIdx => $stage)
+    <template x-if="resultsTab === @js($stage['key'])">
+    @if(! $stage['battle'])
+    {{-- SCORE stage — one score table per round --}}
     <div class="flex flex-col gap-8">
-    @foreach($group['rounds'] as $roundLoopIdx => $round)
+    @foreach($stage['rounds'] as $roundLoopIdx => $round)
     @php
         $isPublished = $round->scores_published;
         $advanceCount = $round->nextRound?->competitor_count;
@@ -227,21 +249,22 @@
     @endif
     @endforeach
     </div>
-    </template>
 
     @else
-    <template x-if="resultsTab === 'bracket'">
+    {{-- BATTLE stage — bracket. The "finále / o 1./3. miesto" labels + medals apply
+         only when this bracket is the category's last stage (i.e. the competition
+         genuinely ends in a battle, not when a score finále follows it). --}}
     <div>
         <h3 class="text-white text-2xl font-bold mb-6" style="font-family: 'Thunder', sans-serif; letter-spacing: 0.5px;">
-            Battle pavúk
+            {{ $stage['rounds']->first()->name }}
         </h3>
         @php
-            // Compute final placements across the battle rounds (1st/2nd in final, 3rd/4th in 3rd-place battle,
-            // and semifinal losers get tied 3rd when no explicit 3rd-place battle).
-            $battleRoundsOrdered = $group['rounds']->sortBy('sort_order')->values();
-            $placements = [];
+            $battleRoundsOrdered = $stage['rounds']->sortBy('sort_order')->values();
             $finaleRound = $battleRoundsOrdered->last();
-            if ($finaleRound && $finaleRound->scores_published && $finaleRound->battles->isNotEmpty()) {
+            $bracketIsCategoryFinale = $finaleRound
+                && ! $catRounds->contains(fn ($r) => $r->sort_order > $finaleRound->sort_order);
+            $placements = [];
+            if ($bracketIsCategoryFinale && $finaleRound && $finaleRound->scores_published && $finaleRound->battles->isNotEmpty()) {
                 foreach ($finaleRound->battles as $battle) {
                     if ($battle->winner_side === null) continue;
                     $winnerSide = $battle->winner_side === 'a' ? 'sideA' : 'sideB';
@@ -303,7 +326,7 @@
                 </div>
 
                 @php
-                    $isFinaleRound = $finaleRound && $round->id === $finaleRound->id;
+                    $isFinaleRound = $bracketIsCategoryFinale && $finaleRound && $round->id === $finaleRound->id;
                 @endphp
                 @if($isPublished && $round->battles->isNotEmpty())
                 @foreach($round->battles as $battle)
@@ -392,10 +415,11 @@
         @endforeach
         </div>
     </div>
-    </template>
     @endif
+    </template>
     @endforeach
 </div>
+</template>
 @endforeach
 </div>
 
