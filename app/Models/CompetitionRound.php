@@ -137,11 +137,14 @@ class CompetitionRound extends Model
         }
 
         if ($previous->isBattle()) {
-            return $previous->battles
+            $winnerIds = $previous->battles
                 ->flatMap(fn (Battle $battle): Collection => $battle->getWinners())
                 ->pluck('user_id')
                 ->unique()
                 ->values();
+
+            // Battles not decided yet → don't restrict (show the provisional field).
+            return $winnerIds->isEmpty() ? null : $winnerIds;
         }
 
         if (! $this->competitor_count) {
@@ -154,6 +157,12 @@ class CompetitionRound extends Model
                 $totals[$result->user_id] = ($totals[$result->user_id] ?? 0) + (float) $result->score;
             }
         }
+
+        // Preceding round not scored yet → don't restrict (show the provisional field).
+        if ($totals === []) {
+            return null;
+        }
+
         arsort($totals);
 
         return collect(array_keys($totals))->take($this->competitor_count)->values();

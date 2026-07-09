@@ -236,4 +236,33 @@ class PublicResultsTabTest extends TestCase
         // Top 2 by score, in rank order: u1 (40) then u3 (30).
         $this->assertSame([$u1->id, $u3->id], $ids->all());
     }
+
+    public function test_advancing_ids_are_null_when_the_previous_round_is_not_decided_yet(): void
+    {
+        $detail = CompetitionDetail::factory()->create();
+        $category = AthleteCategory::factory()->create();
+
+        // Battle round with battles but no winner decided → provisional field (null).
+        $suboje = CompetitionRound::factory()->battle()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'sort_order' => 1,
+        ]);
+        $finaleAfterBattle = CompetitionRound::factory()->qualification(2)->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'sort_order' => 2, 'previous_round_id' => $suboje->id,
+        ]);
+        [$a, $b] = User::factory()->count(2)->create()->all();
+        Battle::factory()->pair($a, $b)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 1]);
+
+        $this->assertNull($finaleAfterBattle->advancingCompetitorIds(collect([$suboje, $finaleAfterBattle])));
+
+        // Score round with no results yet → also provisional field (null), not an empty set.
+        $qual = CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'sort_order' => 3,
+        ]);
+        $finaleAfterScore = CompetitionRound::factory()->qualification(2)->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'sort_order' => 4, 'previous_round_id' => $qual->id,
+        ]);
+        RoundPart::factory()->create(['competition_round_id' => $qual->id, 'name' => ['sk' => 'Zostava']]);
+
+        $this->assertNull($finaleAfterScore->advancingCompetitorIds(collect([$qual, $finaleAfterScore])));
+    }
 }
