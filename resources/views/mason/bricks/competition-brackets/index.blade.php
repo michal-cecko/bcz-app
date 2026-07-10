@@ -28,28 +28,28 @@
  </div>
  <div class="flex flex-col gap-2">
  {{-- Competitor A --}}
- <div class="flex items-center gap-3 py-2 px-3 {{ $battle->winner_id === $battle->competitor_a_id ? 'bg-bcz-red/10 border border-bcz-red/20' : 'bg-[#0A0A0A]' }}">
- @if($battle->winner_id === $battle->competitor_a_id)
+ <div class="flex items-center gap-3 py-2 px-3 {{ $battle->winner_side === 'a' ? 'bg-bcz-red/10 border border-bcz-red/20' : 'bg-[#0A0A0A]' }}">
+ @if($battle->winner_side === 'a')
  <svg class="w-4 h-4 text-bcz-red shrink-0"fill="none"stroke="currentColor"viewBox="0 0 24 24"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 0 1 0 5H18l-6 11L6 9Z"/>
  </svg>
  @endif
  <span class="text-white text-sm flex-1">
- {{ is_array($battle->competitor_a_id) ? implode(', ', $battle->competitor_a_id) : ($battle->competitor_a_id ?? __('bricks.competition.tbd')) }}
+ {{ $battle->getCompetitorALabel() }}
  </span>
  </div>
 
  <div class="text-center text-[#333333] text-xs font-bold">VS</div>
 
  {{-- Competitor B --}}
- <div class="flex items-center gap-3 py-2 px-3 {{ $battle->winner_id === $battle->competitor_b_id ? 'bg-bcz-red/10 border border-bcz-red/20' : 'bg-[#0A0A0A]' }}">
- @if($battle->winner_id === $battle->competitor_b_id)
+ <div class="flex items-center gap-3 py-2 px-3 {{ $battle->winner_side === 'b' ? 'bg-bcz-red/10 border border-bcz-red/20' : 'bg-[#0A0A0A]' }}">
+ @if($battle->winner_side === 'b')
  <svg class="w-4 h-4 text-bcz-red shrink-0"fill="none"stroke="currentColor"viewBox="0 0 24 24"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 0 1 0 5H18l-6 11L6 9Z"/>
  </svg>
  @endif
  <span class="text-white text-sm flex-1">
- {{ is_array($battle->competitor_b_id) ? implode(', ', $battle->competitor_b_id) : ($battle->competitor_b_id ?? __('bricks.competition.tbd')) }}
+ {{ $battle->getCompetitorBLabel() }}
  </span>
  </div>
  </div>

@@ -43,6 +43,8 @@ class CompetitionBracketsBrick extends Brick
                 'competitionDetail.rounds' => fn ($q) => $q->orderBy('sort_order'),
                 'competitionDetail.rounds.athleteCategory',
                 'competitionDetail.rounds.battles' => fn ($q) => $q->orderBy('bracket_position'),
+                'competitionDetail.rounds.battles.sideA',
+                'competitionDetail.rounds.battles.sideB',
                 'competitionDetail.athleteCategories',
             ])
             ->first();
