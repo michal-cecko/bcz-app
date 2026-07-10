@@ -217,7 +217,7 @@ trait HasScoringActions
         ];
 
         if ($isQualification) {
-            $competitors = $round->getOrderedCompetitors();
+            $competitors = $round->getAdvancedCompetitors();
             $viewData['competitors'] = $competitors->map(fn ($reg, $i) => [
                 'id' => $reg->user_id,
                 'name' => $reg->user?->name ?? 'Neznámy',
@@ -281,7 +281,7 @@ trait HasScoringActions
 
     protected function buildCompetitorOrderView(CompetitionRound $round): array
     {
-        $competitors = $round->getOrderedCompetitors()->map(fn ($reg) => [
+        $competitors = $round->getAdvancedCompetitors()->map(fn ($reg) => [
             'id' => $reg->user_id,
             'name' => $reg->user?->name ?? 'Neznámy',
         ])->values()->toArray();

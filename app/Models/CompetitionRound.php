@@ -169,6 +169,34 @@ class CompetitionRound extends Model
     }
 
     /**
+     * The competitors that actually belong to this round: the qualifiers who advanced from the
+     * previous round (battle winners / top-by-score), ordered by competitor_order. Falls back to
+     * the full ordered field when there is no previous round or advancement isn't decided yet.
+     *
+     * @return Collection<int, EventRegistration>
+     */
+    public function getAdvancedCompetitors(): Collection
+    {
+        $competitors = $this->getOrderedCompetitors();
+
+        $categoryRounds = self::query()
+            ->where('competition_detail_id', $this->competition_detail_id)
+            ->where('athlete_category_id', $this->athlete_category_id)
+            ->with(['parts.results', 'battles'])
+            ->get();
+
+        $advancedIds = $this->advancingCompetitorIds($categoryRounds);
+
+        if ($advancedIds === null) {
+            return $competitors;
+        }
+
+        return $competitors
+            ->filter(fn (EventRegistration $reg): bool => $advancedIds->contains($reg->user_id))
+            ->values();
+    }
+
+    /**
      * Get total score for a user across all parts of this round.
      */
     public function getTotalScoreForUser(string $userId): ?float

@@ -8,6 +8,7 @@ use App\Models\CompetitionDetail;
 use App\Models\CompetitionResult;
 use App\Models\CompetitionRound;
 use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Models\RoundPart;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -264,5 +265,32 @@ class PublicResultsTabTest extends TestCase
         RoundPart::factory()->create(['competition_round_id' => $qual->id, 'name' => ['sk' => 'Zostava']]);
 
         $this->assertNull($finaleAfterScore->advancingCompetitorIds(collect([$qual, $finaleAfterScore])));
+    }
+
+    public function test_get_advanced_competitors_returns_only_the_previous_rounds_winners(): void
+    {
+        // This is what the admin scoring/order views use — it must match the public display.
+        $event = Event::factory()->competition()->create(['is_published' => true]);
+        $detail = CompetitionDetail::factory()->create(['event_id' => $event->id]);
+        $category = AthleteCategory::factory()->create();
+
+        $suboje = CompetitionRound::factory()->battle()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'name' => 'Súboje', 'sort_order' => 1,
+        ]);
+        $finale = CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'name' => 'Finále', 'sort_order' => 2, 'previous_round_id' => $suboje->id,
+        ]);
+
+        [$a, $b, $c, $d] = User::factory()->count(4)->create()->all();
+        Battle::factory()->pair($a, $b, $a)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 1]);
+        Battle::factory()->pair($c, $d, $c)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 2]);
+        foreach ([$a, $b, $c, $d] as $u) {
+            EventRegistration::factory()->approved()->create(['event_id' => $event->id, 'athlete_category_id' => $category->id, 'user_id' => $u->id]);
+        }
+
+        $advancedIds = $finale->getAdvancedCompetitors()->pluck('user_id')->all();
+
+        // Only the two Súboje winners belong in the finále — not all four registrants.
+        $this->assertEqualsCanonicalizing([$a->id, $c->id], $advancedIds);
     }
 }
