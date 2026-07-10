@@ -250,7 +250,11 @@ trait HasScoringActions
                 'id' => $part->id,
                 'name' => $part->getTranslation('name', 'sk'),
             ])->toArray();
-            $viewData['battles'] = $round->battles->map(fn (Battle $battle) => $this->battleToPayload($battle))->toArray();
+            $viewData['battles'] = $round->battles
+                ->filter(fn (Battle $battle) => $battle->sideA->isNotEmpty() || $battle->sideB->isNotEmpty())
+                ->map(fn (Battle $battle) => $this->battleToPayload($battle))
+                ->values()
+                ->toArray();
 
             $viewData['isStale'] = app(BattleGeneratorService::class)->isBattleRoundStale($round);
             $viewData['previousRoundName'] = $round->previousRound?->name;
@@ -346,13 +350,25 @@ trait HasScoringActions
                 Battle::whereIn('id', $toDelete)->delete();
             }
 
-            foreach ($battlesData as $i => $data) {
+            $position = 0;
+            foreach ($battlesData as $data) {
                 $battleId = $data['id'] ?? null;
                 $sideA = array_values(array_filter((array) ($data['sideA'] ?? [])));
                 $sideB = array_values(array_filter((array) ($data['sideB'] ?? [])));
 
+                // A slot with no competitors on either side is not a real battle — don't persist it
+                // (and drop it if it already exists), so it never renders as "TBD vs TBD".
+                if ($sideA === [] && $sideB === []) {
+                    if ($battleId) {
+                        Battle::where('id', $battleId)->delete();
+                    }
+
+                    continue;
+                }
+
+                $position++;
                 $attrs = [
-                    'bracket_position' => $i + 1,
+                    'bracket_position' => $position,
                 ];
 
                 if ($battleId) {

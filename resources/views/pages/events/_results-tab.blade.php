@@ -345,9 +345,10 @@
 
                 @php
                     $isFinaleRound = $bracketIsCategoryFinale && $finaleRound && $round->id === $finaleRound->id;
+                    $roundBattles = $round->battles->filter(fn ($rb) => $rb->sideA->isNotEmpty() || $rb->sideB->isNotEmpty());
                 @endphp
-                @if($round->battles->isNotEmpty())
-                @foreach($round->battles as $battle)
+                @if($roundBattles->isNotEmpty())
+                @foreach($roundBattles as $battle)
                 @php
                     $aIsWinner = $battle->winner_side === 'a';
                     $bIsWinner = $battle->winner_side === 'b';
@@ -358,7 +359,7 @@
                         : null;
                     $battleBorderColor = $topMedalInBattle ? $medalColor($topMedalInBattle).'55' : '#222222';
                     $battleSubLabel = null;
-                    if ($isFinaleRound && $round->battles->count() >= 2) {
+                    if ($isFinaleRound && $roundBattles->count() >= 2) {
                         $battleSubLabel = $battle->bracket_position === 1
                             ? __('event_detail.bracket_final_label')
                             : __('event_detail.bracket_third_place_label');
@@ -412,7 +413,7 @@
                 @endforeach
                 @else
                 @php
-                    $battleCount = $round->battles->count();
+                    $battleCount = $roundBattles->count();
                     if ($battleCount === 0 && $prevRound) { $battleCount = max(1, intdiv($prevRound->battles->count(), 2)); }
                     $battleCount = max($battleCount, 1);
                 @endphp

@@ -293,4 +293,34 @@ class PublicResultsTabTest extends TestCase
         // Only the two Súboje winners belong in the finále — not all four registrants.
         $this->assertEqualsCanonicalizing([$a->id, $c->id], $advancedIds);
     }
+
+    public function test_empty_battles_are_not_rendered_as_tbd(): void
+    {
+        $event = Event::factory()->competition()->create(['is_published' => true]);
+        $detail = CompetitionDetail::factory()->create(['event_id' => $event->id]);
+        $category = AthleteCategory::factory()->create();
+
+        $suboje = CompetitionRound::factory()->battle()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id,
+            'name' => 'Súboje', 'sort_order' => 1, 'scores_published' => true,
+        ]);
+        // A real matchup plus an empty slot (no competitors on either side).
+        $a = User::factory()->create(['first_name' => 'FighterAlpha']);
+        $b = User::factory()->create(['first_name' => 'FighterBravo']);
+        Battle::factory()->pair($a, $b, $a)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 1]);
+        Battle::factory()->create(['competition_round_id' => $suboje->id, 'bracket_position' => 2]);
+        // A score finále follows, so Súboje isn't treated as the bracket "finale".
+        CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id,
+            'name' => 'Finále', 'sort_order' => 2, 'previous_round_id' => $suboje->id,
+        ]);
+
+        $response = $this->get(route('event.show', $event));
+
+        $response->assertOk();
+        $response->assertSee('FighterAlpha', false);
+        $response->assertSee('FighterBravo', false);
+        // The empty battle is filtered out — no "TBD vs TBD".
+        $response->assertDontSee('TBD', false);
+    }
 }
