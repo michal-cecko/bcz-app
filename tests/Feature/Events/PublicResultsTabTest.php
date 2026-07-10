@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Events;
 
+use App\Enums\TimetableEntryStatusEnum;
+use App\Enums\TimetableEntryTypeEnum;
 use App\Models\AthleteCategory;
 use App\Models\Battle;
 use App\Models\CompetitionDetail;
@@ -10,6 +12,7 @@ use App\Models\CompetitionRound;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\RoundPart;
+use App\Models\TimetableEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -322,5 +325,32 @@ class PublicResultsTabTest extends TestCase
         $response->assertSee('FighterBravo', false);
         // The empty battle is filtered out — no "TBD vs TBD".
         $response->assertDontSee('TBD', false);
+    }
+
+    public function test_timetable_live_battle_label_shows_real_competitors_not_tbd(): void
+    {
+        $detail = CompetitionDetail::factory()->create();
+        $category = AthleteCategory::factory()->create();
+        $round = CompetitionRound::factory()->battle()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'name' => 'Súboje', 'sort_order' => 1,
+        ]);
+        $a = User::factory()->create(['first_name' => 'FighterAlpha']);
+        $b = User::factory()->create(['first_name' => 'FighterBravo']);
+        $battle = Battle::factory()->pair($a, $b, $a)->create(['competition_round_id' => $round->id, 'bracket_position' => 2]);
+
+        $entry = TimetableEntry::factory()->create([
+            'competition_detail_id' => $detail->id,
+            'type' => TimetableEntryTypeEnum::COMPETITION_ROUND,
+            'competition_round_id' => $round->id,
+            'status' => TimetableEntryStatusEnum::IN_PROGRESS,
+            'current_battle_id' => $battle->id,
+        ]);
+
+        $label = $entry->getCurrentPerformerLabel();
+
+        $this->assertStringStartsWith('Battle 2:', $label);
+        $this->assertStringContainsString('FighterAlpha', $label);
+        $this->assertStringContainsString('FighterBravo', $label);
+        $this->assertStringNotContainsString('TBD', $label);
     }
 }

@@ -124,10 +124,8 @@ class TimetableEntry extends Model
             if (! $battle) {
                 return null;
             }
-            $a = is_array($battle->competitor_a_id) ? ($battle->competitor_a_id[1] ?? $battle->competitor_a_id['name'] ?? 'TBD') : 'TBD';
-            $b = is_array($battle->competitor_b_id) ? ($battle->competitor_b_id[1] ?? $battle->competitor_b_id['name'] ?? 'TBD') : 'TBD';
 
-            return "Battle {$battle->bracket_position}: {$a} vs {$b}";
+            return "Battle {$battle->bracket_position}: {$battle->getCompetitorALabel()} vs {$battle->getCompetitorBLabel()}";
         }
 
         $competitor = $this->getCurrentCompetitor();
