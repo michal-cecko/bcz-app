@@ -353,4 +353,44 @@ class PublicResultsTabTest extends TestCase
         $this->assertStringContainsString('FighterBravo', $label);
         $this->assertStringNotContainsString('TBD', $label);
     }
+
+    public function test_timetable_score_round_counts_only_advancers_not_all_registrants(): void
+    {
+        $event = Event::factory()->competition()->create(['is_published' => true]);
+        $detail = CompetitionDetail::factory()->create(['event_id' => $event->id]);
+        $category = AthleteCategory::factory()->create();
+
+        $suboje = CompetitionRound::factory()->battle()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'name' => 'Súboje', 'sort_order' => 1,
+        ]);
+        $finale = CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id, 'athlete_category_id' => $category->id, 'name' => 'Finále', 'sort_order' => 2, 'previous_round_id' => $suboje->id,
+        ]);
+
+        $a = User::factory()->create(['first_name' => 'AlphaWinner']);
+        $b = User::factory()->create(['first_name' => 'BravoLoser']);
+        $c = User::factory()->create(['first_name' => 'CharlieWinner']);
+        $d = User::factory()->create(['first_name' => 'DeltaLoser']);
+        Battle::factory()->pair($a, $b, $a)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 1]);
+        Battle::factory()->pair($c, $d, $c)->create(['competition_round_id' => $suboje->id, 'bracket_position' => 2]);
+        foreach ([$a, $b, $c, $d] as $u) {
+            EventRegistration::factory()->approved()->create(['event_id' => $event->id, 'athlete_category_id' => $category->id, 'user_id' => $u->id]);
+        }
+
+        // Stale index (3) carried over from the 4-competitor qualification.
+        $entry = TimetableEntry::factory()->create([
+            'competition_detail_id' => $detail->id,
+            'type' => TimetableEntryTypeEnum::COMPETITION_ROUND,
+            'competition_round_id' => $finale->id,
+            'status' => TimetableEntryStatusEnum::IN_PROGRESS,
+            'current_competitor_index' => 3,
+        ]);
+
+        $label = $entry->getCurrentPerformerLabel();
+
+        // Only the 2 battle winners are in the finále — total is 2 (not 4), and the stale index restarts at the first.
+        $this->assertStringContainsString('(1/2)', $label);
+        $this->assertStringContainsString('AlphaWinner', $label);
+        $this->assertStringNotContainsString('/4', $label);
+    }
 }

@@ -85,7 +85,7 @@ class TimetableEntry extends Model
      */
     public function getOrderedCompetitors(): Collection
     {
-        return $this->competitionRound?->getOrderedCompetitors() ?? collect();
+        return $this->competitionRound?->getAdvancedCompetitors() ?? collect();
     }
 
     /**
@@ -128,15 +128,21 @@ class TimetableEntry extends Model
             return "Battle {$battle->bracket_position}: {$battle->getCompetitorALabel()} vs {$battle->getCompetitorBLabel()}";
         }
 
-        $competitor = $this->getCurrentCompetitor();
+        $competitors = $this->getOrderedCompetitors();
+        $total = $competitors->count();
+        if ($total === 0) {
+            return null;
+        }
+
+        // A current_competitor_index carried over from a larger earlier field (e.g. the full
+        // qualification) restarts at the first competitor of this round's advancers.
+        $position = $this->current_competitor_index < $total ? max($this->current_competitor_index, 0) : 0;
+        $competitor = $competitors->get($position);
         if (! $competitor) {
             return null;
         }
 
-        $total = $this->getOrderedCompetitors()->count();
-        $index = $this->current_competitor_index + 1;
-
-        return "{$competitor->user?->name} ({$index}/{$total})";
+        return "{$competitor->user?->name} (".($position + 1)."/{$total})";
     }
 
     /**
