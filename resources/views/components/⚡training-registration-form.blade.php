@@ -179,6 +179,17 @@ new class extends Component
         $authUser = auth()->user();
 
         if ($authUser) {
+            // One registration per email per training — guard the submit even for
+            // logged-in users (mount() already switches the UI to "already registered").
+            if (TrainingRegistration::where('training_id', $this->training->id)
+                ->where('user_id', $authUser->id)
+                ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
+                ->exists()) {
+                $this->registrationState = 'already_registered';
+
+                return;
+            }
+
             $user = $authUser;
             $isNewUser = false;
         } else {
@@ -191,6 +202,13 @@ new class extends Component
             // Duplicate phone check for guests (block when phone is registered to a *different* email — fraud prevention).
             if ($phone && $email && User::where('phone', $phone)->where('email', '!=', $email)->exists()) {
                 $this->addError('fields.' . $this->getPhoneFieldName($schema), __('training_detail.error_phone_exists'));
+
+                return;
+            }
+
+            // One registration per email per training.
+            if ($email && RegistrationService::emailAlreadyRegisteredForTraining($email, $this->training->id)) {
+                $this->addError('fields.' . $this->getEmailFieldName($schema), __('training_detail.error_email_already_registered'));
 
                 return;
             }
@@ -381,6 +399,17 @@ new class extends Component
         }
 
         return 'phone';
+    }
+
+    protected function getEmailFieldName(array $schema): string
+    {
+        foreach ($schema as $field) {
+            if (($field['type'] ?? '') === 'email') {
+                return $field['name'] ?? $field['key'] ?? 'email';
+            }
+        }
+
+        return 'email';
     }
 };
 ?>

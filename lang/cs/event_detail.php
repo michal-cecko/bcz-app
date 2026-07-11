@@ -187,6 +187,7 @@ return [
     'dr_payment_method' => 'Platba',
     'dr_membership' => 'Členství',
     'error_phone_exists' => 'Toto telefonní číslo je již přiřazeno k jinému účtu.',
+    'error_email_already_registered' => 'Tento e-mail je již zaregistrován na tuto akci.',
 
     // Index page
     'portfolio' => 'PORTFOLIO',

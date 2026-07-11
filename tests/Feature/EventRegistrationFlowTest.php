@@ -188,4 +188,35 @@ class EventRegistrationFlowTest extends TestCase
         $this->assertNotNull($registration);
         $this->assertEquals(RegistrationStatusEnum::Approved, $registration->status);
     }
+
+    public function test_same_email_cannot_register_twice_for_one_event(): void
+    {
+        Mail::fake();
+
+        $event = $this->createRegisteringEvent();
+
+        // First registration succeeds.
+        Livewire::test('event-registration-form', ['event' => $event])
+            ->set('fields.meno', 'Samuel')
+            ->set('fields.priezvisko', 'Ivan')
+            ->set('fields.email', 'coach@test.com')
+            ->set('fields.telefon', '+421900111000')
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $this->assertSame(1, EventRegistration::where('event_id', $event->id)->count());
+
+        // A second registration under the SAME email (different casing, different athlete) is blocked.
+        Livewire::test('event-registration-form', ['event' => $event])
+            ->set('fields.meno', 'Simon')
+            ->set('fields.priezvisko', 'Toráč')
+            ->set('fields.email', 'COACH@test.com')
+            ->set('fields.telefon', '+421900222000')
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertHasErrors(['fields.email']);
+
+        $this->assertSame(1, EventRegistration::where('event_id', $event->id)->count());
+    }
 }

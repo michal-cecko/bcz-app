@@ -187,6 +187,7 @@ return [
     'dr_payment_method' => 'Payment',
     'dr_membership' => 'Membership',
     'error_phone_exists' => 'This phone number is already assigned to another account.',
+    'error_email_already_registered' => 'This email is already registered for this event.',
 
     // Index page
     'portfolio' => 'PORTFOLIO',

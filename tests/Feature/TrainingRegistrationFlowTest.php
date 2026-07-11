@@ -244,6 +244,43 @@ class TrainingRegistrationFlowTest extends TestCase
             ->assertHasErrors(['fields.telefon']);
     }
 
+    public function test_same_email_cannot_register_twice_for_one_training(): void
+    {
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::FREE,
+            'registration_form_schema' => [
+                ['label' => ['sk' => 'Meno'], 'name' => 'meno', 'type' => 'first_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Priezvisko'], 'name' => 'priezvisko', 'type' => 'last_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Email'], 'name' => 'email', 'type' => 'email', 'width' => 'full', 'required' => true, 'has_condition' => false],
+                ['label' => ['sk' => 'Telefón'], 'name' => 'telefon', 'type' => 'phone', 'width' => 'full', 'required' => true, 'has_condition' => false],
+            ],
+        ]);
+
+        Livewire::test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', 'Samuel')
+            ->set('fields.priezvisko', 'Ivan')
+            ->set('fields.email', 'coach@test.com')
+            ->set('fields.telefon', '+421900111000')
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $this->assertSame(1, TrainingRegistration::where('training_id', $training->id)->count());
+
+        Livewire::test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', 'Simon')
+            ->set('fields.priezvisko', 'Toráč')
+            ->set('fields.email', 'COACH@test.com')
+            ->set('fields.telefon', '+421900222000')
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertHasErrors(['fields.email']);
+
+        $this->assertSame(1, TrainingRegistration::where('training_id', $training->id)->count());
+    }
+
     public function test_new_user_gets_account_created_email(): void
     {
         Mail::fake();

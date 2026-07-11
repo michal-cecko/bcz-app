@@ -5,9 +5,11 @@ namespace App\Services;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Mail\RegistrationConfirmationMail;
+use App\Models\EventRegistration;
 use App\Models\Payment;
 use App\Models\Team;
 use App\Models\Training;
+use App\Models\TrainingRegistration;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +45,37 @@ class RegistrationService
         ]);
 
         return ['user' => $user, 'created' => true];
+    }
+
+    /**
+     * Whether the given email is already registered for the event. Because
+     * registration resolves one user per email, this enforces the rule of a
+     * single registration per email per event (guests and logged-in users alike).
+     */
+    public static function emailAlreadyRegisteredForEvent(string $email, string $eventId): bool
+    {
+        $normalized = mb_strtolower(trim($email));
+
+        return EventRegistration::query()
+            ->where('event_id', $eventId)
+            ->where('status', '!=', RegistrationStatusEnum::Cancelled->value)
+            ->whereHas('user', fn ($query) => $query->whereRaw('LOWER(email) = ?', [$normalized]))
+            ->exists();
+    }
+
+    /**
+     * Whether the given email is already registered for the training. See
+     * {@see self::emailAlreadyRegisteredForEvent()}.
+     */
+    public static function emailAlreadyRegisteredForTraining(string $email, string $trainingId): bool
+    {
+        $normalized = mb_strtolower(trim($email));
+
+        return TrainingRegistration::query()
+            ->where('training_id', $trainingId)
+            ->where('status', '!=', RegistrationStatusEnum::Cancelled->value)
+            ->whereHas('user', fn ($query) => $query->whereRaw('LOWER(email) = ?', [$normalized]))
+            ->exists();
     }
 
     /**

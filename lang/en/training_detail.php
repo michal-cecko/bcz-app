@@ -145,6 +145,7 @@ return [
 
     // Validation errors
     'error_phone_exists' => 'This phone number is already assigned to another account.',
+    'error_email_already_registered' => 'This email is already registered for this training.',
 
     'days' => [
         'monday' => 'Monday',

@@ -147,6 +147,7 @@ return [
 
     // Validation errors
     'error_phone_exists' => 'Telefónne číslo je už priradené k inému účtu.',
+    'error_email_already_registered' => 'Tento e-mail je už zaregistrovaný na tento tréning.',
 
     'days' => [
         'monday' => 'Pondelok',
