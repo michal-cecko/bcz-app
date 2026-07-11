@@ -184,4 +184,42 @@ class ScoringTest extends TestCase
         $this->assertCount(2, $competitors);
         $this->assertTrue($competitors->first()->user->is($user1));
     }
+
+    public function test_ordered_competitors_ignores_non_scalar_entries_in_stored_order(): void
+    {
+        $event = Event::factory()->competition()->create();
+        $detail = CompetitionDetail::factory()->create(['event_id' => $event->id]);
+        $category = AthleteCategory::factory()->create();
+
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        EventRegistration::factory()->approved()->create([
+            'event_id' => $event->id,
+            'user_id' => $user1->id,
+            'athlete_category_id' => $category->id,
+            'registered_at' => now()->subHour(),
+        ]);
+        EventRegistration::factory()->approved()->create([
+            'event_id' => $event->id,
+            'user_id' => $user2->id,
+            'athlete_category_id' => $category->id,
+            'registered_at' => now(),
+        ]);
+
+        // A null slipped into the persisted order (e.g. a registration with no user_id);
+        // array_flip would otherwise raise a warning promoted to an exception.
+        $round = CompetitionRound::factory()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+            'competitor_order' => [$user2->id, null, $user1->id],
+        ]);
+
+        $competitors = $round->getOrderedCompetitors();
+
+        $this->assertCount(2, $competitors);
+        $this->assertTrue($competitors->first()->user->is($user2));
+        $this->assertTrue($competitors->last()->user->is($user1));
+    }
 }

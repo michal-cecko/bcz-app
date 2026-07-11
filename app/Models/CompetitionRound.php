@@ -107,7 +107,9 @@ class CompetitionRound extends Model
             ->get();
 
         if (! empty($this->competitor_order)) {
-            $order = collect($this->competitor_order)->flip();
+            $order = collect($this->competitor_order)
+                ->filter(fn (mixed $userId): bool => is_string($userId) || is_int($userId))
+                ->flip();
 
             return $competitors->sortBy(fn (EventRegistration $reg): int => $order->get($reg->user_id, 9999))->values();
         }
