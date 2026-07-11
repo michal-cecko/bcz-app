@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RoundAdvancementTypeEnum;
 use App\Enums\ScoringFormatEnum;
 use App\Models\AthleteCategory;
@@ -221,5 +222,61 @@ class ScoringTest extends TestCase
         $this->assertCount(2, $competitors);
         $this->assertTrue($competitors->first()->user->is($user2));
         $this->assertTrue($competitors->last()->user->is($user1));
+    }
+
+    public function test_athlete_name_and_email_come_from_the_registration_form_not_the_account(): void
+    {
+        // A coach registered under one account but the form carried a different athlete.
+        $account = User::factory()->create(['name' => 'Nikola Coufalová', 'email' => 'coach@example.com']);
+        $registration = EventRegistration::factory()->create(['user_id' => $account->id]);
+
+        $registration->fieldValues()->createMany([
+            ['field_key' => 'meno', 'field_type' => RegistrationFieldTypeEnum::FIRST_NAME, 'value' => 'Samuel'],
+            ['field_key' => 'priezvisko', 'field_type' => RegistrationFieldTypeEnum::LAST_NAME, 'value' => 'Ivan'],
+            ['field_key' => 'email', 'field_type' => RegistrationFieldTypeEnum::EMAIL, 'value' => 'samuel@example.com'],
+        ]);
+
+        $registration->load('fieldValues');
+
+        $this->assertSame('Samuel Ivan', $registration->athleteName());
+        $this->assertSame('samuel@example.com', $registration->athleteEmail());
+    }
+
+    public function test_athlete_name_and_email_fall_back_to_the_account_when_form_has_no_name(): void
+    {
+        $account = User::factory()->create(['first_name' => 'Jane', 'last_name' => 'Doe', 'email' => 'jane@example.com']);
+        $registration = EventRegistration::factory()->create(['user_id' => $account->id]);
+
+        $this->assertSame('Jane Doe', $registration->athleteName());
+        $this->assertSame('jane@example.com', $registration->athleteEmail());
+    }
+
+    public function test_competitor_name_map_uses_per_registration_athlete_names(): void
+    {
+        $event = Event::factory()->competition()->create();
+        $detail = CompetitionDetail::factory()->create(['event_id' => $event->id]);
+        $category = AthleteCategory::factory()->create();
+
+        $round = CompetitionRound::factory()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'advancement_type' => RoundAdvancementTypeEnum::TOP_BY_POINTS,
+        ]);
+
+        $account = User::factory()->create(['name' => 'Nikola Coufalová']);
+        $registration = EventRegistration::factory()->approved()->create([
+            'event_id' => $event->id,
+            'user_id' => $account->id,
+            'athlete_category_id' => $category->id,
+        ]);
+        $registration->fieldValues()->createMany([
+            ['field_key' => 'meno', 'field_type' => RegistrationFieldTypeEnum::FIRST_NAME, 'value' => 'Andrej'],
+            ['field_key' => 'priezvisko', 'field_type' => RegistrationFieldTypeEnum::LAST_NAME, 'value' => 'Tokár'],
+        ]);
+
+        $map = $round->competitorNameMap();
+
+        $this->assertSame(['Andrej Tokár'], array_values($map));
+        $this->assertSame('Andrej Tokár', $map[$account->id]);
     }
 }

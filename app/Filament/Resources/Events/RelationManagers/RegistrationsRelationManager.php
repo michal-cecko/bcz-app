@@ -108,15 +108,22 @@ class RegistrationsRelationManager extends RelationManager
     {
         return $table
             ->defaultSort('registered_at', 'desc')
+            ->modifyQueryUsing(fn ($query) => $query->with('fieldValues'))
             ->columns([
-                TextColumn::make('user.name')
+                TextColumn::make('athlete_name')
                     ->label('Meno')
-                    ->searchable()
-                    ->sortable()
+                    ->state(fn ($record): ?string => $record->athleteName())
+                    ->searchable(query: fn ($query, string $search) => $query->where(
+                        fn ($q) => $q
+                            ->whereHas('user', fn ($u) => $u->where('name', 'ilike', "%{$search}%"))
+                            ->orWhereHas('fieldValues', fn ($fv) => $fv
+                                ->whereIn('field_type', ['first_name', 'last_name', 'full_name'])
+                                ->where('value', 'ilike', "%{$search}%"))
+                    ))
                     ->placeholder('Hosť'),
-                TextColumn::make('user.email')
+                TextColumn::make('athlete_email')
                     ->label('E-mail')
-                    ->sortable()
+                    ->state(fn ($record): ?string => $record->athleteEmail())
                     ->placeholder('-'),
                 TextColumn::make('athleteCategory.name')
                     ->label('Kategória')
@@ -326,7 +333,7 @@ class RegistrationsRelationManager extends RelationManager
      */
     protected function resolveEventRegistrationRecipient($record): array
     {
-        $email = $record->user?->email;
+        $email = $record->athleteEmail();
         if (! $email) {
             return [];
         }
@@ -339,7 +346,7 @@ class RegistrationsRelationManager extends RelationManager
             [
                 'email' => $email,
                 'variables' => [
-                    'meno' => $record->user?->name ?? '',
+                    'meno' => $record->athleteName() ?? '',
                     'email' => $email,
                     'nazov_timu' => $teamName,
                     'nazov_eventu' => $event->getTranslation('title', 'sk'),

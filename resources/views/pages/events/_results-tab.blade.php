@@ -22,11 +22,12 @@
             } else {
                 $round = $finalRound;
             }
+            $nameMap = $round->competitorNameMap();
             $results = [];
             foreach ($round->parts as $part) {
                 foreach ($part->results as $result) {
                     if (!isset($results[$result->user_id])) {
-                        $results[$result->user_id] = ['user' => $result->user, 'total' => 0, 'place' => $result->place];
+                        $results[$result->user_id] = ['name' => $nameMap[$result->user_id] ?? $result->user?->name, 'total' => 0, 'place' => $result->place];
                     }
                     $results[$result->user_id]['total'] += (float) $result->score;
                 }
@@ -72,7 +73,7 @@
             @endphp
             <div class="flex-1 flex flex-col items-center gap-4 rounded-2xl bg-[#111111] {{ $cardPadding }}" style="border: {{ $place === 1 ? '2px' : '1px' }} solid {{ $borderColor }};">
                 <svg class="{{ $iconSize }}" style="color: {{ $medalColor }};" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                <span class="text-white {{ $nameSize }} font-sans text-center">{{ $competitor['user']?->name ?? '—' }}</span>
+                <span class="text-white {{ $nameSize }} font-sans text-center">{{ $competitor['name'] ?? '—' }}</span>
                 <span class="text-sm font-bold font-sans" style="color: {{ $medalColor }};">{{ $placeLabel }}</span>
             </div>
             @endforeach
@@ -167,12 +168,13 @@
         $hasFollowingBattle = $catRounds->contains(fn($r) => $r->isBattle() && $r->sort_order > $round->sort_order);
         $showStatusColumn = $round->nextRound !== null;
 
+        $nameMap = $round->competitorNameMap();
         if ($isPublished) {
             $compData = [];
             foreach ($round->parts as $part) {
                 foreach ($part->results as $result) {
                     if (!isset($compData[$result->user_id])) {
-                        $compData[$result->user_id] = ['user' => $result->user, 'parts' => [], 'total' => 0, 'place' => $result->place];
+                        $compData[$result->user_id] = ['user' => $result->user, 'name' => $nameMap[$result->user_id] ?? $result->user?->name, 'parts' => [], 'total' => 0, 'place' => $result->place];
                     }
                     $compData[$result->user_id]['parts'][$part->id] = $result->score;
                     $compData[$result->user_id]['total'] += (float) $result->score;
@@ -183,7 +185,7 @@
                 ->sortBy(fn ($c) => $c['place'] ?? PHP_INT_MAX)
                 ->values();
         } else {
-            $competitors = $round->getOrderedCompetitors()->map(fn($reg, $i) => ['user' => $reg->user, 'parts' => [], 'total' => 0, 'place' => $i + 1])->values();
+            $competitors = $round->getOrderedCompetitors()->map(fn($reg, $i) => ['user' => $reg->user, 'name' => $reg->athleteName(), 'parts' => [], 'total' => 0, 'place' => $i + 1])->values();
         }
 
         // Only the competitors who advanced from the previous round belong here: a battle round
@@ -242,7 +244,7 @@
         @endif
         <div class="flex items-center px-5 py-3 border-b border-[#1A1A1A] {{ $isAdvancing ? 'bg-[#FF2D2D10]' : '' }} {{ $isBelowCutoff ? 'opacity-50' : '' }}">
             <span class="text-sm font-bold font-sans w-[30px]" style="color: {{ $placeColor }};">{{ $place }}</span>
-            <span class="text-sm font-sans flex-1 {{ $isAdvancing ? 'text-white font-semibold' : ($isBelowCutoff ? 'text-[#888888]' : 'text-white font-medium') }}">{{ $comp['user']?->name ?? '—' }}</span>
+            <span class="text-sm font-sans flex-1 {{ $isAdvancing ? 'text-white font-semibold' : ($isBelowCutoff ? 'text-[#888888]' : 'text-white font-medium') }}">{{ $comp['name'] ?? '—' }}</span>
             @if($isPublished)
             @foreach($round->parts as $part)
             <span class="text-sm font-sans w-[70px] text-right {{ $isBelowCutoff ? 'text-[#666666]' : 'text-[#CCCCCC]' }}">{{ isset($comp['parts'][$part->id]) ? number_format((float) $comp['parts'][$part->id], 1) : '—' }}</span>

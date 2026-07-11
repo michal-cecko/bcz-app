@@ -60,11 +60,18 @@ class EventRegistrationResource extends Resource
                     ->schema([
                         Section::make('Registrácia')
                             ->schema([
-                                TextEntry::make('user.name')
-                                    ->label('Používateľ')
+                                TextEntry::make('athlete_name')
+                                    ->label('Účastník')
+                                    ->state(fn (EventRegistration $record): ?string => $record->athleteName())
                                     ->placeholder('Hosť'),
-                                TextEntry::make('user.email')
+                                TextEntry::make('athlete_email')
                                     ->label('E-mail')
+                                    ->state(fn (EventRegistration $record): ?string => $record->athleteEmail())
+                                    ->placeholder('-'),
+                                TextEntry::make('account_holder')
+                                    ->label('Registrujúci účet')
+                                    ->state(fn (EventRegistration $record): ?string => $record->user?->name)
+                                    ->visible(fn (EventRegistration $record): bool => $record->user !== null && $record->user->name !== $record->athleteName())
                                     ->placeholder('-'),
                                 TextEntry::make('user.phone')
                                     ->label('Telefón')

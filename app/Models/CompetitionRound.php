@@ -102,7 +102,7 @@ class CompetitionRound extends Model
             ->where('event_id', $this->competitionDetail->event_id)
             ->where('athlete_category_id', $this->athlete_category_id)
             ->where('status', RegistrationStatusEnum::Approved)
-            ->with('user')
+            ->with(['user', 'fieldValues'])
             ->orderBy('registered_at')
             ->get();
 
@@ -115,6 +115,23 @@ class CompetitionRound extends Model
         }
 
         return $competitors;
+    }
+
+    /**
+     * Map of user_id → the athlete's own display name for this round's
+     * competitors, sourced from each registration's form data rather than the
+     * shared linked account. Used by user_id-keyed views (results, podium)
+     * where only a user_id is available.
+     *
+     * @return array<string, string>
+     */
+    public function competitorNameMap(): array
+    {
+        return $this->getOrderedCompetitors()
+            ->mapWithKeys(fn (EventRegistration $reg): array => [
+                $reg->user_id => $reg->athleteName() ?? 'Neznámy',
+            ])
+            ->all();
     }
 
     /**

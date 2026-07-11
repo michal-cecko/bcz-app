@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Contracts\Payable;
+use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
 use App\Models\Concerns\PurgesPaymentsOnDelete;
@@ -64,6 +65,57 @@ class EventRegistration extends Model implements Payable
     public function fieldValues(): HasMany
     {
         return $this->hasMany(RegistrationFieldValue::class);
+    }
+
+    /**
+     * The athlete's own name as entered on THIS registration's form.
+     *
+     * One account (matched by email) can register many different athletes — a
+     * coach/parent using a single email — so the per-registration form data,
+     * not the shared linked user, is the source of truth for who this is.
+     * Falls back to the linked account holder's name when the form carried no
+     * name fields.
+     */
+    public function athleteName(): ?string
+    {
+        $name = trim(($this->athleteFirstName() ?? '').' '.($this->athleteLastName() ?? ''));
+
+        if ($name === '') {
+            $name = $this->fieldValueOfType(RegistrationFieldTypeEnum::FULL_NAME) ?? '';
+        }
+
+        return $name !== '' ? $name : $this->user?->name;
+    }
+
+    public function athleteFirstName(): ?string
+    {
+        return $this->fieldValueOfType(RegistrationFieldTypeEnum::FIRST_NAME);
+    }
+
+    public function athleteLastName(): ?string
+    {
+        return $this->fieldValueOfType(RegistrationFieldTypeEnum::LAST_NAME);
+    }
+
+    /**
+     * The email entered on this registration's form, falling back to the linked
+     * account holder's email.
+     */
+    public function athleteEmail(): ?string
+    {
+        return $this->fieldValueOfType(RegistrationFieldTypeEnum::EMAIL) ?? $this->user?->email;
+    }
+
+    /**
+     * The (trimmed, non-empty) value of the first form field of the given type,
+     * or null. Reads the loaded fieldValues relation to avoid per-call queries.
+     */
+    protected function fieldValueOfType(RegistrationFieldTypeEnum $type): ?string
+    {
+        $value = $this->fieldValues
+            ->first(fn (RegistrationFieldValue $fieldValue): bool => $fieldValue->field_type === $type)?->value;
+
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 
     public function payments(): MorphMany

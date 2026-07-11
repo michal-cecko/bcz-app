@@ -142,7 +142,7 @@ class TimetableEntry extends Model
             return null;
         }
 
-        return "{$competitor->user?->name} (".($position + 1)."/{$total})";
+        return "{$competitor->athleteName()} (".($position + 1)."/{$total})";
     }
 
     /**

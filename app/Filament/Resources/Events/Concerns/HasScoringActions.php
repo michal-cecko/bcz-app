@@ -220,7 +220,7 @@ trait HasScoringActions
             $competitors = $round->getAdvancedCompetitors();
             $viewData['competitors'] = $competitors->map(fn ($reg, $i) => [
                 'id' => $reg->user_id,
-                'name' => $reg->user?->name ?? 'Neznámy',
+                'name' => $reg->athleteName() ?? 'Neznámy',
                 'order' => $i,
             ])->values()->toArray();
 
@@ -287,7 +287,7 @@ trait HasScoringActions
     {
         $competitors = $round->getAdvancedCompetitors()->map(fn ($reg) => [
             'id' => $reg->user_id,
-            'name' => $reg->user?->name ?? 'Neznámy',
+            'name' => $reg->athleteName() ?? 'Neznámy',
         ])->values()->toArray();
 
         return [
@@ -305,7 +305,7 @@ trait HasScoringActions
 
         $competitors = $round->getOrderedCompetitors()->map(fn ($reg) => [
             'id' => $reg->user_id,
-            'name' => $reg->user?->name ?? 'Neznámy',
+            'name' => $reg->athleteName() ?? 'Neznámy',
         ])->values()->toArray();
 
         $battles = $round->battles->map(fn (Battle $battle) => [
@@ -339,7 +339,7 @@ trait HasScoringActions
         }
 
         $competitorNames = $round->getOrderedCompetitors()
-            ->mapWithKeys(fn ($reg) => [$reg->user_id => $reg->user?->name ?? 'Neznámy']);
+            ->mapWithKeys(fn ($reg) => [$reg->user_id => $reg->athleteName() ?? 'Neznámy']);
 
         DB::transaction(function () use ($round, $battlesData, $competitorNames): void {
             $existingIds = $round->battles()->pluck('id')->toArray();

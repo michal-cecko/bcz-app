@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Events;
 
+use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\TimetableEntryStatusEnum;
 use App\Enums\TimetableEntryTypeEnum;
 use App\Models\AthleteCategory;
@@ -392,5 +393,51 @@ class PublicResultsTabTest extends TestCase
         $this->assertStringContainsString('(1/2)', $label);
         $this->assertStringContainsString('AlphaWinner', $label);
         $this->assertStringNotContainsString('/4', $label);
+    }
+
+    /**
+     * A coach registered a different athlete under their own account (one email,
+     * many athletes). Published score results must show the athlete's own name
+     * from the registration form, not the linked account holder's name.
+     */
+    public function test_score_results_show_the_registration_athlete_not_the_account_holder(): void
+    {
+        $event = Event::factory()->competition()->create(['is_published' => true]);
+        $detail = CompetitionDetail::factory()->create(['event_id' => $event->id]);
+        $category = AthleteCategory::factory()->create();
+
+        $round = CompetitionRound::factory()->qualification()->create([
+            'competition_detail_id' => $detail->id,
+            'athlete_category_id' => $category->id,
+            'name' => 'Kvalifikácia',
+            'round_number' => 1,
+            'sort_order' => 1,
+            'scores_published' => true,
+        ]);
+
+        $account = User::factory()->create(['first_name' => 'Nikola', 'last_name' => 'Coufalová']);
+        $registration = EventRegistration::factory()->approved()->create([
+            'event_id' => $event->id,
+            'user_id' => $account->id,
+            'athlete_category_id' => $category->id,
+        ]);
+        $registration->fieldValues()->createMany([
+            ['field_key' => 'meno', 'field_type' => RegistrationFieldTypeEnum::FIRST_NAME, 'value' => 'Samuel'],
+            ['field_key' => 'priezvisko', 'field_type' => RegistrationFieldTypeEnum::LAST_NAME, 'value' => 'Ivan'],
+        ]);
+
+        $part = RoundPart::factory()->create(['competition_round_id' => $round->id, 'name' => ['sk' => 'Statika']]);
+        CompetitionResult::factory()->create([
+            'round_part_id' => $part->id,
+            'user_id' => $account->id,
+            'score' => 90,
+            'place' => 1,
+        ]);
+
+        $response = $this->get(route('event.show', $event));
+
+        $response->assertOk();
+        $response->assertSee('Samuel Ivan', false);
+        $response->assertDontSee('Nikola Coufalová', false);
     }
 }
