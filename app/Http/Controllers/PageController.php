@@ -57,9 +57,11 @@ use App\Mason\Bricks\TrainingCategoriesBrick;
 use App\Mason\Bricks\TrainingsArchiveBrick;
 use App\Mason\Bricks\VerticalTimelineBrick;
 use App\Mason\Bricks\VideoSectionBrick;
+use App\Models\Event;
 use App\Models\Page;
 use Awcodes\Mason\Support\MasonRenderer;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class PageController extends Controller
 {
@@ -121,12 +123,31 @@ class PageController extends Controller
         CompetitionCtaBrick::class,
     ];
 
-    public function show(string $slug = '/'): View
+    /**
+     * Old streetworkoutkysuce.sk blog-post slugs that were renamed when migrated
+     * as events; posts whose slug was kept are resolved dynamically in show().
+     * Defined here (not as routes) because Symfony rejects non-ASCII route URIs.
+     *
+     * @var array<string, string>
+     */
+    private const array LEGACY_EVENT_SLUGS = [
+        'majstrovstva-slovenska-freestyle-2023-v-presove' => 'majstrovstva-v-street-workout-e-2023-boli-velkolepe-freestyle-atleti-hviezdili',
+        'exhibicia-hotel-dixon-banska-bystrica' => 'street-workout-kysuce-na-plese-sportovcov-v-banskej-bystrici',
+        'exhibicia-na-zilinskej-univerzite' => 'exhibicia-pre-fakultu-bezpecnostneho-inzinierstva-uniza',
+        'street-workout-kysuce-nadchol-v-cadci-silova-exhibicia-na-60-vyrocie-cvc-ukazala-co-dokaze-ludske-telo' => 'street-workout-kysuce-ohuril-exhibiciou-pri-60-vyroci-cvc-cadca',
+        'vylet-z-kruzku-do-gymnastickej-haly-🏆🔥' => 'vylet-z-kruzku-do-gymnastickej-haly',
+    ];
+
+    public function show(string $slug = '/'): View|RedirectResponse
     {
         $page = Page::query()
             ->published()
             ->where('slug', $slug)
-            ->firstOrFail();
+            ->first();
+
+        if ($page === null) {
+            return $this->redirectLegacyEventSlugOrFail($slug);
+        }
 
         $content = $page->content ?: [];
 
@@ -138,5 +159,27 @@ class PageController extends Controller
             'page' => $page,
             'renderedContent' => $renderedContent,
         ]);
+    }
+
+    /**
+     * Old-site blog posts live at root-level slugs; redirect them to their
+     * event detail page instead of 404ing so link equity carries over.
+     */
+    private function redirectLegacyEventSlugOrFail(string $slug): RedirectResponse
+    {
+        $eventSlug = self::LEGACY_EVENT_SLUGS[$slug] ?? null;
+
+        if ($eventSlug === null) {
+            $slugIsPublishedEvent = Event::query()
+                ->where('slug', $slug)
+                ->where('is_published', true)
+                ->exists();
+
+            abort_unless($slugIsPublishedEvent, 404);
+
+            $eventSlug = $slug;
+        }
+
+        return redirect()->route('event.show', ['event' => $eventSlug], 301);
     }
 }

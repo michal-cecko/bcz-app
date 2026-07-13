@@ -106,10 +106,21 @@ $frontendRoutes = function () {
     Route::redirect('/archiv-trenerov', '/treningy', 301);
     Route::redirect('/zoznam-treningov', '/treningy', 301);
     Route::redirect('/vystupenia', '/eventy', 301);
+    Route::redirect('/vystupenia-workshopy', '/vystupenia-prednasky-workshopy', 301);
     Route::redirect('/trening/{any}', '/treningy', 301)->where('any', '.+');
     Route::redirect('/sutaz/{any}', '/sutaze', 301)->where('any', '.+');
     Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
     Route::redirect('/tim/{any}', '/timy', 301)->where('any', '.+');
+
+    // Legacy redirects: streetworkoutkysuce.sk (old WordPress site, path preserved by domain redirect)
+    Route::redirect('/domov', '/', 301);
+    Route::redirect('/2-percenta-z-dane', '/dva-percenta-z-dane', 301);
+    Route::redirect('/stan-sa-clenom-timu-street-workout-kysuce', '/trenuj-s-nami', 301);
+    Route::redirect('/podujatia-a-sutaze', '/eventy', 301);
+    Route::redirect('/blog', '/eventy', 301);
+    Route::redirect('/category/sutaze', '/sutaze', 301);
+    Route::redirect('/category/exhibicie', '/akrobaticke-vystupenia', 301);
+    Route::redirect('/category/{any}', '/eventy', 301)->where('any', '.+');
 
     Route::get('/{slug}', [PageController::class, 'show'])
         ->where('slug', '^(?!admin|login|gopay|team-invitations|magic-login|payment|en|cs|timy).*$');
@@ -184,6 +195,17 @@ Route::redirect('/vystupenia-workshopy', '/vystupenia-prednasky-workshopy', 301)
 Route::redirect('/trening/{any}', '/treningy', 301)->where('any', '.+');
 Route::redirect('/sutaz/{any}', '/sutaze', 301)->where('any', '.+');
 Route::redirect('/vystupenie/{any}', '/eventy', 301)->where('any', '.+');
+Route::redirect('/tim/{any}', '/timy', 301)->where('any', '.+');
+
+// Legacy redirects: streetworkoutkysuce.sk (old WordPress site, path preserved by domain redirect)
+Route::redirect('/domov', '/', 301);
+Route::redirect('/2-percenta-z-dane', '/dva-percenta-z-dane', 301);
+Route::redirect('/stan-sa-clenom-timu-street-workout-kysuce', '/trenuj-s-nami', 301);
+Route::redirect('/podujatia-a-sutaze', '/eventy', 301);
+Route::redirect('/blog', '/eventy', 301);
+Route::redirect('/category/sutaze', '/sutaze', 301);
+Route::redirect('/category/exhibicie', '/akrobaticke-vystupenia', 301);
+Route::redirect('/category/{any}', '/eventy', 301)->where('any', '.+');
 
 // Catch-all CMS page
 Route::get('/{slug}', [PageController::class, 'show'])
