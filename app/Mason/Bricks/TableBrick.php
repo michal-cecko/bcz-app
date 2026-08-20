@@ -39,13 +39,13 @@ class TableBrick extends Brick
             ->schema([
                 Repeater::make('headers')
                     ->label(__('bricks.table.headers'))
-                    ->simple(
+                    ->schema([
                         TranslatableBrickFields::group(fn (string $locale) => [
                             TextInput::make("label.{$locale}")
                                 ->label(__('bricks.fields.label'))
                                 ->required(),
                         ]),
-                    )
+                    ])
                     ->reorderable()
                     ->reorderableWithButtons()
                     ->cloneable()
@@ -57,12 +57,12 @@ class TableBrick extends Brick
                         Repeater::make('cells')
                             ->label(__('bricks.table.cells'))
                             ->addActionLabel('Pridať hodnotu')
-                            ->simple(
+                            ->schema([
                                 TranslatableBrickFields::group(fn (string $locale) => [
                                     TextInput::make("value.{$locale}")
                                         ->label(__('bricks.fields.value')),
                                 ]),
-                            )
+                            ])
                             ->reorderable()
                             ->reorderableWithButtons()
                             ->cloneable()
