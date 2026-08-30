@@ -184,7 +184,7 @@
                 <a href="{{ route('team.training.show', [$training->team, $training]) }}" wire:navigate class="bg-[#111111] border border-[#222222] rounded-xl overflow-hidden group hover:border-[#333333] transition-colors flex flex-col">
                     {{-- Card Image --}}
                     <div class="h-[180px] bg-[#1A1A1A] overflow-hidden">
-                        @php($cardImage = $training->cardImageUrl())
+                        @php $cardImage = $training->cardImageUrl(); @endphp
                         @if($cardImage)
                             <img src="{{ $cardImage }}" alt="{{ $training->getTranslation('title', app()->getLocale()) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         @else
