@@ -39,7 +39,13 @@ class CancelExpiredRegistrations extends Command
                 'cancellation_reason' => 'Automaticky zrušená — platba nebola prijatá v stanovenej lehote.',
             ]);
 
-            $trainingsToCheck->push($registration->training);
+            // The training may have been soft-deleted after the registration was
+            // created, in which case the relation resolves to null. Skip it rather
+            // than passing null into a strictly-typed Training parameter below.
+            if ($registration->training) {
+                $trainingsToCheck->push($registration->training);
+            }
+
             $count++;
         }
 
