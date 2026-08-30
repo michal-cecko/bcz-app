@@ -93,10 +93,10 @@
                 </div>
 
                 @php
-                    $payoutIban = method_exists($payable ?? null, 'effectiveBankAccountIban')
+                    $payoutIban = $payable && method_exists($payable, 'effectiveBankAccountIban')
                         ? ($payable->effectiveBankAccountIban() ?: $team?->bank_account_iban)
                         : $team?->bank_account_iban;
-                    $payoutName = method_exists($payable ?? null, 'effectiveBankAccountName')
+                    $payoutName = $payable && method_exists($payable, 'effectiveBankAccountName')
                         ? ($payable->effectiveBankAccountName() ?: $team?->bank_account_name)
                         : $team?->bank_account_name;
                 @endphp
