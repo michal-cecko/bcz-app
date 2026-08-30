@@ -100,7 +100,7 @@ class TrainingsArchive extends Component
             ->where('is_active', true)
             ->where('team_id', $teamId)
             ->current()
-            ->with(['sportCategory', 'coaches', 'team', 'city', 'schedules', 'registrations' => function ($q) {
+            ->with(['media', 'sportCategory.media', 'coaches', 'team', 'city', 'schedules', 'registrations' => function ($q) {
                 if (auth()->check()) {
                     $q->where('user_id', auth()->id())
                         ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])

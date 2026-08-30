@@ -15,7 +15,7 @@ class TrainingController extends Controller
 
         $trainings = Training::query()
             ->where('is_active', true)
-            ->with(['sportCategory', 'coaches', 'team', 'schedules'])
+            ->with(['media', 'sportCategory.media', 'coaches', 'team', 'schedules'])
             ->orderByRaw('team_id = ? DESC', [$defaultTeamId])
             ->orderBy('sort_order')
             ->get();
@@ -30,7 +30,7 @@ class TrainingController extends Controller
     {
         abort_unless($training->team_id === $team->id, 404);
 
-        $training->load(['sportCategory', 'coaches.coachProfile', 'coaches.certifications', 'team', 'city', 'schedules'])
+        $training->load(['media', 'sportCategory.media', 'coaches.coachProfile', 'coaches.certifications', 'team', 'city', 'schedules'])
             ->loadCount('registrations');
 
         return view('pages.trainings.show', compact('training'));

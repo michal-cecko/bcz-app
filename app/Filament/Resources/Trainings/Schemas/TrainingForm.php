@@ -105,6 +105,15 @@ class TrainingForm
                                     ->required()
                                     ->preload()
                                     ->searchable(),
+                                SpatieMediaLibraryFileUpload::make('card_image')
+                                    ->label('Obrázok tréningu')
+                                    ->collection('card_image')
+                                    ->disk('public')
+                                    ->visibility('public')
+                                    ->image()
+                                    ->imageEditor()
+                                    ->helperText('Zobrazuje sa na karte tréningu vo výpise a v hlavičke detailu. Ak nie je vyplnený, použije sa obrázok športovej kategórie.')
+                                    ->columnSpanFull(),
                             ]),
 
                         Tabs\Tab::make('Miesto')
