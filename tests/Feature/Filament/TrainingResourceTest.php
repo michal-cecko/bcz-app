@@ -151,6 +151,49 @@ class TrainingResourceTest extends TestCase
             ->assertSeeLivewire(CoachesRelationManager::class);
     }
 
+    public function test_attach_coach_action_options_only_include_team_admins_and_coaches(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+        ]);
+
+        $coach = User::factory()->create();
+        $coach->teams()->attach($this->team->id, ['role' => RoleEnum::COACH->value]);
+
+        $teamAdmin = User::factory()->create();
+        $teamAdmin->teams()->attach($this->team->id, ['role' => RoleEnum::TEAM_ADMIN->value]);
+
+        // No explicit attach: creating a User while a Filament tenant is active
+        // auto-syncs it to the tenant with the default (ATHLETE) pivot role, via
+        // Filament's tenant-ownership model-creation hook. This user must NOT
+        // appear in the "attach coach" options, since it holds no TEAM_ADMIN/COACH role.
+        $athlete = User::factory()->create();
+
+        $test = Livewire::test(CoachesRelationManager::class, [
+            'ownerRecord' => $training,
+            'pageClass' => EditTraining::class,
+        ])
+            ->mountTableAction('attach')
+            ->assertTableActionMounted('attach');
+
+        // Reach into the mounted action's schema to read the actual resolved
+        // options of the "Tréner" select, rather than asserting on rendered
+        // HTML (searchable selects don't inline their full option list as
+        // plain text). This is the exact code path that previously blew up
+        // in production with `SQLSTATE[42703]: column "pivot_in" does not
+        // exist` — before the fix, mounting this action throws instead of
+        // reaching this assertion at all.
+        $userIdField = $test->instance()->getMountedTableActionForm()->getComponent('user_id');
+
+        $this->assertNotNull($userIdField);
+        $this->assertEqualsCanonicalizing(
+            [$coach->id, $teamAdmin->id],
+            array_keys($userIdField->getOptions())
+        );
+    }
+
     public function test_registrations_relation_manager_loads(): void
     {
         $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);

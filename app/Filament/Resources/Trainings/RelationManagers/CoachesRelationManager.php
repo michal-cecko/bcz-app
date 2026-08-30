@@ -78,7 +78,7 @@ class CoachesRelationManager extends RelationManager
                                 return User::query()
                                     ->whereHas('teams', fn ($q) => $q
                                         ->where('teams.id', $training->team_id)
-                                        ->wherePivotIn('role', [RoleEnum::TEAM_ADMIN->value, RoleEnum::COACH->value])
+                                        ->whereIn('team_user.role', [RoleEnum::TEAM_ADMIN->value, RoleEnum::COACH->value])
                                     )
                                     ->orderBy('name')
                                     ->pluck('name', 'id')
