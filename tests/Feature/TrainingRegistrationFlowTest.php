@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\MembershipStatusEnum;
+use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
@@ -10,6 +11,7 @@ use App\Enums\TrainingPricingTypeEnum;
 use App\Mail\RegistrationConfirmationMail;
 use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Team;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
@@ -169,6 +171,53 @@ class TrainingRegistrationFlowTest extends TestCase
 
         $this->assertNotNull($registration);
         $this->assertEquals(RegistrationStatusEnum::Pending, $registration->status);
+    }
+
+    public function test_membership_needed_state_renders_bank_transfer_details_without_payable(): void
+    {
+        // Regression test for BCZ-APP-J: the "membership_needed" state renders the
+        // training-payment-methods component WITHOUT a $payable (see the
+        // membership_needed @include in the ⚡training-registration-form.blade.php
+        // Volt component, which never passes 'payable'). When the auto-selected
+        // payment method is bank_transfer, method_exists() was previously called
+        // with $payable ?? null, which is a TypeError in PHP 8+ (method_exists()
+        // does not accept null), crashing the view instead of falling back to the
+        // team's bank account details.
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        $bankTransfer = PaymentMethod::create([
+            'method' => PaymentMethodEnum::BANK_TRANSFER,
+            'title' => ['sk' => 'Bankový prevod'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+
+        $training->paymentMethods()->attach($bankTransfer->id, [
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        $this->team->update([
+            'bank_account_iban' => 'SK1234567890123456789012',
+            'bank_account_name' => 'BCZ Team',
+        ]);
+
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertOk()
+            ->assertSet('registrationState', 'membership_needed')
+            ->assertSet('selectedPaymentMethod', PaymentMethodEnum::BANK_TRANSFER->value)
+            ->assertSee($this->team->bank_account_iban);
     }
 
     public function test_paid_training_stays_pending(): void
