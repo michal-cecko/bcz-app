@@ -135,7 +135,22 @@ class Training extends Model implements HasMedia, Linkable
 
     public function registerMediaCollections(): void
     {
+        $this->addMediaCollection('card_image')->singleFile();
         $this->addMediaCollection('email_attachments');
+    }
+
+    /**
+     * Image used by the public training card and the detail hero.
+     *
+     * The training's own image wins; trainings without one keep falling back to
+     * the sport category image they relied on before per-training images existed.
+     */
+    public function cardImageUrl(): ?string
+    {
+        return $this->getFirstMediaUrl('card_image')
+            ?: $this->sportCategory?->getFirstMediaUrl('hero_image')
+            ?: $this->sportCategory?->hero_image
+            ?: null;
     }
 
     public function getSlugOptions(): SlugOptions

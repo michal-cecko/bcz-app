@@ -32,7 +32,7 @@ class TeamController extends Controller
     {
         $trainings = $team->trainings()
             ->where('is_active', true)
-            ->with(['sportCategory', 'coaches', 'team'])
+            ->with(['media', 'sportCategory.media', 'coaches', 'team'])
             ->orderBy('sort_order')
             ->get();
 

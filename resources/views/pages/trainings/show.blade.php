@@ -9,7 +9,7 @@
     $description = $training->getTranslation('description', $locale);
     $placeName = $training->getTranslation('place_name', $locale);
     $gatheringPlace = $training->getTranslation('gathering_place', $locale);
-    $heroImage = $training->sportCategory?->getFirstMediaUrl('hero_image');
+    $heroImage = $training->cardImageUrl();
     $schedules = $training->schedules;
     $timeRange = '';
     if (!$training->is_recurring && $training->start_time) {

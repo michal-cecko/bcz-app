@@ -56,8 +56,9 @@
                         @foreach($trainings as $training)
                             <a href="{{ route('team.training.show', [$training->team, $training]) }}" class="bg-[#111111] border border-[#222222] rounded-xl overflow-hidden group hover:border-[#333333] transition-colors">
                                 <div class="h-[180px] bg-[#1A1A1A] overflow-hidden">
-                                    @if($training->sportCategory?->hero_image)
-                                        <img src="{{ $training->sportCategory->hero_image }}" alt="{{ $training->getTranslation('title', app()->getLocale()) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                    @php($cardImage = $training->cardImageUrl())
+                                    @if($cardImage)
+                                        <img src="{{ $cardImage }}" alt="{{ $training->getTranslation('title', app()->getLocale()) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center">
                                             <svg class="w-12 h-12 text-[#333333]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
