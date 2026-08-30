@@ -69,19 +69,7 @@ class TrainingResourceTest extends TestCase
         $city = City::factory()->create();
 
         Livewire::test(CreateTraining::class)
-            ->fillForm([
-                'title.sk' => 'Nový Tréning',
-                'sport_category_id' => $sportCategory->id,
-                'city_id' => $city->id,
-                'pricing_type' => TrainingPricingTypeEnum::FREE->value,
-                'is_active' => true,
-                'registration_form_schema' => [
-                    ['name' => 'meno', 'type' => 'first_name', 'label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'required' => true, 'width' => 'half'],
-                    ['name' => 'priezvisko', 'type' => 'last_name', 'label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'required' => true, 'width' => 'half'],
-                    ['name' => 'email', 'type' => 'email', 'label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'required' => true, 'width' => 'half'],
-                    ['name' => 'telefon', 'type' => 'phone', 'label' => ['sk' => 'Telefón', 'en' => 'Phone', 'cs' => 'Telefon'], 'required' => true, 'width' => 'half'],
-                ],
-            ])
+            ->fillForm($this->validTrainingFormData($sportCategory->id, $city->id))
             ->call('create')
             ->assertNotified()
             ->assertRedirect();
@@ -110,6 +98,66 @@ class TrainingResourceTest extends TestCase
 
         $training->refresh();
         $this->assertEquals('Upravený Tréning', $training->getTranslation('title', 'sk'));
+    }
+
+    public function test_map_is_centred_on_the_stored_coordinates_when_editing(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+            'place_address' => 'M. R. Štefánika 2007/14, 022 01 Čadca, Slovensko',
+            'latitude' => 49.4305426,
+            'longitude' => 18.7895393,
+        ]);
+
+        Livewire::test(EditTraining::class, ['record' => $training->getRouteKey()])
+            ->assertOk()
+            ->assertFormSet([
+                'location' => ['lat' => 49.4305426, 'lng' => 18.7895393],
+            ]);
+    }
+
+    public function test_untouched_map_does_not_store_its_default_location_as_coordinates(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $city = City::factory()->create();
+
+        Livewire::test(CreateTraining::class)
+            ->fillForm([
+                ...$this->validTrainingFormData($sportCategory->id, $city->id),
+                // The map component writes its default centre back into the form state
+                // as soon as it boots without coordinates, without any user interaction.
+                'location' => ['lat' => 48.1486, 'lng' => 17.1077],
+            ])
+            ->call('create')
+            ->assertNotified()
+            ->assertRedirect();
+
+        $training = Training::query()->where('sport_category_id', $sportCategory->id)->sole();
+
+        $this->assertNull($training->latitude);
+        $this->assertNull($training->longitude);
+    }
+
+    public function test_picking_a_location_on_the_map_stores_its_coordinates(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $city = City::factory()->create();
+
+        Livewire::test(CreateTraining::class)
+            ->fillForm([
+                ...$this->validTrainingFormData($sportCategory->id, $city->id),
+                'location' => ['lat' => 49.4305426, 'lng' => 18.7895393],
+            ])
+            ->call('create')
+            ->assertNotified()
+            ->assertRedirect();
+
+        $training = Training::query()->where('sport_category_id', $sportCategory->id)->sole();
+
+        $this->assertEquals(49.4305426, (float) $training->latitude);
+        $this->assertEquals(18.7895393, (float) $training->longitude);
     }
 
     public function test_can_delete_training(): void
@@ -204,5 +252,23 @@ class TrainingResourceTest extends TestCase
             ->assertCanSeeTableRecords([$approved, $pending], inOrder: true)
             ->sortTable('status', 'desc')
             ->assertCanSeeTableRecords([$pending, $approved], inOrder: true);
+    }
+
+    /** @return array<string, mixed> */
+    private function validTrainingFormData(string $sportCategoryId, string $cityId): array
+    {
+        return [
+            'title.sk' => 'Nový Tréning',
+            'sport_category_id' => $sportCategoryId,
+            'city_id' => $cityId,
+            'pricing_type' => TrainingPricingTypeEnum::FREE->value,
+            'is_active' => true,
+            'registration_form_schema' => [
+                ['name' => 'meno', 'type' => 'first_name', 'label' => ['sk' => 'Meno', 'en' => 'First name', 'cs' => 'Jméno'], 'required' => true, 'width' => 'half'],
+                ['name' => 'priezvisko', 'type' => 'last_name', 'label' => ['sk' => 'Priezvisko', 'en' => 'Last name', 'cs' => 'Příjmení'], 'required' => true, 'width' => 'half'],
+                ['name' => 'email', 'type' => 'email', 'label' => ['sk' => 'Email', 'en' => 'Email', 'cs' => 'Email'], 'required' => true, 'width' => 'half'],
+                ['name' => 'telefon', 'type' => 'phone', 'label' => ['sk' => 'Telefón', 'en' => 'Phone', 'cs' => 'Telefon'], 'required' => true, 'width' => 'half'],
+            ],
+        ];
     }
 }

@@ -14,6 +14,7 @@ use App\Mason\EmailBricks\EmailImageBrick;
 use App\Mason\EmailBricks\EmailRichTextBrick;
 use App\Mason\EmailBricks\EmailSpacerBrick;
 use App\Models\TeamSeason;
+use App\Models\Training;
 use App\Support\ConditionFieldOptions;
 use App\Support\RegistrationFieldOptions;
 use Awcodes\Mason\Mason;
@@ -43,6 +44,25 @@ use Illuminate\Support\Str;
 
 class TrainingForm
 {
+    /**
+     * Centre of the map for trainings that have no coordinates stored yet.
+     *
+     * @var array{0: float, 1: float}
+     */
+    private const DEFAULT_MAP_LOCATION = [48.1486, 17.1077];
+
+    /**
+     * The map component pushes this centre back into the form state whenever it boots
+     * without coordinates, so a position identical to it was never picked by a user.
+     */
+    private static function isDefaultMapLocation(mixed $latitude, mixed $longitude): bool
+    {
+        [$defaultLatitude, $defaultLongitude] = self::DEFAULT_MAP_LOCATION;
+
+        return abs((float) $latitude - $defaultLatitude) < 0.0000001
+            && abs((float) $longitude - $defaultLongitude) < 0.0000001;
+    }
+
     /** @return list<class-string> */
     private static function emailBricks(): array
     {
@@ -158,7 +178,7 @@ class TrainingForm
                                     ->dehydrated(),
                                 Map::make('location')
                                     ->label('Mapa')
-                                    ->defaultLocation([48.1486, 17.1077])
+                                    ->defaultLocation(self::DEFAULT_MAP_LOCATION)
                                     ->defaultZoom(12)
                                     ->draggable()
                                     ->clickable()
@@ -170,11 +190,35 @@ class TrainingForm
                                         'street' => '%n %S',
                                     ])
                                     ->reactive()
-                                    ->afterStateUpdated(function (Get $get, Set $set, ?array $state): void {
-                                        if ($state) {
-                                            $set('latitude', $state['lat'] ?? null);
-                                            $set('longitude', $state['lng'] ?? null);
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(function (Map $component, ?Model $record): void {
+                                        if (! $record instanceof Training) {
+                                            return;
                                         }
+
+                                        if (blank($record->latitude) || blank($record->longitude)) {
+                                            return;
+                                        }
+
+                                        $component->state([
+                                            'lat' => (float) $record->latitude,
+                                            'lng' => (float) $record->longitude,
+                                        ]);
+                                    })
+                                    ->afterStateUpdated(function (Set $set, ?array $state): void {
+                                        $latitude = $state['lat'] ?? null;
+                                        $longitude = $state['lng'] ?? null;
+
+                                        if ($latitude === null || $longitude === null) {
+                                            return;
+                                        }
+
+                                        if (self::isDefaultMapLocation($latitude, $longitude)) {
+                                            return;
+                                        }
+
+                                        $set('latitude', $latitude);
+                                        $set('longitude', $longitude);
                                     })
                                     ->columnSpanFull(),
                             ]),
