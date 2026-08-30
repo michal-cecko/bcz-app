@@ -386,11 +386,8 @@
                         'caption' => '',
                         'type' => 'image',
                     ])->filter(fn ($m) => $m->url)->values();
-                    $colMediaItems = [[], [], []];
-                    foreach ($mediaItems as $i => $item) {
-                        $colMediaItems[$i % 3][] = $item;
-                    }
-                    $ratios = [[7, 5], [5, 7], [6, 6]];
+                    // Repeating tile aspect ratios keep the masonry rhythm at any column count.
+                    $tileAspects = ['aspect-[4/3]', 'aspect-square', 'aspect-[3/2]'];
                     $jsData = $mediaItems->map(fn ($m) => ['url' => $m->url, 'alt' => $m->alt, 'caption' => $m->caption]);
                 @endphp
                 <div
@@ -399,36 +396,26 @@
                     @keydown.left.window="if(lightbox) current = (current - 1 + items.length) % items.length"
                     @keydown.right.window="if(lightbox) current = (current + 1) % items.length"
                 >
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" style="height: 500px">
-                        @php $globalIdx = 0; @endphp
-                        @foreach($colMediaItems as $colIndex => $col)
-                            @if(count($col) > 0)
-                                <div class="flex flex-col gap-5 h-full">
-                                    @foreach($col as $imgIndex => $media)
-                                        @php
-                                            $ratio = $ratios[$colIndex][$imgIndex] ?? 6;
-                                            $isVideo = ($media->type ?? 'image') === 'video';
-                                        @endphp
-                                        <div
-                                            class="rounded-lg overflow-hidden bg-[#1A1A1A] cursor-pointer relative group min-h-0"
-                                            style="flex: {{ $ratio }}"
-                                            @if($media->url) @click="current = {{ $globalIdx }}; lightbox = true" @endif
-                                        >
-                                            @if($media->url)
-                                                <img src="{{ $media->url }}" alt="{{ $media->alt ?? '' }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                            @endif
-                                            @if($isVideo)
-                                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                                    <div class="w-16 h-16 rounded-full bg-bcz-red flex items-center justify-center">
-                                                        <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-                                                    </div>
-                                                </div>
-                                            @endif
+                    <div class="columns-1 sm:columns-2 lg:columns-3 gap-5">
+                        @foreach($mediaItems as $index => $media)
+                            @php
+                                $isVideo = ($media->type ?? 'image') === 'video';
+                            @endphp
+                            <div
+                                class="mb-5 break-inside-avoid {{ $tileAspects[$index % count($tileAspects)] }} rounded-lg overflow-hidden bg-[#1A1A1A] cursor-pointer relative group"
+                                @if($media->url) @click="current = {{ $index }}; lightbox = true" @endif
+                            >
+                                @if($media->url)
+                                    <img src="{{ $media->url }}" alt="{{ $media->alt ?? '' }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                @endif
+                                @if($isVideo)
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                        <div class="w-16 h-16 rounded-full bg-bcz-red flex items-center justify-center">
+                                            <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
                                         </div>
-                                        @php $globalIdx++; @endphp
-                                    @endforeach
-                                </div>
-                            @endif
+                                    </div>
+                                @endif
+                            </div>
                         @endforeach
                     </div>
 
