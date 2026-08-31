@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Sentry\Laravel\Integration;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileUnacceptableForCollection;
 
@@ -35,6 +36,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);
+
+        // Bot/scanner traffic occasionally POSTs a forged Livewire snapshot
+        // update targeting an internal Filament-locked property (e.g. the
+        // login page's `discoveredSchemaNames`). Livewire is correctly
+        // rejecting the tampered request — this is not an app bug, so don't
+        // let it spam Sentry. See filamentphp/filament#18949.
+        $exceptions->dontReport(CannotUpdateLockedPropertyException::class);
 
         $exceptions->renderable(function (FileUnacceptableForCollection $e) {
             preg_match('/mime: ([^,`]+)/', $e->getMessage(), $matches);
