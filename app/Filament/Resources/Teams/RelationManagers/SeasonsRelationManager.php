@@ -25,6 +25,24 @@ class SeasonsRelationManager extends RelationManager
 
     protected static ?string $pluralModelLabel = 'Sezóny';
 
+    /**
+     * By default Filament treats this relation manager as read-only whenever it
+     * renders on a Resource's `ViewRecord` page, which denies `CreateAction` and
+     * `DeleteAction` outright (see `RelationManager::isReadOnly()` /
+     * `getDefaultActionAuthorizationResponse()`). That made "Sezóny" actions
+     * visible on `EditTeam` but missing on `ViewTeam` for the exact same team —
+     * see https://github.com/michal-cecko/bcz-app/issues/32.
+     *
+     * Base read-only-ness on whether the acting user can actually manage this
+     * team (`TeamPolicy::update`) instead of on the page type, mirroring
+     * `CoachesRelationManager::isReadOnly()`, so the actions show up wherever the
+     * team is genuinely editable for them (View or Edit).
+     */
+    public function isReadOnly(): bool
+    {
+        return ! auth()->user()?->can('update', $this->getOwnerRecord());
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema

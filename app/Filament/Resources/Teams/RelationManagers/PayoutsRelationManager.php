@@ -30,6 +30,16 @@ class PayoutsRelationManager extends RelationManager
 
     protected static ?string $pluralModelLabel = 'Výplaty';
 
+    /**
+     * See {@see \App\Filament\Resources\Teams\RelationManagers\SeasonsRelationManager::isReadOnly()}
+     * — without this, `CreateAction`/`EditAction`/`DeleteAction` are hidden on
+     * `ViewTeam` even though they work on `EditTeam` for the same team and user.
+     */
+    public function isReadOnly(): bool
+    {
+        return ! auth()->user()?->can('update', $this->getOwnerRecord());
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema->components(self::formFields());
