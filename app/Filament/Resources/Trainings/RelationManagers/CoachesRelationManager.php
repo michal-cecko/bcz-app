@@ -37,6 +37,30 @@ class CoachesRelationManager extends RelationManager
             ->count();
     }
 
+    /**
+     * By default Filament treats this relation manager as read-only whenever it
+     * renders on a Resource's `ViewRecord` page — which hides Attach/Detach
+     * entirely, since Filament's DetachAction/DetachBulkAction only consult
+     * `isReadOnly()` and never fall back to a policy check (see
+     * `RelationManager::getDefaultActionAuthorizationResponse()`).
+     *
+     * `TrainingsTable::recordUrl()` always routes the training list to
+     * `ViewTraining`, so every user — including admins — lands there by
+     * default. That made "Priradiť trénera" / detach coach invisible unless
+     * someone separately clicked through to the Edit page, which read as a
+     * missing detach action.
+     *
+     * Base read-only-ness on whether the acting user can actually manage this
+     * training (`TrainingPolicy::update`) instead of on the page type, so
+     * attach/detach show up wherever the training is genuinely editable for
+     * them (View or Edit), while still remaining hidden for users who cannot
+     * manage this specific training's coaches at all.
+     */
+    public function isReadOnly(): bool
+    {
+        return ! auth()->user()?->can('update', $this->getOwnerRecord());
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
