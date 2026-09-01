@@ -105,6 +105,42 @@ class TeamSeasonTest extends TestCase
         $this->assertGreaterThan(0, $prorated);
     }
 
+    public function test_length_in_whole_months_rounds_a_full_calendar_year_to_twelve(): void
+    {
+        $season = TeamSeason::factory()->create([
+            'starts_at' => now()->startOfYear(),
+            'ends_at' => now()->endOfYear()->startOfDay(),
+        ]);
+
+        // The truncating count behind prorating reports eleven-and-a-bit months.
+        $this->assertSame(11, $season->totalMonths());
+        $this->assertSame(12, $season->lengthInWholeMonths());
+    }
+
+    public function test_monthly_fee_spreads_the_fee_across_the_season_months(): void
+    {
+        $season = TeamSeason::factory()->create([
+            'starts_at' => now()->startOfMonth(),
+            'ends_at' => now()->startOfMonth()->addMonths(9)->endOfMonth(),
+            'fee_amount' => 100.00,
+        ]);
+
+        $this->assertSame(10, $season->lengthInWholeMonths());
+        $this->assertSame(10.0, $season->monthlyFee());
+    }
+
+    public function test_monthly_fee_is_null_for_a_season_shorter_than_a_month(): void
+    {
+        $season = TeamSeason::factory()->create([
+            'starts_at' => now()->startOfMonth(),
+            'ends_at' => now()->startOfMonth()->addDays(10),
+            'fee_amount' => 90.00,
+        ]);
+
+        $this->assertSame(0, $season->lengthInWholeMonths());
+        $this->assertNull($season->monthlyFee());
+    }
+
     public function test_has_capacity_unlimited(): void
     {
         $season = TeamSeason::factory()->create(['max_capacity' => null]);
