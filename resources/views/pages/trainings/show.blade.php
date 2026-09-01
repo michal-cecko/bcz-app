@@ -333,7 +333,7 @@
                                 </div>
 
                                 @if($coach->coachProfile?->getTranslation('biography', $locale))
-                                    <p class="text-[#888888] text-[15px] leading-[1.7]">{{ $coach->coachProfile->getTranslation('biography', $locale) }}</p>
+                                    <div class="text-[#888888] text-[15px] leading-[1.7] space-y-4">{!! $coach->coachProfile->getTranslation('biography', $locale) !!}</div>
                                 @endif
 
                                 {{-- Certifications --}}
