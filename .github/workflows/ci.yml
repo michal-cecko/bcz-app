@@ -7,6 +7,26 @@ on:
   pull_request:
     branches: [main]
 
+# Only one CI run per ref may be in flight.
+#
+# On main this is a QUEUE, not a cancel: merging several PRs in quick succession used
+# to start several runs that each pinned Dokploy to their OWN commit
+# (`dockerImage: ...sha-${{ github.sha }}`) and then raced. On 2026-09-01 five merges
+# landed inside ~2 minutes and the LAST update to arrive was #41's — an older commit
+# than #39/#40 — so production ended up running code that predated three merged PRs
+# while every run still reported `deploy: success`.
+#
+# cancel-in-progress is deliberately FALSE on main: cancelling mid-deploy could stop
+# the loop between the web app and the worker and leave the two pinned to different
+# images. Letting the in-flight run finish and queueing the newest one means the last
+# deploy to execute is always the newest commit. GitHub keeps only one pending run per
+# group, so intermediate commits are skipped rather than deployed in turn.
+#
+# On pull requests superseded runs ARE cancelled — nothing is deployed there.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
