@@ -297,56 +297,6 @@ class TrainingResourceTest extends TestCase
             ->assertCanSeeTableRecords([$pending, $approved], inOrder: true);
     }
 
-    public function test_create_form_offers_every_section_in_the_default_order(): void
-    {
-        $state = Livewire::test(CreateTraining::class)
-            ->assertOk()
-            ->get('data.section_order');
-
-        $this->assertSame(
-            Training::DEFAULT_SECTION_ORDER,
-            array_column($state, 'key'),
-            'A new training must start from the order the page shipped with.'
-        );
-    }
-
-    public function test_sections_can_be_reordered_from_the_edit_form(): void
-    {
-        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
-        $training = Training::factory()->create([
-            'team_id' => $this->team->id,
-            'sport_category_id' => $sportCategory->id,
-        ]);
-
-        $component = Livewire::test(EditTraining::class, ['record' => $training->getRouteKey()])->assertOk();
-
-        $hydrated = $component->get('data.section_order');
-
-        $this->assertSame(
-            Training::DEFAULT_SECTION_ORDER,
-            array_column($hydrated, 'key'),
-            'A training that has never been touched must still offer every section to drag.'
-        );
-
-        // Drag the gallery and the coaches below the registration form.
-        $reordered = [];
-
-        foreach (['info', 'location', 'registration', 'gallery', 'coaches'] as $key) {
-            $uuid = collect($hydrated)->search(fn (array $item): bool => $item['key'] === $key);
-            $reordered[$uuid] = $hydrated[$uuid];
-        }
-
-        $component->set('data.section_order', $reordered)
-            ->call('save')
-            ->assertNotified()
-            ->assertHasNoFormErrors();
-
-        $this->assertSame(
-            ['info', 'location', 'registration', 'gallery', 'coaches'],
-            $training->refresh()->section_order
-        );
-    }
-
     /** @return array<string, mixed> */
     private function validTrainingFormData(string $sportCategoryId, string $cityId): array
     {

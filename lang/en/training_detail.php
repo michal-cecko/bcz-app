@@ -4,6 +4,8 @@ return [
     'breadcrumb_home' => 'HOME',
     'breadcrumb_trainings' => 'TRAININGS',
 
+    'nav_sections_label' => 'Page sections',
+
     'about_label' => 'ABOUT TRAINING',
     'about_title' => "WHAT AWAITS YOU\nAT THE TRAINING?",
 

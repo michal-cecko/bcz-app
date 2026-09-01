@@ -4,6 +4,8 @@ return [
     'breadcrumb_home' => 'DOMOV',
     'breadcrumb_trainings' => 'TRÉNINKY',
 
+    'nav_sections_label' => 'Sekce stránky',
+
     'about_label' => 'O TRÉNINKU',
     'about_title' => "CO TĚ ČEKÁ\nNA TRÉNINKU?",
 
