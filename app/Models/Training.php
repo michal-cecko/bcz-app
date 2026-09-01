@@ -9,6 +9,7 @@ use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasResolvedPaymentMethods;
 use App\Models\Concerns\HasUuidV7;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,6 +30,15 @@ class Training extends Model implements HasMedia, Linkable
 
     /** @var list<string> */
     public array $translatable = ['title', 'description', 'place_name', 'gathering_place'];
+
+    /**
+     * Sections of the public training detail page that can be reordered from the
+     * admin, listed in the order the page has always shipped with. The hero is the
+     * page header and stays pinned above them, so it is not part of this list.
+     *
+     * @var list<string>
+     */
+    public const DEFAULT_SECTION_ORDER = ['info', 'location', 'coaches', 'gallery', 'registration'];
 
     protected static function booted(): void
     {
@@ -67,6 +77,7 @@ class Training extends Model implements HasMedia, Linkable
         'registration_form_schema',
         'registration_intro',
         'gallery_images',
+        'section_order',
         'is_active',
         'is_recurring_across_seasons',
         'is_recurring',
@@ -101,6 +112,47 @@ class Training extends Model implements HasMedia, Linkable
             'registration_opens_at' => 'datetime',
             'registration_closes_at' => 'datetime',
             'confirmation_email_content' => 'json',
+        ];
+    }
+
+    /**
+     * Order of the public detail page sections for this training.
+     *
+     * Reading always yields the full, de-duplicated list of known sections: unknown
+     * or removed keys are dropped and sections missing from a stored order (a training
+     * saved before the section existed, or one that was never touched in the admin)
+     * are appended in their default position. The page therefore always renders every
+     * section exactly once, and the admin always has every section to drag around.
+     *
+     * @return Attribute<list<string>, string|null>
+     */
+    protected function sectionOrder(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value): array => self::normalizeSectionOrder(
+                is_string($value) ? json_decode($value, true) : $value
+            ),
+            set: fn (mixed $value): ?string => $value === null
+                ? null
+                : json_encode(self::normalizeSectionOrder($value)),
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function normalizeSectionOrder(mixed $value): array
+    {
+        $stored = collect(is_array($value) ? $value : [])
+            ->map(fn (mixed $key): mixed => is_array($key) ? ($key['key'] ?? null) : $key)
+            ->filter(fn (mixed $key): bool => in_array($key, self::DEFAULT_SECTION_ORDER, true))
+            ->unique()
+            ->values()
+            ->all();
+
+        return [
+            ...$stored,
+            ...array_values(array_diff(self::DEFAULT_SECTION_ORDER, $stored)),
         ];
     }
 

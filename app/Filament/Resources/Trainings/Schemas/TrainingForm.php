@@ -23,6 +23,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\RichEditor;
@@ -62,6 +63,20 @@ class TrainingForm
         return abs((float) $latitude - $defaultLatitude) < 0.0000001
             && abs((float) $longitude - $defaultLongitude) < 0.0000001;
     }
+
+    /**
+     * Human names for the reorderable sections of the public training detail page,
+     * keyed by the section keys in Training::DEFAULT_SECTION_ORDER.
+     *
+     * @var array<string, string>
+     */
+    private const SECTION_LABELS = [
+        'info' => 'O tréningu + detaily a kapacita',
+        'location' => 'Lokácia a mapa',
+        'coaches' => 'Tréneri',
+        'gallery' => 'Galéria',
+        'registration' => 'Registračný formulár',
+    ];
 
     /** @return list<class-string> */
     private static function emailBricks(): array
@@ -716,6 +731,21 @@ class TrainingForm
                                     ->disk('public')
                                     ->directory('trainings/gallery')
                                     ->visibility('public')
+                                    ->columnSpanFull(),
+                            ]),
+
+                        Tabs\Tab::make('Poradie sekcií')
+                            ->schema([
+                                Repeater::make('section_order')
+                                    ->label('Poradie sekcií na verejnej stránke tréningu')
+                                    ->helperText('Presúvaním zmeníš poradie, v akom sa sekcie zobrazia na stránke tréningu. Úvodná hlavička s názvom ostáva vždy hore. Sekcia, ktorá nemá žiadny obsah (napr. tréning bez galérie), sa na stránke nezobrazí.')
+                                    ->simple(Hidden::make('key'))
+                                    ->default(Training::DEFAULT_SECTION_ORDER)
+                                    ->itemLabel(fn (array $state): ?string => self::SECTION_LABELS[$state['key'] ?? ''] ?? null)
+                                    ->addable(false)
+                                    ->deletable(false)
+                                    ->reorderable()
+                                    ->reorderableWithButtons()
                                     ->columnSpanFull(),
                             ]),
 
