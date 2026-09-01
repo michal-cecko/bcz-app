@@ -117,8 +117,8 @@
                     @foreach($certifications as $cert)
                         <div class="bg-[#111111] border border-bcz-border rounded-lg p-8 flex flex-col gap-4">
                             <div class="w-8 h-8 bg-bcz-red/20 rounded flex items-center justify-center">
-                                @if($cert->getFirstMediaUrl('icon'))
-                                    <img src="{{ $cert->getFirstMediaUrl('icon') }}" alt="" class="w-5 h-5 object-contain">
+                                @if($cert->icon)
+                                    <x-icon name="{{ $cert->icon }}" class="w-5 h-5 text-bcz-red" />
                                 @else
                                     <svg class="w-4 h-4 text-bcz-red" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 10 3 12 0v-5"/>
