@@ -1,4 +1,4 @@
-{{-- Tailwind safelist: text-red-500 text-orange-400 text-emerald-500 bg-red-500 bg-orange-400 bg-emerald-500 --}}
+{{-- Tailwind safelist: text-red-500 text-orange-400 text-emerald-500 bg-red-500 bg-orange-400 bg-emerald-500 bg-[#0A0A0A] bg-[#111111] --}}
 @extends('layouts.public')
 
 @section('title', $training->getTranslation('title', app()->getLocale()) . ' | BCZ Club')
@@ -32,6 +32,33 @@
         default => 'bg-emerald-500',
     };
     $ogImage = $heroImage ?: $training->team?->getFirstMediaUrl('logo');
+    $galleryImages = $training->gallery_images ?? [];
+
+    // The page ships one fixed section order: the hero, then the list below.
+    // Only sections that actually have something to show are kept, so the
+    // in-page navigation never links to a section that does not render, and the
+    // background banding stays alternating whichever sections are skipped.
+    // Each flag must mirror the Blade guard on the matching section below.
+    $sections = array_keys(array_filter([
+        'info' => true,
+        'location' => (bool) ($placeName || $training->place_address || $gatheringPlace),
+        'registration' => true,
+        'coaches' => $training->coaches->isNotEmpty(),
+        'gallery' => count($galleryImages) > 0,
+    ]));
+
+    $sectionLabels = [
+        'info' => __('training_detail.about_label'),
+        'location' => __('training_detail.location_label'),
+        'registration' => __('training_detail.form_label'),
+        'coaches' => __('training_detail.coach_title'),
+        'gallery' => __('training_detail.gallery_title'),
+    ];
+
+    $sectionBackground = [];
+    foreach ($sections as $index => $sectionKey) {
+        $sectionBackground[$sectionKey] = $index % 2 === 0 ? 'bg-[#0A0A0A]' : 'bg-[#111111]';
+    }
 @endphp
 
 @section('meta_description', seo_description($description))
@@ -78,8 +105,56 @@
         </div>
     </section>
 
+    {{-- Section Navigation --}}
+    {{-- Sticks under the site header as a horizontal bar, and becomes a fixed
+         vertical sidebar from 1800px up, where there is finally room beside the
+         1440px content column for one that does not cover the page. Built from
+         $sections, so it only ever links to sections that really rendered. --}}
+    @if(count($sections) > 2)
+        <nav
+            aria-label="{{ __('training_detail.nav_sections_label') }}"
+            x-data="{
+                activeSection: @js($sections[0]),
+                scrollToSection(id) {
+                    const el = document.getElementById(id);
+                    if (! el) return;
+                    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+                    this.activeSection = id;
+                    history.replaceState(null, '', '#' + id);
+                },
+            }"
+            x-init="
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) activeSection = entry.target.id;
+                    });
+                }, { rootMargin: '-140px 0px -65% 0px' });
+                @js($sections).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) observer.observe(el);
+                });
+            "
+            class="sticky top-16 lg:top-20 z-40 bg-[#0A0A0A] border-y border-[#1A1A1A] min-[1800px]:fixed min-[1800px]:top-1/2 min-[1800px]:right-10 min-[1800px]:-translate-y-1/2 min-[1800px]:w-[200px] min-[1800px]:border-0 min-[1800px]:bg-transparent"
+        >
+            <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[1800px]:mx-0 min-[1800px]:px-0 min-[1800px]:flex-col min-[1800px]:items-stretch min-[1800px]:overflow-visible">
+                <span class="hidden min-[1800px]:block text-[#555555] text-[10px] font-bold tracking-[3px] pb-3 pl-4">{{ mb_strtoupper(__('training_detail.nav_sections_label')) }}</span>
+                @foreach($sections as $sectionKey)
+                    <a
+                        href="#{{ $sectionKey }}"
+                        @click.prevent="scrollToSection(@js($sectionKey))"
+                        :class="activeSection === @js($sectionKey) ? 'text-white border-bcz-red' : 'text-[#888888] border-transparent hover:text-white'"
+                        class="whitespace-nowrap font-display text-[11px] font-bold tracking-[2px] px-5 py-4 border-b-2 transition-colors min-[1800px]:border-b-0 min-[1800px]:border-l-2 min-[1800px]:px-4 min-[1800px]:py-2.5"
+                    >
+                        {{ $sectionLabels[$sectionKey] }}
+                    </a>
+                @endforeach
+            </div>
+        </nav>
+    @endif
+
     {{-- Info Section --}}
-    <section class="bg-[#0A0A0A] py-20">
+    <section id="info" class="{{ $sectionBackground['info'] }} py-20 scroll-mt-[124px] lg:scroll-mt-[140px]">
         <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col lg:flex-row gap-20">
             {{-- Left: About --}}
             <div class="flex-1 flex flex-col gap-8">
@@ -209,7 +284,7 @@
 
     {{-- Location Section --}}
     @if($placeName || $training->place_address || $gatheringPlace)
-        <section class="bg-[#111111] py-20">
+        <section id="location" class="{{ $sectionBackground['location'] }} py-20 scroll-mt-[124px] lg:scroll-mt-[140px]">
             <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col gap-12">
                 {{-- Header --}}
                 <div class="flex flex-col items-center gap-3">
@@ -283,9 +358,30 @@
         </section>
     @endif
 
+    {{-- Registration Form Section --}}
+    <section id="registration" class="{{ $sectionBackground['registration'] }} py-20 scroll-mt-[124px] lg:scroll-mt-[140px]">
+        <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col items-center gap-12">
+            {{-- Header --}}
+            <div class="flex flex-col items-center gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-0.5 bg-bcz-red"></div>
+                    <span class="text-bcz-red text-xs font-bold tracking-[3px]">{{ __('training_detail.form_label') }}</span>
+                    <div class="w-10 h-0.5 bg-bcz-red"></div>
+                </div>
+                <h2 class="font-display font-bold text-4xl tracking-wide">{{ __('training_detail.form_title') }}</h2>
+                <p class="text-[#666666] text-base">{{ __('training_detail.form_subtitle') }}</p>
+            </div>
+
+            {{-- Form Card --}}
+            <div class="w-full max-w-[600px] bg-[#111111] border border-[#222222] p-10">
+                <livewire:training-registration-form :training="$training" />
+            </div>
+        </div>
+    </section>
+
     {{-- Coach Section --}}
     @if($training->coaches->isNotEmpty())
-        <section class="bg-[#111111] py-20">
+        <section id="coaches" class="{{ $sectionBackground['coaches'] }} py-20 scroll-mt-[124px] lg:scroll-mt-[140px]">
             <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col gap-12">
                 {{-- Header --}}
                 <div class="flex flex-col items-center gap-3">
@@ -363,9 +459,8 @@
     @endif
 
     {{-- Gallery Section --}}
-    @php $galleryImages = $training->gallery_images ?? []; @endphp
     @if(count($galleryImages) > 0)
-        <section class="bg-[#0A0A0A] py-20">
+        <section id="gallery" class="{{ $sectionBackground['gallery'] }} py-20 scroll-mt-[124px] lg:scroll-mt-[140px]">
             <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col gap-12">
                 {{-- Header --}}
                 <div class="flex flex-col items-center gap-3">
@@ -445,25 +540,4 @@
             </div>
         </section>
     @endif
-
-    {{-- Registration Form Section --}}
-    <section class="bg-[#0A0A0A] py-20">
-        <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20 flex flex-col items-center gap-12">
-            {{-- Header --}}
-            <div class="flex flex-col items-center gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-0.5 bg-bcz-red"></div>
-                    <span class="text-bcz-red text-xs font-bold tracking-[3px]">{{ __('training_detail.form_label') }}</span>
-                    <div class="w-10 h-0.5 bg-bcz-red"></div>
-                </div>
-                <h2 class="font-display font-bold text-4xl tracking-wide">{{ __('training_detail.form_title') }}</h2>
-                <p class="text-[#666666] text-base">{{ __('training_detail.form_subtitle') }}</p>
-            </div>
-
-            {{-- Form Card --}}
-            <div class="w-full max-w-[600px] bg-[#111111] border border-[#222222] p-10">
-                <livewire:training-registration-form :training="$training" />
-            </div>
-        </div>
-    </section>
 @endsection
