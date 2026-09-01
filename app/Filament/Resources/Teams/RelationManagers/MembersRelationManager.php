@@ -45,7 +45,7 @@ class MembersRelationManager extends RelationManager
     protected static ?string $pluralModelLabel = 'Členovia';
 
     /**
-     * See {@see \App\Filament\Resources\Teams\RelationManagers\SeasonsRelationManager::isReadOnly()}
+     * See {@see SeasonsRelationManager::isReadOnly()}
      * — without this, `DetachAction`/`DetachBulkAction` are hidden on `ViewTeam`
      * even though they work on `EditTeam` for the same team and user. Note that
      * Filament's Detach actions only consult `isReadOnly()` and never fall back

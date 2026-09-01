@@ -29,7 +29,7 @@ class PaymentMethodsRelationManager extends RelationManager
     protected static ?string $pluralModelLabel = 'Platobné metódy';
 
     /**
-     * See {@see \App\Filament\Resources\Teams\RelationManagers\SeasonsRelationManager::isReadOnly()}
+     * See {@see SeasonsRelationManager::isReadOnly()}
      * — without this, `AttachAction`/`EditAction`/`DetachAction` are hidden on
      * `ViewTeam` even though they work on `EditTeam` for the same team and user.
      * Note that Filament's Attach/Detach actions only consult `isReadOnly()` and
