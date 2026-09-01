@@ -28,7 +28,7 @@ class InvitationsRelationManager extends RelationManager
     protected static ?string $pluralModelLabel = 'Pozvánky';
 
     /**
-     * See {@see \App\Filament\Resources\Teams\RelationManagers\SeasonsRelationManager::isReadOnly()}
+     * See {@see SeasonsRelationManager::isReadOnly()}
      * — without this, `DeleteAction` ("Zrušiť") is hidden on `ViewTeam` even
      * though it works on `EditTeam` for the same team and user.
      */
