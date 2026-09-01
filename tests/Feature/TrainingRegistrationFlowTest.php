@@ -13,6 +13,7 @@ use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Team;
+use App\Models\TeamSeason;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
@@ -218,6 +219,57 @@ class TrainingRegistrationFlowTest extends TestCase
             ->assertSet('registrationState', 'membership_needed')
             ->assertSet('selectedPaymentMethod', PaymentMethodEnum::BANK_TRANSFER->value)
             ->assertSee($this->team->bank_account_iban);
+    }
+
+    public function test_membership_needed_qr_note_prefers_the_training_payment_note_over_the_season_note(): void
+    {
+        // Regression test for #38: registering for a membership-required training
+        // creates a Membership payment, whose payable note is the *season* note.
+        // The note the coach set on the training itself was never used, even
+        // though the training form offers the field for this pricing type.
+        Mail::fake();
+
+        $season = TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'name' => 'Sezona 2026',
+            'payment_note' => 'Clenske {{sezona}}',
+        ]);
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+            'team_season_id' => $season->id,
+            'payment_note' => 'Treningovka {{meno}} {{priezvisko}}',
+        ]);
+
+        $bankTransfer = PaymentMethod::create([
+            'method' => PaymentMethodEnum::BANK_TRANSFER,
+            'title' => ['sk' => 'Bankovy prevod'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+
+        $training->paymentMethods()->attach($bankTransfer->id, [
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        $this->team->update([
+            'bank_account_iban' => 'SK1234567890123456789012',
+            'bank_account_name' => 'BCZ Team',
+        ]);
+
+        $user = User::factory()->create(['first_name' => 'Jan', 'last_name' => 'Novak']);
+
+        Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertOk()
+            ->assertSet('registrationState', 'membership_needed')
+            ->assertSee('Treningovka Jan Novak')
+            ->assertDontSee('Clenske Sezona 2026');
     }
 
     public function test_paid_training_stays_pending(): void

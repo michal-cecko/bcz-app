@@ -635,7 +635,7 @@ new class extends Component
                 'team' => $team,
                 'season' => $season,
                 'variableSymbol' => $membershipPayment?->formattedVariableSymbol(),
-                'paymentNote' => $membershipPayment?->payable?->getQrPaymentNote(),
+                'paymentNote' => $training->renderQrPaymentNote($authUser) ?: $membershipPayment?->payable?->getQrPaymentNote(),
             ])
         </div>
 

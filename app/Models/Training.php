@@ -9,6 +9,7 @@ use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasResolvedPaymentMethods;
 use App\Models\Concerns\HasUuidV7;
+use App\Services\EmailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -256,6 +257,45 @@ class Training extends Model implements HasMedia, Linkable
     public function effectiveBankAccountName(): ?string
     {
         return $this->bank_account_name ?: $this->team?->bank_account_name;
+    }
+
+    /**
+     * The payment note template that applies to this training: the training's
+     * own note wins, the season's note is the fallback. Same specific-over-broad
+     * idiom as effectiveBankAccountIban().
+     */
+    public function effectivePaymentNoteTemplate(): ?string
+    {
+        return $this->payment_note ?: $this->season?->payment_note;
+    }
+
+    /**
+     * Render the QR payment note for a payment made for this training, with its
+     * variables substituted. The season-scoped variables ({{sezona}},
+     * {{nazov_timu}}) are substituted alongside the training-scoped ones so a
+     * season note used as the fallback renders instead of leaking raw
+     * {{...}} placeholders into the QR.
+     */
+    public function renderQrPaymentNote(?User $user = null): ?string
+    {
+        $template = $this->effectivePaymentNoteTemplate();
+
+        if (! $template) {
+            return null;
+        }
+
+        $schedule = $this->schedules?->first();
+
+        return EmailService::replaceVariables($template, [
+            'meno' => (string) ($user?->first_name ?? ''),
+            'priezvisko' => (string) ($user?->last_name ?? ''),
+            'nazov_treningu' => (string) ($this->getTranslation('title', app()->getLocale()) ?? ''),
+            'mesto' => (string) ($this->city?->name ?? ''),
+            'miesto' => (string) ($this->getTranslation('place_name', app()->getLocale()) ?? ''),
+            'cas' => $schedule?->start_time ? mb_substr((string) $schedule->start_time, 0, 5) : '',
+            'sezona' => (string) ($this->season?->name ?? ''),
+            'nazov_timu' => (string) ($this->team?->getTranslation('name', app()->getLocale()) ?? ''),
+        ]);
     }
 
     public function coaches(): BelongsToMany

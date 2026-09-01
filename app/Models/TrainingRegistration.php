@@ -6,7 +6,6 @@ use App\Contracts\Payable;
 use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
 use App\Models\Concerns\PurgesPaymentsOnDelete;
-use App\Services\EmailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -79,22 +78,7 @@ class TrainingRegistration extends Model implements Payable
 
     public function getQrPaymentNote(): ?string
     {
-        $template = $this->training?->payment_note;
-
-        if (! $template) {
-            return null;
-        }
-
-        $schedule = $this->training?->schedules?->first();
-
-        return EmailService::replaceVariables($template, [
-            'meno' => (string) ($this->user?->first_name ?? ''),
-            'priezvisko' => (string) ($this->user?->last_name ?? ''),
-            'nazov_treningu' => (string) ($this->training?->getTranslation('title', app()->getLocale()) ?? ''),
-            'mesto' => (string) ($this->training?->city?->name ?? ''),
-            'miesto' => (string) ($this->training?->getTranslation('place_name', app()->getLocale()) ?? ''),
-            'cas' => $schedule?->start_time ? mb_substr((string) $schedule->start_time, 0, 5) : '',
-        ]);
+        return $this->training?->renderQrPaymentNote($this->user);
     }
 
     public function getPayoutIban(): ?string
