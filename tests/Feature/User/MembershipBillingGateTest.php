@@ -5,6 +5,7 @@ namespace Tests\Feature\User;
 use App\Enums\MembershipStatusEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Resources\Users\UserResource;
+use App\Models\Membership;
 use App\Models\Team;
 use App\Models\User;
 use App\Notifications\MembershipPaymentDue;
@@ -187,5 +188,39 @@ class MembershipBillingGateTest extends TestCase
             ->pluck('role');
 
         $this->assertSame([RoleEnum::ATHLETE->value], $rows->all());
+    }
+
+    public function test_has_active_membership_for_team_is_false_when_starts_at_is_in_the_future(): void
+    {
+        $team = Team::factory()->create();
+        $user = User::factory()->create();
+
+        Membership::factory()->create([
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+            'status' => MembershipStatusEnum::ACTIVE,
+            'is_free' => true,
+            'starts_at' => now()->addDay(),
+            'ends_at' => now()->addMonths(4),
+        ]);
+
+        $this->assertFalse($user->hasActiveMembershipForTeam($team->id));
+    }
+
+    public function test_has_active_membership_for_team_is_true_when_currently_within_its_period(): void
+    {
+        $team = Team::factory()->create();
+        $user = User::factory()->create();
+
+        Membership::factory()->create([
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+            'status' => MembershipStatusEnum::ACTIVE,
+            'is_free' => true,
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addMonths(4),
+        ]);
+
+        $this->assertTrue($user->hasActiveMembershipForTeam($team->id));
     }
 }

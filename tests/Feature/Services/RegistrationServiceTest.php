@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Services;
 
+use App\Enums\MembershipStatusEnum;
 use App\Enums\RegistrationStatusEnum;
+use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\Membership;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
@@ -55,5 +58,59 @@ class RegistrationServiceTest extends TestCase
 
         $this->assertTrue(RegistrationService::emailAlreadyRegisteredForTraining('coach@example.com', $training->id));
         $this->assertFalse(RegistrationService::emailAlreadyRegisteredForTraining('other@example.com', $training->id));
+    }
+
+    public function test_membership_required_training_stays_pending_when_membership_has_not_started_yet(): void
+    {
+        $user = User::factory()->create();
+        $training = Training::factory()->create([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        // Membership exists and is "active", but its period only starts tomorrow — user has not
+        // paid for / entered the current period yet, so registration must not auto-approve.
+        Membership::factory()->create([
+            'team_id' => $training->team_id,
+            'user_id' => $user->id,
+            'status' => MembershipStatusEnum::ACTIVE,
+            'is_free' => true,
+            'starts_at' => now()->addDay(),
+            'ends_at' => now()->addMonths(4),
+        ]);
+
+        $this->assertSame(
+            RegistrationStatusEnum::Pending,
+            RegistrationService::determineRegistrationStatus($training, $user)
+        );
+        $this->assertSame(
+            'membership_needed',
+            RegistrationService::determinePostRegistrationState($training, $user)
+        );
+    }
+
+    public function test_membership_required_training_is_approved_when_membership_is_currently_active(): void
+    {
+        $user = User::factory()->create();
+        $training = Training::factory()->create([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        Membership::factory()->create([
+            'team_id' => $training->team_id,
+            'user_id' => $user->id,
+            'status' => MembershipStatusEnum::ACTIVE,
+            'is_free' => true,
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addMonths(4),
+        ]);
+
+        $this->assertSame(
+            RegistrationStatusEnum::Approved,
+            RegistrationService::determineRegistrationStatus($training, $user)
+        );
+        $this->assertSame(
+            'membership_valid',
+            RegistrationService::determinePostRegistrationState($training, $user)
+        );
     }
 }
