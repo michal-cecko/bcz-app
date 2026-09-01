@@ -101,6 +101,62 @@ class TrainingInfolist
         ];
     }
 
+    /**
+     * Read-only summary of the season the training belongs to. Display only – season
+     * data is edited in the Sezóny resource.
+     */
+    private static function seasonCard(): Section
+    {
+        return Section::make('Aktuálna sezóna')
+            ->icon('heroicon-o-calendar-days')
+            ->description(function (Training $record): string {
+                $sentences = [];
+
+                if ($record->season !== null && ! $record->season->isActive()) {
+                    $sentences[] = 'Táto sezóna už nie je aktuálna.';
+                }
+
+                if ($record->season?->monthlyFee() !== null) {
+                    $sentences[] = 'Mesačná suma je orientačná – cena sezóny delená počtom mesiacov jej trvania.';
+                }
+
+                return implode(' ', $sentences);
+            })
+            ->columns(2)
+            ->columnSpanFull()
+            ->visible(fn (Training $record): bool => $record->season !== null)
+            ->schema([
+                TextEntry::make('season.name')
+                    ->label('Názov sezóny')
+                    ->placeholder('-'),
+                TextEntry::make('season_fee_amount')
+                    ->label('Cena sezóny')
+                    ->placeholder('-')
+                    ->state(function (Training $record): ?string {
+                        $season = $record->season;
+
+                        if ($season === null || $season->fee_amount === null) {
+                            return null;
+                        }
+
+                        return number_format((float) $season->fee_amount, 2).' '.$season->fee_currency;
+                    }),
+                TextEntry::make('season_monthly_fee')
+                    ->label('Cena za mesiac')
+                    ->visible(fn (Training $record): bool => $record->season?->monthlyFee() !== null)
+                    ->state(function (Training $record): ?string {
+                        $season = $record->season;
+                        $monthlyFee = $season?->monthlyFee();
+
+                        if ($season === null || $monthlyFee === null) {
+                            return null;
+                        }
+
+                        return number_format($monthlyFee, 2).' '.$season->fee_currency;
+                    }),
+            ]);
+    }
+
     private static function scheduleTab(): array
     {
         return [
@@ -153,6 +209,7 @@ class TrainingInfolist
                     Section::make('Kapacita a ceny')
                         ->icon('heroicon-o-currency-euro')
                         ->schema([
+                            self::seasonCard(),
                             TextEntry::make('pricing_type')
                                 ->label('Typ ceny')
                                 ->badge(),

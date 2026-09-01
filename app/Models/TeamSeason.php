@@ -74,6 +74,35 @@ class TeamSeason extends Model
         return (int) $this->starts_at->diffInMonths($this->ends_at);
     }
 
+    /**
+     * The season length rounded to whole months, for display purposes.
+     *
+     * Unlike {@see self::totalMonths()}, which truncates and is used for prorating
+     * a fee against the months a member still has left, this rounds: a season
+     * running 1 January to 31 December is twelve months, not eleven and a bit.
+     */
+    public function lengthInWholeMonths(): int
+    {
+        return (int) round($this->starts_at->diffInMonths($this->ends_at));
+    }
+
+    /**
+     * The season fee spread evenly across every month of the season.
+     *
+     * Returns null when no unambiguous monthly figure can be derived - a season
+     * shorter than half a month, or one with no fee stored.
+     */
+    public function monthlyFee(): ?float
+    {
+        $months = $this->lengthInWholeMonths();
+
+        if ($months <= 0 || $this->fee_amount === null) {
+            return null;
+        }
+
+        return round((float) $this->fee_amount / $months, 2);
+    }
+
     public function remainingMonths(?Carbon $fromDate = null): int
     {
         $from = $fromDate ?? now();

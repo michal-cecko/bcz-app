@@ -23,6 +23,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\RichEditor;
@@ -75,6 +76,80 @@ class TrainingForm
             EmailDividerBrick::class,
             EmailSpacerBrick::class,
         ];
+    }
+
+    /**
+     * The season the training is (or is being) assigned to, resolved from the form
+     * state so the read-only season card follows the "Sezóna" select live.
+     */
+    private static function resolveSeason(mixed $seasonId): ?TeamSeason
+    {
+        if (! is_string($seasonId) || $seasonId === '') {
+            return null;
+        }
+
+        return TeamSeason::find($seasonId);
+    }
+
+    private static function formatSeasonMoney(float $amount, string $currency): string
+    {
+        return number_format($amount, 2).' '.$currency;
+    }
+
+    /**
+     * Read-only summary of the season the training belongs to. Display only – season
+     * data is edited in the Sezóny resource, never from the training form.
+     */
+    private static function seasonCard(): Section
+    {
+        return Section::make('Aktuálna sezóna')
+            ->icon('heroicon-o-calendar-days')
+            ->description(function (Get $get): string {
+                $season = self::resolveSeason($get('team_season_id'));
+                $sentences = ['Len na čítanie.'];
+
+                if ($season !== null && ! $season->isActive()) {
+                    $sentences[] = 'Táto sezóna už nie je aktuálna.';
+                }
+
+                if ($season?->monthlyFee() !== null) {
+                    $sentences[] = 'Mesačná suma je orientačná – cena sezóny delená počtom mesiacov jej trvania.';
+                }
+
+                return implode(' ', $sentences);
+            })
+            ->columns(2)
+            ->columnSpanFull()
+            ->visible(fn (Get $get): bool => self::resolveSeason($get('team_season_id')) instanceof TeamSeason)
+            ->schema([
+                Placeholder::make('season_name')
+                    ->label('Názov sezóny')
+                    ->content(fn (Get $get): string => self::resolveSeason($get('team_season_id'))?->name ?? '–'),
+                Placeholder::make('season_fee_amount')
+                    ->label('Cena sezóny')
+                    ->content(function (Get $get): string {
+                        $season = self::resolveSeason($get('team_season_id'));
+
+                        if ($season === null || $season->fee_amount === null) {
+                            return '–';
+                        }
+
+                        return self::formatSeasonMoney((float) $season->fee_amount, $season->fee_currency);
+                    }),
+                Placeholder::make('season_monthly_fee')
+                    ->label('Cena za mesiac')
+                    ->visible(fn (Get $get): bool => self::resolveSeason($get('team_season_id'))?->monthlyFee() !== null)
+                    ->content(function (Get $get): string {
+                        $season = self::resolveSeason($get('team_season_id'));
+                        $monthlyFee = $season?->monthlyFee();
+
+                        if ($season === null || $monthlyFee === null) {
+                            return '–';
+                        }
+
+                        return self::formatSeasonMoney($monthlyFee, $season->fee_currency);
+                    }),
+            ]);
     }
 
     public static function configure(Schema $schema): Schema
@@ -298,6 +373,7 @@ class TrainingForm
 
                                 Section::make('Kapacita a ceny')
                                     ->schema([
+                                        self::seasonCard(),
                                         TextInput::make('max_capacity')
                                             ->label('Max. kapacita')
                                             ->numeric()
@@ -744,6 +820,7 @@ class TrainingForm
                                     ->default(true),
                                 Select::make('team_season_id')
                                     ->label('Sezóna')
+                                    ->live()
                                     ->relationship(
                                         name: 'season',
                                         titleAttribute: 'name',

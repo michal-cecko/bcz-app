@@ -8,11 +8,13 @@ use App\Enums\TrainingPricingTypeEnum;
 use App\Filament\Resources\Trainings\Pages\CreateTraining;
 use App\Filament\Resources\Trainings\Pages\EditTraining;
 use App\Filament\Resources\Trainings\Pages\ListTrainings;
+use App\Filament\Resources\Trainings\Pages\ViewTraining;
 use App\Filament\Resources\Trainings\RelationManagers\CoachesRelationManager;
 use App\Filament\Resources\Trainings\RelationManagers\RegistrationsRelationManager;
 use App\Models\City;
 use App\Models\SportCategory;
 use App\Models\Team;
+use App\Models\TeamSeason;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
@@ -158,6 +160,111 @@ class TrainingResourceTest extends TestCase
 
         $this->assertEquals(49.4305426, (float) $training->latitude);
         $this->assertEquals(18.7895393, (float) $training->longitude);
+    }
+
+    public function test_season_card_shows_the_season_name_and_prices_on_the_edit_form(): void
+    {
+        $training = $this->trainingInSeason($this->tenMonthSeason());
+
+        Livewire::test(EditTraining::class, ['record' => $training->getRouteKey()])
+            ->assertOk()
+            ->assertSee('Aktuálna sezóna')
+            ->assertSee('Sezóna 2026/2027')
+            ->assertSee('100.00 EUR')
+            ->assertSee('Cena za mesiac')
+            ->assertSee('10.00 EUR');
+    }
+
+    public function test_season_card_shows_the_current_season_on_the_create_form(): void
+    {
+        $this->tenMonthSeason();
+
+        Livewire::test(CreateTraining::class)
+            ->assertOk()
+            ->assertSee('Aktuálna sezóna')
+            ->assertSee('Sezóna 2026/2027')
+            ->assertSee('100.00 EUR')
+            ->assertSee('10.00 EUR');
+    }
+
+    public function test_season_card_shows_the_season_name_and_prices_on_the_view_page(): void
+    {
+        $training = $this->trainingInSeason($this->tenMonthSeason());
+
+        Livewire::test(ViewTraining::class, ['record' => $training->getRouteKey()])
+            ->assertOk()
+            ->assertSee('Aktuálna sezóna')
+            ->assertSee('Sezóna 2026/2027')
+            ->assertSee('100.00 EUR')
+            ->assertSee('Cena za mesiac')
+            ->assertSee('10.00 EUR');
+    }
+
+    public function test_season_card_is_hidden_when_the_training_has_no_season(): void
+    {
+        $training = $this->trainingInSeason(null);
+
+        $this->assertNull($training->team_season_id);
+
+        Livewire::test(EditTraining::class, ['record' => $training->getRouteKey()])
+            ->assertOk()
+            ->assertDontSee('Aktuálna sezóna')
+            ->assertDontSee('Cena za mesiac');
+
+        Livewire::test(ViewTraining::class, ['record' => $training->getRouteKey()])
+            ->assertOk()
+            ->assertDontSee('Aktuálna sezóna')
+            ->assertDontSee('Cena za mesiac');
+    }
+
+    public function test_season_card_omits_the_monthly_price_for_a_season_shorter_than_a_month(): void
+    {
+        $season = TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'name' => 'Krátka sezóna',
+            'starts_at' => now()->startOfMonth(),
+            'ends_at' => now()->startOfMonth()->addDays(10),
+            'fee_amount' => 90.00,
+            'fee_currency' => 'EUR',
+        ]);
+
+        $training = $this->trainingInSeason($season);
+
+        Livewire::test(EditTraining::class, ['record' => $training->getRouteKey()])
+            ->assertOk()
+            ->assertSee('Aktuálna sezóna')
+            ->assertSee('90.00 EUR')
+            ->assertDontSee('Cena za mesiac');
+
+        Livewire::test(ViewTraining::class, ['record' => $training->getRouteKey()])
+            ->assertOk()
+            ->assertSee('Aktuálna sezóna')
+            ->assertSee('90.00 EUR')
+            ->assertDontSee('Cena za mesiac');
+    }
+
+    /** A ten-month, currently running season costing 100 EUR - exactly 10 EUR a month. */
+    private function tenMonthSeason(): TeamSeason
+    {
+        return TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'name' => 'Sezóna 2026/2027',
+            'starts_at' => now()->startOfMonth(),
+            'ends_at' => now()->startOfMonth()->addMonths(9)->endOfMonth(),
+            'fee_amount' => 100.00,
+            'fee_currency' => 'EUR',
+        ]);
+    }
+
+    private function trainingInSeason(?TeamSeason $season): Training
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+
+        return Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+            'team_season_id' => $season?->id,
+        ]);
     }
 
     public function test_can_delete_training(): void
