@@ -17,8 +17,10 @@ use App\Models\Team;
 use App\Models\TeamSeason;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
+use App\Models\TrainingSchedule;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -280,6 +282,69 @@ class TrainingResourceTest extends TestCase
             ->assertNotified();
 
         $this->assertSoftDeleted($training);
+    }
+
+    public function test_duplicate_action_copies_core_fields_schedules_and_coaches(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+            'title' => ['sk' => 'Krúžok gymnastiky', 'en' => 'Gymnastics club'],
+            'registration_form_schema' => [
+                ['label' => ['sk' => 'Meno'], 'name' => 'meno', 'type' => 'first_name', 'width' => 'half', 'required' => true, 'has_condition' => false],
+            ],
+            'min_age' => 6,
+            'max_age' => 12,
+        ]);
+
+        TrainingSchedule::factory()->create([
+            'training_id' => $training->id,
+            'day' => 'monday',
+            'start_time' => '17:00',
+            'sort_order' => 0,
+        ]);
+
+        $coach = User::factory()->create();
+        $coach->teams()->attach($this->team->id, ['role' => RoleEnum::COACH->value]);
+        $training->coaches()->attach($coach->id, ['role' => 'main']);
+
+        $registration = TrainingRegistration::factory()->approved()->create(['training_id' => $training->id]);
+
+        Livewire::test(ListTrainings::class)
+            ->callAction(TestAction::make('replicate')->table($training))
+            ->assertNotified();
+
+        $replica = Training::query()
+            ->where('id', '!=', $training->id)
+            ->where('sport_category_id', $sportCategory->id)
+            ->sole();
+
+        // Core config is copied so the registration form doesn't need to be rebuilt.
+        $this->assertEquals('Krúžok gymnastiky (kópia)', $replica->getTranslation('title', 'sk'));
+        $this->assertEquals('Gymnastics club (kópia)', $replica->getTranslation('title', 'en'));
+        $this->assertEquals($training->registration_form_schema, $replica->registration_form_schema);
+        $this->assertEquals(6, $replica->min_age);
+        $this->assertEquals(12, $replica->max_age);
+
+        // The slug is distinct and valid (unique constraint would otherwise reject the save).
+        $this->assertNotEquals($training->slug, $replica->slug);
+        $this->assertNotEmpty($replica->slug);
+
+        // Schedule and coaches are cloned onto the new record.
+        $this->assertCount(1, $replica->schedules);
+        $this->assertEquals('monday', $replica->schedules->first()->day);
+        $this->assertEquals('main', $replica->coaches->first()->pivot->role);
+        $this->assertTrue($replica->coaches->pluck('id')->contains($coach->id));
+
+        // Registrations belong to the people who signed up, not the training config.
+        $this->assertCount(0, $replica->registrations);
+        $this->assertTrue(TrainingRegistration::query()->whereKey($registration->id)->where('training_id', $training->id)->exists());
+
+        // The original training is untouched.
+        $training->refresh();
+        $this->assertEquals('Krúžok gymnastiky', $training->getTranslation('title', 'sk'));
+        $this->assertCount(1, $training->schedules);
     }
 
     public function test_sport_category_is_required(): void
