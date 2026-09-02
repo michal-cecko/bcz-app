@@ -219,11 +219,13 @@ class EventForm
                                         ->collection('card_image')
                                         ->disk('public')
                                         ->visibility('public')
+                                        ->maxSize(10240)
                                         ->label('Obrázok na karte'),
                                     SpatieMediaLibraryFileUpload::make('detail_image')
                                         ->collection('detail_image')
                                         ->disk('public')
                                         ->visibility('public')
+                                        ->maxSize(10240)
                                         ->label('Obrázok detailu'),
                                 ]),
                         ])
@@ -799,6 +801,7 @@ class EventForm
                         ->reorderable()
                         ->appendFiles()
                         ->image()
+                        ->maxSize(10240)
                         ->label('Obrázky galérie')
                         ->columnSpanFull(),
                 ]),

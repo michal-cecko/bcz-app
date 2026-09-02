@@ -64,6 +64,7 @@ class SportCategoryForm
                                     ->collection('hero_image')
                                     ->disk('public')
                                     ->visibility('public')
+                                    ->maxSize(10240)
                                     ->label('Hero obrázok'),
                                 TextInput::make('sort_order')
                                     ->label('Poradie')

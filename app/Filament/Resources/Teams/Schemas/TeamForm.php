@@ -65,6 +65,7 @@ class TeamForm
                     ->collection('logo')
                     ->disk('public')
                     ->visibility('public')
+                    ->maxSize(10240)
                     ->label('Logo'),
                 KeyValue::make('socials')
                     ->label('Sociálne siete')

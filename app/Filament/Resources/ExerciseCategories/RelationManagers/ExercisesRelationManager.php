@@ -69,6 +69,7 @@ class ExercisesRelationManager extends RelationManager
                     ->collection('image')
                     ->disk('public')
                     ->visibility('public')
+                    ->maxSize(10240)
                     ->label('Obrázok'),
             ]);
     }

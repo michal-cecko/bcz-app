@@ -62,6 +62,7 @@ class ExerciseForm
                     ->collection('image')
                     ->disk('public')
                     ->visibility('public')
+                    ->maxSize(10240)
                     ->label('Obrázok'),
             ]);
     }

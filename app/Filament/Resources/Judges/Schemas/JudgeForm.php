@@ -73,13 +73,15 @@ class JudgeForm
                         ->label('Profilová fotografia')
                         ->disk('public')
                         ->visibility('public')
-                        ->image(),
+                        ->image()
+                        ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('hero_image')
                         ->collection('hero_image')
                         ->label('Hlavný obrázok')
                         ->disk('public')
                         ->visibility('public')
-                        ->image(),
+                        ->image()
+                        ->maxSize(10240),
                     SpatieMediaLibraryFileUpload::make('gallery')
                         ->collection('gallery')
                         ->label('Galéria')
@@ -88,6 +90,7 @@ class JudgeForm
                         ->multiple()
                         ->reorderable()
                         ->image()
+                        ->maxSize(10240)
                         ->columnSpanFull(),
                 ])
                 ->columns(2),

@@ -26,6 +26,7 @@ class SponsorForm
                     ->collection('logo')
                     ->disk('public')
                     ->visibility('public')
+                    ->maxSize(10240)
                     ->label('Logo'),
                 TextInput::make('link')
                     ->label('Odkaz')
