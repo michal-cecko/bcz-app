@@ -5,7 +5,6 @@ namespace App\Notifications;
 use App\Enums\PaymentStatusEnum;
 use App\Models\Membership;
 use App\Models\Payment;
-use App\Notifications\Concerns\GeneratesPaymentQrCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -14,7 +13,7 @@ use Illuminate\Support\Facades\URL;
 
 class MembershipPaymentDue extends Notification implements ShouldQueue
 {
-    use GeneratesPaymentQrCode, Queueable;
+    use Queueable;
 
     public function __construct(
         public Membership $membership,
@@ -51,7 +50,6 @@ class MembershipPaymentDue extends Notification implements ShouldQueue
                 'feeCurrency' => $feeCurrency,
                 'paymentDeadline' => $paymentDeadline,
                 'paymentUrl' => $paymentUrl,
-                'qrCodeImage' => $this->qrCodeImageForPayment($payment),
                 'emailSubject' => 'Platba za členstvo',
                 'teamLogoUrl' => null,
                 'teamUrl' => null,
