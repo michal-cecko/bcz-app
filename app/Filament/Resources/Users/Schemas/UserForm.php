@@ -56,6 +56,7 @@ class UserForm
                             ->label('Profilový obrázok')
                             ->image()
                             ->imagePreviewHeight('212')
+                            ->maxSize(10240)
                             ->columnSpan(1),
 
                         Grid::make(2)

@@ -168,6 +168,7 @@ class PageForm
                                             ->collection('featured_image')
                                             ->disk('public')
                                             ->visibility('public')
+                                            ->maxSize(10240)
                                             ->label('Hlavný obrázok'),
                                     ]),
                             ])

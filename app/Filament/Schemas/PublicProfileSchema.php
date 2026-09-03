@@ -85,6 +85,7 @@ class PublicProfileSchema
                     ->disk('public')
                     ->visibility('public')
                     ->image()
+                    ->maxSize(10240)
                     ->when($mediaModel, fn ($c) => $c->model($mediaModel)),
                 SpatieMediaLibraryFileUpload::make('biography_image')
                     ->collection('biography_image')
@@ -92,6 +93,7 @@ class PublicProfileSchema
                     ->disk('public')
                     ->visibility('public')
                     ->image()
+                    ->maxSize(10240)
                     ->when($mediaModel, fn ($c) => $c->model($mediaModel)),
             ]),
         ];
@@ -143,6 +145,7 @@ class PublicProfileSchema
                     ->disk('public')
                     ->visibility('public')
                     ->image()
+                    ->maxSize(10240)
                     ->when($mediaModel, fn ($c) => $c->model($mediaModel)),
                 SpatieMediaLibraryFileUpload::make('main_image')
                     ->collection('main_image')
@@ -150,6 +153,7 @@ class PublicProfileSchema
                     ->disk('public')
                     ->visibility('public')
                     ->image()
+                    ->maxSize(10240)
                     ->when($mediaModel, fn ($c) => $c->model($mediaModel)),
             ]),
         ];
@@ -258,6 +262,7 @@ class PublicProfileSchema
                     ->visibility('public')
                     ->panelLayout('grid')
                     ->extraAttributes(['accept' => 'image/*,video/*'])
+                    ->maxSize(10240)
                     ->helperText('Prvý obrázok bude použitý ako náhľad na karte.'),
             ])
             ->orderColumn('sort_order')
@@ -300,6 +305,7 @@ class PublicProfileSchema
                     ->image()
                     ->disk('public')
                     ->visibility('public')
+                    ->maxSize(10240)
                     ->helperText('Prvý obrázok bude použitý ako náhľad.'),
             ])
             ->orderColumn('sort_order')
@@ -323,6 +329,7 @@ class PublicProfileSchema
             ->disk('public')
             ->visibility('public')
             ->panelLayout('grid')
+            ->maxSize(10240)
             ->when($mediaModel, fn ($c) => $c->model($mediaModel));
     }
 

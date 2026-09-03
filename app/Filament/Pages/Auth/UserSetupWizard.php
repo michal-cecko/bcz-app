@@ -220,6 +220,7 @@ class UserSetupWizard extends SimplePage
                     ->label('Profilový obrázok')
                     ->avatar()
                     ->circleCropper()
+                    ->maxSize(10240)
                     ->model(auth()->user()),
                 Select::make('locale')
                     ->label('Predvolený jazyk')

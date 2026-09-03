@@ -207,6 +207,7 @@ class TrainingForm
                                     ->visibility('public')
                                     ->image()
                                     ->imageEditor()
+                                    ->maxSize(10240)
                                     ->helperText('Zobrazuje sa na karte tréningu vo výpise a v hlavičke detailu. Ak nie je vyplnený, použije sa obrázok športovej kategórie.')
                                     ->columnSpanFull(),
                             ]),

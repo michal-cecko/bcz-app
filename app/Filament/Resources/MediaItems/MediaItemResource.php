@@ -65,6 +65,7 @@ class MediaItemResource extends Resource
                     ->label('Súbor')
                     ->collection('file')
                     ->visibility('public')
+                    ->maxSize(10240)
                     ->required(),
             ]);
     }

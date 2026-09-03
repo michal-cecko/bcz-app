@@ -3,13 +3,17 @@
 namespace Tests\Feature\Filament;
 
 use App\Enums\RoleEnum;
+use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\Team;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -183,5 +187,38 @@ class UserResourceTest extends TestCase
             'user_id' => $user->id,
             'role' => RoleEnum::COACH->value,
         ]);
+    }
+
+    /**
+     * Regression test for Sentry BCZ-APP-R: uploading a profile_image larger than Spatie
+     * Media Library's configured max_file_size (10MB, see config/media-library.php) used to
+     * bubble up as an uncaught Spatie\MediaLibrary\MediaCollections\Exceptions\FileIsTooBig
+     * instead of a normal Filament validation error, because SpatieMediaLibraryFileUpload
+     * had no ->maxSize() matching that limit. The file must physically exceed the limit on
+     * disk (not just report an inflated size) so this also exercises Spatie's own
+     * filesize()-based guard in FileAdder::toMediaCollection() if the fix regresses.
+     */
+    public function test_oversized_profile_image_fails_form_validation_instead_of_crashing(): void
+    {
+        Storage::fake('public');
+
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleEnum::SUPER_ADMIN);
+        $admin->teams()->attach($this->team);
+
+        $this->bootAdminPanelAs($admin);
+
+        $oversizedImage = UploadedFile::fake()->createWithContent(
+            'too-big.jpg',
+            str_repeat('0', 11 * 1024 * 1024) // 11MB > Spatie's configured 10MB max_file_size
+        );
+
+        Livewire::test(EditUser::class, ['record' => $admin->getRouteKey()])
+            ->assertFormFieldExists('profile_image')
+            ->fillForm(['profile_image' => [$oversizedImage]])
+            ->call('save')
+            ->assertHasFormErrors(['profile_image']);
+
+        $this->assertEmpty($admin->fresh()->getMedia('profile_image'));
     }
 }

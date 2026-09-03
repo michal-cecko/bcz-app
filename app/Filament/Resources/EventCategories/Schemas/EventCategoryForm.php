@@ -82,21 +82,25 @@ class EventCategoryForm
                             ->collection('card_image')
                             ->disk('public')
                             ->visibility('public')
+                            ->maxSize(10240)
                             ->label('Obrázok karty'),
                         SpatieMediaLibraryFileUpload::make('detail_image')
                             ->collection('detail_image')
                             ->disk('public')
                             ->visibility('public')
+                            ->maxSize(10240)
                             ->label('Obrázok detailu'),
                         SpatieMediaLibraryFileUpload::make('hero_image')
                             ->collection('hero_image')
                             ->disk('public')
                             ->visibility('public')
+                            ->maxSize(10240)
                             ->label('Hero obrázok'),
                         SpatieMediaLibraryFileUpload::make('about_image')
                             ->collection('about_image')
                             ->disk('public')
                             ->visibility('public')
+                            ->maxSize(10240)
                             ->label('O nás obrázok'),
                     ])
                     ->columns(2),
