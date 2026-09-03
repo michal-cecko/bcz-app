@@ -13,29 +13,42 @@
 
     <div style="height: 20px;"></div>
 
-    <div class="info-box" style="background-color: #F5F5F5; border-radius: 12px; padding: 20px; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-        <p class="heading-text" style="font-size: 14px; font-weight: 600; color: #1A1A1A; margin: 0 0 12px 0; font-family: 'DM Sans', sans-serif;">Detail platby</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-            <tr>
-                <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Tím</td>
-                <td class="heading-text" style="font-size: 13px; font-weight: 600; color: #1A1A1A; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $teamName }}</td>
-            </tr>
-            <tr>
-                <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Podujatie</td>
-                <td class="heading-text" style="font-size: 13px; font-weight: 600; color: #1A1A1A; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $eventTitle }}</td>
-            </tr>
-            <tr>
-                <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Suma</td>
-                <td style="font-size: 13px; font-weight: 700; color: #FF2D2D; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $feeAmount }} {{ $feeCurrency }}</td>
-            </tr>
-            @if($paymentDeadline)
-                <tr>
-                    <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Splatnosť</td>
-                    <td style="font-size: 13px; font-weight: 700; color: #FF2D2D; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $paymentDeadline }}</td>
-                </tr>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            @if($qrCodeImage)
+                <td valign="top" width="132" style="padding-right: 16px;">
+                    <div style="width: 116px; height: 116px; background-color: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 8px;">
+                        <img src="{{ $message->embedData($qrCodeImage, 'qr-payment.png', 'image/png') }}" alt="QR platba" width="100" height="100" style="display: block; width: 100%; height: auto;" />
+                    </div>
+                </td>
             @endif
-        </table>
-    </div>
+            <td valign="top">
+                <div class="info-box" style="background-color: #F5F5F5; border-radius: 12px; padding: 20px; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <p class="heading-text" style="font-size: 14px; font-weight: 600; color: #1A1A1A; margin: 0 0 12px 0; font-family: 'DM Sans', sans-serif;">Detail platby</p>
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Tím</td>
+                            <td class="heading-text" style="font-size: 13px; font-weight: 600; color: #1A1A1A; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $teamName }}</td>
+                        </tr>
+                        <tr>
+                            <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Podujatie</td>
+                            <td class="heading-text" style="font-size: 13px; font-weight: 600; color: #1A1A1A; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $eventTitle }}</td>
+                        </tr>
+                        <tr>
+                            <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Suma</td>
+                            <td style="font-size: 13px; font-weight: 700; color: #FF2D2D; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $feeAmount }} {{ $feeCurrency }}</td>
+                        </tr>
+                        @if($paymentDeadline)
+                            <tr>
+                                <td class="body-text" style="font-size: 13px; color: #999999; padding: 4px 0; font-family: 'DM Sans', sans-serif;">Splatnosť</td>
+                                <td style="font-size: 13px; font-weight: 700; color: #FF2D2D; padding: 4px 0; text-align: right; font-family: 'DM Sans', sans-serif;">{{ $paymentDeadline }}</td>
+                            </tr>
+                        @endif
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
 
     <div style="height: 28px;"></div>
 

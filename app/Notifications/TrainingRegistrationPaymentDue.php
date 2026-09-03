@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Enums\PaymentStatusEnum;
 use App\Models\Payment;
 use App\Models\TrainingRegistration;
+use App\Notifications\Concerns\GeneratesPaymentQrCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\URL;
 
 class TrainingRegistrationPaymentDue extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use GeneratesPaymentQrCode, Queueable;
 
     public function __construct(
         public TrainingRegistration $registration,
@@ -53,6 +54,7 @@ class TrainingRegistrationPaymentDue extends Notification implements ShouldQueue
                 'feeCurrency' => $feeCurrency,
                 'paymentDeadline' => $paymentDeadline,
                 'paymentUrl' => $paymentUrl,
+                'qrCodeImage' => $this->qrCodeImageForPayment($payment),
                 'emailSubject' => 'Platba za tréning',
                 'teamLogoUrl' => $team?->getFirstMediaUrl('logo') ?: null,
                 'teamUrl' => $team ? url('/timy/'.$team->slug) : null,
