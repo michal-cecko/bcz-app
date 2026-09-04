@@ -469,6 +469,65 @@ class TrainingResourceTest extends TestCase
             ->assertCanSeeTableRecords([$pending, $approved], inOrder: true);
     }
 
+    public function test_list_shows_schedule_days_and_times_for_a_recurring_training(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+            'duration_minutes' => 60,
+        ]);
+
+        TrainingSchedule::factory()->create([
+            'training_id' => $training->id,
+            'day' => 'monday',
+            'start_time' => '18:00',
+            'sort_order' => 0,
+        ]);
+        TrainingSchedule::factory()->create([
+            'training_id' => $training->id,
+            'day' => 'wednesday',
+            'start_time' => '19:30',
+            'sort_order' => 1,
+        ]);
+
+        Livewire::test(ListTrainings::class)
+            ->assertOk()
+            ->assertSee('Mo 18:00–19:00')
+            ->assertSee('We 19:30–20:30');
+    }
+
+    public function test_list_shows_start_time_for_a_one_off_training_without_schedules(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+            'start_time' => '09:15',
+            'duration_minutes' => 45,
+        ]);
+
+        Livewire::test(ListTrainings::class)
+            ->assertOk()
+            ->assertSee('09:15–10:00');
+    }
+
+    public function test_list_shows_a_placeholder_when_neither_schedule_nor_start_time_is_set(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+            'start_time' => null,
+        ]);
+
+        $this->assertCount(0, $training->schedules);
+
+        Livewire::test(ListTrainings::class)
+            ->assertOk()
+            ->assertSee('-');
+    }
+
     /** @return array<string, mixed> */
     private function validTrainingFormData(string $sportCategoryId, string $cityId): array
     {

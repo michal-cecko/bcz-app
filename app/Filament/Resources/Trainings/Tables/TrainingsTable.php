@@ -16,7 +16,9 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
+use Illuminate\Support\Str;
 
 class TrainingsTable
 {
@@ -31,6 +33,28 @@ class TrainingsTable
                     ->searchable()
                     ->sortable()
                     ->description(fn (Training $record): string => $record->is_recurring ? 'Pravidelný' : 'Jednorazový — '.($record->event_date?->format('d.m.Y') ?? '')),
+                TextColumn::make('schedule_time')
+                    ->label('Čas')
+                    // Recurring trainings show every schedule day + start time (and end time,
+                    // when duration_minutes is set) so it's the same "day HH:mm" shape used in
+                    // training-card.blade.php and the registration/waitlist "cas" email
+                    // variable. One-off trainings fall back to their own start_time/duration.
+                    ->state(function (Training $record): ?string {
+                        if ($record->schedules->isNotEmpty()) {
+                            return $record->schedules
+                                ->map(fn ($schedule): string => trim(
+                                    ucfirst(mb_substr($schedule->day, 0, 2)).' '.static::formatTimeRange($schedule->start_time, $record->duration_minutes)
+                                ))
+                                ->implode(', ');
+                        }
+
+                        if (! $record->start_time) {
+                            return null;
+                        }
+
+                        return static::formatTimeRange($record->start_time, $record->duration_minutes);
+                    })
+                    ->placeholder('-'),
                 TextColumn::make('sportCategory.name')
                     ->label('Šport')
                     ->state(fn (Training $record): ?string => $record->sportCategory?->getTranslation('name', 'sk')),
@@ -147,5 +171,21 @@ class TrainingsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /** Formats a `time`-column value as "HH:mm", appending "–HH:mm" when a duration is known. */
+    private static function formatTimeRange(?string $startTime, ?int $durationMinutes): string
+    {
+        if (! $startTime) {
+            return '';
+        }
+
+        $time = Str::substr($startTime, 0, 5);
+
+        if ($durationMinutes) {
+            $time .= '–'.Carbon::parse($startTime)->addMinutes($durationMinutes)->format('H:i');
+        }
+
+        return $time;
     }
 }
