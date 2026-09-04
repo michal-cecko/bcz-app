@@ -98,7 +98,7 @@ class TeamSubscription extends Model implements Payable
             default => '',
         };
 
-        return EmailService::replaceVariables($template, [
+        return EmailService::renderPaymentNote($template, [
             'nazov_timu' => (string) ($this->team?->getTranslation('name', app()->getLocale()) ?? ''),
             'nazov_planu' => (string) ($this->plan?->getTranslation('name', app()->getLocale()) ?? ''),
             'sezona' => $seasonLabel,

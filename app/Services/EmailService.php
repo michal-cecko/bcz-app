@@ -73,6 +73,28 @@ class EmailService
     }
 
     /**
+     * Substitute variables into a QR payment note template and tidy the result.
+     *
+     * A placeholder that resolves to an empty string leaves the punctuation
+     * around it behind, so "{{meno}} {{priezvisko}} - clensky prispevok" would
+     * reach the bank app as " - clensky prispevok" for a registration with no
+     * name on file. Collapse that back to just the readable part, and return
+     * null when nothing but separators is left, so callers hide the note
+     * entirely rather than showing a stray dash.
+     *
+     * @param  array<string, string>  $variables
+     */
+    public static function renderPaymentNote(string $template, array $variables): ?string
+    {
+        $note = static::replaceVariables($template, $variables);
+        $note = preg_replace('/\s+/u', ' ', $note) ?? $note;
+        $note = preg_replace('/(?:\s*[-–—,;:\/|]\s*){2,}/u', ' - ', $note) ?? $note;
+        $note = preg_replace('/^[\s\-–—,;:\/|]+|[\s\-–—,;:\/|]+$/u', '', $note) ?? $note;
+
+        return $note !== '' ? $note : null;
+    }
+
+    /**
      * Send emails to recipients.
      *
      * @param  array<int, array<string, mixed>>  $brickContent

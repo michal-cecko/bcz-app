@@ -275,8 +275,12 @@ class Training extends Model implements HasMedia, Linkable
      * {{nazov_timu}}) are substituted alongside the training-scoped ones so a
      * season note used as the fallback renders instead of leaking raw
      * {{...}} placeholders into the QR.
+     *
+     * The athlete's name is passed in rather than read off $user, because one
+     * account can hold many athletes — see TrainingRegistration::athleteName().
+     * It falls back to the account holder when the caller has no better name.
      */
-    public function renderQrPaymentNote(?User $user = null): ?string
+    public function renderQrPaymentNote(?User $user = null, ?string $athleteFirstName = null, ?string $athleteLastName = null): ?string
     {
         $template = $this->effectivePaymentNoteTemplate();
 
@@ -286,9 +290,9 @@ class Training extends Model implements HasMedia, Linkable
 
         $schedule = $this->schedules?->first();
 
-        return EmailService::replaceVariables($template, [
-            'meno' => (string) ($user?->first_name ?? ''),
-            'priezvisko' => (string) ($user?->last_name ?? ''),
+        return EmailService::renderPaymentNote($template, [
+            'meno' => (string) ($athleteFirstName ?? $user?->first_name ?? ''),
+            'priezvisko' => (string) ($athleteLastName ?? $user?->last_name ?? ''),
             'nazov_treningu' => (string) ($this->getTranslation('title', app()->getLocale()) ?? ''),
             'mesto' => (string) ($this->city?->name ?? ''),
             'miesto' => (string) ($this->getTranslation('place_name', app()->getLocale()) ?? ''),

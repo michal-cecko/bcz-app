@@ -6,6 +6,7 @@ use App\Enums\GenderEnum;
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
+use App\Filament\Support\PaymentNotePreview;
 use App\Mason\EmailBricks\EmailButtonBrick;
 use App\Mason\EmailBricks\EmailCalloutBrick;
 use App\Mason\EmailBricks\EmailDividerBrick;
@@ -41,6 +42,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class TrainingForm
@@ -421,7 +423,18 @@ class TrainingForm
                                             ->visible(fn (Get $get): bool => $get('pricing_type') === TrainingPricingTypeEnum::PAID->value),
                                         TextInput::make('payment_note')
                                             ->label('Poznámka platby (QR)')
-                                            ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{nazov_treningu}}, {{mesto}}, {{miesto}}, {{cas}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
+                                            ->default('{{meno}} {{priezvisko}}')
+                                            ->live(onBlur: true)
+                                            ->helperText(fn (?string $state): HtmlString => PaymentNotePreview::helperText($state, [
+                                                'meno' => 'Ján',
+                                                'priezvisko' => 'Novák',
+                                                'nazov_treningu' => 'Street Workout',
+                                                'mesto' => 'Žilina',
+                                                'miesto' => 'Mestský park',
+                                                'cas' => '18:00',
+                                                'sezona' => 'Sezóna 2026',
+                                                'nazov_timu' => 'BCZ Team',
+                                            ]))
                                             ->maxLength(140)
                                             ->visible(fn (Get $get): bool => $get('pricing_type') !== TrainingPricingTypeEnum::FREE->value),
                                         TextInput::make('bank_account_iban')
