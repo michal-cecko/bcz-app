@@ -107,7 +107,9 @@ class TrainingRegistration extends Model implements Payable
     public function getPaymentDescription(): string
     {
         $athleteName = $this->athleteName();
-        $title = $this->training?->getTranslation('title', app()->getLocale()) ?? 'Tréning';
+        $title = $this->training?->getTranslation('title', app()->getLocale())
+            ?: $this->training?->getTranslation('title', 'sk')
+            ?: 'Tréning';
 
         return $athleteName ? "{$athleteName} - {$title}" : $title;
     }
