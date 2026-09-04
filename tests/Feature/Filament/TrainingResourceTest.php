@@ -23,6 +23,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -65,6 +67,58 @@ class TrainingResourceTest extends TestCase
         Livewire::test(ListTrainings::class)
             ->assertOk()
             ->assertCanSeeTableRecords($trainings);
+    }
+
+    public function test_list_table_thumbnail_shows_the_trainings_own_card_image(): void
+    {
+        Storage::fake('public');
+
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+        ]);
+
+        $training->addMedia(UploadedFile::fake()->image('trening.jpg', 800, 600))
+            ->preservingOriginal()
+            ->toMediaCollection('card_image', 'public');
+
+        Livewire::test(ListTrainings::class)
+            ->assertOk()
+            ->assertCanRenderTableColumn('card_image_url')
+            ->assertTableColumnStateSet('card_image_url', $training->fresh()->cardImageUrl(), $training);
+    }
+
+    public function test_list_table_thumbnail_falls_back_to_the_sport_category_hero_image(): void
+    {
+        Storage::fake('public');
+
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $sportCategory->addMedia(UploadedFile::fake()->image('kategoria.jpg', 800, 600))
+            ->preservingOriginal()
+            ->toMediaCollection('hero_image', 'public');
+
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+        ]);
+
+        Livewire::test(ListTrainings::class)
+            ->assertOk()
+            ->assertTableColumnStateSet('card_image_url', $sportCategory->fresh()->getFirstMediaUrl('hero_image'), $training);
+    }
+
+    public function test_list_table_thumbnail_is_blank_placeholder_when_no_image_exists_anywhere(): void
+    {
+        $sportCategory = SportCategory::factory()->create(['team_id' => $this->team->id]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'sport_category_id' => $sportCategory->id,
+        ]);
+
+        Livewire::test(ListTrainings::class)
+            ->assertOk()
+            ->assertTableColumnStateSet('card_image_url', null, $training);
     }
 
     public function test_can_create_training(): void
