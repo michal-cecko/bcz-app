@@ -12,6 +12,8 @@ use App\Models\EventRegistration;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Team;
+use App\Models\TeamSeason;
+use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
 use App\Notifications\PaymentConfirmed;
@@ -322,6 +324,70 @@ class PaymentService
         }
 
         return $this->createPendingPayment($user, $team, $payable, $amount, $currency);
+    }
+
+    /**
+     * Return the pending membership fee payment for the user on this team's season,
+     * creating both the Membership and its Payment when they do not exist yet.
+     *
+     * The fee is prorated from today, so a member joining mid-season only owes the
+     * remaining months.
+     */
+    public function ensurePendingMembershipPayment(User $user, Team $team, TeamSeason $season): Payment
+    {
+        $membership = Membership::firstOrCreate(
+            [
+                'team_id' => $team->id,
+                'user_id' => $user->id,
+                'team_season_id' => $season->id,
+            ],
+            [
+                'status' => MembershipStatusEnum::PENDING,
+                'fee_amount' => $season->proratedFee(),
+                'fee_currency' => $season->fee_currency ?? 'EUR',
+                'is_free' => false,
+                'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
+                'starts_at' => $season->starts_at,
+                'ends_at' => $season->ends_at,
+            ],
+        );
+
+        return $this->ensurePendingPaymentFor(
+            user: $user,
+            team: $team,
+            payable: $membership,
+            amount: (float) $season->proratedFee(),
+            currency: $season->fee_currency ?? 'EUR',
+        );
+    }
+
+    /**
+     * Return the membership fee the user still owes because they signed up for a
+     * training that requires club membership, or null when they owe none.
+     *
+     * Scoped to the teams behind those registrations, so an unrelated pending
+     * membership on another team never leaks into the welcome email.
+     */
+    public function pendingMembershipPaymentFromMembershipRequiredTraining(User $user): ?Payment
+    {
+        $teamIds = Training::query()
+            ->where('pricing_type', TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED)
+            ->whereHas('registrations', fn ($query) => $query
+                ->where('user_id', $user->id)
+                ->where('status', '!=', RegistrationStatusEnum::Cancelled->value))
+            ->pluck('team_id');
+
+        if ($teamIds->isEmpty()) {
+            return null;
+        }
+
+        return Payment::query()
+            ->where('user_id', $user->id)
+            ->where('payable_type', (new Membership)->getMorphClass())
+            ->where('status', PaymentStatusEnum::PENDING)
+            ->whereIn('team_id', $teamIds)
+            ->latest('created_at')
+            ->first();
     }
 
     /**
