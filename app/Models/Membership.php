@@ -96,7 +96,7 @@ class Membership extends Model implements Payable
             return null;
         }
 
-        return EmailService::replaceVariables($template, [
+        return EmailService::renderPaymentNote($template, [
             'meno' => (string) ($this->user?->first_name ?? ''),
             'priezvisko' => (string) ($this->user?->last_name ?? ''),
             'sezona' => (string) ($this->season?->name ?? ''),

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Mail\RegistrationConfirmationMail;
@@ -167,6 +168,29 @@ class RegistrationService
         foreach ($schema as $field) {
             if (($field['type'] ?? '') === 'email' && ! empty($formData[($field['name'] ?? $field['key'] ?? '')] ?? null)) {
                 return $formData[($field['name'] ?? $field['key'] ?? '')];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The trimmed, non-empty value of the first form field of the given type.
+     *
+     * @param  array<string, mixed>  $formData
+     * @param  list<array<string, mixed>>  $schema
+     */
+    public static function extractFieldValueOfType(array $formData, array $schema, RegistrationFieldTypeEnum $type): ?string
+    {
+        foreach ($schema as $field) {
+            if (($field['type'] ?? '') !== $type->value) {
+                continue;
+            }
+
+            $value = $formData[$field['name'] ?? $field['key'] ?? ''] ?? null;
+
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
             }
         }
 

@@ -125,10 +125,10 @@ class EventRegistration extends Model implements Payable
 
     public function getPaymentDescription(): string
     {
-        $userName = trim(($this->user?->first_name ?? '').' '.($this->user?->last_name ?? ''));
+        $athleteName = $this->athleteName();
         $title = $this->event?->getTranslation('title', app()->getLocale()) ?? 'Podujatie';
 
-        return $userName ? "{$userName} - {$title}" : $title;
+        return $athleteName ? "{$athleteName} - {$title}" : $title;
     }
 
     public function getTotalPriceAmount(): float
@@ -157,9 +157,9 @@ class EventRegistration extends Model implements Payable
             return null;
         }
 
-        return EmailService::replaceVariables($template, [
-            'meno' => (string) ($this->user?->first_name ?? ''),
-            'priezvisko' => (string) ($this->user?->last_name ?? ''),
+        return EmailService::renderPaymentNote($template, [
+            'meno' => (string) ($this->athleteFirstName() ?? $this->user?->first_name ?? ''),
+            'priezvisko' => (string) ($this->athleteLastName() ?? $this->user?->last_name ?? ''),
             'nazov_eventu' => (string) ($this->event?->getTranslation('title', app()->getLocale()) ?? ''),
             'datum_eventu' => $this->event?->date?->format('d.m.Y') ?? '',
             'miesto' => (string) ($this->event?->place_name ?? ''),

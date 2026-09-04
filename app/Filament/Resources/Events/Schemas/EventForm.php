@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Events\Schemas;
 use App\Enums\EventPricingTypeEnum;
 use App\Enums\EventTypeEnum;
 use App\Enums\RegistrationFieldTypeEnum;
+use App\Filament\Support\PaymentNotePreview;
 use App\Mason\Bricks\CompetitionBracketsBrick;
 use App\Mason\Bricks\CompetitionResultsBrick;
 use App\Mason\Bricks\CompetitionTimetableBrick;
@@ -54,6 +55,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class EventForm
@@ -270,7 +272,15 @@ class EventForm
                                 ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             TextInput::make('payment_note')
                                 ->label('Poznámka platby (QR)')
-                                ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{nazov_eventu}}, {{datum_eventu}}, {{miesto}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
+                                ->default('{{meno}} {{priezvisko}}')
+                                ->live(onBlur: true)
+                                ->helperText(fn (?string $state): HtmlString => PaymentNotePreview::helperText($state, [
+                                    'meno' => 'Ján',
+                                    'priezvisko' => 'Novák',
+                                    'nazov_eventu' => 'Jarná súťaž',
+                                    'datum_eventu' => '15.05.2026',
+                                    'miesto' => 'Mestský park',
+                                ]))
                                 ->maxLength(140)
                                 ->visible(fn (Get $get): bool => self::isPaid($get('pricing_type'))),
                             TextInput::make('bank_account_iban')
