@@ -11,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ReplicateAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -26,6 +27,14 @@ class TrainingsTable
             ->reorderable('sort_order')
             ->defaultSort('sort_order')
             ->columns([
+                ImageColumn::make('card_image_url')
+                    ->label('Foto')
+                    // Uses the same fallback as the public site (own card image, then the
+                    // sport category's hero image) so the admin list reflects exactly what
+                    // visitors will see, and stays in sync if that logic ever changes.
+                    ->state(fn (Training $record): ?string => $record->cardImageUrl())
+                    ->circular()
+                    ->placeholder('-'),
                 TextColumn::make('title')
                     ->label('Názov')
                     ->searchable()
