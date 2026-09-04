@@ -8,6 +8,7 @@ use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Notifications\WelcomeToApp;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use Livewire\Component;
@@ -273,6 +274,14 @@ new class extends Component
             $this->pendingPaymentId = $payment->id;
         }
 
+        // Membership-required trainings owe a club membership fee rather than a
+        // per-training price. Issue it here so the fee — and its variable symbol —
+        // exists in time for the welcome email below, instead of only once the
+        // registrant comes back to the payment box on this page.
+        if ($user && $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
+            $this->ensureMembershipFeeIssued($user);
+        }
+
         $confirmationRecipient = $user
             ?? RegistrationService::extractEmailFromFormData($this->fields, $schema);
 
@@ -288,6 +297,13 @@ new class extends Component
                 attachments: $this->training->getMedia('email_attachments'),
                 payment: $payment,
             );
+        }
+
+        // Registering for a membership-required training is the moment a person
+        // joins the club, so welcome them to the platform. The welcome email
+        // resolves the membership fee QR code for itself.
+        if ($isNewUser && $user && $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
+            $user->notify(new WelcomeToApp);
         }
 
         $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $user);
@@ -327,6 +343,30 @@ new class extends Component
             'joined_at' => now(),
             'continuous_membership' => true,
         ]);
+    }
+
+    /**
+     * Issue the pending membership fee for the team's current season, unless the
+     * user is already a paid-up member. Idempotent — the payment box on this page
+     * resolves the very same Membership and Payment.
+     */
+    protected function ensureMembershipFeeIssued(User $user): void
+    {
+        if ($user->hasActiveMembershipForTeam($this->training->team_id)) {
+            return;
+        }
+
+        $season = $this->training->team?->currentSeason;
+
+        if (! $season) {
+            return;
+        }
+
+        app(PaymentService::class)->ensurePendingMembershipPayment(
+            user: $user,
+            team: $this->training->team,
+            season: $season,
+        );
     }
 
     protected function autoSelectPaymentMethod(): void
@@ -581,28 +621,10 @@ new class extends Component
             $authUser = auth()->user();
             $membershipPayment = null;
             if ($authUser && $season) {
-                $membership = \App\Models\Membership::firstOrCreate(
-                    [
-                        'team_id' => $team->id,
-                        'user_id' => $authUser->id,
-                        'team_season_id' => $season->id,
-                    ],
-                    [
-                        'status' => \App\Enums\MembershipStatusEnum::PENDING,
-                        'fee_amount' => $season->proratedFee(),
-                        'fee_currency' => $season->fee_currency ?? 'EUR',
-                        'is_free' => false,
-                        'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
-                        'starts_at' => $season->starts_at,
-                        'ends_at' => $season->ends_at,
-                    ],
-                );
-                $membershipPayment = app(\App\Services\PaymentService::class)->ensurePendingPaymentFor(
+                $membershipPayment = app(\App\Services\PaymentService::class)->ensurePendingMembershipPayment(
                     user: $authUser,
                     team: $team,
-                    payable: $membership,
-                    amount: (float) $season->proratedFee(),
-                    currency: $season->fee_currency ?? 'EUR',
+                    season: $season,
                 );
             }
         @endphp
