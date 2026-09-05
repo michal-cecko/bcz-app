@@ -272,6 +272,55 @@ class TrainingRegistrationFlowTest extends TestCase
             ->assertDontSee('Clenske Sezona 2026');
     }
 
+    public function test_membership_needed_qr_note_uses_the_athlete_named_on_the_registration_not_the_account_holder(): void
+    {
+        // Regression test for item 15 of the testing notes: the confirmation
+        // email and the account/profile page already resolve the QR payment
+        // note from the *registration's own* athlete name (see
+        // TrainingRegistration::getQrPaymentNote()), but the QR shown on
+        // screen right after submitting — the "membership_needed" state — was
+        // still passing $authUser into Training::renderQrPaymentNote(),
+        // which names the logged-in account holder instead. This matters
+        // whenever one account registers an athlete other than itself, e.g. a
+        // parent registering a child.
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+            'payment_note' => '{{meno}} {{priezvisko}} - clensky prispevok',
+        ]);
+
+        $bankTransfer = PaymentMethod::create([
+            'method' => PaymentMethodEnum::BANK_TRANSFER,
+            'title' => ['sk' => 'Bankovy prevod'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+
+        $training->paymentMethods()->attach($bankTransfer->id, [
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        $this->team->update([
+            'bank_account_iban' => 'SK1234567890123456789012',
+            'bank_account_name' => 'BCZ Team',
+        ]);
+
+        $parent = User::factory()->create(['first_name' => 'Peter', 'last_name' => 'Rodič']);
+
+        Livewire::actingAs($parent)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', 'Ján')
+            ->set('fields.priezvisko', 'Novák')
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertOk()
+            ->assertSet('registrationState', 'membership_needed')
+            ->assertSee('Ján Novák - clensky prispevok')
+            ->assertDontSee('Peter Rodič - clensky prispevok');
+    }
+
     public function test_paid_training_stays_pending(): void
     {
         Mail::fake();

@@ -627,6 +627,17 @@ new class extends Component
                     season: $season,
                 );
             }
+            // Prefer this specific registration's own athlete name over the
+            // account holder's — one account can hold several athletes (e.g. a
+            // parent registering multiple children), so $authUser's name is
+            // wrong whenever the registrant differs from the account holder.
+            $registration = $authUser
+                ? TrainingRegistration::where('training_id', $training->id)
+                    ->where('user_id', $authUser->id)
+                    ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
+                    ->latest()
+                    ->first()
+                : null;
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
             <span class="text-[#DC2626] text-[10px] font-bold tracking-[2px]">{{ __('training_detail.state_membership_needed') }}</span>
@@ -657,7 +668,7 @@ new class extends Component
                 'team' => $team,
                 'season' => $season,
                 'variableSymbol' => $membershipPayment?->formattedVariableSymbol(),
-                'paymentNote' => $training->renderQrPaymentNote($authUser) ?: $membershipPayment?->payable?->getQrPaymentNote(),
+                'paymentNote' => $registration?->getQrPaymentNote() ?: $training->renderQrPaymentNote($authUser) ?: $membershipPayment?->payable?->getQrPaymentNote(),
             ])
         </div>
 
