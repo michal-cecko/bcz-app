@@ -21,6 +21,8 @@ use App\Notifications\TrainingPaymentConfirmed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -372,6 +374,18 @@ class TrainingRegistrationFlowTest extends TestCase
         $payment = Payment::where('user_id', $user->id)->where('status', PaymentStatusEnum::PENDING)->firstOrFail();
 
         $component->assertSee($payment->formattedVariableSymbol());
+    }
+
+    public function test_remembered_registration_id_cannot_be_set_from_the_client(): void
+    {
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        $this->expectException(CannotUpdateLockedPropertyException::class);
+
+        Livewire::test('training-registration-form', ['training' => $training])
+            ->set('registrationId', (string) Str::uuid());
     }
 
     public function test_paid_training_stays_pending(): void
