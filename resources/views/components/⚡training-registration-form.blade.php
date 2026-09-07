@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\WelcomeToApp;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -29,8 +30,10 @@ new class extends Component
 
     public ?string $selectedPaymentMethod = null;
 
+    #[Locked]
     public ?string $pendingPaymentId = null;
 
+    #[Locked]
     public ?string $registrationId = null;
 
     public function mount(Training $training): void
@@ -624,20 +627,17 @@ new class extends Component
             $season = $team->currentSeason;
             $enabledMethods = $team->getEnabledPaymentMethodKeys();
             $feeLabel = $season ? number_format($season->proratedFee(), 2) . ' ' . ($season->fee_currency ?? 'EUR') : '';
-            $authUser = auth()->user();
             // Resolve the registration by the id this component remembered, not
             // via auth(): a guest who has just submitted is not logged in, and
             // one account can hold several athletes (a parent registering
             // children), so the account holder's name is the wrong one anyway.
-            $registration = $registrationId ? TrainingRegistration::find($registrationId) : null;
-            $registration ??= $authUser
-                ? TrainingRegistration::where('training_id', $training->id)
-                    ->where('user_id', $authUser->id)
+            $registration = $registrationId
+                ? TrainingRegistration::whereKey($registrationId)
+                    ->where('training_id', $training->id)
                     ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
-                    ->latest()
                     ->first()
                 : null;
-            $payer = $registration?->user ?? $authUser;
+            $payer = $registration?->user ?? auth()->user();
             $membershipPayment = null;
             if ($payer && $season) {
                 $membershipPayment = app(\App\Services\PaymentService::class)->ensurePendingMembershipPayment(
