@@ -321,6 +321,59 @@ class TrainingRegistrationFlowTest extends TestCase
             ->assertDontSee('Peter Rodič - clensky prispevok');
     }
 
+    public function test_membership_needed_qr_note_and_variable_symbol_render_for_a_guest_registration(): void
+    {
+        // A guest who has just submitted is not logged in, so resolving the
+        // registration (and the membership fee) through auth() found nothing
+        // and the on-screen QR came out as a bare "clensky prispevok" with no
+        // name and no variable symbol — while the email got both.
+        Mail::fake();
+
+        $season = TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'name' => 'Sezona 2026',
+        ]);
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+            'team_season_id' => $season->id,
+            'payment_note' => '{{meno}} {{priezvisko}} - clensky prispevok',
+        ]);
+
+        $bankTransfer = PaymentMethod::create([
+            'method' => PaymentMethodEnum::BANK_TRANSFER,
+            'title' => ['sk' => 'Bankovy prevod'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+
+        $training->paymentMethods()->attach($bankTransfer->id, [
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        $this->team->update([
+            'bank_account_iban' => 'SK1234567890123456789012',
+            'bank_account_name' => 'BCZ Team',
+        ]);
+
+        $component = Livewire::test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', 'Ján')
+            ->set('fields.priezvisko', 'Novák')
+            ->set('fields.email', 'jan.novak@test.com')
+            ->set('fields.telefon', '+421900222333')
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertOk()
+            ->assertSet('registrationState', 'membership_needed')
+            ->assertSee('Ján Novák - clensky prispevok');
+
+        $user = User::where('email', 'jan.novak@test.com')->firstOrFail();
+        $payment = Payment::where('user_id', $user->id)->where('status', PaymentStatusEnum::PENDING)->firstOrFail();
+
+        $component->assertSee($payment->formattedVariableSymbol());
+    }
+
     public function test_paid_training_stays_pending(): void
     {
         Mail::fake();
