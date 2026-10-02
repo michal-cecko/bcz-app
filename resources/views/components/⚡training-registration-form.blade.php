@@ -662,8 +662,12 @@ new class extends Component
             @if($season)
                 <div class="w-full rounded-xl bg-[#0A0A0A] border border-[#333333] p-4 text-left flex flex-col gap-1">
                     <span class="text-white text-sm font-semibold">{{ $season->name }}</span>
-                    <span class="text-[#FF2D2D] text-[13px] font-medium">{{ $feeLabel }} {{ __('training_detail.season_remaining') }}</span>
-                    <span class="text-[#666666] text-xs">{{ __('training_detail.season_prorated_note') }}</span>
+                    @if($season->prorate_fee)
+                        <span class="text-[#FF2D2D] text-[13px] font-medium">{{ $feeLabel }} {{ __('training_detail.season_remaining') }}</span>
+                        <span class="text-[#666666] text-xs">{{ __('training_detail.season_prorated_note') }}</span>
+                    @else
+                        <span class="text-[#FF2D2D] text-[13px] font-medium">{{ $feeLabel }} {{ __('training_detail.season_full') }}</span>
+                    @endif
                 </div>
             @endif
 

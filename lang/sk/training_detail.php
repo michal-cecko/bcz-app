@@ -145,6 +145,7 @@ return [
 
     // Season info
     'season_remaining' => 'za zvyšok sezóny',
+    'season_full' => 'za celú sezónu',
     'season_prorated_note' => 'Pomerná cena za zostávajúce mesiace aktuálnej sezóny',
 
     // Validation errors

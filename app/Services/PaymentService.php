@@ -330,8 +330,8 @@ class PaymentService
      * Return the pending membership fee payment for the user on this team's season,
      * creating both the Membership and its Payment when they do not exist yet.
      *
-     * The fee is prorated from today, so a member joining mid-season only owes the
-     * remaining months.
+     * The fee comes from {@see TeamSeason::proratedFee()}: the full season fee, or,
+     * when the season has prorating switched on, only the remaining months from today.
      */
     public function ensurePendingMembershipPayment(User $user, Team $team, TeamSeason $season): Payment
     {

@@ -87,7 +87,7 @@ class SeasonServiceTest extends TestCase
 
     public function test_add_mid_season_member(): void
     {
-        $season = TeamSeason::factory()->create([
+        $season = TeamSeason::factory()->prorated()->create([
             'starts_at' => now()->subMonths(4)->startOfMonth(),
             'ends_at' => now()->addMonths(4)->endOfMonth(),
             'fee_amount' => 80.00,
@@ -101,6 +101,19 @@ class SeasonServiceTest extends TestCase
         $this->assertLessThan(80.00, (float) $membership->fee_amount);
         $this->assertEquals($season->id, $membership->team_season_id);
         $this->assertNotNull($membership->payment_deadline_at);
+    }
+
+    public function test_add_mid_season_member_pays_full_fee_when_season_is_not_prorated(): void
+    {
+        $season = TeamSeason::factory()->create([
+            'starts_at' => now()->subMonths(4)->startOfMonth(),
+            'ends_at' => now()->addMonths(4)->endOfMonth(),
+            'fee_amount' => 80.00,
+        ]);
+
+        $membership = $this->service->addMidSeasonMember($season, User::factory()->create());
+
+        $this->assertEquals(80.00, (float) $membership->fee_amount);
     }
 
     public function test_mark_membership_free(): void

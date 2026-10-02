@@ -61,6 +61,9 @@ class TeamSeasonResource extends Resource
                                 TextEntry::make('fee_display')
                                     ->label('Suma')
                                     ->state(fn (TeamSeason $record): string => number_format((float) $record->fee_amount, 2).' '.$record->fee_currency),
+                                IconEntry::make('prorate_fee')
+                                    ->label('Pomerná cena pri vstupe počas sezóny')
+                                    ->boolean(),
                                 TextEntry::make('payment_deadline_days')
                                     ->label('Splatnosť (dní)'),
                                 TextEntry::make('status_display')

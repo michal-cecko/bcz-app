@@ -2611,7 +2611,7 @@ class DemoDataSeeder extends Seeder
             } else {
                 $status = MembershipStatusEnum::PENDING;
                 $isFree = false;
-                // Mid-season join — prorated fee
+                // Mid-season join — season fee (prorated only if the season opts in)
                 $feeAmount = $currentSeason->proratedFee();
                 $deadlineAt = now()->addDays(rand(3, 12));
             }

@@ -10,6 +10,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -67,6 +68,10 @@ class SeasonsRelationManager extends RelationManager
                     ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
                     ->default('EUR')
                     ->required(),
+                Toggle::make('prorate_fee')
+                    ->label('Pomerná cena pri vstupe počas sezóny')
+                    ->helperText('Ak je zapnuté, člen, ktorý sa pridá počas sezóny, platí len za zostávajúce mesiace (vrátane mesiaca vstupu). Ak je vypnuté, platí vždy celú sumu sezóny.')
+                    ->default(false),
                 TextInput::make('max_capacity')
                     ->label('Maximálny počet členov')
                     ->numeric()

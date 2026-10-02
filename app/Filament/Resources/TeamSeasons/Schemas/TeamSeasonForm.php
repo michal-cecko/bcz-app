@@ -7,6 +7,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class TeamSeasonForm
@@ -40,6 +41,10 @@ class TeamSeasonForm
                     ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
                     ->default('EUR')
                     ->required(),
+                Toggle::make('prorate_fee')
+                    ->label('Pomerná cena pri vstupe počas sezóny')
+                    ->helperText('Ak je zapnuté, člen, ktorý sa pridá počas sezóny, platí len za zostávajúce mesiace (vrátane mesiaca vstupu). Ak je vypnuté, platí vždy celú sumu sezóny.')
+                    ->default(false),
                 TextInput::make('payment_note')
                     ->label('Poznámka platby (QR)')
                     ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{sezona}}, {{nazov_timu}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')
