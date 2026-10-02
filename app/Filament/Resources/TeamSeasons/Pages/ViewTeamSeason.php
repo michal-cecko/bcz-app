@@ -15,6 +15,7 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
@@ -65,6 +66,10 @@ class ViewTeamSeason extends ViewRecord
                             ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
                             ->default($this->record->fee_currency)
                             ->required(),
+                        Toggle::make('prorate_fee')
+                            ->label('Pomerná cena pri vstupe počas sezóny')
+                            ->helperText('Ak je zapnuté, člen, ktorý sa pridá počas sezóny, platí len za zostávajúce mesiace (vrátane mesiaca vstupu). Ak je vypnuté, platí vždy celú sumu sezóny.')
+                            ->default((bool) $this->record->prorate_fee),
                         TextInput::make('payment_deadline_days')
                             ->label('Splatnosť (dní)')
                             ->numeric()
@@ -102,6 +107,7 @@ class ViewTeamSeason extends ViewRecord
                         'ends_at' => $data['ends_at'],
                         'fee_amount' => $data['fee_amount'],
                         'fee_currency' => $data['fee_currency'],
+                        'prorate_fee' => (bool) ($data['prorate_fee'] ?? false),
                         'payment_deadline_days' => $data['payment_deadline_days'],
                     ]);
 

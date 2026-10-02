@@ -143,6 +143,7 @@ return [
 
     // Season info
     'season_remaining' => 'for the rest of the season',
+    'season_full' => 'for the whole season',
     'season_prorated_note' => 'Prorated fee for the remaining months of the current season',
 
     // Validation errors

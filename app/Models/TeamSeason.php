@@ -21,10 +21,18 @@ class TeamSeason extends Model
         'ends_at',
         'fee_amount',
         'fee_currency',
+        'prorate_fee',
         'payment_note',
         'max_capacity',
         'payment_deadline_days',
         'renewal_notified_at',
+    ];
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'prorate_fee' => false,
     ];
 
     protected function casts(): array
@@ -33,6 +41,7 @@ class TeamSeason extends Model
             'starts_at' => 'date',
             'ends_at' => 'date',
             'fee_amount' => 'decimal:2',
+            'prorate_fee' => 'boolean',
             'max_capacity' => 'integer',
             'payment_deadline_days' => 'integer',
             'renewal_notified_at' => 'datetime',
@@ -69,17 +78,24 @@ class TeamSeason extends Model
         return $this->ends_at->lt(now());
     }
 
+    /**
+     * The number of calendar months the season touches, both ends included.
+     *
+     * A season running 1 September to 31 December is four months, and one running
+     * 1 January to 31 December is twelve. Used for prorating the season fee.
+     */
     public function totalMonths(): int
     {
-        return (int) $this->starts_at->diffInMonths($this->ends_at);
+        return self::calendarMonthsBetween($this->starts_at, $this->ends_at);
     }
 
     /**
      * The season length rounded to whole months, for display purposes.
      *
-     * Unlike {@see self::totalMonths()}, which truncates and is used for prorating
-     * a fee against the months a member still has left, this rounds: a season
-     * running 1 January to 31 December is twelve months, not eleven and a bit.
+     * Unlike {@see self::totalMonths()}, which counts every calendar month the
+     * season touches and is used for prorating, this rounds the actual length:
+     * a season running 1 January to 31 December is twelve months, while one
+     * running only ten days is zero.
      */
     public function lengthInWholeMonths(): int
     {
@@ -103,33 +119,54 @@ class TeamSeason extends Model
         return round((float) $this->fee_amount / $months, 2);
     }
 
+    /**
+     * The calendar months a member joining on the given date still has to pay for.
+     *
+     * The joining month counts as a whole month: joining on any day of October
+     * in a September-December season leaves October, November and December.
+     */
     public function remainingMonths(?Carbon $fromDate = null): int
     {
-        $from = $fromDate ?? now();
-        $total = $this->totalMonths();
+        $from = ($fromDate ?? now())->copy()->startOfDay();
 
         if ($from->lte($this->starts_at)) {
-            return $total;
+            return $this->totalMonths();
         }
 
-        if ($from->gte($this->ends_at)) {
+        if ($from->gt($this->ends_at)) {
             return 0;
         }
 
-        return max(1, (int) $from->diffInMonths($this->ends_at));
+        return min($this->totalMonths(), self::calendarMonthsBetween($from, $this->ends_at));
     }
 
+    /**
+     * The season fee a member joining on the given date owes.
+     *
+     * Seasons charge the full fee regardless of the joining date unless the admin
+     * opted the season into prorating, in which case the fee is spread evenly over
+     * the season's calendar months and only the remaining ones are charged.
+     */
     public function proratedFee(?Carbon $fromDate = null): float
     {
+        if (! $this->prorate_fee) {
+            return (float) $this->fee_amount;
+        }
+
         $total = $this->totalMonths();
 
-        if ($total === 0) {
+        if ($total <= 0) {
             return (float) $this->fee_amount;
         }
 
         $remaining = $this->remainingMonths($fromDate);
 
         return round(((float) $this->fee_amount / $total) * $remaining, 2);
+    }
+
+    private static function calendarMonthsBetween(Carbon $from, Carbon $to): int
+    {
+        return max(0, ($to->year - $from->year) * 12 + ($to->month - $from->month) + 1);
     }
 
     public function hasCapacity(): bool

@@ -6,6 +6,7 @@ use App\Enums\RoleEnum;
 use App\Filament\Resources\Teams\Pages\EditTeam;
 use App\Filament\Resources\Teams\Pages\ViewTeam;
 use App\Filament\Resources\Teams\RelationManagers\SeasonsRelationManager;
+use App\Filament\Resources\TeamSeasons\Pages\EditTeamSeason;
 use App\Models\Team;
 use App\Models\TeamSeason;
 use App\Models\User;
@@ -120,5 +121,29 @@ class SeasonsRelationManagerActionsTest extends TestCase
         ])
             ->assertTableActionHidden('create')
             ->assertTableActionHidden('delete', $season);
+    }
+
+    public function test_admin_can_opt_a_season_into_prorated_fees(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleEnum::SUPER_ADMIN);
+
+        $season = TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+            'fee_amount' => 80.00,
+        ]);
+
+        $this->actingAsTenantUser($admin->fresh());
+
+        Livewire::test(EditTeamSeason::class, ['record' => $season->getRouteKey()])
+            ->assertFormFieldExists('prorate_fee')
+            ->assertSchemaStateSet(['prorate_fee' => false])
+            ->fillForm(['prorate_fee' => true])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue($season->fresh()->prorate_fee);
     }
 }
