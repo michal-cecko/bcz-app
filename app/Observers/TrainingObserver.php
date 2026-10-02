@@ -7,9 +7,12 @@ use App\Services\TrainingCapacityService;
 
 class TrainingObserver
 {
-    public function updating(Training $training): void
+    /**
+     * In "updated" the original still holds the value from before the save.
+     */
+    public function updated(Training $training): void
     {
-        if (! $training->isDirty('max_capacity')) {
+        if (! $training->wasChanged('max_capacity')) {
             return;
         }
 
@@ -17,16 +20,7 @@ class TrainingObserver
         $newCapacity = $training->max_capacity;
 
         if ($newCapacity === null || ($oldCapacity !== null && $newCapacity > $oldCapacity)) {
-            // Capacity increased or set to unlimited — check waitlist after save
-            $training->shouldCheckWaitlist = true;
-        }
-    }
-
-    public function updated(Training $training): void
-    {
-        if (! empty($training->shouldCheckWaitlist)) {
             TrainingCapacityService::handleSpotFreed($training);
-            unset($training->shouldCheckWaitlist);
         }
     }
 }

@@ -4,11 +4,11 @@ namespace App\Notifications;
 
 use App\Models\Training;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TrainingSpotAvailable extends Notification implements ShouldQueue
+class TrainingSpotAvailable extends Notification implements ShouldQueueAfterCommit
 {
     use Queueable;
 

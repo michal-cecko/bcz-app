@@ -19,6 +19,8 @@ use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Forms\Components\BaseFileUpload;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Notifications\Collection as NotificationCollection;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -40,6 +42,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             LoginResponse::class,
             FilamentLoginResponse::class,
+        );
+
+        // Filament hydrates client-sent notification updates through the container and types every
+        // item as an array; a client can send other values there, so drop them before they reach it.
+        $this->app->bind(
+            NotificationCollection::class,
+            fn (Application $app, array $parameters): NotificationCollection => new NotificationCollection(
+                array_filter($parameters['items'] ?? [], is_array(...)),
+            ),
         );
     }
 
