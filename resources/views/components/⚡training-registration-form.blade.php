@@ -5,10 +5,10 @@ use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
+use App\Models\Payment;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
-use App\Notifications\WelcomeToApp;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use Livewire\Attributes\Locked;
@@ -285,10 +285,11 @@ new class extends Component
 
         // Membership-required trainings owe a club membership fee rather than a
         // per-training price. Issue it here so the fee — and its variable symbol —
-        // exists in time for the welcome email below, instead of only once the
-        // registrant comes back to the payment box on this page.
+        // exists in time for the confirmation email below, instead of only once
+        // the registrant comes back to the payment box on this page.
+        $membershipPayment = null;
         if ($user && $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
-            $this->ensureMembershipFeeIssued($user);
+            $membershipPayment = $this->ensureMembershipFeeIssued($user);
         }
 
         $confirmationRecipient = $user
@@ -305,14 +306,10 @@ new class extends Component
                 locale: $registration->locale,
                 attachments: $this->training->getMedia('email_attachments'),
                 payment: $payment,
+                // One email carries everything: the membership fee QR code + pay
+                // link, and (for new users) the sign-in link to the new account.
+                membershipPayment: $membershipPayment,
             );
-        }
-
-        // Registering for a membership-required training is the moment a person
-        // joins the club, so welcome them to the platform. The welcome email
-        // resolves the membership fee QR code for itself.
-        if ($isNewUser && $user && $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
-            $user->notify(new WelcomeToApp);
         }
 
         $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $user);
@@ -359,19 +356,19 @@ new class extends Component
      * user is already a paid-up member. Idempotent — the payment box on this page
      * resolves the very same Membership and Payment.
      */
-    protected function ensureMembershipFeeIssued(User $user): void
+    protected function ensureMembershipFeeIssued(User $user): ?Payment
     {
         if ($user->hasActiveMembershipForTeam($this->training->team_id)) {
-            return;
+            return null;
         }
 
         $season = $this->training->team?->currentSeason;
 
         if (! $season) {
-            return;
+            return null;
         }
 
-        app(PaymentService::class)->ensurePendingMembershipPayment(
+        return app(PaymentService::class)->ensurePendingMembershipPayment(
             user: $user,
             team: $this->training->team,
             season: $season,

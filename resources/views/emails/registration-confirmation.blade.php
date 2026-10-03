@@ -12,6 +12,8 @@
 <div style="height: 16px;"></div>
 <p class="body-text" style="font-size: 14px; color: #555555; line-height: 1.7; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">{!! __('emails.registration_confirmation.body', ['type' => '<strong>'.$kindLabel.'</strong>', 'title' => '<strong>'.e($registrationTitle).'</strong>']) !!}</p>
 
+@include('emails.partials.membership-payment')
+
 @if(!empty($paymentAmount) && !empty($paymentUrl))
 <div style="height: 24px;"></div>
 <div class="divider-line" style="height: 1px; background-color: #E5E5E5; margin: 0;"></div>

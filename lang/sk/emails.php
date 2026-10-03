@@ -32,4 +32,17 @@ return [
         'signoff' => 'Ďakujeme,',
         'signature' => 'BCZ Club',
     ],
+    'membership_payment' => [
+        'heading' => 'Členské v klube',
+        'body' => 'Tréning, na ktorý si sa prihlásil, je pre členov klubu. Členské môžeš uhradiť hneď — naskenuj QR kód v bankovej aplikácii alebo použi údaje vedľa neho.',
+        'qr_alt' => 'QR platba',
+        'details_heading' => 'Detail platby',
+        'season' => 'Sezóna',
+        'amount' => 'Suma',
+        'iban' => 'IBAN',
+        'variable_symbol' => 'Variabilný symbol',
+        'recipient' => 'Príjemca',
+        'note' => 'Poznámka',
+        'cta' => 'Zaplatiť členské',
+    ],
 ];

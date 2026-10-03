@@ -91,8 +91,9 @@ class RegistrationService
      * @param  string  $registrationKind  'training' or 'event' — translated via lang file
      * @param  array<string, list<array<string, mixed>>>|null  $customEmailContent  Locale-keyed Mason brick content
      * @param  Collection<int, Media>|null  $attachments
+     * @param  Payment|null  $membershipPayment  Outstanding club membership fee to show with its QR code
      */
-    public static function sendConfirmation(User|string $userOrEmail, string $registrationKind, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null, ?Collection $attachments = null, ?Payment $payment = null): void
+    public static function sendConfirmation(User|string $userOrEmail, string $registrationKind, string $registrationTitle, bool $isNewUser = false, ?Team $team = null, ?array $customEmailContent = null, ?string $locale = null, ?Collection $attachments = null, ?Payment $payment = null, ?Payment $membershipPayment = null): void
     {
         $user = $userOrEmail instanceof User ? $userOrEmail : null;
         $email = $user?->email ?? (is_string($userOrEmail) ? $userOrEmail : null);
@@ -122,6 +123,7 @@ class RegistrationService
             team: $team,
             customContent: $customHtml,
             payment: $payment,
+            membershipPayment: $membershipPayment,
         );
 
         $mail->locale($resolvedLocale);
