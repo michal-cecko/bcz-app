@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
+use App\Mail\RegistrationConfirmationMail;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Team;
@@ -138,7 +139,7 @@ class WelcomeEmailMembershipQrTest extends TestCase
         $this->assertStringContainsString('Vitaj v BCZ App', $html);
     }
 
-    public function test_registering_for_a_membership_required_training_welcomes_the_new_user_and_issues_the_fee(): void
+    public function test_registering_for_a_membership_required_training_issues_the_fee_in_a_single_confirmation_email_instead_of_a_welcome_email(): void
     {
         Mail::fake();
         Notification::fake();
@@ -170,15 +171,19 @@ class WelcomeEmailMembershipQrTest extends TestCase
 
         $user = User::where('email', 'jana@test.com')->sole();
 
-        Notification::assertSentTo($user, WelcomeToApp::class);
+        // The sign-in link and the membership fee QR now travel together in the
+        // registration confirmation, so the separate welcome email is not sent.
+        Notification::assertNotSentTo($user, WelcomeToApp::class);
 
-        $this->assertTrue(
-            Payment::query()
-                ->where('user_id', $user->id)
-                ->where('payable_type', (new Membership)->getMorphClass())
-                ->where('status', PaymentStatusEnum::PENDING)
-                ->exists(),
-        );
+        $fee = Payment::query()
+            ->where('user_id', $user->id)
+            ->where('payable_type', (new Membership)->getMorphClass())
+            ->where('status', PaymentStatusEnum::PENDING)
+            ->sole();
+
+        Mail::assertQueuedCount(1);
+        Mail::assertQueued(RegistrationConfirmationMail::class, fn (RegistrationConfirmationMail $mail): bool => $mail->isNewUser
+            && $mail->membershipPayment?->is($fee));
     }
 
     public function test_registering_for_a_free_training_does_not_send_the_welcome_email(): void

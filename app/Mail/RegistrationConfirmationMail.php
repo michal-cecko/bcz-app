@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Models\Payment;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\Concerns\GeneratesPaymentQrCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\URL;
 
 class RegistrationConfirmationMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use GeneratesPaymentQrCode, Queueable, SerializesModels;
 
     public string $magicUrl;
 
@@ -38,8 +39,12 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
 
     public ?string $paymentUrl = null;
 
+    public ?string $membershipPaymentUrl = null;
+
     /**
      * @param  string  $registrationKind  'training' or 'event' (translated via lang file)
+     * @param  Payment|null  $membershipPayment  Outstanding club membership fee (membership-required
+     *                                           trainings) — rendered with its QR code and pay link
      */
     public function __construct(
         public ?User $user,
@@ -49,6 +54,7 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
         public ?Team $team = null,
         public ?string $customContent = null,
         public ?Payment $payment = null,
+        public ?Payment $membershipPayment = null,
     ) {
         $this->magicUrl = ($isNewUser && $user)
             ? URL::temporarySignedRoute('magic-login', now()->addDays(7), ['user' => $user->id])
@@ -68,6 +74,14 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
             $this->paymentCurrency = $this->payment->currency;
             $this->paymentUrl = URL::signedRoute('payment.page', ['payment' => $this->payment->id]);
         }
+
+        if ($this->membershipPayment && $this->membershipPayment->status !== PaymentStatusEnum::PENDING) {
+            $this->membershipPayment = null;
+        }
+
+        if ($this->membershipPayment) {
+            $this->membershipPaymentUrl = URL::signedRoute('payment.page', ['payment' => $this->membershipPayment->id]);
+        }
     }
 
     public function envelope(): Envelope
@@ -81,6 +95,11 @@ class RegistrationConfirmationMail extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'emails.registration-confirmation',
+            // Generated at send time (not stored on the queued mailable) so the raw
+            // PNG bytes never end up in the serialized queue payload.
+            with: [
+                'qrCodeImage' => $this->qrCodeImageForPayment($this->membershipPayment),
+            ],
         );
     }
 }

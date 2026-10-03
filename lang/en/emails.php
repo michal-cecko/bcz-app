@@ -32,4 +32,17 @@ return [
         'signoff' => 'Thank you,',
         'signature' => 'BCZ Club',
     ],
+    'membership_payment' => [
+        'heading' => 'Club membership',
+        'body' => 'The training you registered for is for club members. You can pay the membership fee right away — scan the QR code in your banking app or use the details next to it.',
+        'qr_alt' => 'QR payment',
+        'details_heading' => 'Payment details',
+        'season' => 'Season',
+        'amount' => 'Amount',
+        'iban' => 'IBAN',
+        'variable_symbol' => 'Variable symbol',
+        'recipient' => 'Recipient',
+        'note' => 'Note',
+        'cta' => 'Pay membership fee',
+    ],
 ];
