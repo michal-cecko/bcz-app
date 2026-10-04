@@ -250,6 +250,94 @@ class TeamRelationManagersActionsTest extends TestCase
             ->assertTableActionVisible('detach', $method);
     }
 
+    public function test_payment_method_attach_options_load_with_json_instructions_and_ignore_other_teams_pivot_order(): void
+    {
+        $gopay = PaymentMethod::create([
+            'method' => PaymentMethodEnum::GOPAY->value,
+            'title' => ['sk' => 'Platba kartou', 'en' => 'Card payment'],
+            'instructions' => ['sk' => 'Zaplaťte kartou.'],
+            'is_active' => true,
+            'sort_order' => 20,
+        ]);
+        $cash = PaymentMethod::create([
+            'method' => PaymentMethodEnum::CASH->value,
+            'title' => ['sk' => 'Hotovosť', 'en' => 'Cash'],
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+        PaymentMethod::create([
+            'method' => PaymentMethodEnum::BANK_TRANSFER->value,
+            'title' => ['sk' => 'Bankový prevod'],
+            'is_active' => false,
+        ]);
+
+        foreach ([0, 30] as $sortOrder) {
+            Team::factory()->create()->paymentMethods()->attach($gopay->id, ['sort_order' => $sortOrder]);
+        }
+
+        app()->setLocale('sk');
+        $this->actingAsTenantUser($this->admin->fresh());
+
+        $test = Livewire::test(PaymentMethodsRelationManager::class, [
+            'ownerRecord' => $this->team,
+            'pageClass' => ViewTeam::class,
+        ])
+            ->mountTableAction('attach')
+            ->assertTableActionMounted('attach');
+
+        $select = $test->instance()->getMountedTableActionForm()->getComponent('recordId');
+
+        $this->assertSame([
+            $cash->id => 'Hotovosť',
+            $gopay->id => 'Platba kartou',
+        ], $select->getOptions());
+        $this->assertSame([$gopay->id => 'Platba kartou'], $select->getSearchResults('kartou'));
+        $select->state($gopay->id);
+        $this->assertSame('Platba kartou', $select->getOptionLabel());
+    }
+
+    public function test_payment_method_attach_excludes_attached_methods_and_saves_pivot_settings(): void
+    {
+        $gopay = PaymentMethod::create([
+            'method' => PaymentMethodEnum::GOPAY->value,
+            'title' => ['sk' => 'Platba kartou'],
+            'is_active' => true,
+        ]);
+        $cash = PaymentMethod::create([
+            'method' => PaymentMethodEnum::CASH->value,
+            'title' => ['sk' => 'Hotovosť'],
+            'instructions' => ['sk' => 'Zaplaťte na mieste.'],
+            'is_active' => true,
+        ]);
+        $this->team->paymentMethods()->attach($gopay->id);
+
+        app()->setLocale('sk');
+        $this->actingAsTenantUser($this->admin->fresh());
+
+        $test = Livewire::test(PaymentMethodsRelationManager::class, [
+            'ownerRecord' => $this->team,
+            'pageClass' => ViewTeam::class,
+        ])->mountTableAction('attach');
+
+        $select = $test->instance()->getMountedTableActionForm()->getComponent('recordId');
+        $this->assertSame([$cash->id => 'Hotovosť'], $select->getOptions());
+        $this->assertSame([], $select->getSearchResults('kartou'));
+
+        $test->setTableActionData([
+            'recordId' => $cash->id,
+            'title' => ['sk' => 'Hotovosť na mieste'],
+            'instructions' => ['sk' => 'Zaplaťte trénerovi.'],
+            'is_enabled' => false,
+            'sort_order' => 5,
+        ])->callMountedTableAction()->assertHasNoTableActionErrors();
+
+        $attached = $this->team->paymentMethods()->findOrFail($cash->id);
+        $this->assertFalse($attached->pivot->is_enabled);
+        $this->assertSame(5, $attached->pivot->sort_order);
+        $this->assertSame('Hotovosť na mieste', $attached->pivot->getTranslation('title', 'sk'));
+        $this->assertSame('Zaplaťte trénerovi.', strip_tags($attached->pivot->getTranslation('instructions', 'sk')));
+    }
+
     public function test_payment_methods_attach_and_detach_actions_are_hidden_on_the_view_page_for_an_unrelated_user(): void
     {
         $method = PaymentMethod::create([

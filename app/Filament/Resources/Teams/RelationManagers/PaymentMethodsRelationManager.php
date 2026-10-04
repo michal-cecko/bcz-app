@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PaymentMethodsRelationManager extends RelationManager
 {
@@ -65,7 +66,13 @@ class PaymentMethodsRelationManager extends RelationManager
             ->headerActions([
                 AttachAction::make()
                     ->preloadRecordSelect()
-                    ->recordSelectOptionsQuery(fn ($query) => $query->where('is_active', true))
+                    ->recordTitle(fn (PaymentMethod $record): string => $record->getTranslation('title', app()->getLocale()))
+                    ->recordSelectSearchColumns(['title'])
+                    // The prepared relationship query selects DISTINCT over JSON columns
+                    // and includes other teams' pivot ordering. Use the catalog instead.
+                    ->recordSelectOptionsQuery(fn (): Builder => PaymentMethod::query()
+                        ->where('is_active', true)
+                        ->orderBy('sort_order'))
                     ->schema(fn (AttachAction $action): array => array_merge(
                         [$action->getRecordSelect()],
                         self::pivotFormComponents(),
