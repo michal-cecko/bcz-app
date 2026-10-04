@@ -35,11 +35,13 @@
         </table>
     </div>
 
-    <div style="height: 20px;"></div>
+    @if ($cashPaymentEnabled)
+        <div style="height: 20px;"></div>
 
-    <div style="background-color: #EFF6FF; border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 16px;">
-        <p style="font-size: 14px; color: #1E40AF; line-height: 1.7; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0;">Váš tím umožňuje platbu v hotovosti. Ak preferujete tento spôsob, kontaktujte svojho trénera alebo správcu klubu.</p>
-    </div>
+        <div style="background-color: #EFF6FF; border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 12px; padding: 16px;">
+            <p style="font-size: 14px; color: #1E40AF; line-height: 1.7; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0;">Váš tím umožňuje platbu v hotovosti. Ak preferujete tento spôsob, kontaktujte svojho trénera alebo správcu klubu.</p>
+        </div>
+    @endif
 
     <div style="height: 28px;"></div>
 

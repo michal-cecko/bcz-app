@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Enums\PaymentMethodEnum;
 use App\Models\Membership;
 use App\Services\PaymentService;
 use Illuminate\Bus\Queueable;
@@ -50,6 +51,11 @@ class MembershipPaymentDue extends Notification implements ShouldQueue
                 'feeCurrency' => $feeCurrency,
                 'paymentDeadline' => $paymentDeadline,
                 'paymentUrl' => $paymentUrl,
+                'cashPaymentEnabled' => in_array(
+                    PaymentMethodEnum::CASH->value,
+                    $this->membership->team?->getEnabledPaymentMethodKeys() ?? [],
+                    true,
+                ),
                 'emailSubject' => 'Platba za členstvo',
                 'teamLogoUrl' => null,
                 'teamUrl' => null,
