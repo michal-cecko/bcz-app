@@ -17,7 +17,6 @@ class TeamController extends Controller
     public function show(Team $team): View
     {
         $team->load([
-            'members',
             'competitions',
             'trainings',
             'events',
@@ -25,6 +24,7 @@ class TeamController extends Controller
 
         return view('pages.team-detail', [
             'team' => $team,
+            'members' => $team->publicMembers()->get()->unique('id')->values(),
         ]);
     }
 
@@ -52,8 +52,9 @@ class TeamController extends Controller
 
     public function members(Team $team): View
     {
-        $team->load('members');
-
-        return view('pages.team-members', compact('team'));
+        return view('pages.team-members', [
+            'team' => $team,
+            'members' => $team->publicMembers()->get()->unique('id')->values(),
+        ]);
     }
 }

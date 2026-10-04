@@ -71,7 +71,7 @@ class SeasonsRelationManager extends RelationManager
                 Toggle::make('prorate_fee')
                     ->label('Pomerná cena pri vstupe počas sezóny')
                     ->helperText('Ak je zapnuté, člen, ktorý sa pridá počas sezóny, platí len za zostávajúce mesiace (vrátane mesiaca vstupu). Ak je vypnuté, platí vždy celú sumu sezóny.')
-                    ->default(false),
+                    ->default(true),
                 TextInput::make('max_capacity')
                     ->label('Maximálny počet členov')
                     ->numeric()

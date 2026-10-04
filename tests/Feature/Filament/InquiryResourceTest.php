@@ -53,6 +53,21 @@ class InquiryResourceTest extends TestCase
             ->assertCanSeeTableRecords($inquiries);
     }
 
+    public function test_send_email_recipient_list_escapes_an_email_sent_through_the_public_form(): void
+    {
+        // The public form's `email` rule accepts a quoted local part like this.
+        Inquiry::factory()->create([
+            'team_id' => $this->team->id,
+            'email' => '"<img src=x onerror=alert(1)>"@x.com',
+        ]);
+
+        $page = Livewire::test(ListInquiries::class)->instance();
+        $recipients = (string) (fn () => $this->buildInquiriesRecipientsPlaceholder()->getContent())->call($page);
+
+        $this->assertStringContainsString('&quot;&lt;img src=x onerror=alert(1)&gt;&quot;@x.com', $recipients);
+        $this->assertStringNotContainsString('<img', $recipients);
+    }
+
     public function test_can_view_inquiry_and_marks_as_in_progress(): void
     {
         $inquiry = Inquiry::factory()->create([

@@ -3,6 +3,8 @@
 namespace Tests\Feature\Models;
 
 use App\Enums\TrainingPricingTypeEnum;
+use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Models\Team;
 use App\Models\TeamSeason;
 use App\Models\Training;
@@ -132,5 +134,16 @@ class QrPaymentNoteTest extends TestCase
         $registration = $this->registration($training, $parent, ['meno' => 'Ján', 'priezvisko' => 'Novák']);
 
         $this->assertSame('Ján Novák - Street Workout', $registration->getPaymentDescription());
+    }
+
+    public function test_event_payment_description_falls_back_to_the_sk_title(): void
+    {
+        app()->setLocale('cs');
+        config(['app.fallback_locale' => 'en']);
+
+        $event = Event::factory()->create(['title' => ['sk' => 'Majstrovstvá']]);
+        $registration = EventRegistration::factory()->create(['event_id' => $event->id]);
+
+        $this->assertStringEndsWith(' - Majstrovstvá', $registration->getPaymentDescription());
     }
 }

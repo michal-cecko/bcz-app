@@ -103,6 +103,22 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
             ->withTimestamps();
     }
 
+    /**
+     * The members shown on the public team pages: every active coach, and active
+     * athletes only once their public profile is approved. One user can have a
+     * row per role, so callers should dedupe by id.
+     */
+    public function publicMembers(): BelongsToMany
+    {
+        return $this->members()
+            ->wherePivot('is_active', true)
+            ->where(fn ($query) => $query
+                ->where('team_user.role', RoleEnum::COACH->value)
+                ->orWhere(fn ($query) => $query
+                    ->where('team_user.role', RoleEnum::ATHLETE->value)
+                    ->whereNotNull('users.athlete_profile_approved_at')));
+    }
+
     public function membersWithRole(RoleEnum $role): BelongsToMany
     {
         return $this->members()->wherePivot('role', $role->value);
@@ -163,7 +179,7 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
     {
         return $this->hasOne(TeamSeason::class)
             ->where('starts_at', '<=', now())
-            ->where('ends_at', '>=', now())
+            ->where('ends_at', '>=', today())
             ->latest('starts_at');
     }
 

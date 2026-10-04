@@ -126,7 +126,9 @@ class EventRegistration extends Model implements Payable
     public function getPaymentDescription(): string
     {
         $athleteName = $this->athleteName();
-        $title = $this->event?->getTranslation('title', app()->getLocale()) ?? 'Podujatie';
+        $title = $this->event?->getTranslation('title', app()->getLocale())
+            ?: $this->event?->getTranslation('title', 'sk')
+            ?: 'Podujatie';
 
         return $athleteName ? "{$athleteName} - {$title}" : $title;
     }

@@ -379,7 +379,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             ->where('team_id', $teamId)
             ->where('status', MembershipStatusEnum::ACTIVE)
             ->where('starts_at', '<=', now())
-            ->where('ends_at', '>=', now())
+            ->where('ends_at', '>=', today())
             ->exists();
     }
 

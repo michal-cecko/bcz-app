@@ -9,11 +9,13 @@ use App\Jobs\OptimizeImageJob;
 use App\Models\EventRegistration;
 use App\Models\Membership;
 use App\Models\Menu;
+use App\Models\Payment;
 use App\Models\Team;
 use App\Models\TeamSubscription;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Observers\PaymentObserver;
 use App\Observers\TrainingObserver;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Forms\Components\BaseFileUpload;
@@ -59,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerTeamScopedGate();
 
         Training::observe(TrainingObserver::class);
+        Payment::observe(PaymentObserver::class);
 
         Relation::morphMap([
             'membership' => Membership::class,

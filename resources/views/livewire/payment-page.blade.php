@@ -10,6 +10,8 @@
             <h1 class="font-display text-3xl md:text-4xl font-bold text-white">
                 @if($payment->status === \App\Enums\PaymentStatusEnum::COMPLETED)
                     Platba bola uhradená
+                @elseif($payment->status === \App\Enums\PaymentStatusEnum::CANCELLED)
+                    Platba bola zrušená
                 @else
                     Platba bola vrátená
                 @endif
@@ -17,6 +19,8 @@
             <p class="text-[#888888] text-sm max-w-md">
                 @if($payment->status === \App\Enums\PaymentStatusEnum::COMPLETED)
                     Táto platba už bola úspešne spracovaná. Potvrdenie ti bolo odoslané na email.
+                @elseif($payment->status === \App\Enums\PaymentStatusEnum::CANCELLED)
+                    Táto platba už nie je platná. Ak chceš platiť, kontaktuj svoj tím.
                 @else
                     Táto platba bola vrátená. Ak máš otázky, kontaktuj svoj tím.
                 @endif

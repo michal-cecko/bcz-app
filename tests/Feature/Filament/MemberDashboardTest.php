@@ -3,6 +3,7 @@
 namespace Tests\Feature\Filament;
 
 use App\Enums\MembershipStatusEnum;
+use App\Enums\PaymentMethodEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\MemberEvents;
@@ -13,6 +14,7 @@ use App\Filament\Widgets\MembershipStatusWidget;
 use App\Filament\Widgets\RecentPaymentsWidget;
 use App\Filament\Widgets\UpcomingTrainingsWidget;
 use App\Models\Membership;
+use App\Models\PaymentMethod;
 use App\Models\Team;
 use App\Models\TeamSeason;
 use App\Models\User;
@@ -102,6 +104,67 @@ class MemberDashboardTest extends TestCase
 
         Livewire::test(MembershipStatusWidget::class)
             ->assertOk();
+    }
+
+    public function test_membership_page_bills_a_pending_membership_at_its_own_fee(): void
+    {
+        $this->travelTo('2026-11-15 10:00:00');
+
+        $user = $this->actingAsMember();
+
+        $bankTransfer = PaymentMethod::create([
+            'method' => PaymentMethodEnum::BANK_TRANSFER,
+            'title' => ['sk' => 'Bankovy prevod'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+        $this->team->paymentMethods()->attach($bankTransfer->id, ['is_enabled' => true, 'sort_order' => 0]);
+        $this->team->update(['bank_account_iban' => 'SK1234567890123456789012', 'bank_account_name' => 'BCZ Team']);
+
+        // Prorating would charge 40.00 today; the membership was issued at 80.00.
+        $season = TeamSeason::factory()->prorated()->create([
+            'team_id' => $this->team->id,
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+            'fee_amount' => 80.00,
+        ]);
+        $membership = Membership::factory()->create([
+            'team_id' => $this->team->id,
+            'user_id' => $user->id,
+            'team_season_id' => $season->id,
+            'status' => MembershipStatusEnum::PENDING,
+            'fee_amount' => 80.00,
+            'fee_currency' => 'EUR',
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+        ]);
+
+        Livewire::test(MemberMembership::class)
+            ->assertOk()
+            ->assertSee('80.00 EUR')
+            ->assertDontSee('40.00 EUR');
+
+        $this->assertEquals(80.00, (float) $membership->payments()->sole()->amount);
+    }
+
+    public function test_membership_widget_does_not_bill_a_member_with_a_free_membership(): void
+    {
+        $user = $this->actingAsMember();
+        $user->update(['has_free_membership' => true]);
+
+        TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'starts_at' => now()->subMonth(),
+            'ends_at' => now()->addMonths(6),
+            'fee_amount' => 80.00,
+        ]);
+
+        Livewire::test(MembershipStatusWidget::class)->assertOk();
+
+        $membership = Membership::where('user_id', $user->id)->sole();
+        $this->assertTrue($membership->is_free);
+        $this->assertSame(MembershipStatusEnum::ACTIVE, $membership->status);
+        $this->assertSame(0, $membership->payments()->count());
     }
 
     public function test_membership_widget_shows_no_membership(): void

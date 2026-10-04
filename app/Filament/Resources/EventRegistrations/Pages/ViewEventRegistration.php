@@ -8,8 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Filament\Resources\EventRegistrations\EventRegistrationResource;
 use App\Models\EventRegistration;
-use App\Models\Payment;
-use App\Notifications\PaymentConfirmed;
+use App\Services\PaymentService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -88,8 +87,8 @@ class ViewEventRegistration extends ViewRecord
                         ->label('Suma')
                         ->numeric()
                         ->required()
-                        ->default($org?->price_amount)
-                        ->prefix($org?->price_currency ?? '€'),
+                        ->default(app(PaymentService::class)->amountStillOwed($record))
+                        ->prefix($record->getPriceCurrency()),
                     Select::make('payment_method')
                         ->label('Metóda platby')
                         ->options([
@@ -111,34 +110,20 @@ class ViewEventRegistration extends ViewRecord
                         ->helperText('Pošle e-mail s potvrdením platby.')
                         ->default(true),
                 ])
-                ->action(function (array $data) use ($record, $event, $org): void {
-                    $user = $record->user;
-                    $paymentStatus = $data['payment_status'] instanceof PaymentStatusEnum
-                        ? $data['payment_status']
-                        : PaymentStatusEnum::from($data['payment_status']);
-
-                    $payment = Payment::create([
-                        'team_id' => $event->team_id,
-                        'user_id' => $record->user_id,
-                        'payer_name' => $user?->name,
-                        'payer_email' => $user?->email,
-                        'payable_type' => $record->getMorphClass(),
-                        'payable_id' => $record->id,
-                        'amount' => $data['amount'],
-                        'currency' => $org?->price_currency ?? 'EUR',
-                        'status' => $paymentStatus,
-                        'payment_method' => $data['payment_method'],
-                        'paid_at' => now(),
-                        'notes' => $data['notes'] ?? null,
-                    ]);
-
-                    if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
-                        $record->update(['status' => RegistrationStatusEnum::Approved]);
-                    }
-
-                    if (! empty($data['notify_customer']) && $paymentStatus === PaymentStatusEnum::COMPLETED && $user) {
-                        $user->notify(new PaymentConfirmed($payment));
-                    }
+                ->action(function (array $data) use ($record, $event): void {
+                    app(PaymentService::class)->recordManualPayment(
+                        user: $record->user,
+                        team: $event->team_id,
+                        payable: $record,
+                        amount: (float) $data['amount'],
+                        currency: $record->getPriceCurrency(),
+                        paymentMethod: $data['payment_method'],
+                        notes: $data['notes'] ?? null,
+                        notify: ! empty($data['notify_customer']),
+                        status: $data['payment_status'] instanceof PaymentStatusEnum
+                            ? $data['payment_status']
+                            : PaymentStatusEnum::from($data['payment_status']),
+                    );
 
                     Notification::make()->success()->title('Platba bola zaznamenaná.')->send();
                     $this->refreshFormData(['status']);

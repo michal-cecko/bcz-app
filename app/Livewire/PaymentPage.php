@@ -23,6 +23,16 @@ use Livewire\Component;
 
 class PaymentPage extends Component
 {
+    /**
+     * A cancelled payment belongs to a cancelled registration or one already
+     * paid in full; paying it would take money twice or revive the registration.
+     */
+    private const CLOSED_STATUSES = [
+        PaymentStatusEnum::COMPLETED,
+        PaymentStatusEnum::REFUNDED,
+        PaymentStatusEnum::CANCELLED,
+    ];
+
     public Payment $payment;
 
     public string $selectedMethod = '';
@@ -39,10 +49,7 @@ class PaymentPage extends Component
     {
         $this->payment = $payment->load(['team', 'payable', 'user']);
 
-        $this->isCompleted = in_array($this->payment->status, [
-            PaymentStatusEnum::COMPLETED,
-            PaymentStatusEnum::REFUNDED,
-        ]);
+        $this->isCompleted = in_array($this->payment->status, self::CLOSED_STATUSES);
 
         if (! $this->isCompleted) {
             $enabledMethods = $this->enabledMethods;
@@ -73,6 +80,13 @@ class PaymentPage extends Component
     public function pay(): void
     {
         if ($this->isCompleted || $this->isProcessing) {
+            return;
+        }
+
+        // The page may have been open since before the payment was settled or cancelled.
+        if (in_array($this->payment->status, self::CLOSED_STATUSES)) {
+            $this->isCompleted = true;
+
             return;
         }
 

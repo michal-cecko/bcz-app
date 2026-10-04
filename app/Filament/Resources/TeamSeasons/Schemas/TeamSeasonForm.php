@@ -44,7 +44,7 @@ class TeamSeasonForm
                 Toggle::make('prorate_fee')
                     ->label('Pomerná cena pri vstupe počas sezóny')
                     ->helperText('Ak je zapnuté, člen, ktorý sa pridá počas sezóny, platí len za zostávajúce mesiace (vrátane mesiaca vstupu). Ak je vypnuté, platí vždy celú sumu sezóny.')
-                    ->default(false),
+                    ->default(true),
                 TextInput::make('payment_note')
                     ->label('Poznámka platby (QR)')
                     ->helperText('Dostupné premenné: {{meno}}, {{priezvisko}}, {{sezona}}, {{nazov_timu}}. Max 140 znakov (Pay by Square) / 60 znakov (QR Platba).')

@@ -248,11 +248,6 @@ Route::post('/logout', function () {
 Route::get('/admin/email-preview/{key}', [EmailPreviewController::class, 'show'])
     ->name('admin.email-preview');
 
-Route::middleware('auth')->group(function () {
-    Route::post('/admin/email-preview', [EmailPreviewController::class, 'store'])
-        ->name('admin.email-preview.store');
-});
-
 Route::get('/gopay/notify', [GoPayNotificationController::class, 'handle'])
     ->name('gopay.notify');
 Route::get('/gopay/return', [GoPayReturnController::class, 'handle'])

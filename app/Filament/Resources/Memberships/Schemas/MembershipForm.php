@@ -39,7 +39,7 @@ class MembershipForm
                         $team = Filament::getTenant();
 
                         return TeamSeason::where('team_id', $team?->id)
-                            ->where('ends_at', '>=', now())
+                            ->where('ends_at', '>=', today())
                             ->orderBy('starts_at', 'desc')
                             ->pluck('name', 'id')
                             ->toArray();

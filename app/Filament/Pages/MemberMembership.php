@@ -127,7 +127,7 @@ class MemberMembership extends Page implements HasTable
         return Membership::query()
             ->where('team_id', $team?->id)
             ->where('user_id', auth()->id())
-            ->whereHas('season', fn ($q) => $q->where('starts_at', '<=', now())->where('ends_at', '>=', now()))
+            ->whereHas('season', fn ($q) => $q->where('starts_at', '<=', now())->where('ends_at', '>=', today()))
             ->with(['season', 'payments'])
             ->first();
     }
@@ -390,7 +390,7 @@ class MemberMembership extends Page implements HasTable
                 Membership::query()
                     ->where('team_id', $team?->id)
                     ->where('user_id', auth()->id())
-                    ->whereHas('season', fn ($q) => $q->where('ends_at', '<', now()))
+                    ->whereHas('season', fn ($q) => $q->where('ends_at', '<', today()))
                     ->with('season')
                     ->orderByDesc('created_at')
             )

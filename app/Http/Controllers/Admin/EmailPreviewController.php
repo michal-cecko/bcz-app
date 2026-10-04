@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Services\EmailService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 class EmailPreviewController
 {
@@ -59,25 +56,5 @@ class EmailPreviewController
             'subject' => $subject,
             'emailHtml' => $emailHtml,
         ])->render());
-    }
-
-    public function store(Request $request): JsonResponse
-    {
-        $key = Str::random(32);
-
-        Cache::put("email-preview:{$key}", [
-            'subject' => $request->input('subject', ''),
-            'content' => $request->input('content', []),
-            'team_name' => $request->input('team_name'),
-            'team_logo_url' => $request->input('team_logo_url'),
-            'team_url' => $request->input('team_url', '#'),
-            'team_email' => $request->input('team_email'),
-            'team_phone' => $request->input('team_phone'),
-            'team_website' => $request->input('team_website'),
-        ], now()->addMinutes(30));
-
-        return response()->json([
-            'url' => route('admin.email-preview', $key),
-        ]);
     }
 }

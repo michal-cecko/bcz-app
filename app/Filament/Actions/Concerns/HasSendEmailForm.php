@@ -10,21 +10,69 @@ use App\Mason\EmailBricks\EmailImageBrick;
 use App\Mason\EmailBricks\EmailRichTextBrick;
 use App\Mason\EmailBricks\EmailSpacerBrick;
 use App\Models\EmailTemplate;
+use App\Services\PaymentService;
 use Awcodes\Mason\Mason;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
 trait HasSendEmailForm
 {
+    /**
+     * Built-in template that sends the system payment-due email instead of a
+     * composed one, so each payer gets their own amount, due date and payment link.
+     */
+    public const PAYMENT_REQUEST_TEMPLATE = 'payment_request';
+
+    protected bool $offersPaymentRequest = false;
+
+    /**
+     * Offer the built-in payment request template; for actions whose records
+     * are payables (memberships, training and event registrations).
+     */
+    public function paymentRequestTemplate(bool $condition = true): static
+    {
+        $this->offersPaymentRequest = $condition;
+
+        return $this;
+    }
+
+    protected function isPaymentRequest(?string $templateId): bool
+    {
+        return $this->offersPaymentRequest && $templateId === self::PAYMENT_REQUEST_TEMPLATE;
+    }
+
+    /**
+     * @param  iterable<Model>  $records
+     */
+    protected function sendPaymentRequests(iterable $records): void
+    {
+        $paymentService = app(PaymentService::class);
+        $sent = 0;
+        $skipped = 0;
+
+        foreach ($records as $record) {
+            $paymentService->resendPaymentRequest($record) ? $sent++ : $skipped++;
+        }
+
+        Notification::make()
+            ->success()
+            ->title("Výzva na platbu odoslaná: {$sent}")
+            ->body($skipped > 0 ? "Preskočené (zaplatené, zrušené, zadarmo alebo bez platiteľa): {$skipped}" : null)
+            ->send();
+    }
+
     public function getEmailFormSchema(): array
     {
         return [
@@ -32,18 +80,22 @@ trait HasSendEmailForm
                 ->label('Šablóna')
                 ->placeholder('Vyberte šablónu...')
                 ->options(function (): array {
+                    $builtIn = $this->offersPaymentRequest
+                        ? [self::PAYMENT_REQUEST_TEMPLATE => 'Výzva na platbu (aktuálna suma, splatnosť a odkaz na platbu)']
+                        : [];
+
                     $tenantId = filament()->getTenant()?->id;
                     if (! $tenantId) {
-                        return [];
+                        return $builtIn;
                     }
 
-                    return EmailTemplate::where('team_id', $tenantId)
+                    return $builtIn + EmailTemplate::where('team_id', $tenantId)
                         ->pluck('name', 'id')
                         ->toArray();
                 })
                 ->live()
                 ->afterStateUpdated(function (?string $state, Set $set): void {
-                    if (! $state) {
+                    if (! $state || $state === self::PAYMENT_REQUEST_TEMPLATE) {
                         return;
                     }
 
@@ -55,12 +107,18 @@ trait HasSendEmailForm
                     $set('subject', $template->subject);
                     $set('content', $template->content);
                 })
-                ->dehydrated(false),
+                ->dehydrated(fn (?string $state): bool => $this->isPaymentRequest($state)),
+            Placeholder::make('payment_request_info')
+                ->hiddenLabel()
+                ->content('Každý nezaplatený dostane systémový e-mail s tým, čo mu ešte zostáva uhradiť, so splatnosťou a s odkazom na platbu (QR kód, bankový prevod). Zaplatení, zrušení a zadarmo sa preskočia.')
+                ->visible(fn (Get $get): bool => $this->isPaymentRequest($get('template_id'))),
             TextInput::make('subject')
                 ->label('Predmet')
                 ->required()
-                ->helperText($this->getVariableHints()),
+                ->helperText($this->getVariableHints())
+                ->hidden(fn (Get $get): bool => $this->isPaymentRequest($get('template_id'))),
             Section::make('Obsah e-mailu')
+                ->hidden(fn (Get $get): bool => $this->isPaymentRequest($get('template_id')))
                 ->schema([
                     Mason::make('content')
                         ->label('')

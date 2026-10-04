@@ -109,7 +109,7 @@ class TrainingsArchive extends Component
                     $q->whereRaw('1 = 0');
                 }
             }])
-            ->withCount('registrations')
+            ->withCount('spotHoldingRegistrations')
             ->orderBy('sort_order');
 
         if ($this->categoryFilter) {

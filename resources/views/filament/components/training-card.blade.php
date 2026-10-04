@@ -1,6 +1,8 @@
 @php
     $locale = app()->getLocale();
-    $approvedCount = $training->registrations->where('status', \App\Enums\RegistrationStatusEnum::Approved)->count();
+    $approvedCount = $training->registrations
+        ->whereIn('status', [\App\Enums\RegistrationStatusEnum::Pending, \App\Enums\RegistrationStatusEnum::Approved])
+        ->count();
     $isFull = $training->max_capacity !== null && $approvedCount >= $training->max_capacity;
     $title = $training->getTranslation('title', $locale) ?: $training->getTranslation('title', 'sk');
     $remaining = $training->max_capacity ? max(0, $training->max_capacity - $approvedCount) : null;

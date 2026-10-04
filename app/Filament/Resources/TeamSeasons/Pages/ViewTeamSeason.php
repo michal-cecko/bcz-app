@@ -107,7 +107,7 @@ class ViewTeamSeason extends ViewRecord
                         'ends_at' => $data['ends_at'],
                         'fee_amount' => $data['fee_amount'],
                         'fee_currency' => $data['fee_currency'],
-                        'prorate_fee' => (bool) ($data['prorate_fee'] ?? false),
+                        'prorate_fee' => (bool) ($data['prorate_fee'] ?? true),
                         'payment_deadline_days' => $data['payment_deadline_days'],
                     ]);
 

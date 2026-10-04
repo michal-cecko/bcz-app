@@ -20,7 +20,7 @@
             </h1>
 
             <p class="text-[#888888] text-[18px] text-center max-w-[600px]">
-                {{ $team->members->count() }} {{ trans_choice('člen|členovia|členov', $team->members->count()) }} tímu {{ $team->getTranslation('name', app()->getLocale()) }}
+                {{ $members->count() }} {{ trans_choice('člen|členovia|členov', $members->count()) }} tímu {{ $team->getTranslation('name', app()->getLocale()) }}
             </p>
         </div>
     </section>
@@ -28,13 +28,13 @@
     {{-- Members Grid --}}
     <section class="bg-[#111111] py-16">
         <div class="max-w-[1440px] mx-auto px-5 md:px-10 lg:px-20">
-            @if($team->members->isEmpty())
+            @if($members->isEmpty())
                 <div class="text-center py-20">
                     <p class="text-[#666666] text-lg">Tím zatiaľ nemá žiadnych členov.</p>
                 </div>
             @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    @foreach($team->members as $member)
+                    @foreach($members as $member)
                         <div class="rounded-2xl bg-bcz-dark overflow-hidden group">
                             <div class="h-[280px] bg-[#1A1A1A] overflow-hidden">
                                 @if($member->avatar_url)

@@ -47,6 +47,12 @@ class SendEmailAction extends Action
             ->modalSubmitActionLabel('Áno, odoslať'));
 
         $this->action(function (array $data): void {
+            if ($this->isPaymentRequest($data['template_id'] ?? null)) {
+                $this->sendPaymentRequests(collect([$this->getRecord()]));
+
+                return;
+            }
+
             $recipients = $this->resolveRecipients
                 ? call_user_func($this->resolveRecipients, $this->getRecord())
                 : [];
@@ -112,7 +118,7 @@ class SendEmailAction extends Action
         }
 
         $emails = collect($recipients)->pluck('email')->unique()->values();
-        $list = $emails->map(fn (string $e) => "<span class=\"inline-block px-2.5 py-0.5 m-0.5 rounded-full bg-gray-200 text-gray-700 text-sm dark:bg-gray-700 dark:text-gray-200\">{$e}</span>")->implode(' ');
+        $list = $emails->map(fn (string $e) => '<span class="inline-block px-2.5 py-0.5 m-0.5 rounded-full bg-gray-200 text-gray-700 text-sm dark:bg-gray-700 dark:text-gray-200">'.e($e).'</span>')->implode(' ');
 
         return Placeholder::make('recipients_info')
             ->label('Príjemcovia')

@@ -30,11 +30,11 @@ class ViewTeamPayout extends ViewRecord
                     $html = '<div class="space-y-4">';
                     $html .= '<p class="text-sm text-gray-500">Naskenujte QR kód na úhradu výplaty pre tím.</p>';
                     $html .= '<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-sm space-y-1">';
-                    $html .= '<div><span class="font-medium">IBAN:</span> '.$payout->bank_account_iban.'</div>';
-                    $html .= '<div><span class="font-medium">Príjemca:</span> '.($payout->bank_account_name ?: '-').'</div>';
-                    $html .= '<div><span class="font-medium">Suma:</span> '.number_format((float) $payout->net_amount, 2).' '.$payout->currency.'</div>';
+                    $html .= '<div><span class="font-medium">IBAN:</span> '.e($payout->bank_account_iban).'</div>';
+                    $html .= '<div><span class="font-medium">Príjemca:</span> '.e($payout->bank_account_name ?: '-').'</div>';
+                    $html .= '<div><span class="font-medium">Suma:</span> '.number_format((float) $payout->net_amount, 2).' '.e($payout->currency).'</div>';
                     if ($payout->reference) {
-                        $html .= '<div><span class="font-medium">Referencia:</span> '.$payout->reference.'</div>';
+                        $html .= '<div><span class="font-medium">Referencia:</span> '.e($payout->reference).'</div>';
                     }
                     $html .= '</div>';
 
@@ -63,7 +63,7 @@ class ViewTeamPayout extends ViewRecord
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->visible(fn (): bool => $this->record->status === PayoutStatusEnum::PENDING
-                    && ! auth()->user()?->isMemberLevel())
+                    && (auth()->user()?->can('update', $this->record) ?? false))
                 ->requiresConfirmation()
                 ->modalHeading('Potvrdiť úhradu výplaty')
                 ->modalDescription('Naozaj chcete označiť túto výplatu ako uhradenú? Táto akcia sa nedá vrátiť.')

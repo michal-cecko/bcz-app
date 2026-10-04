@@ -4,7 +4,8 @@ namespace App\Filament\RelationManagers;
 
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\RegistrationStatusEnum;
+use App\Models\Payment;
+use App\Services\PaymentService;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -118,30 +119,22 @@ class RegistrationPaymentsRelationManager extends RelationManager
 
                         return $data;
                     })
-                    ->after(function () {
-                        $owner = $this->getOwnerRecord();
-                        $status = $owner->status;
-
-                        if ($status === RegistrationStatusEnum::Approved) {
-                            return;
-                        }
-
-                        $totalPaid = $owner->payments()
-                            ->where('status', PaymentStatusEnum::COMPLETED)
-                            ->sum('amount');
-
-                        $requiredAmount = method_exists($owner, 'training')
-                            ? (float) ($owner->training?->price_amount ?? 0)
-                            : (float) ($owner->event?->organization?->price_amount ?? 0);
-
-                        if ($requiredAmount > 0 && $totalPaid >= $requiredAmount) {
-                            $owner->update(['status' => RegistrationStatusEnum::Approved]);
-                        }
-                    }),
+                    ->after(fn (Payment $record) => $this->approveWhenPaidInFull($record)),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->after(fn (Payment $record) => $this->approveWhenPaidInFull($record)),
                 DeleteAction::make(),
             ]);
+    }
+
+    /**
+     * Refunds, edits and deletes that undo an approval are handled by PaymentObserver.
+     */
+    protected function approveWhenPaidInFull(Payment $payment): void
+    {
+        if ($payment->status === PaymentStatusEnum::COMPLETED) {
+            app(PaymentService::class)->processPaymentCompleted($payment->load('payable'), notify: false);
+        }
     }
 }

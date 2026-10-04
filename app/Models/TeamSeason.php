@@ -32,7 +32,7 @@ class TeamSeason extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'prorate_fee' => false,
+        'prorate_fee' => true,
     ];
 
     protected function casts(): array
@@ -65,7 +65,7 @@ class TeamSeason extends Model
 
     public function isActive(): bool
     {
-        return $this->starts_at->lte(now()) && $this->ends_at->gte(now());
+        return $this->starts_at->lte(today()) && $this->ends_at->gte(today());
     }
 
     public function isFuture(): bool
@@ -75,7 +75,7 @@ class TeamSeason extends Model
 
     public function isPast(): bool
     {
-        return $this->ends_at->lt(now());
+        return $this->ends_at->lt(today());
     }
 
     /**

@@ -87,7 +87,7 @@
                                                 </p>
                                             @endif
                                             <p class="text-gray-600 dark:text-gray-400">
-                                                {{ __('payments.bank_transfer.amount') }} <span class="font-medium text-gray-900 dark:text-white">{{ number_format((float) $membership->fee_amount, 2) }} {{ $membership->fee_currency }}</span>
+                                                {{ __('payments.bank_transfer.amount') }} <span class="font-medium text-gray-900 dark:text-white">{{ number_format((float) ($this->pendingPayment?->amount ?? $membership->fee_amount), 2) }} {{ $membership->fee_currency }}</span>
                                             </p>
                                             @if($team?->bank_account_name)
                                                 <p class="text-gray-600 dark:text-gray-400">
@@ -128,7 +128,7 @@
                                     <div class="space-y-2">
                                         <div class="flex items-center gap-2 rounded-lg bg-success-100 px-3 py-2 dark:bg-success-500/20">
                                             <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('payments.bank_transfer.amount_to_pay') }}</span>
-                                            <span class="text-sm font-bold text-success-700 dark:text-success-300">{{ number_format((float) $membership->fee_amount, 2) }} {{ $membership->fee_currency }}</span>
+                                            <span class="text-sm font-bold text-success-700 dark:text-success-300">{{ number_format((float) ($this->pendingPayment?->amount ?? $membership->fee_amount), 2) }} {{ $membership->fee_currency }}</span>
                                         </div>
                                         <div class="flex items-start gap-2">
                                             <x-filament::icon icon="heroicon-m-information-circle" class="mt-0.5 h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" />

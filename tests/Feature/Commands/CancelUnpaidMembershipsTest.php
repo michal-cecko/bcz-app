@@ -3,7 +3,9 @@
 namespace Tests\Feature\Commands;
 
 use App\Enums\MembershipStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Models\Membership;
+use App\Models\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,6 +25,30 @@ class CancelUnpaidMembershipsTest extends TestCase
             ->assertExitCode(0);
 
         $this->assertEquals(MembershipStatusEnum::CANCELLED, $overdue->fresh()->status);
+    }
+
+    public function test_does_not_cancel_a_partly_paid_membership(): void
+    {
+        $partlyPaid = Membership::factory()->pending()->create([
+            'payment_deadline_at' => now()->subDay(),
+            'is_free' => false,
+            'fee_amount' => 80.00,
+            'fee_currency' => 'EUR',
+        ]);
+
+        Payment::factory()->create([
+            'payable_type' => $partlyPaid->getMorphClass(),
+            'payable_id' => $partlyPaid->id,
+            'amount' => 30.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::COMPLETED,
+        ]);
+
+        $this->artisan('memberships:cancel-unpaid')
+            ->expectsOutputToContain('Cancelled 0 unpaid membership(s)')
+            ->assertExitCode(0);
+
+        $this->assertEquals(MembershipStatusEnum::PENDING, $partlyPaid->fresh()->status);
     }
 
     public function test_does_not_cancel_before_deadline(): void

@@ -8,14 +8,17 @@ use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ListEvents;
 use App\Filament\Resources\Events\RelationManagers\RegistrationsRelationManager;
+use App\Mail\RegistrationConfirmationMail;
 use App\Models\Event;
 use App\Models\EventCategory;
 use App\Models\EventRegistration;
 use App\Models\Team;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -139,6 +142,30 @@ class EventResourceTest extends TestCase
             ])
             ->call('create')
             ->assertHasFormErrors(['date' => 'required']);
+    }
+
+    public function test_admin_registration_with_notification_switched_on_emails_the_customer(): void
+    {
+        Mail::fake();
+
+        $event = Event::factory()->competition()->create([
+            'team_id' => $this->team->id,
+            'event_category_id' => EventCategory::factory()->create()->id,
+        ]);
+        $customer = User::factory()->create();
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $event,
+            'pageClass' => EditEvent::class,
+        ])
+            ->callAction(TestAction::make('create')->table(), [
+                'user_id' => $customer->id,
+                'status' => RegistrationStatusEnum::Approved->value,
+                'send_notification' => true,
+            ])
+            ->assertHasNoActionErrors();
+
+        Mail::assertQueued(RegistrationConfirmationMail::class, fn ($mail) => $mail->hasTo($customer->email));
     }
 
     public function test_registrations_relation_manager_filters_by_status(): void

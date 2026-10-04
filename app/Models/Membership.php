@@ -49,7 +49,7 @@ class Membership extends Model implements Payable
     public function isActive(): bool
     {
         return $this->status === MembershipStatusEnum::ACTIVE
-            && $this->ends_at->isFuture();
+            && $this->ends_at->gte(today());
     }
 
     public function team(): BelongsTo

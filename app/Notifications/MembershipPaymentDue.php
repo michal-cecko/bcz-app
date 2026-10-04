@@ -2,9 +2,8 @@
 
 namespace App\Notifications;
 
-use App\Enums\PaymentStatusEnum;
 use App\Models\Membership;
-use App\Models\Payment;
+use App\Services\PaymentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -30,11 +29,12 @@ class MembershipPaymentDue extends Notification implements ShouldQueue
         $user = $notifiable;
         $teamName = $this->membership->team?->getTranslation('name', 'sk') ?? '';
         $seasonName = $this->membership->season?->name ?? '';
-        $feeAmount = number_format((float) $this->membership->fee_amount, 2);
+        $paymentService = app(PaymentService::class);
+        $feeAmount = number_format($paymentService->amountStillOwed($this->membership), 2);
         $feeCurrency = $this->membership->fee_currency;
         $paymentDeadline = $this->membership->payment_deadline_at?->format('d.m.Y') ?? '';
 
-        $payment = $this->findOrCreatePendingPayment($user);
+        $payment = $paymentService->openPaymentFor($this->membership, $user, $this->membership->team);
         $paymentUrl = $payment
             ? URL::signedRoute('payment.page', ['payment' => $payment->id])
             : url('/admin');
@@ -71,39 +71,5 @@ class MembershipPaymentDue extends Notification implements ShouldQueue
             'payment_deadline_at' => $this->membership->payment_deadline_at?->toIso8601String(),
             'type' => 'membership_payment_due',
         ];
-    }
-
-    /**
-     * Find an existing pending payment for this membership or create one.
-     */
-    private function findOrCreatePendingPayment(object $user): ?Payment
-    {
-        $membership = $this->membership;
-
-        if (! $membership->team_id || (float) $membership->fee_amount <= 0) {
-            return null;
-        }
-
-        $existing = Payment::query()
-            ->where('payable_type', 'membership')
-            ->where('payable_id', $membership->id)
-            ->where('status', PaymentStatusEnum::PENDING)
-            ->first();
-
-        if ($existing) {
-            return $existing;
-        }
-
-        return Payment::create([
-            'team_id' => $membership->team_id,
-            'user_id' => $user->id ?? null,
-            'payer_name' => $user->name ?? null,
-            'payer_email' => $user->email ?? null,
-            'payable_type' => $membership->getMorphClass(),
-            'payable_id' => $membership->getKey(),
-            'amount' => $membership->fee_amount,
-            'currency' => $membership->fee_currency,
-            'status' => PaymentStatusEnum::PENDING,
-        ]);
     }
 }

@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RoleEnum;
 use App\Models\Event;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -45,5 +47,35 @@ class TeamDetailPageTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('"@type":"SportsTeam"', false);
+    }
+
+    public function test_team_pages_list_coaches_and_publicly_approved_athletes_only(): void
+    {
+        $team = Team::factory()->create(['slug' => 'bcz-club']);
+
+        $coach = User::factory()->create(['first_name' => 'Coach', 'last_name' => 'Visible']);
+        $publicAthlete = User::factory()->create(['first_name' => 'Athlete', 'last_name' => 'Public', 'athlete_profile_approved_at' => now()]);
+        $privateAthlete = User::factory()->create(['first_name' => 'Athlete', 'last_name' => 'Private', 'athlete_profile_approved_at' => null]);
+        $inactiveCoach = User::factory()->create(['first_name' => 'Coach', 'last_name' => 'Gone']);
+        $teamAdmin = User::factory()->create(['first_name' => 'Admin', 'last_name' => 'Hidden']);
+
+        $team->members()->attach($coach, ['role' => RoleEnum::COACH->value, 'is_active' => true]);
+        $team->members()->attach($coach, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true]);
+        $team->members()->attach($publicAthlete, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true]);
+        $team->members()->attach($privateAthlete, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true]);
+        $team->members()->attach($inactiveCoach, ['role' => RoleEnum::COACH->value, 'is_active' => false]);
+        $team->members()->attach($teamAdmin, ['role' => RoleEnum::TEAM_ADMIN->value, 'is_active' => true]);
+
+        foreach (['/timy/bcz-club', '/timy/bcz-club/clenovia'] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertSee('Coach Visible')
+                ->assertSee('Athlete Public')
+                ->assertDontSee('Athlete Private')
+                ->assertDontSee('Coach Gone')
+                ->assertDontSee('Admin Hidden');
+        }
+
+        $this->get('/timy/bcz-club/clenovia')->assertSee('2 členovia');
     }
 }

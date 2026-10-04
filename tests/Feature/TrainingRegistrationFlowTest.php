@@ -18,6 +18,8 @@ use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
 use App\Notifications\TrainingPaymentConfirmed;
+use App\Services\GoPayService;
+use GoPay\Http\Response as GoPayResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -376,6 +378,59 @@ class TrainingRegistrationFlowTest extends TestCase
         $component->assertSee($payment->formattedVariableSymbol());
     }
 
+    public function test_membership_needed_state_shows_and_bills_the_fee_the_membership_was_issued_with(): void
+    {
+        Mail::fake();
+        $this->travelTo('2026-11-15 10:00:00');
+
+        // Prorating would charge 40.00 today; the membership was issued at 80.00.
+        $season = TeamSeason::factory()->prorated()->create([
+            'team_id' => $this->team->id,
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+            'fee_amount' => 80.00,
+        ]);
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+            'team_season_id' => $season->id,
+        ]);
+
+        $bankTransfer = PaymentMethod::create([
+            'method' => PaymentMethodEnum::BANK_TRANSFER,
+            'title' => ['sk' => 'Bankovy prevod'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+        $training->paymentMethods()->attach($bankTransfer->id, ['is_enabled' => true, 'sort_order' => 0]);
+        $this->team->paymentMethods()->attach($bankTransfer->id, ['is_enabled' => true, 'sort_order' => 0]);
+        $this->team->update(['bank_account_iban' => 'SK1234567890123456789012', 'bank_account_name' => 'BCZ Team']);
+
+        $user = User::factory()->create();
+        $membership = Membership::factory()->create([
+            'team_id' => $this->team->id,
+            'user_id' => $user->id,
+            'team_season_id' => $season->id,
+            'status' => MembershipStatusEnum::PENDING,
+            'fee_amount' => 80.00,
+            'fee_currency' => 'EUR',
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertSet('registrationState', 'membership_needed')
+            ->assertSee('80.00 EUR')
+            ->assertDontSee('40.00 EUR');
+
+        $this->assertEquals(80.00, (float) $membership->payments()->sole()->amount);
+    }
+
     public function test_remembered_registration_id_cannot_be_set_from_the_client(): void
     {
         $training = $this->createTraining([
@@ -386,6 +441,94 @@ class TrainingRegistrationFlowTest extends TestCase
 
         Livewire::test('training-registration-form', ['training' => $training])
             ->set('registrationId', (string) Str::uuid());
+    }
+
+    public function test_registration_state_cannot_be_set_from_the_client(): void
+    {
+        // The membership_needed view issues a membership fee while rendering, so
+        // a client that could jump to it would get billed by any team.
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        $this->expectException(CannotUpdateLockedPropertyException::class);
+
+        Livewire::actingAs(User::factory()->create())
+            ->test('training-registration-form', ['training' => $training])
+            ->set('registrationState', 'membership_needed');
+    }
+
+    public function test_an_unpaid_registration_holds_its_place(): void
+    {
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'price_amount' => 25.00,
+            'max_capacity' => 1,
+        ]);
+        TrainingRegistration::factory()->pending()->create(['training_id' => $training->id]);
+
+        $this->assertTrue($training->isFull());
+
+        Livewire::test('training-registration-form', ['training' => $training])
+            ->assertSet('registrationState', 'full');
+    }
+
+    public function test_a_cancelled_registration_frees_its_place(): void
+    {
+        $training = $this->createTraining(['max_capacity' => 1]);
+        TrainingRegistration::factory()->create([
+            'training_id' => $training->id,
+            'status' => RegistrationStatusEnum::Cancelled,
+        ]);
+
+        $this->assertFalse($training->isFull());
+    }
+
+    public function test_submit_rechecks_capacity_taken_after_the_form_was_opened(): void
+    {
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::FREE,
+            'max_capacity' => 1,
+        ]);
+        $user = User::factory()->create();
+
+        $form = Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->assertSet('registrationState', 'form');
+
+        TrainingRegistration::factory()->approved()->create(['training_id' => $training->id]);
+
+        $form->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertSet('registrationState', 'full');
+
+        $this->assertSame(1, $training->registrations()->count());
+    }
+
+    public function test_member_with_a_free_membership_is_approved_without_a_fee(): void
+    {
+        Mail::fake();
+
+        TeamSeason::factory()->create(['team_id' => $this->team->id, 'fee_amount' => 80.00]);
+        $training = $this->createTraining(['pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED]);
+
+        $user = User::factory()->create(['has_free_membership' => true]);
+
+        Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertSet('registrationState', 'membership_valid');
+
+        $this->assertSame(RegistrationStatusEnum::Approved, $training->registrations()->sole()->status);
+        $this->assertTrue(Membership::where('user_id', $user->id)->sole()->is_free);
+        $this->assertSame(0, Payment::where('user_id', $user->id)->count());
     }
 
     public function test_paid_training_stays_pending(): void
@@ -414,6 +557,142 @@ class TrainingRegistrationFlowTest extends TestCase
 
         $this->assertNotNull($registration);
         $this->assertEquals(RegistrationStatusEnum::Pending, $registration->status);
+    }
+
+    public function test_gopay_button_on_a_paid_training_starts_a_gopay_payment_for_the_training_price(): void
+    {
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'is_recurring' => false,
+            'event_date' => now()->addWeek(),
+            'price_amount' => 25.00,
+        ]);
+
+        $gopay = PaymentMethod::create([
+            'method' => PaymentMethodEnum::GOPAY,
+            'title' => ['sk' => 'GoPay'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+
+        $training->paymentMethods()->attach($gopay->id, [
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        $response = new GoPayResponse;
+        $response->statusCode = 200;
+        $response->json = ['id' => 3001, 'order_number' => 'TRA-1', 'gw_url' => 'https://gate.gopay.test/3001'];
+
+        $this->mock(GoPayService::class)
+            ->shouldReceive('createPayment')
+            ->once()
+            ->withArgs(fn (array $params): bool => $params['amount'] === 2500 && $params['currency'] === 'EUR')
+            ->andReturn($response);
+
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertSet('registrationState', 'payment_needed')
+            ->assertSet('selectedPaymentMethod', PaymentMethodEnum::GOPAY->value)
+            ->call('handlePayment')
+            ->assertRedirect('https://gate.gopay.test/3001');
+
+        $this->assertDatabaseHas('payments', [
+            'user_id' => $user->id,
+            'gopay_payment_id' => '3001',
+            'amount' => 25.00,
+        ]);
+    }
+
+    public function test_gopay_button_works_for_a_guest_who_has_just_registered(): void
+    {
+        Mail::fake();
+
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'is_recurring' => false,
+            'event_date' => now()->addWeek(),
+            'price_amount' => 25.00,
+        ]);
+
+        $gopay = PaymentMethod::create([
+            'method' => PaymentMethodEnum::GOPAY,
+            'title' => ['sk' => 'GoPay'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+
+        $training->paymentMethods()->attach($gopay->id, [
+            'is_enabled' => true,
+            'sort_order' => 0,
+        ]);
+
+        $response = new GoPayResponse;
+        $response->statusCode = 200;
+        $response->json = ['id' => 3002, 'order_number' => 'TRA-2', 'gw_url' => 'https://gate.gopay.test/3002'];
+
+        $this->mock(GoPayService::class)
+            ->shouldReceive('createPayment')
+            ->once()
+            ->withArgs(fn (array $params): bool => $params['payer_email'] === 'jan.novak@test.com')
+            ->andReturn($response);
+
+        Livewire::test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', 'Ján')
+            ->set('fields.priezvisko', 'Novák')
+            ->set('fields.email', 'jan.novak@test.com')
+            ->set('fields.telefon', '+421900222333')
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertSet('registrationState', 'payment_needed')
+            ->call('handlePayment')
+            ->assertRedirect('https://gate.gopay.test/3002');
+    }
+
+    public function test_gopay_button_in_the_membership_box_never_charges_a_stale_training_price(): void
+    {
+        Mail::fake();
+
+        TeamSeason::factory()->create(['team_id' => $this->team->id]);
+
+        // price_amount left over from when the training was paid.
+        $training = $this->createTraining([
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+            'price_amount' => 5.00,
+        ]);
+
+        $gopay = PaymentMethod::create([
+            'method' => PaymentMethodEnum::GOPAY,
+            'title' => ['sk' => 'GoPay'],
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+        $training->paymentMethods()->attach($gopay->id, ['is_enabled' => true, 'sort_order' => 0]);
+
+        $this->mock(GoPayService::class)->shouldNotReceive('createPayment');
+
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $user->first_name)
+            ->set('fields.priezvisko', $user->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit')
+            ->assertSet('registrationState', 'membership_needed')
+            ->assertSet('selectedPaymentMethod', PaymentMethodEnum::GOPAY->value)
+            ->call('handlePayment')
+            ->assertNoRedirect();
+
+        $this->assertDatabaseMissing('payments', ['user_id' => $user->id, 'amount' => 5.00]);
     }
 
     public function test_guest_with_existing_email_can_register_attaching_to_existing_user(): void

@@ -1,35 +1,31 @@
 @php
     $team = \Filament\Facades\Filament::getTenant();
     $enabledMethods = $team?->getEnabledPaymentMethodKeys() ?? [];
-    $feeAmount = $season->proratedFee();
-    $feeCurrency = $season->fee_currency ?? 'EUR';
+    // An existing membership keeps the fee it was issued with; that is what
+    // payWithGoPay() charges and what decides when it counts as paid.
+    $membership = $team && auth()->check()
+        ? \App\Models\Membership::query()
+            ->where('team_id', $team->id)
+            ->where('user_id', auth()->id())
+            ->where('team_season_id', $season->id)
+            ->first()
+        : null;
+    $feeAmount = $membership ? $membership->getTotalPriceAmount() : $season->proratedFee();
+    $feeCurrency = $membership ? $membership->getPriceCurrency() : ($season->fee_currency ?? 'EUR');
 
     $variableSymbol = null;
     if ($team && auth()->check() && $team->bank_account_iban && in_array('bank_transfer', $enabledMethods)) {
-        $membership = \App\Models\Membership::firstOrCreate(
-            [
-                'team_id' => $team->id,
-                'user_id' => auth()->id(),
-                'team_season_id' => $season->id,
-            ],
-            [
-                'status' => \App\Enums\MembershipStatusEnum::PENDING,
-                'fee_amount' => $feeAmount,
-                'fee_currency' => $feeCurrency,
-                'is_free' => false,
-                'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
-                'starts_at' => $season->starts_at,
-                'ends_at' => $season->ends_at,
-            ],
-        );
-        $payment = app(\App\Services\PaymentService::class)->ensurePendingPaymentFor(
+        $payment = app(\App\Services\PaymentService::class)->ensurePendingMembershipPayment(
             user: auth()->user(),
             team: $team,
-            payable: $membership,
-            amount: (float) $feeAmount,
-            currency: $feeCurrency,
+            season: $season,
         );
-        $variableSymbol = $payment->formattedVariableSymbol();
+        if ($payment) {
+            $membership = $payment->payable;
+            $feeAmount = (float) $payment->amount;
+            $feeCurrency = $payment->currency;
+            $variableSymbol = $payment->formattedVariableSymbol();
+        }
     }
 @endphp
 

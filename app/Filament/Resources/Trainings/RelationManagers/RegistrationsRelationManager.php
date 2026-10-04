@@ -12,15 +12,14 @@ use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
 use App\Filament\Resources\TrainingRegistrations\TrainingRegistrationResource;
 use App\Models\Membership;
-use App\Models\Payment;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
-use App\Notifications\TrainingPaymentConfirmed;
 use App\Notifications\TrainingRegistrationCancelled;
 use App\Services\EmailService;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
+use App\Services\SeasonService;
 use App\Services\TrainingCapacityService;
 use App\Support\RegistrationFieldOptions;
 use Filament\Actions\Action;
@@ -78,8 +77,7 @@ class RegistrationsRelationManager extends RelationManager
                         Toggle::make('send_notification')
                             ->label('Odoslať notifikáciu')
                             ->inline(false)
-                            ->default(true)
-                            ->dehydrated(false),
+                            ->default(true),
                     ]),
                 Section::make('Registračný formulár')
                     ->schema($this->buildDynamicFormFields())
@@ -148,7 +146,7 @@ class RegistrationsRelationManager extends RelationManager
                     $membership = Membership::where('team_id', $training->team_id)
                         ->where('user_id', $record->user_id)
                         ->where('status', MembershipStatusEnum::ACTIVE)
-                        ->where('ends_at', '>=', now())
+                        ->where('ends_at', '>=', today())
                         ->first();
 
                     return $membership ? 'active' : 'inactive';
@@ -242,7 +240,11 @@ class RegistrationsRelationManager extends RelationManager
                         $training = $this->getOwnerRecord();
 
                         $payment = null;
-                        if ($training->pricing_type === TrainingPricingTypeEnum::PAID && $training->price_amount) {
+                        // Only a pending registration still owes; an admin who picks
+                        // Approved has settled the fee some other way.
+                        if ($record->status === RegistrationStatusEnum::Pending
+                            && $training->pricing_type === TrainingPricingTypeEnum::PAID
+                            && $training->price_amount) {
                             $paymentService = app(PaymentService::class);
                             $payment = $paymentService->createPendingPayment(
                                 user: $user,
@@ -275,6 +277,7 @@ class RegistrationsRelationManager extends RelationManager
             ])
             ->recordActions([
                 SendEmailAction::make('send_email')
+                    ->paymentRequestTemplate()
                     ->contextVariables(['nazov_treningu', 'miesto', 'cas', 'kapacita'])
                     ->resolveRecipients(function ($record) {
                         return $this->resolveRegistrationRecipient($record);
@@ -290,7 +293,7 @@ class RegistrationsRelationManager extends RelationManager
                             ->label('Suma')
                             ->numeric()
                             ->required()
-                            ->default(fn () => $this->getOwnerRecord()->price_amount)
+                            ->default(fn (TrainingRegistration $record): float => app(PaymentService::class)->amountStillOwed($record))
                             ->prefix('€'),
                         Select::make('payment_method')
                             ->label('Metóda platby')
@@ -308,39 +311,25 @@ class RegistrationsRelationManager extends RelationManager
                         Textarea::make('notes')
                             ->label('Poznámka')
                             ->rows(2),
+                        Toggle::make('notify_customer')
+                            ->label('Upozorniť zákazníka?')
+                            ->helperText('Pošle e-mail s potvrdením platby.')
+                            ->default(true),
                     ])
-                    ->action(function (array $data, $record): void {
-                        $training = $this->getOwnerRecord();
-                        $user = $record->user;
-                        $paymentStatus = $data['payment_status'] instanceof PaymentStatusEnum
-                            ? $data['payment_status']
-                            : PaymentStatusEnum::from($data['payment_status']);
-
-                        Payment::create([
-                            'team_id' => $training->team_id,
-                            'user_id' => $record->user_id,
-                            'payer_name' => $user?->name,
-                            'payer_email' => $user?->email,
-                            'payable_type' => TrainingRegistration::class,
-                            'payable_id' => $record->id,
-                            'amount' => $data['amount'],
-                            'currency' => 'EUR',
-                            'status' => $paymentStatus,
-                            'payment_method' => $data['payment_method'],
-                            'paid_at' => now(),
-                            'notes' => $data['notes'] ?? null,
-                        ]);
-
-                        if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
-                            $record->update([
-                                'status' => RegistrationStatusEnum::Approved,
-                                'payment_due_at' => null,
-                            ]);
-
-                            if ($sendNotification && $user) {
-                                $user->notify(new TrainingPaymentConfirmed($training));
-                            }
-                        }
+                    ->action(function (array $data, TrainingRegistration $record): void {
+                        app(PaymentService::class)->recordManualPayment(
+                            user: $record->user,
+                            team: $this->getOwnerRecord()->team_id,
+                            payable: $record,
+                            amount: (float) $data['amount'],
+                            currency: $record->getPriceCurrency(),
+                            paymentMethod: $data['payment_method'],
+                            notes: $data['notes'] ?? null,
+                            notify: ! empty($data['notify_customer']),
+                            status: $data['payment_status'] instanceof PaymentStatusEnum
+                                ? $data['payment_status']
+                                : PaymentStatusEnum::from($data['payment_status']),
+                        );
 
                         Notification::make()
                             ->success()
@@ -356,15 +345,12 @@ class RegistrationsRelationManager extends RelationManager
                         && $record->status === RegistrationStatusEnum::Pending)
                     ->modalHeading('Zaznamenať platbu za členstvo')
                     ->schema(function ($record) {
-                        $training = $this->getOwnerRecord();
-                        $team = $training->team;
-                        $season = $team->currentSeason;
+                        $season = $this->getOwnerRecord()->membershipSeason();
 
-                        $existingMembership = $record->user_id
-                            ? Membership::where('team_id', $team->id)
-                                ->where('user_id', $record->user_id)
+                        $existingMembership = $record->user_id && $season
+                            ? Membership::where('user_id', $record->user_id)
+                                ->where('team_season_id', $season->id)
                                 ->whereIn('status', [MembershipStatusEnum::PENDING, MembershipStatusEnum::ACTIVE])
-                                ->where('ends_at', '>=', now())
                                 ->first()
                             : null;
 
@@ -376,7 +362,9 @@ class RegistrationsRelationManager extends RelationManager
                                 ->content("Členstvo so stavom \"{$existingMembership->status->getLabel()}\" už existuje. Platba bude zaznamenaná k nemu.");
                         }
 
-                        $feeAmount = $existingMembership?->fee_amount ?? ($season?->proratedFee() ?? 0);
+                        $feeAmount = $existingMembership
+                            ? app(PaymentService::class)->amountStillOwed($existingMembership)
+                            : ($season?->proratedFee() ?? 0);
                         $feeCurrency = $existingMembership?->fee_currency ?? ($season?->fee_currency ?? 'EUR');
 
                         return [
@@ -410,37 +398,18 @@ class RegistrationsRelationManager extends RelationManager
                         ];
                     })
                     ->action(function (array $data, TrainingRegistration $record): void {
-                        $training = $this->getOwnerRecord();
-                        $team = $training->team;
-                        $season = $team->currentSeason;
+                        $team = $this->getOwnerRecord()->team;
+                        $season = $this->getOwnerRecord()->membershipSeason();
                         $user = $record->user;
 
-                        // Find or create membership
-                        $membership = Membership::where('team_id', $team->id)
-                            ->where('user_id', $record->user_id)
-                            ->whereIn('status', [MembershipStatusEnum::PENDING, MembershipStatusEnum::ACTIVE])
-                            ->where('ends_at', '>=', now())
-                            ->first();
-
-                        if (! $membership && $season) {
-                            $membership = Membership::create([
-                                'team_id' => $team->id,
-                                'user_id' => $record->user_id,
-                                'team_season_id' => $season->id,
-                                'status' => MembershipStatusEnum::PENDING,
-                                'fee_amount' => $season->proratedFee(),
-                                'fee_currency' => $season->fee_currency,
-                                'is_free' => false,
-                                'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
-                                'starts_at' => now()->toDateString(),
-                                'ends_at' => $season->ends_at,
-                            ]);
-                        }
+                        $membership = $season ? app(SeasonService::class)->findOrCreateMembership($season, $user) : null;
 
                         if (! $membership) {
                             Notification::make()
                                 ->danger()
-                                ->title('Nie je možné vytvoriť členstvo — žiadna aktívna sezóna.')
+                                ->title($season
+                                    ? 'Nie je možné vytvoriť členstvo — používateľ neplatí členské v tomto tíme.'
+                                    : 'Nie je možné vytvoriť členstvo — žiadna aktívna sezóna.')
                                 ->send();
 
                             return;
@@ -514,6 +483,7 @@ class RegistrationsRelationManager extends RelationManager
             ])
             ->toolbarActions([
                 SendEmailBulkAction::make('send_email_bulk')
+                    ->paymentRequestTemplate()
                     ->contextVariables(['nazov_treningu', 'miesto', 'cas', 'kapacita'])
                     ->resolveRecipients(function ($record) {
                         return $this->resolveRegistrationRecipient($record);
@@ -734,7 +704,7 @@ class RegistrationsRelationManager extends RelationManager
         }
 
         $unique = $emails->unique()->values();
-        $list = $unique->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+        $list = $unique->map(fn (string $e) => '<span style="display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;">'.e($e).'</span>')->implode(' ');
 
         return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$unique->count().')')

@@ -843,7 +843,7 @@ class TrainingForm
                                     ->placeholder('Bez sezóny')
                                     ->default(fn () => TeamSeason::query()
                                         ->where('starts_at', '<=', now())
-                                        ->where('ends_at', '>=', now())
+                                        ->where('ends_at', '>=', today())
                                         ->first()?->id
                                     ),
                                 Toggle::make('is_recurring_across_seasons')
