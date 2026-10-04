@@ -77,7 +77,7 @@ new class extends Component
                 } elseif ($registration->status === RegistrationStatusEnum::Approved) {
                     // Re-check: membership-required training where membership expired/unpaid
                     $needsMembership = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED
-                        && ! $user->hasActiveMembershipForTeam($this->training->team_id);
+                        && ! $user->hasActiveMembershipForTeam($this->training->team_id, $this->training->membershipSeason());
 
                     // Re-check: paid training with no completed payment
                     $needsPayment = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID
@@ -372,7 +372,7 @@ new class extends Component
      */
     protected function ensureMembershipFeeIssued(User $user): void
     {
-        if ($user->hasActiveMembershipForTeam($this->training->team_id)) {
+        if ($user->hasActiveMembershipForTeam($this->training->team_id, $this->training->membershipSeason())) {
             return;
         }
 
@@ -608,7 +608,7 @@ new class extends Component
                 @php
                     $user = auth()->user();
                     $reg = $user ? \App\Models\TrainingRegistration::where('training_id', $training->id)->where('user_id', $user->id)->first() : null;
-                    $hasMembership = $user && $user->hasActiveMembershipForTeam($training->team_id);
+                    $hasMembership = $user && $user->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason());
                 @endphp
                 <div class="flex justify-between w-full">
                     <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_membership') }}</span>

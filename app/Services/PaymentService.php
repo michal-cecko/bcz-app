@@ -345,18 +345,26 @@ class PaymentService
             return;
         }
 
+        // The payment's cached payable can predate later edits; the resets
+        // below only write attributes that differ from what is loaded.
+        $payable->refresh();
+
+        // A new due date, same length as when first issued, and a fresh reminder,
+        // so the reminder and the expiry sweeps treat it like a new one.
         if ($payable instanceof Membership && $payable->status === MembershipStatusEnum::ACTIVE) {
-            $payable->update(['status' => MembershipStatusEnum::PENDING]);
+            $payable->update([
+                'status' => MembershipStatusEnum::PENDING,
+                'payment_deadline_at' => now()->addDays($payable->season?->payment_deadline_days ?? 14),
+                'payment_reminder_sent_at' => null,
+            ]);
         }
 
-        // A new due date, same length as on registration, so reminders and the
-        // expiry sweep pick the registration up again.
         if ($payable instanceof TrainingRegistration && $payable->status === RegistrationStatusEnum::Approved) {
-            $payable->update(['status' => RegistrationStatusEnum::Pending, 'payment_due_at' => now()->addDays(7)]);
+            $payable->update(['status' => RegistrationStatusEnum::Pending, 'payment_due_at' => now()->addDays(7), 'payment_reminder_sent_at' => null]);
         }
 
         if ($payable instanceof EventRegistration && $payable->status === RegistrationStatusEnum::Approved) {
-            $payable->update(['status' => RegistrationStatusEnum::Pending, 'payment_due_at' => now()->addDays(14)]);
+            $payable->update(['status' => RegistrationStatusEnum::Pending, 'payment_due_at' => now()->addDays(14), 'payment_reminder_sent_at' => null]);
         }
     }
 
@@ -494,7 +502,8 @@ class PaymentService
     {
         $membership = app(SeasonService::class)->findOrCreateMembership($season, $user);
 
-        if (! $membership || $membership->is_free || $membership->status === MembershipStatusEnum::ACTIVE) {
+        if (! $membership || $membership->is_free || $membership->status === MembershipStatusEnum::ACTIVE
+            || $this->amountStillOwed($membership) <= 0) {
             return null;
         }
 

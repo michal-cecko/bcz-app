@@ -41,8 +41,10 @@ class CancelExpiredRegistrations extends Command
                 'status' => RegistrationStatusEnum::Cancelled,
                 'cancellation_reason' => 'Automaticky zrušená — platba nebola prijatá v stanovenej lehote.',
             ]);
+            // GoPay payments are left alone: the gateway may still complete them.
             $registration->payments()
                 ->where('status', PaymentStatusEnum::PENDING)
+                ->whereNull('gopay_payment_id')
                 ->update(['status' => PaymentStatusEnum::CANCELLED->value]);
 
             // The training may have been soft-deleted after the registration was

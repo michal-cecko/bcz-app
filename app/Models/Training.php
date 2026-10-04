@@ -260,11 +260,6 @@ class Training extends Model implements HasMedia, Linkable
     }
 
     /**
-     * The payment note template that applies to this training: the training's
-     * own note wins, the season's note is the fallback. Same specific-over-broad
-     * idiom as effectiveBankAccountIban().
-     */
-    /**
      * The season a membership-required training bills its membership for: the
      * training's own season while it has not ended (it may start later, e.g. a
      * January training booked in December), else the team's current one.
@@ -276,6 +271,11 @@ class Training extends Model implements HasMedia, Linkable
         return $season && ! $season->isPast() ? $season : $this->team?->currentSeason;
     }
 
+    /**
+     * The payment note template that applies to this training: the training's
+     * own note wins, the season's note is the fallback. Same specific-over-broad
+     * idiom as effectiveBankAccountIban().
+     */
     public function effectivePaymentNoteTemplate(): ?string
     {
         return $this->payment_note ?: $this->season?->payment_note;

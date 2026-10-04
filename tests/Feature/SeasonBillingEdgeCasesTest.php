@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Filament\Resources\Teams\Pages\ViewTeam;
@@ -14,6 +15,7 @@ use App\Models\Payment;
 use App\Models\Team;
 use App\Models\TeamSeason;
 use App\Models\Training;
+use App\Models\TrainingRegistration;
 use App\Models\User;
 use App\Services\GoPayService;
 use App\Services\SeasonService;
@@ -176,6 +178,61 @@ class SeasonBillingEdgeCasesTest extends TestCase
         $membership = Membership::where('user_id', $user->id)->sole();
         $this->assertTrue($membership->season->is($spring));
         $this->assertEquals(120.00, (float) $membership->fee_amount);
+    }
+
+    public function test_a_free_member_booking_next_season_in_advance_is_approved(): void
+    {
+        $this->travelTo('2026-12-20 10:00:00');
+
+        $spring = TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'starts_at' => '2027-01-01',
+            'ends_at' => '2027-06-30',
+            'fee_amount' => 120.00,
+        ]);
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'team_season_id' => $spring->id,
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+        ]);
+
+        $coach = User::factory()->create(['has_free_membership' => true]);
+        Mail::fake();
+        Notification::fake();
+
+        Livewire::actingAs($coach)
+            ->test('training-registration-form', ['training' => $training])
+            ->set('fields.meno', $coach->first_name)
+            ->set('fields.priezvisko', $coach->last_name)
+            ->set('gdprAgreed', true)
+            ->call('submit');
+
+        $this->assertTrue(Membership::where('user_id', $coach->id)->sole()->is_free);
+        $this->assertSame(RegistrationStatusEnum::Approved, TrainingRegistration::where('user_id', $coach->id)->sole()->status);
+    }
+
+    public function test_a_current_membership_does_not_cover_next_season_in_advance(): void
+    {
+        $this->travelTo('2026-12-20 10:00:00');
+
+        $member = $this->athleteJoinedOn('2026-09-01');
+        Membership::factory()->create([
+            'team_id' => $this->team->id,
+            'user_id' => $member->id,
+            'team_season_id' => $this->autumn->id,
+            'status' => MembershipStatusEnum::ACTIVE,
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+        ]);
+        $spring = TeamSeason::factory()->create([
+            'team_id' => $this->team->id,
+            'starts_at' => '2027-01-01',
+            'ends_at' => '2027-06-30',
+        ]);
+
+        $this->assertTrue($member->hasActiveMembershipForTeam($this->team->id));
+        $this->assertFalse($member->hasActiveMembershipForTeam($this->team->id, $spring));
+        $this->assertTrue($member->hasActiveMembershipForTeam($this->team->id, $this->autumn));
     }
 
     public function test_add_membership_refuses_a_second_membership_for_the_same_season(): void

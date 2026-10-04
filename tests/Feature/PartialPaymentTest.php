@@ -22,6 +22,7 @@ use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\RegistrationFee;
 use App\Models\Team;
+use App\Models\TeamSeason;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
@@ -340,6 +341,48 @@ class PartialPaymentTest extends TestCase
         $registration->refresh();
         $this->assertSame(RegistrationStatusEnum::Pending, $registration->status);
         $this->assertTrue($registration->payment_due_at->isSameDay(now()->addDays(7)));
+    }
+
+    public function test_a_reopened_registration_is_reminded_again(): void
+    {
+        $registration = $this->pendingTrainingRegistration(100.00);
+        $payment = $this->payments->recordManualPayment($registration->user, $this->team, $registration, 100.00, 'EUR', PaymentMethodEnum::CASH, notify: false);
+        $registration->update(['payment_reminder_sent_at' => now()->subDays(3)]);
+
+        $this->payments->refund($payment);
+
+        $this->assertNull($registration->refresh()->payment_reminder_sent_at);
+    }
+
+    public function test_a_reopened_membership_gets_a_new_deadline_and_reminder(): void
+    {
+        $member = User::factory()->create();
+        $membership = Membership::factory()->pending()->create([
+            'team_id' => $this->team->id,
+            'user_id' => $member->id,
+            'fee_amount' => 100.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_at' => now()->subMonth(),
+            'payment_reminder_sent_at' => now()->subMonth(),
+        ]);
+        $payment = $this->payments->recordManualPayment($member, $this->team, $membership, 100.00, 'EUR', PaymentMethodEnum::CASH, notify: false);
+
+        $payment->delete();
+
+        $membership->refresh();
+        $this->assertSame(MembershipStatusEnum::PENDING, $membership->status);
+        $this->assertTrue($membership->payment_deadline_at->isFuture());
+        $this->assertNull($membership->payment_reminder_sent_at);
+    }
+
+    public function test_no_open_payment_is_issued_when_nothing_is_owed(): void
+    {
+        $member = User::factory()->create();
+        $member->assignRole(RoleEnum::CUSTOMER->value);
+        $season = TeamSeason::factory()->create(['team_id' => $this->team->id, 'fee_amount' => 0.00]);
+
+        $this->assertNull($this->payments->ensurePendingMembershipPayment($member, $this->team, $season));
+        $this->assertSame(0, Payment::count());
     }
 
     public function test_the_open_payment_recorded_for_a_guest_is_reused_not_duplicated(): void

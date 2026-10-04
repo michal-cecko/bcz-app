@@ -86,6 +86,22 @@ class CancelExpiredRegistrationsTest extends TestCase
         $this->assertEquals(PaymentStatusEnum::CANCELLED, $open->fresh()->status);
     }
 
+    public function test_leaves_an_open_gopay_payment_alone(): void
+    {
+        $registration = $this->expiredPaidTrainingRegistration();
+
+        $gopay = Payment::factory()->gopay()->forTrainingRegistration($registration)->create([
+            'amount' => 25.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::PENDING,
+        ]);
+
+        $this->artisan('registrations:cancel-expired')->assertExitCode(0);
+
+        $this->assertEquals(RegistrationStatusEnum::Cancelled, $registration->fresh()->status);
+        $this->assertEquals(PaymentStatusEnum::PENDING, $gopay->fresh()->status);
+    }
+
     private function expiredPaidTrainingRegistration(): TrainingRegistration
     {
         $training = Training::factory()->create([
