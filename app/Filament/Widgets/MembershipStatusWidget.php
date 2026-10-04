@@ -7,6 +7,7 @@ use App\Models\Membership;
 use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Services\QrPaymentService;
+use App\Services\SeasonService;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
@@ -97,31 +98,17 @@ class MembershipStatusWidget extends Widget
         $membership = Membership::query()
             ->where('team_id', $team?->id)
             ->where('user_id', auth()->id())
-            ->whereHas('season', fn ($q) => $q->where('ends_at', '>=', now()))
+            ->whereHas('season', fn ($q) => $q->where('ends_at', '>=', today()))
             ->orderByDesc('created_at')
             ->with(['season', 'payments'])
             ->first();
 
-        // Auto-create PENDING membership if none exists and active season is available
-        if (! $membership) {
-            $season = $team?->currentSeason;
+        $season = $team?->currentSeason;
 
-            if ($season) {
-                $membership = Membership::create([
-                    'team_id' => $team->id,
-                    'user_id' => auth()->id(),
-                    'team_season_id' => $season->id,
-                    'status' => MembershipStatusEnum::PENDING,
-                    'fee_amount' => $season->proratedFee(),
-                    'fee_currency' => $season->fee_currency ?? 'EUR',
-                    'is_free' => false,
-                    'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
-                    'starts_at' => $season->starts_at,
-                    'ends_at' => $season->ends_at,
-                ]);
-
-                $membership->load(['season', 'payments']);
-            }
+        if (! $membership && $season) {
+            $membership = app(SeasonService::class)
+                ->findOrCreateMembership($season, auth()->user())
+                ?->load(['season', 'payments']);
         }
 
         return $membership;
@@ -143,13 +130,7 @@ class MembershipStatusWidget extends Widget
             return null;
         }
 
-        return app(PaymentService::class)->ensurePendingPaymentFor(
-            user: $user,
-            team: $team,
-            payable: $membership,
-            amount: (float) $membership->fee_amount,
-            currency: $membership->fee_currency ?? 'EUR',
-        );
+        return app(PaymentService::class)->openPaymentFor($membership, $user, $team);
     }
 
     #[Computed]
@@ -167,11 +148,17 @@ class MembershipStatusWidget extends Widget
             return null;
         }
 
+        $payment = $this->pendingPayment;
+
+        if (! $payment) {
+            return null;
+        }
+
         return QrPaymentService::qrPlatba(
             iban: $team->bank_account_iban,
-            amount: (float) $membership->fee_amount,
-            currency: $membership->fee_currency ?? 'EUR',
-            variableSymbol: $this->pendingPayment?->formattedVariableSymbol() ?? '',
+            amount: (float) $payment->amount,
+            currency: $payment->currency,
+            variableSymbol: $payment->formattedVariableSymbol(),
             recipientName: $team->bank_account_name ?? '',
             note: $membership->getQrPaymentNote(),
         );

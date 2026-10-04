@@ -38,7 +38,7 @@ class ProfileApprovals extends Page implements HasTable
 
     protected string $view = 'filament.pages.profile-approvals';
 
-    public static function shouldRegisterNavigation(): bool
+    public static function canAccess(): bool
     {
         /** @var User|null $user */
         $user = auth()->user();

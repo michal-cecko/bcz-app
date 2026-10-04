@@ -74,8 +74,8 @@ class TeamPayoutsTable
                 ->modalContent(function (TeamPayout $record): HtmlString {
                     $html = '<div class="space-y-4">';
                     $html .= '<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-sm space-y-1">';
-                    $html .= '<div><span class="font-medium">IBAN:</span> '.$record->bank_account_iban.'</div>';
-                    $html .= '<div><span class="font-medium">Suma:</span> '.number_format((float) $record->net_amount, 2).' '.$record->currency.'</div>';
+                    $html .= '<div><span class="font-medium">IBAN:</span> '.e($record->bank_account_iban).'</div>';
+                    $html .= '<div><span class="font-medium">Suma:</span> '.number_format((float) $record->net_amount, 2).' '.e($record->currency).'</div>';
                     $html .= '</div>';
 
                     $qr = QrPaymentService::qrPlatba(
@@ -100,7 +100,7 @@ class TeamPayoutsTable
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->visible(fn (TeamPayout $record): bool => $record->status === PayoutStatusEnum::PENDING
-                    && ! auth()->user()?->isMemberLevel())
+                    && (auth()->user()?->can('update', $record) ?? false))
                 ->requiresConfirmation()
                 ->action(function (TeamPayout $record): void {
                     $record->update([

@@ -165,6 +165,28 @@ class SendPaymentDueRemindersTest extends TestCase
         $this->assertNotNull($registration->fresh()->payment_reminder_sent_at);
     }
 
+    public function test_does_not_send_a_training_payment_reminder_for_a_membership_required_training(): void
+    {
+        Notification::fake();
+
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'pricing_type' => TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED,
+            'price_amount' => null,
+        ]);
+
+        $registration = TrainingRegistration::factory()->pending()->create([
+            'training_id' => $training->id,
+            'user_id' => $this->user->id,
+            'payment_due_at' => now()->addDays(1),
+        ]);
+
+        $this->artisan('payments:send-due-reminders')->assertSuccessful();
+
+        Notification::assertNotSentTo($this->user, TrainingRegistrationPaymentDue::class);
+        $this->assertNull($registration->fresh()->payment_reminder_sent_at);
+    }
+
     public function test_does_not_send_training_reminder_if_already_completed_payment_exists(): void
     {
         Notification::fake();
@@ -194,6 +216,75 @@ class SendPaymentDueRemindersTest extends TestCase
         $this->artisan('payments:send-due-reminders')->assertSuccessful();
 
         Notification::assertNothingSent();
+    }
+
+    public function test_partly_paid_training_registration_is_reminded_about_the_rest(): void
+    {
+        Notification::fake();
+
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'price_amount' => 25.00,
+        ]);
+
+        $registration = TrainingRegistration::factory()->pending()->create([
+            'training_id' => $training->id,
+            'user_id' => $this->user->id,
+            'payment_due_at' => now()->addDays(1),
+        ]);
+
+        Payment::factory()->create([
+            'team_id' => $this->team->id,
+            'user_id' => $this->user->id,
+            'payable_type' => $registration->getMorphClass(),
+            'payable_id' => $registration->id,
+            'amount' => 10.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::COMPLETED,
+        ]);
+
+        $this->artisan('payments:send-due-reminders')->assertSuccessful();
+
+        Notification::assertSentTo($this->user, TrainingRegistrationPaymentDue::class, function (TrainingRegistrationPaymentDue $notification): bool {
+            $mail = $notification->toMail($this->user);
+            $openPayment = Payment::query()
+                ->where('payable_id', $notification->registration->id)
+                ->where('status', PaymentStatusEnum::PENDING)
+                ->sole();
+
+            return $mail->viewData['feeAmount'] === '15.00'
+                && (float) $openPayment->amount === 15.0
+                && str_contains($mail->viewData['paymentUrl'], $openPayment->id);
+        });
+    }
+
+    public function test_partly_paid_membership_is_reminded_about_the_rest(): void
+    {
+        Notification::fake();
+
+        $membership = Membership::factory()->pending()->create([
+            'team_id' => $this->team->id,
+            'user_id' => $this->user->id,
+            'fee_amount' => 60.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_at' => now()->addDays(2),
+        ]);
+
+        Payment::factory()->create([
+            'team_id' => $this->team->id,
+            'user_id' => $this->user->id,
+            'payable_type' => $membership->getMorphClass(),
+            'payable_id' => $membership->id,
+            'amount' => 20.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::COMPLETED,
+        ]);
+
+        $this->artisan('payments:send-due-reminders')->assertSuccessful();
+
+        Notification::assertSentTo($this->user, MembershipPaymentDue::class,
+            fn (MembershipPaymentDue $notification): bool => $notification->toMail($this->user)->viewData['feeAmount'] === '40.00');
     }
 
     public function test_sends_event_registration_reminder_when_deadline_within_threshold(): void

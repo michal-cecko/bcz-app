@@ -120,7 +120,7 @@ class WaitlistRelationManager extends RelationManager
             }
         }
         $unique = $emails->unique()->values();
-        $list = $unique->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+        $list = $unique->map(fn (string $e) => '<span style="display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;">'.e($e).'</span>')->implode(' ');
 
         return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$unique->count().')')

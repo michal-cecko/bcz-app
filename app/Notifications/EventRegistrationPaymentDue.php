@@ -2,9 +2,8 @@
 
 namespace App\Notifications;
 
-use App\Enums\PaymentStatusEnum;
 use App\Models\EventRegistration;
-use App\Models\Payment;
+use App\Services\PaymentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -32,11 +31,12 @@ class EventRegistrationPaymentDue extends Notification implements ShouldQueue
         $team = $event?->team;
         $teamName = $team?->getTranslation('name', 'sk') ?? '';
         $eventTitle = $event?->getTranslation('title', 'sk') ?? 'Podujatie';
-        $feeAmount = number_format($this->registration->getTotalPriceAmount(), 2);
+        $paymentService = app(PaymentService::class);
+        $feeAmount = number_format($paymentService->amountStillOwed($this->registration), 2);
         $feeCurrency = $this->registration->getPriceCurrency();
         $paymentDeadline = $this->registration->payment_due_at?->format('d.m.Y') ?? '';
 
-        $payment = $this->findOrCreatePendingPayment($user);
+        $payment = $paymentService->openPaymentFor($this->registration, $user, $this->registration->event?->team);
         $paymentUrl = $payment
             ? URL::signedRoute('payment.page', ['payment' => $payment->id])
             : url('/admin');
@@ -73,38 +73,5 @@ class EventRegistrationPaymentDue extends Notification implements ShouldQueue
             'payment_due_at' => $this->registration->payment_due_at?->toIso8601String(),
             'type' => 'event_registration_payment_due',
         ];
-    }
-
-    private function findOrCreatePendingPayment(object $user): ?Payment
-    {
-        $registration = $this->registration;
-        $event = $registration->event;
-        $amount = $registration->getTotalPriceAmount();
-
-        if (! $event?->team_id || $amount <= 0) {
-            return null;
-        }
-
-        $existing = Payment::query()
-            ->where('payable_type', $registration->getMorphClass())
-            ->where('payable_id', $registration->id)
-            ->whereIn('status', [PaymentStatusEnum::PENDING, PaymentStatusEnum::COMPLETED])
-            ->first();
-
-        if ($existing) {
-            return $existing;
-        }
-
-        return Payment::create([
-            'team_id' => $event->team_id,
-            'user_id' => $user->id ?? null,
-            'payer_name' => $user->name ?? null,
-            'payer_email' => $user->email ?? null,
-            'payable_type' => $registration->getMorphClass(),
-            'payable_id' => $registration->getKey(),
-            'amount' => $amount,
-            'currency' => $registration->getPriceCurrency(),
-            'status' => PaymentStatusEnum::PENDING,
-        ]);
     }
 }

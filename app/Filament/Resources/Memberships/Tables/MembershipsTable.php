@@ -18,7 +18,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -42,12 +41,11 @@ class MembershipsTable
                     ->label('Stav')
                     ->badge()
                     ->sortable(),
-                IconColumn::make('is_free')
-                    ->label('Zadarmo')
-                    ->boolean(),
                 TextColumn::make('fee_amount')
                     ->label('Suma')
-                    ->formatStateUsing(fn ($record): string => number_format((float) $record->fee_amount, 2).' '.$record->fee_currency)
+                    ->formatStateUsing(fn (Membership $record): string => $record->is_free
+                        ? 'Zadarmo'
+                        : number_format((float) $record->fee_amount, 2).' '.$record->fee_currency)
                     ->sortable(),
                 TextColumn::make('starts_at')
                     ->label('Začiatok')
@@ -69,6 +67,7 @@ class MembershipsTable
             ])
             ->recordActions([
                 SendEmailAction::make('send_email')
+                    ->paymentRequestTemplate()
                     ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->resolveRecipients(function (Membership $record) {
                         if (! $record->user?->email) {
@@ -99,7 +98,7 @@ class MembershipsTable
                             ->label('Suma')
                             ->numeric()
                             ->required()
-                            ->default(fn (Membership $record): string => (string) $record->fee_amount),
+                            ->default(fn (Membership $record): string => (string) app(PaymentService::class)->amountStillOwed($record)),
                         Select::make('currency')
                             ->label('Mena')
                             ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])
@@ -181,6 +180,7 @@ class MembershipsTable
             ])
             ->toolbarActions([
                 SendEmailBulkAction::make('send_email_bulk')
+                    ->paymentRequestTemplate()
                     ->visible(fn (): bool => ! auth()->user()?->isMemberLevel())
                     ->resolveRecipients(function (Membership $record) {
                         if (! $record->user?->email) {

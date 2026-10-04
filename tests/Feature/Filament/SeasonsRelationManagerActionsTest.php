@@ -139,11 +139,11 @@ class SeasonsRelationManagerActionsTest extends TestCase
 
         Livewire::test(EditTeamSeason::class, ['record' => $season->getRouteKey()])
             ->assertFormFieldExists('prorate_fee')
-            ->assertSchemaStateSet(['prorate_fee' => false])
-            ->fillForm(['prorate_fee' => true])
+            ->assertSchemaStateSet(['prorate_fee' => true])
+            ->fillForm(['prorate_fee' => false])
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $this->assertTrue($season->fresh()->prorate_fee);
+        $this->assertFalse($season->fresh()->prorate_fee);
     }
 }

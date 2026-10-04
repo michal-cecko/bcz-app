@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\RelationManagers;
 
 use App\Enums\MembershipStatusEnum;
 use App\Enums\RoleEnum;
+use App\Models\Membership;
 use App\Models\User;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -50,7 +51,9 @@ class MembershipsRelationManager extends RelationManager
                     ->sortable(),
                 TextColumn::make('fee_amount')
                     ->label('Suma')
-                    ->formatStateUsing(fn ($record): string => number_format((float) $record->fee_amount, 2).' '.$record->fee_currency)
+                    ->formatStateUsing(fn (Membership $record): string => $record->is_free
+                        ? 'Zadarmo'
+                        : number_format((float) $record->fee_amount, 2).' '.$record->fee_currency)
                     ->sortable(),
                 TextColumn::make('starts_at')
                     ->label('Začiatok')

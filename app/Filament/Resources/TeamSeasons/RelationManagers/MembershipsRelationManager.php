@@ -15,7 +15,6 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -47,12 +46,11 @@ class MembershipsRelationManager extends RelationManager
                     ->label('Stav')
                     ->badge()
                     ->sortable(),
-                IconColumn::make('is_free')
-                    ->label('Zadarmo')
-                    ->boolean(),
                 TextColumn::make('fee_amount')
                     ->label('Suma')
-                    ->formatStateUsing(fn ($record): string => number_format((float) $record->fee_amount, 2).' '.$record->fee_currency)
+                    ->formatStateUsing(fn (Membership $record): string => $record->is_free
+                        ? 'Zadarmo'
+                        : number_format((float) $record->fee_amount, 2).' '.$record->fee_currency)
                     ->sortable(),
                 TextColumn::make('payment_deadline_at')
                     ->label('Splatnosť')
@@ -84,7 +82,7 @@ class MembershipsRelationManager extends RelationManager
                             ->label('Suma')
                             ->numeric()
                             ->required()
-                            ->default(fn (Membership $record): string => (string) $record->fee_amount),
+                            ->default(fn (Membership $record): string => (string) app(PaymentService::class)->amountStillOwed($record)),
                         Select::make('currency')
                             ->label('Mena')
                             ->options(['EUR' => 'EUR', 'CZK' => 'CZK', 'USD' => 'USD'])

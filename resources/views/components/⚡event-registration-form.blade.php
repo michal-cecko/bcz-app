@@ -10,6 +10,7 @@ use App\Models\EventRegistration;
 use App\Models\User;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -24,11 +25,16 @@ new class extends Component
 
     public bool $gdprAgreed = false;
 
+    #[Locked]
     public string $registrationState = 'form';
 
     public ?string $selectedPaymentMethod = null;
 
+    #[Locked]
     public ?string $pendingPaymentId = null;
+
+    #[Locked]
+    public ?string $registrationId = null;
 
     public function mount(Event $event): void
     {
@@ -60,13 +66,15 @@ new class extends Component
                 ->first();
 
             if ($registration) {
-                if ($registration->status === RegistrationStatusEnum::Pending->value) {
+                $this->registrationId = $registration->id;
+
+                if ($registration->status === RegistrationStatusEnum::Pending) {
                     $this->registrationState = $this->determinePostState($user);
                     $this->autoSelectPaymentMethod();
                     $this->pendingPaymentId = $registration->payments()
                         ->where('status', \App\Enums\PaymentStatusEnum::PENDING)
                         ->latest('created_at')->value('id');
-                } elseif ($registration->status === RegistrationStatusEnum::Approved->value) {
+                } elseif ($registration->status === RegistrationStatusEnum::Approved) {
                     // Re-check: paid event with no completed payment
                     $needsPayment = $org
                         && $org->pricing_type === EventPricingTypeEnum::Paid
@@ -268,6 +276,8 @@ new class extends Component
             'registration_fee_id' => $registrationFee?->id,
         ]);
 
+        $this->registrationId = $registration->id;
+
         // Store field values
         foreach ($this->fields as $key => $value) {
             if ($value !== '' && $value !== null) {
@@ -348,19 +358,17 @@ new class extends Component
         }
 
         if ($this->selectedPaymentMethod === PaymentMethodEnum::GOPAY->value) {
-            $user = auth()->user();
-            if (! $user) {
-                return;
-            }
-
-            $registration = EventRegistration::query()
-                ->where('event_id', $this->event->id)
-                ->where('user_id', $user->id)
-                ->latest()
-                ->first();
+            // The remembered registration, not auth(): a guest who has just
+            // submitted is not logged in.
+            $registration = $this->registrationId
+                ? EventRegistration::whereKey($this->registrationId)
+                    ->where('event_id', $this->event->id)
+                    ->first()
+                : null;
+            $user = $registration?->user;
 
             $amount = $registration?->getTotalPriceAmount() ?? 0;
-            if (! $registration || $amount <= 0) {
+            if (! $user || $amount <= 0) {
                 return;
             }
 

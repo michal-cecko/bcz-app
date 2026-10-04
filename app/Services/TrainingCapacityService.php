@@ -2,31 +2,19 @@
 
 namespace App\Services;
 
-use App\Enums\RegistrationStatusEnum;
 use App\Models\Training;
 use App\Notifications\TrainingSpotAvailable;
 use Illuminate\Support\Facades\Notification;
 
 class TrainingCapacityService
 {
-    public static function isFull(Training $training): bool
-    {
-        if ($training->max_capacity === null) {
-            return false;
-        }
-
-        return $training->registrations()
-            ->where('status', RegistrationStatusEnum::Approved->value)
-            ->count() >= $training->max_capacity;
-    }
-
     public static function handleSpotFreed(Training $training): void
     {
         if (! $training->notify_on_available) {
             return;
         }
 
-        if (self::isFull($training)) {
+        if ($training->isFull()) {
             return;
         }
 

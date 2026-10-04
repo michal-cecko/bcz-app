@@ -373,13 +373,25 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         return $this->hasMany(Membership::class);
     }
 
-    public function hasActiveMembershipForTeam(string $teamId): bool
+    /**
+     * Whether the user is a paid-up member of the team today. For a season that
+     * has not started yet (a January training booked in December), the
+     * membership for that season counts instead.
+     */
+    public function hasActiveMembershipForTeam(string $teamId, ?TeamSeason $season = null): bool
     {
+        if ($season?->isFuture()) {
+            return $this->memberships()
+                ->where('team_season_id', $season->id)
+                ->where('status', MembershipStatusEnum::ACTIVE)
+                ->exists();
+        }
+
         return $this->memberships()
             ->where('team_id', $teamId)
             ->where('status', MembershipStatusEnum::ACTIVE)
             ->where('starts_at', '<=', now())
-            ->where('ends_at', '>=', now())
+            ->where('ends_at', '>=', today())
             ->exists();
     }
 

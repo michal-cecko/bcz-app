@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
@@ -10,7 +12,9 @@ use App\Filament\Resources\Trainings\Pages\EditTraining;
 use App\Filament\Resources\Trainings\Pages\ListTrainings;
 use App\Filament\Resources\Trainings\Pages\ViewTraining;
 use App\Filament\Resources\Trainings\RelationManagers\CoachesRelationManager;
+use App\Filament\Resources\Trainings\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Trainings\RelationManagers\RegistrationsRelationManager;
+use App\Mail\RegistrationConfirmationMail;
 use App\Models\City;
 use App\Models\SportCategory;
 use App\Models\Team;
@@ -19,13 +23,17 @@ use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\TrainingSchedule;
 use App\Models\User;
+use App\Notifications\PaymentConfirmed;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -521,6 +529,136 @@ class TrainingResourceTest extends TestCase
             ->assertCanSeeTableRecords([$approved, $pending], inOrder: true)
             ->sortTable('status', 'desc')
             ->assertCanSeeTableRecords([$pending, $approved], inOrder: true);
+    }
+
+    public function test_admin_registration_with_notification_switched_on_emails_the_customer(): void
+    {
+        Mail::fake();
+
+        $training = Training::factory()->create(['team_id' => $this->team->id]);
+        $customer = User::factory()->create();
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $training,
+            'pageClass' => EditTraining::class,
+        ])
+            ->callAction(TestAction::make('create')->table(), [
+                'status' => RegistrationStatusEnum::Approved->value,
+                'send_notification' => true,
+                'user_id' => $customer->id,
+                'form_data' => [
+                    'meno' => $customer->first_name,
+                    'priezvisko' => $customer->last_name,
+                    'email' => $customer->email,
+                    'telefon' => '+421900111222',
+                ],
+            ])
+            ->assertHasNoActionErrors();
+
+        Mail::assertQueued(RegistrationConfirmationMail::class, fn ($mail) => $mail->hasTo($customer->email));
+    }
+
+    #[DataProvider('adminRegistrationStatuses')]
+    public function test_admin_registration_on_a_paid_training_bills_only_a_pending_registration(string $status, int $expectedPayments): void
+    {
+        Mail::fake();
+
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'price_amount' => 20.00,
+        ]);
+        $customer = User::factory()->create();
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $training,
+            'pageClass' => EditTraining::class,
+        ])
+            ->callAction(TestAction::make('create')->table(), [
+                'status' => $status,
+                'send_notification' => true,
+                'user_id' => $customer->id,
+                'form_data' => [
+                    'meno' => $customer->first_name,
+                    'priezvisko' => $customer->last_name,
+                    'email' => $customer->email,
+                    'telefon' => '+421900111222',
+                ],
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame($expectedPayments, $customer->payments()->count());
+    }
+
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function adminRegistrationStatuses(): array
+    {
+        return [
+            'approved' => [RegistrationStatusEnum::Approved->value, 0],
+            'pending' => [RegistrationStatusEnum::Pending->value, 1],
+        ];
+    }
+
+    public function test_payment_recorded_on_the_payments_tab_is_linked_to_the_registration_and_approves_it(): void
+    {
+        Notification::fake();
+
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'price_amount' => 20.00,
+        ]);
+        $registration = TrainingRegistration::factory()->pending()->create([
+            'training_id' => $training->id,
+            'payment_due_at' => now()->addDay(),
+        ]);
+
+        Livewire::test(PaymentsRelationManager::class, [
+            'ownerRecord' => $training,
+            'pageClass' => EditTraining::class,
+        ])
+            ->callAction(TestAction::make('create_payment')->table(), [
+                'registration_id' => $registration->id,
+                'amount' => 20.00,
+                'payment_method' => PaymentMethodEnum::CASH->value,
+                'status' => PaymentStatusEnum::COMPLETED->value,
+                'paid_at' => now(),
+                'notify_customer' => true,
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame(1, $registration->payments()->count());
+        $registration->refresh();
+        $this->assertSame(RegistrationStatusEnum::Approved, $registration->status);
+        $this->assertNull($registration->payment_due_at);
+        Notification::assertSentToTimes($registration->user, PaymentConfirmed::class, 1);
+    }
+
+    public function test_payment_recorded_on_a_registration_row_is_linked_to_the_registration(): void
+    {
+        Notification::fake();
+
+        $training = Training::factory()->create([
+            'team_id' => $this->team->id,
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'price_amount' => 20.00,
+        ]);
+        $registration = TrainingRegistration::factory()->pending()->create(['training_id' => $training->id]);
+
+        Livewire::test(RegistrationsRelationManager::class, [
+            'ownerRecord' => $training,
+            'pageClass' => EditTraining::class,
+        ])
+            ->callAction(TestAction::make('record_payment')->table($registration), [
+                'amount' => 20.00,
+                'payment_method' => PaymentMethodEnum::CASH->value,
+                'payment_status' => PaymentStatusEnum::COMPLETED->value,
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame(1, $registration->payments()->count());
     }
 
     /** @return array<string, mixed> */

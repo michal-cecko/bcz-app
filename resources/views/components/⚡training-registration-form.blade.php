@@ -26,6 +26,7 @@ new class extends Component
 
     public bool $gdprAgreed = false;
 
+    #[Locked]
     public string $registrationState = 'form';
 
     public ?string $selectedPaymentMethod = null;
@@ -76,7 +77,7 @@ new class extends Component
                 } elseif ($registration->status === RegistrationStatusEnum::Approved) {
                     // Re-check: membership-required training where membership expired/unpaid
                     $needsMembership = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED
-                        && ! $user->hasActiveMembershipForTeam($this->training->team_id);
+                        && ! $user->hasActiveMembershipForTeam($this->training->team_id, $this->training->membershipSeason());
 
                     // Re-check: paid training with no completed payment
                     $needsPayment = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID
@@ -162,6 +163,13 @@ new class extends Component
         $attributes['gdprAgreed'] = __('consent.privacy_policy');
 
         $this->validate($rules, [], $attributes);
+
+        // The last place may have been taken since this form was opened.
+        if ($this->training->isFull()) {
+            $this->registrationState = 'full';
+
+            return;
+        }
 
         $schema = $this->training->registration_form_schema ?? [];
 
@@ -252,6 +260,12 @@ new class extends Component
         // a team.
         if ($user && $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
             $this->enrollAsContinuousMember($user);
+
+            // Membership-required trainings owe a club membership fee rather than
+            // a per-training price. Issue it before the status is decided, so a
+            // member with a free membership is approved right away, and so the
+            // fee and its variable symbol exist in time for the welcome email.
+            $this->ensureMembershipFeeIssued($user);
         }
 
         $status = RegistrationService::determineRegistrationStatus($this->training, $user);
@@ -271,7 +285,9 @@ new class extends Component
         $this->registrationId = $registration->id;
 
         $payment = null;
-        if ($user && $status === RegistrationStatusEnum::Pending && $this->training->price_amount) {
+        if ($user && $status === RegistrationStatusEnum::Pending
+            && $this->training->pricing_type === TrainingPricingTypeEnum::PAID
+            && $this->training->price_amount) {
             $paymentService = app(PaymentService::class);
             $payment = $paymentService->createPendingPayment(
                 user: $user,
@@ -281,14 +297,6 @@ new class extends Component
                 currency: 'EUR',
             );
             $this->pendingPaymentId = $payment->id;
-        }
-
-        // Membership-required trainings owe a club membership fee rather than a
-        // per-training price. Issue it here so the fee — and its variable symbol —
-        // exists in time for the welcome email below, instead of only once the
-        // registrant comes back to the payment box on this page.
-        if ($user && $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
-            $this->ensureMembershipFeeIssued($user);
         }
 
         $confirmationRecipient = $user
@@ -352,6 +360,9 @@ new class extends Component
             'joined_at' => now(),
             'continuous_membership' => true,
         ]);
+
+        // The membership fee issued next checks this role on the same User instance.
+        $user->flushTeamRolesCache();
     }
 
     /**
@@ -361,11 +372,11 @@ new class extends Component
      */
     protected function ensureMembershipFeeIssued(User $user): void
     {
-        if ($user->hasActiveMembershipForTeam($this->training->team_id)) {
+        if ($user->hasActiveMembershipForTeam($this->training->team_id, $this->training->membershipSeason())) {
             return;
         }
 
-        $season = $this->training->team?->currentSeason;
+        $season = $this->training->membershipSeason();
 
         if (! $season) {
             return;
@@ -407,18 +418,24 @@ new class extends Component
         }
 
         if ($this->selectedPaymentMethod === PaymentMethodEnum::GOPAY->value) {
-            $user = auth()->user();
-            if (! $user) {
+            // The remembered registration, not auth(): a guest who has just
+            // submitted is not logged in.
+            $registration = $this->registrationId
+                ? TrainingRegistration::whereKey($this->registrationId)
+                    ->where('training_id', $this->training->id)
+                    ->first()
+                : null;
+            $user = $registration?->user;
+
+            // A membership-required training owes the membership fee, not the
+            // registration: its price_amount can be a stale value kept from
+            // when the training was paid.
+            if ($this->training->pricing_type !== TrainingPricingTypeEnum::PAID) {
                 return;
             }
 
-            $registration = TrainingRegistration::query()
-                ->where('training_id', $this->training->id)
-                ->where('user_id', $user->id)
-                ->latest()
-                ->first();
-
-            if (! $registration || ! $this->training->price) {
+            $amount = $registration?->getTotalPriceAmount() ?? 0;
+            if (! $user || $amount <= 0) {
                 return;
             }
 
@@ -428,8 +445,8 @@ new class extends Component
                     user: $user,
                     team: $this->training->team,
                     payable: $registration,
-                    amount: (float) $this->training->price,
-                    currency: $this->training->currency ?? 'EUR',
+                    amount: $amount,
+                    currency: $registration->getPriceCurrency(),
                 );
 
                 $this->redirect($result['url']);
@@ -591,7 +608,7 @@ new class extends Component
                 @php
                     $user = auth()->user();
                     $reg = $user ? \App\Models\TrainingRegistration::where('training_id', $training->id)->where('user_id', $user->id)->first() : null;
-                    $hasMembership = $user && $user->hasActiveMembershipForTeam($training->team_id);
+                    $hasMembership = $user && $user->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason());
                 @endphp
                 <div class="flex justify-between w-full">
                     <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_membership') }}</span>
@@ -624,9 +641,8 @@ new class extends Component
     @elseif($registrationState === 'membership_needed')
         @php
             $team = $training->team;
-            $season = $team->currentSeason;
+            $season = $training->membershipSeason();
             $enabledMethods = $team->getEnabledPaymentMethodKeys();
-            $feeLabel = $season ? number_format($season->proratedFee(), 2) . ' ' . ($season->fee_currency ?? 'EUR') : '';
             // Resolve the registration by the id this component remembered, not
             // via auth(): a guest who has just submitted is not logged in, and
             // one account can hold several athletes (a parent registering
@@ -646,6 +662,9 @@ new class extends Component
                     season: $season,
                 );
             }
+            $feeAmount = $membershipPayment ? (float) $membershipPayment->amount : ($season?->proratedFee() ?? 0);
+            $feeCurrency = $membershipPayment?->currency ?? $season?->fee_currency ?? 'EUR';
+            $feeLabel = $season ? number_format($feeAmount, 2) . ' ' . $feeCurrency : '';
         @endphp
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-6 text-center">
             <span class="text-[#DC2626] text-[10px] font-bold tracking-[2px]">{{ __('training_detail.state_membership_needed') }}</span>
@@ -675,8 +694,8 @@ new class extends Component
                 'enabledMethods' => $enabledMethods,
                 'selectedPaymentMethod' => $selectedPaymentMethod,
                 'feeLabel' => $feeLabel,
-                'feeAmount' => $season ? $season->proratedFee() : 0,
-                'feeCurrency' => $season->fee_currency ?? 'EUR',
+                'feeAmount' => $feeAmount,
+                'feeCurrency' => $feeCurrency,
                 'team' => $team,
                 'season' => $season,
                 'variableSymbol' => $membershipPayment?->formattedVariableSymbol(),

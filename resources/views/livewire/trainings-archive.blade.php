@@ -239,7 +239,7 @@
                         <div class="flex items-center justify-between pt-2">
                             @if($training->max_capacity)
                                 @php
-                                    $registered = $training->registrations_count;
+                                    $registered = $training->spot_holding_registrations_count;
                                     $remaining = max(0, $training->max_capacity - $registered);
                                     $fillPercent = ($registered / $training->max_capacity) * 100;
                                     $capacityColor = match(true) {

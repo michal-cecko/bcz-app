@@ -299,7 +299,7 @@ class RegistrationService
             return RegistrationStatusEnum::Approved;
         }
 
-        if ($training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED && $user?->hasActiveMembershipForTeam($training->team_id)) {
+        if ($training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED && $user?->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason())) {
             return RegistrationStatusEnum::Approved;
         }
 
@@ -318,7 +318,7 @@ class RegistrationService
         }
 
         if ($training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
-            if ($user?->hasActiveMembershipForTeam($training->team_id)) {
+            if ($user?->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason())) {
                 return 'membership_valid';
             }
 

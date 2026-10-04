@@ -225,13 +225,13 @@ class Training extends Model implements HasMedia, Linkable
     {
         return $query->where(function ($q) {
             $q->whereNull('team_season_id')
-                ->orWhereHas('season', fn ($s) => $s->where('ends_at', '>=', now()));
+                ->orWhereHas('season', fn ($s) => $s->where('ends_at', '>=', today()));
         });
     }
 
     public function scopeArchived($query)
     {
-        return $query->whereHas('season', fn ($s) => $s->where('ends_at', '<', now()));
+        return $query->whereHas('season', fn ($s) => $s->where('ends_at', '<', today()));
     }
 
     public function city(): BelongsTo
@@ -257,6 +257,18 @@ class Training extends Model implements HasMedia, Linkable
     public function effectiveBankAccountName(): ?string
     {
         return $this->bank_account_name ?: $this->team?->bank_account_name;
+    }
+
+    /**
+     * The season a membership-required training bills its membership for: the
+     * training's own season while it has not ended (it may start later, e.g. a
+     * January training booked in December), else the team's current one.
+     */
+    public function membershipSeason(): ?TeamSeason
+    {
+        $season = $this->season;
+
+        return $season && ! $season->isPast() ? $season : $this->team?->currentSeason;
     }
 
     /**
@@ -330,15 +342,26 @@ class Training extends Model implements HasMedia, Linkable
             ->withPivot('created_at');
     }
 
+    /**
+     * Registrations that take up a place. An unpaid (pending) registration keeps
+     * its place until it is paid or cancelled, so open payments cannot oversell
+     * the training.
+     */
+    public function spotHoldingRegistrations(): HasMany
+    {
+        return $this->registrations()->whereIn('status', [
+            RegistrationStatusEnum::Pending->value,
+            RegistrationStatusEnum::Approved->value,
+        ]);
+    }
+
     public function isFull(): bool
     {
         if ($this->max_capacity === null) {
             return false;
         }
 
-        return $this->registrations()
-            ->where('status', RegistrationStatusEnum::Approved->value)
-            ->count() >= $this->max_capacity;
+        return $this->spotHoldingRegistrations()->count() >= $this->max_capacity;
     }
 
     public function paymentMethods(): MorphToMany

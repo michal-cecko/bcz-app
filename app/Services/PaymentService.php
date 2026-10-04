@@ -16,8 +16,12 @@ use App\Models\TeamSeason;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Notifications\EventRegistrationPaymentDue;
+use App\Notifications\MembershipPaymentDue;
 use App\Notifications\PaymentConfirmed;
 use App\Notifications\TrainingPaymentConfirmed;
+use App\Notifications\TrainingRegistrationPaymentDue;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 
 class PaymentService
@@ -26,29 +30,38 @@ class PaymentService
         private GoPayService $goPayService,
     ) {}
 
+    /**
+     * Record a payment an admin took by hand. A completed one is run through
+     * {@see self::processPaymentCompleted()}, so the payable is only approved or
+     * activated once its completed payments cover the full price.
+     */
     public function recordManualPayment(
-        User $user,
-        Team $team,
+        ?User $user,
+        Team|string $team,
         Model $payable,
         float $amount,
         string $currency,
-        PaymentMethodEnum $paymentMethod,
+        PaymentMethodEnum|string $paymentMethod,
         ?string $notes = null,
         bool $notify = true,
+        PaymentStatusEnum $status = PaymentStatusEnum::COMPLETED,
+        ?CarbonInterface $paidAt = null,
     ): Payment {
+        $paymentMethod = $paymentMethod instanceof PaymentMethodEnum ? $paymentMethod : PaymentMethodEnum::from($paymentMethod);
+
         $payment = Payment::create([
-            'team_id' => $team->id,
-            'user_id' => $user->id,
-            'payer_name' => $user->name,
-            'payer_email' => $user->email,
+            'team_id' => $team instanceof Team ? $team->id : $team,
+            'user_id' => $user?->id,
+            'payer_name' => $user?->name,
+            'payer_email' => $user?->email,
             'payable_type' => $payable->getMorphClass(),
             'payable_id' => $payable->getKey(),
             'amount' => $amount,
             'currency' => $currency,
-            'status' => PaymentStatusEnum::COMPLETED,
+            'status' => $status,
             'payment_method' => $paymentMethod,
             'notes' => $notes,
-            'paid_at' => now(),
+            'paid_at' => $status === PaymentStatusEnum::COMPLETED ? ($paidAt ?? now()) : $paidAt,
         ]);
 
         if ($paymentMethod === PaymentMethodEnum::BANK_TRANSFER) {
@@ -56,11 +69,61 @@ class PaymentService
             $payment->update(['variable_symbol' => $this->variableSymbolFor($payment)]);
         }
 
-        $payment->setRelation('payable', $payable->fresh() ?? $payable);
-
-        $this->processPaymentCompleted($payment, $notify);
+        if ($status === PaymentStatusEnum::COMPLETED) {
+            $payment->setRelation('payable', $payable->fresh() ?? $payable);
+            $this->processPaymentCompleted($payment, $notify);
+        }
 
         return $payment;
+    }
+
+    /**
+     * Email the payer the payment request again, with the amount still owed and
+     * the open payment's link. Returns false when there is nothing to ask for:
+     * no payer, the item is no longer awaiting payment, or nothing is owed.
+     */
+    public function resendPaymentRequest(Model $payable): bool
+    {
+        $payable->loadMissing('user');
+        $user = $payable->user;
+
+        $notification = match (true) {
+            $payable instanceof Membership => $payable->status === MembershipStatusEnum::PENDING
+                && ! $payable->is_free
+                && $user?->isMembershipPayer($payable->team)
+                    ? new MembershipPaymentDue($payable)
+                    : null,
+            $payable instanceof TrainingRegistration => $payable->status === RegistrationStatusEnum::Pending
+                && $payable->training?->pricing_type === TrainingPricingTypeEnum::PAID
+                    ? new TrainingRegistrationPaymentDue($payable)
+                    : null,
+            $payable instanceof EventRegistration => $payable->status === RegistrationStatusEnum::Pending
+                    ? new EventRegistrationPaymentDue($payable)
+                    : null,
+            default => null,
+        };
+
+        if (! $notification || ! $user || $this->amountStillOwed($payable) <= 0) {
+            return false;
+        }
+
+        $user->notify($notification);
+
+        return true;
+    }
+
+    public function amountStillOwed(Payable $payable): float
+    {
+        if (! $payable instanceof Model) {
+            return 0.0;
+        }
+
+        $totalPaid = (float) $payable->payments()
+            ->where('status', PaymentStatusEnum::COMPLETED)
+            ->where('currency', $payable->getPriceCurrency())
+            ->sum('amount');
+
+        return max(0.0, round($payable->getTotalPriceAmount() - $totalPaid, 2));
     }
 
     /**
@@ -201,6 +264,10 @@ class PaymentService
 
         $isFullyPaid = $payable instanceof Payable && $this->isFullyPaid($payable);
 
+        if ($payable instanceof Payable) {
+            $this->settleOpenPayments($payable, $payment);
+        }
+
         if ($payable instanceof Membership) {
             if ($isFullyPaid && $payable->status !== MembershipStatusEnum::ACTIVE) {
                 $payable->update(['status' => MembershipStatusEnum::ACTIVE]);
@@ -233,6 +300,71 @@ class PaymentService
             if ($notify && $payment->user) {
                 $payment->user->notify(new PaymentConfirmed($payment));
             }
+        }
+    }
+
+    /**
+     * After a completed payment, keep the payable's other open payments in line:
+     * once it is paid in full they are cancelled, so nobody pays twice; while
+     * something is still owed, the newest one asks for exactly that and older
+     * duplicates are cancelled. GoPay payments are left alone, the gateway may
+     * still take them.
+     */
+    protected function settleOpenPayments(Payable&Model $payable, Payment $completed): void
+    {
+        $owed = $this->amountStillOwed($payable);
+
+        $openPayments = $payable->payments()
+            ->where('status', PaymentStatusEnum::PENDING)
+            ->whereNull('gopay_payment_id')
+            ->whereKeyNot($completed->getKey())
+            ->latest('created_at')
+            ->get();
+
+        $keep = $owed > 0
+            ? $openPayments->first(fn (Payment $payment): bool => $payment->currency === $payable->getPriceCurrency())
+            : null;
+
+        foreach ($openPayments as $openPayment) {
+            if ($keep?->is($openPayment)) {
+                $openPayment->update(['amount' => $owed]);
+            } else {
+                $openPayment->update(['status' => PaymentStatusEnum::CANCELLED]);
+            }
+        }
+    }
+
+    /**
+     * Put a payable back to waiting for payment when a payment that counted
+     * towards it was refunded, changed or deleted and the rest no longer covers
+     * the full price.
+     */
+    public function reopenIfNoLongerPaid(?Model $payable): void
+    {
+        if (! $payable instanceof Payable || $payable->getTotalPriceAmount() <= 0 || $this->isFullyPaid($payable)) {
+            return;
+        }
+
+        // The payment's cached payable can predate later edits; the resets
+        // below only write attributes that differ from what is loaded.
+        $payable->refresh();
+
+        // A new due date, same length as when first issued, and a fresh reminder,
+        // so the reminder and the expiry sweeps treat it like a new one.
+        if ($payable instanceof Membership && $payable->status === MembershipStatusEnum::ACTIVE) {
+            $payable->update([
+                'status' => MembershipStatusEnum::PENDING,
+                'payment_deadline_at' => now()->addDays($payable->season?->payment_deadline_days ?? 14),
+                'payment_reminder_sent_at' => null,
+            ]);
+        }
+
+        if ($payable instanceof TrainingRegistration && $payable->status === RegistrationStatusEnum::Approved) {
+            $payable->update(['status' => RegistrationStatusEnum::Pending, 'payment_due_at' => now()->addDays(7), 'payment_reminder_sent_at' => null]);
+        }
+
+        if ($payable instanceof EventRegistration && $payable->status === RegistrationStatusEnum::Approved) {
+            $payable->update(['status' => RegistrationStatusEnum::Pending, 'payment_due_at' => now()->addDays(14), 'payment_reminder_sent_at' => null]);
         }
     }
 
@@ -303,6 +435,9 @@ class PaymentService
     /**
      * Return the latest pending Payment for this user+payable, creating one if missing.
      * Used by widgets that need a stable VS to display before the user picks a method.
+     *
+     * For a payable, the payment asks only for what is still owed after its
+     * completed (partial) payments, and an older one is brought up to date.
      */
     public function ensurePendingPaymentFor(
         User $user,
@@ -311,8 +446,12 @@ class PaymentService
         float $amount,
         string $currency = 'EUR',
     ): Payment {
+        if ($payable instanceof Payable) {
+            $amount = $this->amountStillOwed($payable);
+        }
+
+        // Any open payment on the payable counts, also one recorded for a guest.
         $existing = Payment::query()
-            ->where('user_id', $user->id)
             ->where('payable_type', $payable->getMorphClass())
             ->where('payable_id', $payable->getKey())
             ->where('status', PaymentStatusEnum::PENDING)
@@ -320,6 +459,11 @@ class PaymentService
             ->first();
 
         if ($existing) {
+            if ($payable instanceof Payable && ! $existing->gopay_payment_id && $amount > 0
+                && $existing->currency === $currency && (float) $existing->amount !== $amount) {
+                $existing->update(['amount' => $amount]);
+            }
+
             return $existing;
         }
 
@@ -327,37 +471,48 @@ class PaymentService
     }
 
     /**
-     * Return the pending membership fee payment for the user on this team's season,
-     * creating both the Membership and its Payment when they do not exist yet.
-     *
-     * The fee comes from {@see TeamSeason::proratedFee()}: the full season fee, or,
-     * when the season has prorating switched on, only the remaining months from today.
+     * The open payment the payer should use for what is still owed on the
+     * payable, created if missing. Null when nothing is owed.
      */
-    public function ensurePendingMembershipPayment(User $user, Team $team, TeamSeason $season): Payment
+    public function openPaymentFor(Payable&Model $payable, User $user, ?Team $team): ?Payment
     {
-        $membership = Membership::firstOrCreate(
-            [
-                'team_id' => $team->id,
-                'user_id' => $user->id,
-                'team_season_id' => $season->id,
-            ],
-            [
-                'status' => MembershipStatusEnum::PENDING,
-                'fee_amount' => $season->proratedFee(),
-                'fee_currency' => $season->fee_currency ?? 'EUR',
-                'is_free' => false,
-                'payment_deadline_at' => now()->addDays($season->payment_deadline_days ?? 14),
-                'starts_at' => $season->starts_at,
-                'ends_at' => $season->ends_at,
-            ],
+        if (! $team || $this->amountStillOwed($payable) <= 0) {
+            return null;
+        }
+
+        return $this->ensurePendingPaymentFor(
+            user: $user,
+            team: $team,
+            payable: $payable,
+            amount: $this->amountStillOwed($payable),
+            currency: $payable->getPriceCurrency(),
         );
+    }
+
+    /**
+     * Return the pending membership fee payment for the user on this team's season,
+     * creating the Membership and its Payment when they do not exist yet. Returns
+     * null when the user owes nothing: outside membership billing, a free
+     * membership, or one that is already active.
+     *
+     * The payment always charges the membership's own fee, which decides when the
+     * membership counts as paid; see {@see SeasonService::findOrCreateMembership()}.
+     */
+    public function ensurePendingMembershipPayment(User $user, Team $team, TeamSeason $season): ?Payment
+    {
+        $membership = app(SeasonService::class)->findOrCreateMembership($season, $user);
+
+        if (! $membership || $membership->is_free || $membership->status === MembershipStatusEnum::ACTIVE
+            || $this->amountStillOwed($membership) <= 0) {
+            return null;
+        }
 
         return $this->ensurePendingPaymentFor(
             user: $user,
             team: $team,
             payable: $membership,
-            amount: (float) $season->proratedFee(),
-            currency: $season->fee_currency ?? 'EUR',
+            amount: $membership->getTotalPriceAmount(),
+            currency: $membership->getPriceCurrency(),
         );
     }
 

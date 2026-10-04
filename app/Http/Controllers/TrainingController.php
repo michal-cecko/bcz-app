@@ -31,7 +31,7 @@ class TrainingController extends Controller
         abort_unless($training->team_id === $team->id, 404);
 
         $training->load(['media', 'sportCategory.media', 'coaches.coachProfile', 'coaches.certifications', 'team', 'city', 'schedules'])
-            ->loadCount('registrations');
+            ->loadCount('spotHoldingRegistrations');
 
         return view('pages.trainings.show', compact('training'));
     }

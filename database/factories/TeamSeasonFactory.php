@@ -20,7 +20,7 @@ class TeamSeasonFactory extends Factory
             'ends_at' => now()->addMonths(9)->endOfMonth(),
             'fee_amount' => fake()->randomFloat(2, 20, 100),
             'fee_currency' => 'EUR',
-            'prorate_fee' => false,
+            'prorate_fee' => true,
             'max_capacity' => null,
             'payment_deadline_days' => 14,
         ];
@@ -30,6 +30,13 @@ class TeamSeasonFactory extends Factory
     {
         return $this->state(fn () => [
             'prorate_fee' => true,
+        ]);
+    }
+
+    public function fullFee(): static
+    {
+        return $this->state(fn () => [
+            'prorate_fee' => false,
         ]);
     }
 

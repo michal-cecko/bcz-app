@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\MembershipStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Models\Membership;
 use Illuminate\Console\Command;
 
@@ -18,6 +19,8 @@ class CancelUnpaidMembershipsCommand extends Command
             ->where('is_free', false)
             ->whereNotNull('payment_deadline_at')
             ->where('payment_deadline_at', '<', now())
+            // A partly paid membership stays open, so the payments already made keep counting.
+            ->whereDoesntHave('payments', fn ($query) => $query->where('status', PaymentStatusEnum::COMPLETED))
             ->update(['status' => MembershipStatusEnum::CANCELLED]);
 
         $this->info("Cancelled {$count} unpaid membership(s).");

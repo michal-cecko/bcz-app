@@ -12,9 +12,7 @@ use App\Filament\Actions\SendEmailBulkAction;
 use App\Filament\Resources\EventRegistrations\EventRegistrationResource;
 use App\Models\Event;
 use App\Models\EventRegistration;
-use App\Models\Payment;
 use App\Models\User;
-use App\Notifications\PaymentConfirmed;
 use App\Services\EmailService;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
@@ -84,8 +82,7 @@ class RegistrationsRelationManager extends RelationManager
                         Toggle::make('send_notification')
                             ->label('Odoslať notifikáciu')
                             ->inline(false)
-                            ->default(true)
-                            ->dehydrated(false),
+                            ->default(true),
                     ]),
                 Select::make('athlete_category_id')
                     ->label('Kategória')
@@ -192,14 +189,18 @@ class RegistrationsRelationManager extends RelationManager
                         $org = $event->organization;
 
                         $payment = null;
-                        if ($org?->pricing_type === EventPricingTypeEnum::Paid && $org->price_amount) {
+                        // Only a pending registration still owes; an admin who picks
+                        // Approved has settled the fee some other way.
+                        if ($record->status === RegistrationStatusEnum::Pending
+                            && $org?->pricing_type === EventPricingTypeEnum::Paid
+                            && $org->price_amount) {
                             $paymentService = app(PaymentService::class);
                             $payment = $paymentService->createPendingPayment(
                                 user: $user,
                                 team: $event->team,
                                 payable: $record,
-                                amount: (float) $org->price_amount,
-                                currency: $org->price_currency ?? 'EUR',
+                                amount: $record->getTotalPriceAmount(),
+                                currency: $record->getPriceCurrency(),
                             );
                         }
 
@@ -224,6 +225,7 @@ class RegistrationsRelationManager extends RelationManager
             ])
             ->recordActions([
                 SendEmailAction::make('send_email')
+                    ->paymentRequestTemplate()
                     ->contextVariables(['nazov_eventu', 'datum_eventu'])
                     ->resolveRecipients(function ($record) {
                         return $this->resolveEventRegistrationRecipient($record);
@@ -241,17 +243,13 @@ class RegistrationsRelationManager extends RelationManager
                     })
                     ->modalHeading('Zaznamenať platbu')
                     ->schema(function () {
-                        /** @var Event $event */
-                        $event = $this->getOwnerRecord();
-                        $org = $event->organization;
-
                         return [
                             TextInput::make('amount')
                                 ->label('Suma')
                                 ->numeric()
                                 ->required()
-                                ->default($org?->price_amount)
-                                ->prefix($org?->price_currency ?? '€'),
+                                ->default(fn (EventRegistration $record): float => app(PaymentService::class)->amountStillOwed($record))
+                                ->prefix(fn (EventRegistration $record): string => $record->getPriceCurrency()),
                             Select::make('payment_method')
                                 ->label('Metóda platby')
                                 ->options([
@@ -275,36 +273,19 @@ class RegistrationsRelationManager extends RelationManager
                         ];
                     })
                     ->action(function (array $data, EventRegistration $record): void {
-                        /** @var Event $event */
-                        $event = $this->getOwnerRecord();
-                        $org = $event->organization;
-                        $user = $record->user;
-                        $paymentStatus = $data['payment_status'] instanceof PaymentStatusEnum
-                            ? $data['payment_status']
-                            : PaymentStatusEnum::from($data['payment_status']);
-
-                        $payment = Payment::create([
-                            'team_id' => $event->team_id,
-                            'user_id' => $record->user_id,
-                            'payer_name' => $user?->name,
-                            'payer_email' => $user?->email,
-                            'payable_type' => $record->getMorphClass(),
-                            'payable_id' => $record->id,
-                            'amount' => $data['amount'],
-                            'currency' => $org?->price_currency ?? 'EUR',
-                            'status' => $paymentStatus,
-                            'payment_method' => $data['payment_method'],
-                            'paid_at' => now(),
-                            'notes' => $data['notes'] ?? null,
-                        ]);
-
-                        if ($paymentStatus === PaymentStatusEnum::COMPLETED) {
-                            $record->update(['status' => RegistrationStatusEnum::Approved]);
-                        }
-
-                        if (! empty($data['notify_customer']) && $paymentStatus === PaymentStatusEnum::COMPLETED && $user) {
-                            $user->notify(new PaymentConfirmed($payment));
-                        }
+                        app(PaymentService::class)->recordManualPayment(
+                            user: $record->user,
+                            team: $this->getOwnerRecord()->team_id,
+                            payable: $record,
+                            amount: (float) $data['amount'],
+                            currency: $record->getPriceCurrency(),
+                            paymentMethod: $data['payment_method'],
+                            notes: $data['notes'] ?? null,
+                            notify: ! empty($data['notify_customer']),
+                            status: $data['payment_status'] instanceof PaymentStatusEnum
+                                ? $data['payment_status']
+                                : PaymentStatusEnum::from($data['payment_status']),
+                        );
 
                         Notification::make()
                             ->success()
@@ -320,6 +301,7 @@ class RegistrationsRelationManager extends RelationManager
             ])
             ->toolbarActions([
                 SendEmailBulkAction::make('send_email_bulk')
+                    ->paymentRequestTemplate()
                     ->contextVariables(['nazov_eventu', 'datum_eventu'])
                     ->resolveRecipients(function ($record) {
                         return $this->resolveEventRegistrationRecipient($record);
@@ -411,7 +393,7 @@ class RegistrationsRelationManager extends RelationManager
             }
         }
         $unique = $emails->unique()->values();
-        $list = $unique->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+        $list = $unique->map(fn (string $e) => '<span style="display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;">'.e($e).'</span>')->implode(' ');
 
         return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$unique->count().')')

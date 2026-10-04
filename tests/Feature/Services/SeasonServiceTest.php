@@ -12,6 +12,7 @@ use App\Notifications\MembershipPaymentDue;
 use App\Services\SeasonService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class SeasonServiceTest extends TestCase
@@ -85,6 +86,78 @@ class SeasonServiceTest extends TestCase
         $this->assertCount(1, $season->memberships);
     }
 
+    public function test_create_season_bills_a_member_with_two_team_roles_once(): void
+    {
+        Notification::fake();
+
+        $team = Team::factory()->create(['membership_enabled' => true]);
+        $coachWhoTrains = User::factory()->create();
+
+        $team->members()->attach($coachWhoTrains, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()]);
+        $team->members()->attach($coachWhoTrains, ['role' => RoleEnum::COACH->value, 'is_active' => true, 'joined_at' => now()]);
+
+        $season = $this->service->createSeasonWithMemberships($team, [
+            'name' => 'Test',
+            'starts_at' => now(),
+            'ends_at' => now()->addMonths(6),
+            'fee_amount' => 50.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 14,
+        ]);
+
+        $this->assertCount(1, $season->memberships);
+        Notification::assertSentToTimes($coachWhoTrains, MembershipPaymentDue::class, 1);
+    }
+
+    public function test_find_or_create_membership_follows_the_season_billing_rules(): void
+    {
+        Role::firstOrCreate(['name' => RoleEnum::CUSTOMER->value, 'guard_name' => 'web']);
+
+        $team = Team::factory()->create();
+        $season = TeamSeason::factory()->create(['team_id' => $team->id, 'fee_amount' => 80.00]);
+
+        $payer = User::factory()->create();
+        $payer->assignRole(RoleEnum::CUSTOMER->value);
+        $freeMember = User::factory()->create(['has_free_membership' => true]);
+        $freeMember->assignRole(RoleEnum::CUSTOMER->value);
+        $coachOnly = User::factory()->create();
+        $team->members()->attach($coachOnly, ['role' => RoleEnum::COACH->value, 'is_active' => true]);
+
+        $paid = $this->service->findOrCreateMembership($season, $payer);
+        $this->assertSame(MembershipStatusEnum::PENDING, $paid->status);
+        $this->assertEquals(80.00, (float) $paid->fee_amount);
+        $this->assertTrue($paid->is($this->service->findOrCreateMembership($season, $payer)));
+
+        $free = $this->service->findOrCreateMembership($season, $freeMember);
+        $this->assertSame(MembershipStatusEnum::ACTIVE, $free->status);
+        $this->assertTrue($free->is_free);
+        $this->assertEquals(0.0, (float) $free->fee_amount);
+
+        $this->assertNull($this->service->findOrCreateMembership($season, $coachOnly));
+        $this->assertSame(0, Membership::where('user_id', $coachOnly->id)->count());
+    }
+
+    public function test_season_created_mid_season_bills_existing_members_for_the_months_left(): void
+    {
+        Notification::fake();
+        $this->travelTo('2026-10-03 10:00:00');
+
+        $team = Team::factory()->create(['membership_enabled' => true]);
+        $member = User::factory()->create();
+        $team->members()->attach($member, ['role' => RoleEnum::ATHLETE->value, 'is_active' => true, 'joined_at' => now()]);
+
+        $season = $this->service->createSeasonWithMemberships($team, [
+            'name' => 'Jesenná sezóna 2026',
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+            'fee_amount' => 80.00,
+            'fee_currency' => 'EUR',
+            'payment_deadline_days' => 14,
+        ]);
+
+        $this->assertEquals(60.00, (float) $season->memberships()->sole()->fee_amount);
+    }
+
     public function test_add_mid_season_member(): void
     {
         $season = TeamSeason::factory()->prorated()->create([
@@ -105,7 +178,7 @@ class SeasonServiceTest extends TestCase
 
     public function test_add_mid_season_member_pays_full_fee_when_season_is_not_prorated(): void
     {
-        $season = TeamSeason::factory()->create([
+        $season = TeamSeason::factory()->fullFee()->create([
             'starts_at' => now()->subMonths(4)->startOfMonth(),
             'ends_at' => now()->addMonths(4)->endOfMonth(),
             'fee_amount' => 80.00,

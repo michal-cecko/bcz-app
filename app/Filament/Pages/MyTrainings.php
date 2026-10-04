@@ -124,9 +124,9 @@ class MyTrainings extends Page implements HasTable
                         if (! $training->max_capacity) {
                             return '-';
                         }
-                        $approved = $training->registrations()->where('status', RegistrationStatusEnum::Approved)->count();
+                        $taken = $training->spotHoldingRegistrations()->count();
 
-                        return "{$approved}/{$training->max_capacity}";
+                        return "{$taken}/{$training->max_capacity}";
                     }),
                 TextColumn::make('status')
                     ->label('Stav')

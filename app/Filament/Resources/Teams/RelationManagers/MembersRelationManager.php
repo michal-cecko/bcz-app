@@ -9,6 +9,7 @@ use App\Filament\Actions\SendEmailAction;
 use App\Filament\Actions\SendEmailBulkAction;
 use App\Filament\Resources\Users\UserResource;
 use App\Mail\TeamInvitationMail;
+use App\Models\Membership;
 use App\Models\TeamInvitation;
 use App\Models\TeamSeason;
 use App\Models\User;
@@ -191,7 +192,7 @@ class MembersRelationManager extends RelationManager
                                 $team = $livewire->getOwnerRecord();
 
                                 return TeamSeason::where('team_id', $team->id)
-                                    ->where('ends_at', '>=', now())
+                                    ->where('ends_at', '>=', today())
                                     ->orderBy('starts_at', 'desc')
                                     ->pluck('name', 'id')
                                     ->toArray();
@@ -245,13 +246,31 @@ class MembersRelationManager extends RelationManager
                             return;
                         }
 
+                        $alreadyMember = Membership::query()
+                            ->where('user_id', $record->id)
+                            ->where('team_season_id', $season->id)
+                            ->exists();
+
+                        if ($alreadyMember) {
+                            Notification::make()
+                                ->title('Členstvo pre túto sezónu už existuje.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
                         $seasonService = app(SeasonService::class);
 
-                        if ($data['is_free'] ?? false) {
-                            $membership = $seasonService->addMidSeasonMember($season, $record);
+                        $membership = $seasonService->addMidSeasonMember($season, $record);
+
+                        if (($data['is_free'] ?? false) || (float) $data['fee_amount'] <= 0) {
                             $seasonService->markMembershipFree($membership);
                         } else {
-                            $seasonService->addMidSeasonMember($season, $record);
+                            $membership->update([
+                                'fee_amount' => $data['fee_amount'],
+                                'fee_currency' => $data['fee_currency'],
+                            ]);
                         }
 
                         Notification::make()
@@ -337,7 +356,7 @@ class MembersRelationManager extends RelationManager
     protected function buildMembersRecipientsPlaceholder(): Placeholder
     {
         $emails = $this->getOwnerRecord()->members->pluck('email')->unique()->values();
-        $list = $emails->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+        $list = $emails->map(fn (string $e) => '<span style="display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;">'.e($e).'</span>')->implode(' ');
 
         return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$emails->count().')')

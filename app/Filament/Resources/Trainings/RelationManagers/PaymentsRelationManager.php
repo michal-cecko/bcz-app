@@ -9,7 +9,8 @@ use App\Filament\Resources\Payments\PaymentResource;
 use App\Models\Payment;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
-use App\Notifications\PaymentConfirmed;
+use App\Services\PaymentService;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -121,29 +122,20 @@ class PaymentsRelationManager extends RelationManager
                         $registration = TrainingRegistration::find($data['registration_id']);
                         $training = $this->getOwnerRecord();
 
-                        $user = $registration->user;
-                        $paymentStatus = $data['status'] instanceof PaymentStatusEnum
-                            ? $data['status']
-                            : PaymentStatusEnum::from($data['status']);
-
-                        $payment = Payment::create([
-                            'team_id' => $training->team_id,
-                            'user_id' => $registration->user_id,
-                            'payer_name' => $user?->name,
-                            'payer_email' => $user?->email,
-                            'payable_type' => TrainingRegistration::class,
-                            'payable_id' => $registration->id,
-                            'amount' => $data['amount'],
-                            'currency' => 'EUR',
-                            'status' => $paymentStatus,
-                            'payment_method' => $data['payment_method'],
-                            'paid_at' => $data['paid_at'],
-                            'notes' => $data['notes'] ?? null,
-                        ]);
-
-                        if (! empty($data['notify_customer']) && $paymentStatus === PaymentStatusEnum::COMPLETED && $user) {
-                            $user->notify(new PaymentConfirmed($payment));
-                        }
+                        app(PaymentService::class)->recordManualPayment(
+                            user: $registration->user,
+                            team: $training->team_id,
+                            payable: $registration,
+                            amount: (float) $data['amount'],
+                            currency: $registration->getPriceCurrency(),
+                            paymentMethod: $data['payment_method'],
+                            notes: $data['notes'] ?? null,
+                            notify: ! empty($data['notify_customer']),
+                            status: $data['status'] instanceof PaymentStatusEnum
+                                ? $data['status']
+                                : PaymentStatusEnum::from($data['status']),
+                            paidAt: filled($data['paid_at'] ?? null) ? Carbon::parse($data['paid_at']) : null,
+                        );
 
                         Notification::make()
                             ->success()

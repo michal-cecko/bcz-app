@@ -44,6 +44,12 @@ class SendEmailBulkAction extends BulkAction
             ->modalSubmitActionLabel('Áno, odoslať'));
 
         $this->action(function (array $data, Collection $records): void {
+            if ($this->isPaymentRequest($data['template_id'] ?? null)) {
+                $this->sendPaymentRequests($records);
+
+                return;
+            }
+
             $allRecipients = [];
 
             foreach ($records as $record) {
@@ -127,7 +133,7 @@ class SendEmailBulkAction extends BulkAction
                 ->content(new HtmlString('<span style="color:#9ca3af;">Žiadni príjemcovia</span>'));
         }
 
-        $list = $unique->map(fn (string $e) => "<span style=\"display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;\">{$e}</span>")->implode(' ');
+        $list = $unique->map(fn (string $e) => '<span style="display:inline-block;padding:2px 10px;margin:2px;border-radius:9999px;background:#e5e7eb;font-size:13px;">'.e($e).'</span>')->implode(' ');
 
         return Placeholder::make('recipients_info')
             ->label('Príjemcovia ('.$unique->count().')')

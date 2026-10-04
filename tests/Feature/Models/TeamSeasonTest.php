@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Models;
 
+use App\Enums\MembershipStatusEnum;
+use App\Enums\RoleEnum;
 use App\Models\Membership;
 use App\Models\Team;
 use App\Models\TeamSeason;
@@ -10,6 +12,7 @@ use App\Services\PaymentService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class TeamSeasonTest extends TestCase
@@ -147,14 +150,30 @@ class TeamSeasonTest extends TestCase
     }
 
     /**
-     * Regression: a 80 EUR September-December season was charging 53.33 EUR to
-     * members registering on 2 October (80 / 3 truncated months * 2 truncated months).
+     * A member joining on 2 October owes October, November and December. The
+     * old month count charged 53.33 here (80 / 3 truncated months * 2).
      */
-    public function test_season_fee_is_not_prorated_by_default_mid_season(): void
+    public function test_season_fee_is_prorated_by_default_mid_season(): void
     {
         $this->travelTo('2026-10-02 16:16:00');
 
-        $season = TeamSeason::factory()->create([
+        $season = TeamSeason::create([
+            'team_id' => Team::factory()->create()->id,
+            'name' => 'Jesenná sezóna 2026',
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+            'fee_amount' => 80.00,
+            'payment_deadline_days' => 14,
+        ]);
+
+        $this->assertSame(60.0, $season->fresh()->proratedFee());
+    }
+
+    public function test_season_with_prorating_switched_off_charges_the_full_fee_mid_season(): void
+    {
+        $this->travelTo('2026-10-02 16:16:00');
+
+        $season = TeamSeason::factory()->fullFee()->create([
             'starts_at' => '2026-09-01',
             'ends_at' => '2026-12-31',
             'fee_amount' => 80.00,
@@ -163,7 +182,7 @@ class TeamSeasonTest extends TestCase
         $this->assertSame(80.0, $season->fresh()->proratedFee());
     }
 
-    public function test_membership_payment_charges_full_season_fee_mid_season_by_default(): void
+    public function test_membership_payment_charges_the_remaining_months_mid_season(): void
     {
         $this->travelTo('2026-10-02 16:16:00');
 
@@ -175,17 +194,55 @@ class TeamSeasonTest extends TestCase
             'fee_amount' => 80.00,
         ]);
 
-        $payment = app(PaymentService::class)->ensurePendingMembershipPayment(User::factory()->create(), $team, $season->fresh());
+        $member = User::factory()->create();
+        $member->assignRole(Role::firstOrCreate(['name' => RoleEnum::CUSTOMER->value, 'guard_name' => 'web']));
 
-        $this->assertEquals(80.00, (float) $payment->amount);
-        $this->assertEquals(80.00, (float) $payment->payable->fee_amount);
+        $payment = app(PaymentService::class)->ensurePendingMembershipPayment($member, $team, $season->fresh());
+
+        $this->assertEquals(60.00, (float) $payment->amount);
+        $this->assertEquals(60.00, (float) $payment->payable->fee_amount);
     }
 
-    public function test_new_season_defaults_to_full_fee(): void
+    public function test_membership_payment_charges_the_fee_the_existing_membership_was_issued_with(): void
     {
-        $season = TeamSeason::factory()->create();
+        $this->travelTo('2026-11-15 10:00:00');
 
-        $this->assertFalse($season->fresh()->prorate_fee);
+        $team = Team::factory()->create();
+        $user = User::factory()->create();
+        $season = TeamSeason::factory()->prorated()->create([
+            'team_id' => $team->id,
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+            'fee_amount' => 80.00,
+        ]);
+
+        // Issued in full when the season was created, before the member signed up.
+        Membership::factory()->create([
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+            'team_season_id' => $season->id,
+            'status' => MembershipStatusEnum::PENDING,
+            'fee_amount' => 80.00,
+            'fee_currency' => 'EUR',
+        ]);
+
+        $payment = app(PaymentService::class)->ensurePendingMembershipPayment($user, $team, $season->fresh());
+
+        $this->assertEquals(80.00, (float) $payment->amount);
+    }
+
+    public function test_new_season_prorates_by_default(): void
+    {
+        $season = TeamSeason::create([
+            'team_id' => Team::factory()->create()->id,
+            'name' => 'Nová sezóna',
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-12-31',
+            'fee_amount' => 80.00,
+            'payment_deadline_days' => 14,
+        ]);
+
+        $this->assertTrue($season->fresh()->prorate_fee);
     }
 
     public function test_total_months_counts_calendar_months_inclusive(): void

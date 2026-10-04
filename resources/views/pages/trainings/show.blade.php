@@ -18,7 +18,7 @@
             $timeRange .= ' - ' . \Carbon\Carbon::createFromFormat('H:i:s', $training->start_time)->addMinutes($training->duration_minutes)->format('H:i');
         }
     }
-    $registeredCount = $training->registrations_count;
+    $registeredCount = $training->spot_holding_registrations_count;
     $remaining = $training->max_capacity ? max(0, $training->max_capacity - $registeredCount) : null;
     $capacityPercent = $training->max_capacity ? min(100, round(($registeredCount / $training->max_capacity) * 100)) : 0;
     $capacityColor = match(true) {

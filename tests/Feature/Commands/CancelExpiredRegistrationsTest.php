@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Commands;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationStatusEnum;
+use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Payment;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
@@ -52,19 +54,65 @@ class CancelExpiredRegistrationsTest extends TestCase
         $this->assertEquals(RegistrationStatusEnum::Pending, $registration->fresh()->status);
     }
 
-    public function test_does_not_cancel_registration_with_completed_payment(): void
+    public function test_does_not_cancel_a_registration_paid_in_full(): void
     {
-        $registration = TrainingRegistration::factory()->pending()->create([
-            'payment_due_at' => now()->subDay(),
-        ]);
+        $registration = $this->expiredPaidTrainingRegistration();
 
-        Payment::factory()->forTrainingRegistration($registration)->create();
+        Payment::factory()->forTrainingRegistration($registration)->create(['amount' => 25.00, 'currency' => 'EUR']);
 
         $this->artisan('registrations:cancel-expired')
             ->expectsOutputToContain('No expired registrations found.')
             ->assertExitCode(0);
 
         $this->assertEquals(RegistrationStatusEnum::Pending, $registration->fresh()->status);
+    }
+
+    public function test_cancels_a_partly_paid_registration_and_its_open_payment(): void
+    {
+        $registration = $this->expiredPaidTrainingRegistration();
+
+        Payment::factory()->forTrainingRegistration($registration)->create(['amount' => 10.00, 'currency' => 'EUR']);
+        $open = Payment::factory()->forTrainingRegistration($registration)->create([
+            'amount' => 15.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::PENDING,
+        ]);
+
+        $this->artisan('registrations:cancel-expired')
+            ->expectsOutputToContain('Cancelled 1 expired registration(s).')
+            ->assertExitCode(0);
+
+        $this->assertEquals(RegistrationStatusEnum::Cancelled, $registration->fresh()->status);
+        $this->assertEquals(PaymentStatusEnum::CANCELLED, $open->fresh()->status);
+    }
+
+    public function test_leaves_an_open_gopay_payment_alone(): void
+    {
+        $registration = $this->expiredPaidTrainingRegistration();
+
+        $gopay = Payment::factory()->gopay()->forTrainingRegistration($registration)->create([
+            'amount' => 25.00,
+            'currency' => 'EUR',
+            'status' => PaymentStatusEnum::PENDING,
+        ]);
+
+        $this->artisan('registrations:cancel-expired')->assertExitCode(0);
+
+        $this->assertEquals(RegistrationStatusEnum::Cancelled, $registration->fresh()->status);
+        $this->assertEquals(PaymentStatusEnum::PENDING, $gopay->fresh()->status);
+    }
+
+    private function expiredPaidTrainingRegistration(): TrainingRegistration
+    {
+        $training = Training::factory()->create([
+            'pricing_type' => TrainingPricingTypeEnum::PAID,
+            'price_amount' => 25.00,
+        ]);
+
+        return TrainingRegistration::factory()->pending()->create([
+            'training_id' => $training->id,
+            'payment_due_at' => now()->subDay(),
+        ]);
     }
 
     /**
