@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Training;
 use App\Notifications\TrainingSpotAvailable;
-use Illuminate\Support\Facades\Notification;
 
 class TrainingCapacityService
 {
@@ -23,15 +22,15 @@ class TrainingCapacityService
 
     public static function notifyWaitlist(Training $training): void
     {
-        $waitlistEntries = $training->waitlistEntries()->with('user')->get();
+        $waitlistEntries = $training->waitlistEntries()->with(['user', 'member'])->get();
 
         if ($waitlistEntries->isEmpty()) {
             return;
         }
 
-        $users = $waitlistEntries->pluck('user')->filter();
-
-        Notification::send($users, new TrainingSpotAvailable($training));
+        foreach ($waitlistEntries as $entry) {
+            $entry->user?->notify(new TrainingSpotAvailable($training, $entry->member));
+        }
 
         $training->waitlistEntries()->delete();
     }

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\GenderEnum;
 use App\Enums\RegistrationStatusEnum;
+use App\Filament\Concerns\HasFamilyMemberSelection;
 use App\Models\City;
 use App\Models\SportCategory;
 use App\Models\Training;
@@ -32,6 +33,7 @@ use Livewire\Attributes\Url;
 
 class MyTrainings extends Page implements HasTable
 {
+    use HasFamilyMemberSelection;
     use InteractsWithTable;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
@@ -68,14 +70,14 @@ class MyTrainings extends Page implements HasTable
     {
         $user = auth()->user();
 
-        if ($user?->gender && ! request()->has('genderFilter')) {
+        if (! config('family.enabled') && $user?->gender && ! request()->has('genderFilter')) {
             $this->genderFilter = $user->gender->value;
         }
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->isMemberLevel() ?? false;
+        return (auth()->user()?->isMemberLevel() ?? false) || (config('family.enabled') && (auth()->user()?->members()->exists() ?? false));
     }
 
     public function table(Table $table): Table
@@ -85,7 +87,7 @@ class MyTrainings extends Page implements HasTable
         return $table
             ->query(
                 TrainingRegistration::query()
-                    ->where('user_id', auth()->id())
+                    ->managedBy(auth()->user())->when(config('family.enabled') && $this->memberId, fn ($query) => $query->where('member_id', $this->familyMember()->id))
                     ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
                     ->whereHas('training', fn (Builder $q) => $q
                         // Only scope by team in the tenant-bound admin panel; the
@@ -97,6 +99,7 @@ class MyTrainings extends Page implements HasTable
                     ->with(['training.sportCategory', 'training.coaches', 'training.city', 'training.season'])
             )
             ->columns([
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
                 TextColumn::make('training.title')
                     ->label('Tréning')
                     ->formatStateUsing(fn ($record): string => $record->training->getTranslation('title', app()->getLocale()) ?: $record->training->getTranslation('title', 'sk'))
@@ -144,7 +147,7 @@ class MyTrainings extends Page implements HasTable
         $locale = app()->getLocale();
 
         $historyRegistrations = TrainingRegistration::query()
-            ->where('user_id', auth()->id())
+            ->managedBy(auth()->user())->when(config('family.enabled') && $this->memberId, fn ($query) => $query->where('member_id', $this->familyMember()->id))
             ->whereHas('training', fn (Builder $q) => $q->when($team, fn (Builder $q) => $q->where('team_id', $team->id)))
             ->where(function (Builder $q) {
                 $q->where('status', RegistrationStatusEnum::Cancelled)
@@ -174,7 +177,7 @@ class MyTrainings extends Page implements HasTable
             $components[] = Section::make($seasonName.($dateRange ? " ({$dateRange})" : ''))
                 ->schema(
                     $registrations->map(fn ($reg) => Placeholder::make('reg_'.$reg->id)
-                        ->label($reg->training->getTranslation('title', $locale) ?: $reg->training->getTranslation('title', 'sk'))
+                        ->label(($reg->member?->name ? $reg->member->name.' — ' : '').$reg->training->getTranslation('title', $locale) ?: $reg->training->getTranslation('title', 'sk'))
                         ->content(fn () => $reg->status->getLabel().($reg->cancellation_reason ? ' - '.$reg->cancellation_reason : ''))
                     )->toArray()
                 )
@@ -192,6 +195,7 @@ class MyTrainings extends Page implements HasTable
         $trainings = $paginated->getCollection();
 
         $components = [
+            Select::make('memberId')->label(__('family.member'))->options(fn () => $this->familyMemberOptions())->live()->visible(fn () => config('family.enabled')),
             $this->buildFilters($team, $locale),
         ];
 
@@ -323,8 +327,8 @@ class MyTrainings extends Page implements HasTable
         $locale = app()->getLocale();
         $filterService = app(TrainingFilterService::class);
 
-        $registeredTrainingIds = $user
-            ? $user->trainingRegistrations()
+        $registeredTrainingIds = $user && (! config('family.enabled') || $this->familyMember())
+            ? (config('family.enabled') ? $this->familyMember() : $user)->trainingRegistrations()
                 ->whereIn('status', [RegistrationStatusEnum::Approved, RegistrationStatusEnum::Pending])
                 ->pluck('training_id')
                 ->toArray()
@@ -367,7 +371,7 @@ class MyTrainings extends Page implements HasTable
 
         $allResults = $query->get()
             ->when($this->onlyAvailable, fn ($collection) => $collection
-                ->filter(fn (Training $training) => $user ? $filterService->matchesAge($training, $user) : true)
+                ->filter(fn (Training $training) => $user ? $filterService->matchesAge($training, config('family.enabled') ? ($this->familyMember() ?? $user) : $user) : true)
                 ->filter(fn (Training $training) => ! $training->isFull())
             )
             ->values();

@@ -18,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Validation\ValidationException;
 
 class MembershipsRelationManager extends RelationManager
 {
@@ -38,6 +39,7 @@ class MembershipsRelationManager extends RelationManager
     {
         return $table
             ->columns([
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
                 TextColumn::make('user.name')
                     ->label('Používateľ')
                     ->searchable()
@@ -125,7 +127,13 @@ class MembershipsRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->visible(fn (Membership $record): bool => ! $record->is_free && $record->status !== MembershipStatusEnum::ACTIVE)
                     ->action(function (Membership $record): void {
-                        app(SeasonService::class)->markMembershipFree($record);
+                        try {
+                            app(SeasonService::class)->markMembershipFree($record);
+                        } catch (ValidationException $exception) {
+                            Notification::make()->title(__('family.membership_exists'))->danger()->send();
+
+                            return;
+                        }
 
                         Notification::make()
                             ->title('Členstvo bolo označené ako zadarmo.')

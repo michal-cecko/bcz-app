@@ -25,7 +25,7 @@ class ListMemberships extends ListRecords
         $query = parent::getTableQuery();
 
         if (auth()->user()?->isMemberLevel()) {
-            $query?->where('user_id', auth()->id());
+            $query?->managedBy(auth()->user());
         }
 
         return $query;

@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\MembershipStatusEnum;
+use App\Filament\Concerns\HasFamilyMemberSelection;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Services\PaymentService;
@@ -15,6 +16,8 @@ use Livewire\Attributes\Computed;
 
 class MembershipStatusWidget extends Widget
 {
+    use HasFamilyMemberSelection;
+
     protected string $view = 'filament.widgets.membership-status-widget';
 
     protected int|string|array $columnSpan = 'full';
@@ -93,11 +96,15 @@ class MembershipStatusWidget extends Widget
     #[Computed]
     public function membership(): ?Membership
     {
+        if (config('family.enabled') && ! $this->familyMember()) {
+            return null;
+        }
+
         $team = Filament::getTenant();
 
-        $membership = Membership::query()
+        $membership = Membership::query()->managedBy(auth()->user())
             ->where('team_id', $team?->id)
-            ->where('user_id', auth()->id())
+            ->where(config('family.enabled') ? 'member_id' : 'user_id', config('family.enabled') ? $this->familyMember()?->id : auth()->id())
             ->whereHas('season', fn ($q) => $q->where('ends_at', '>=', today()))
             ->orderByDesc('created_at')
             ->with(['season', 'payments'])
@@ -105,9 +112,9 @@ class MembershipStatusWidget extends Widget
 
         $season = $team?->currentSeason;
 
-        if (! $membership && $season) {
+        if (! $membership && $season && (! config('family.enabled') || $this->familyMember())) {
             $membership = app(SeasonService::class)
-                ->findOrCreateMembership($season, auth()->user())
+                ->findOrCreateMembership($season, config('family.enabled') ? $this->familyMember() : auth()->user())
                 ?->load(['season', 'payments']);
         }
 

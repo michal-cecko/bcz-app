@@ -12,6 +12,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Validation\Rule;
 
 class MembershipForm
 {
@@ -19,7 +20,11 @@ class MembershipForm
     {
         return $schema
             ->components([
-                Select::make('user_id')
+                Select::make('member_id')->label(__('family.member'))->visible(fn () => config('family.enabled'))
+                    ->required(fn () => config('family.enabled'))->disabled(fn ($record) => $record?->exists)
+                    ->options(fn (): array => Filament::getTenant()?->enrolledMembers()->pluck('members.name', 'members.id')->all() ?? [])
+                    ->searchable()->rule(fn () => Rule::exists('member_team', 'member_id')->where('team_id', Filament::getTenant()?->id)),
+                Select::make('user_id')->visible(fn () => ! config('family.enabled'))->dehydrated(fn () => ! config('family.enabled'))
                     ->label('Používateľ')
                     ->relationship('user', 'name')
                     ->options(fn (): array => Filament::getTenant()
@@ -27,7 +32,7 @@ class MembershipForm
                         ->pluck('name', 'users.id')
                         ->toArray())
                     ->searchable()
-                    ->required(),
+                    ->required(fn () => ! config('family.enabled')),
                 Select::make('status')
                     ->label('Stav')
                     ->options(MembershipStatusEnum::translations())

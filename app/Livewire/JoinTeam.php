@@ -6,17 +6,23 @@ use App\Enums\InvitationStatusEnum;
 use App\Enums\JoinRequestStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TeamJoinModeEnum;
+use App\Filament\Concerns\HasFamilyMemberSelection;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\TeamJoinRequest;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class JoinTeam extends Component
 {
+    use HasFamilyMemberSelection {
+        updatedMemberId as protected updateSelectedFamilyMember;
+    }
+
     public string $search = '';
 
     public string $inviteCode = '';
@@ -46,6 +52,7 @@ class JoinTeam extends Component
 
     public function mount(): void
     {
+        $this->inviteCode = session('pending_invite_code', '');
         if (Auth::check()) {
             $this->requestName = Auth::user()->name;
             $this->requestEmail = Auth::user()->email;
@@ -55,6 +62,14 @@ class JoinTeam extends Component
     public function updatedSearch(): void
     {
         $this->resetRequestState();
+    }
+
+    public function updatedMemberId(): void
+    {
+        $this->updateSelectedFamilyMember();
+        $this->resetRequestState();
+        $this->reset('inviteCode', 'codeSuccess', 'codeError');
+        $this->resetValidation();
     }
 
     public function getTeamResultsProperty(): Collection
@@ -135,6 +150,20 @@ class JoinTeam extends Component
 
         if (Auth::check()) {
             $user = Auth::user();
+            if (config('family.enabled')) {
+                $this->validate(['memberId' => 'required|uuid']);
+                abort_unless(mb_strtolower($invitation->email) === mb_strtolower($user->email), 403);
+                DB::transaction(function () use ($invitation): void {
+                    $invitation = TeamInvitation::whereKey($invitation->id)->lockForUpdate()->firstOrFail();
+                    abort_unless($invitation->isPending() && ! $invitation->isExpired(), 403);
+                    $this->familyMember()->enroll($invitation->team);
+                    $invitation->update(['status' => InvitationStatusEnum::Accepted, 'accepted_at' => now()]);
+                });
+                session()->forget('pending_invite_code');
+                $this->codeSuccess = true;
+
+                return;
+            }
 
             if ($user->teams()->where('teams.id', $invitation->team_id)->exists()) {
                 $this->codeError = __('Už ste členom tohto tímu.');
@@ -163,6 +192,22 @@ class JoinTeam extends Component
 
     protected function joinTeamDirectly(Team $team): void
     {
+        if (config('family.enabled') && Auth::check()) {
+            $this->validate(['memberId' => 'required|uuid']);
+            $member = $this->familyMember();
+            abort_unless($team?->is_active && $team->join_mode === TeamJoinModeEnum::OPEN, 403);
+            if ($member->teams()->whereKey($team->id)->exists()) {
+                $this->requestError = __('Už ste členom tohto tímu.');
+
+                return;
+            }
+            $member->enroll($team);
+            $this->joinedDirectly = true;
+            $this->showRequestForm = false;
+
+            return;
+        }
+
         $user = Auth::user();
 
         if ($user->teams()->where('teams.id', $team->id)->exists()) {
@@ -185,13 +230,19 @@ class JoinTeam extends Component
 
     protected function submitJoinRequest(string $teamId): void
     {
+        $member = null;
+        if (config('family.enabled') && Auth::check()) {
+            $this->validate(['memberId' => 'required|uuid']);
+            $member = $this->familyMember();
+        }
+
         $team = Team::findOrFail($teamId);
 
-        $name = Auth::check() ? Auth::user()->name : $this->requestName;
+        $name = Auth::check() ? ($member?->name ?? Auth::user()->name) : $this->requestName;
         $email = Auth::check() ? Auth::user()->email : $this->requestEmail;
 
         $existing = TeamJoinRequest::where('team_id', $teamId)
-            ->where('email', $email)
+            ->when($member, fn ($query) => $query->where('member_id', $member->id), fn ($query) => $query->where('email', $email))
             ->where('status', JoinRequestStatusEnum::Pending)
             ->first();
 
@@ -202,7 +253,7 @@ class JoinTeam extends Component
             return;
         }
 
-        if (Auth::check() && Auth::user()->teams()->where('teams.id', $teamId)->exists()) {
+        if (Auth::check() && ($member ?? Auth::user())->teams()->where('teams.id', $teamId)->exists()) {
             $this->requestError = __('Už ste členom tohto tímu.');
             $this->showRequestForm = false;
 
@@ -212,6 +263,7 @@ class JoinTeam extends Component
         TeamJoinRequest::create([
             'team_id' => $teamId,
             'user_id' => Auth::id(),
+            'member_id' => $member?->id,
             'name' => $name,
             'email' => $email,
             'status' => JoinRequestStatusEnum::Pending,

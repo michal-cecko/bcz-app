@@ -95,6 +95,12 @@ class Team extends Model implements HasAvatar, HasMedia, Linkable
             ->saveSlugsTo('slug');
     }
 
+    public function enrolledMembers(): BelongsToMany
+    {
+        return $this->belongsToMany(Member::class)->using(MemberTeam::class)
+            ->withPivot('is_active', 'joined_at', 'continuous_membership')->withTimestamps();
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class)

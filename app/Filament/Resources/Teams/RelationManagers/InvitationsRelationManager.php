@@ -82,7 +82,7 @@ class InvitationsRelationManager extends RelationManager
                         $team = $this->getOwnerRecord();
                         $email = $data['email'];
 
-                        if ($team->members()->where('email', $email)->exists()) {
+                        if (! config('family.enabled') && $team->members()->where('email', $email)->exists()) {
                             Notification::make()
                                 ->title('Tento používateľ je už členom tímu.')
                                 ->danger()

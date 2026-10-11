@@ -1,4 +1,7 @@
 <x-filament-widgets::widget class="h-full">
+    @if(config('family.enabled'))
+        @include('filament.components.family-member-selector')
+    @endif
     <x-filament::section class="h-full">
         @php $membership = $this->membership; @endphp
 

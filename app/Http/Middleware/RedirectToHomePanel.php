@@ -85,7 +85,7 @@ class RedirectToHomePanel
         }
 
         try {
-            return route($targetRouteName, $parameters);
+            return route($targetRouteName, $parameters + (config('family.enabled') ? $request->only('member') : []));
         } catch (UrlGenerationException) {
             return $fallback;
         }

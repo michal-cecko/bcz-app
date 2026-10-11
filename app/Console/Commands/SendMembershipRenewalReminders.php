@@ -36,6 +36,21 @@ class SendMembershipRenewalReminders extends Command
         foreach ($seasons as $season) {
             $team = $season->team;
 
+            if (config('family.enabled')) {
+                $members = $team->enrolledMembers()->wherePivot('is_active', true)->wherePivot('continuous_membership', true)
+                    ->whereDoesntHave('memberships', fn ($query) => $query->where('team_season_id', $season->id)
+                        ->whereIn('status', [MembershipStatusEnum::ACTIVE, MembershipStatusEnum::PENDING]))
+                    ->with('user')->get();
+                foreach ($members as $member) {
+                    $member->user->notify(new MembershipRenewalReminder($season,
+                        url('/admin/'.$team->slug.'/member-membership?member='.$member->id), $member));
+                    $totalNotified++;
+                }
+                $season->update(['renewal_notified_at' => now()]);
+
+                continue;
+            }
+
             // Only remind members who opted into continuous membership
             $memberUserIds = $team->members()
                 ->wherePivot('role', RoleEnum::ATHLETE->value)

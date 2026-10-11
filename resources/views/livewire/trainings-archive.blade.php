@@ -1,4 +1,8 @@
 <div>
+    @if(config('family.enabled') && auth()->check())
+        @include('filament.components.family-member-selector')
+    @endif
+
     {{-- Tailwind safelist: text-red-500 text-orange-400 text-emerald-500 --}}
     {{-- Filter Section --}}
     <div class="bg-[#111111] rounded-xl p-8 md:p-10 mb-8">
@@ -265,7 +269,7 @@
                                     $isMembershipRequired = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED;
                                     $isPaid = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID;
                                     $needsPayment = ($isPending && ($isMembershipRequired || $isPaid))
-                                        || ($isApproved && $isMembershipRequired && ! auth()->user()?->hasActiveMembershipForTeam($training->team_id))
+                                        || ($isApproved && $isMembershipRequired && ! (config('family.enabled') ? $this->familyMember() : auth()->user())?->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason()))
                                         || ($isApproved && $isPaid && $training->price_amount > 0 && $reg->payments->where('status', \App\Enums\PaymentStatusEnum::COMPLETED)->isEmpty());
                                     $needsApproval = $isPending && ! $isMembershipRequired && ! $isPaid;
                                 @endphp

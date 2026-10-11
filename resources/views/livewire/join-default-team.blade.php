@@ -1,9 +1,9 @@
-<style>
-    @media (min-width: 1024px) {
-        .join-wrapper { min-height: 0 !important; height: 60vh; }
-    }
-</style>
 <div class="join-wrapper min-h-screen bg-bcz-dark flex flex-col lg:flex-row">
+    <style>
+        @media (min-width: 1024px) {
+            .join-wrapper { min-height: 0 !important; height: 60vh; }
+        }
+    </style>
     {{-- Left Panel --}}
     <div class="hidden lg:block relative flex-shrink-0 overflow-hidden" style="width: 40%">
         <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1769284331730-9955c15e7dac?w=1080&q=80')"></div>
@@ -45,6 +45,10 @@
     {{-- Right Panel --}}
     <div class="flex-1 flex flex-col justify-center px-6 py-8 lg:px-20 overflow-y-auto">
         <div class="max-w-lg mx-auto w-full space-y-8">
+            @if(config('family.enabled') && auth()->check())
+                @include('filament.components.family-member-selector')
+                <a href="{{ \App\Filament\Pages\MyFamily::getUrl(panel: 'customer') }}" class="text-white underline">{{ __('family.add') }}</a>
+            @endif
             @if(! $team)
                 <div class="bg-bcz-red/10 border border-bcz-red/30 rounded-xl p-4 text-center">
                     <p class="text-bcz-red text-sm font-semibold">Tím nie je dostupný.</p>

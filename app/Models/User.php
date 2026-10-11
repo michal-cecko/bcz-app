@@ -106,6 +106,20 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         });
     }
 
+    public function members(): HasMany
+    {
+        return $this->hasMany(Member::class);
+    }
+
+    public function legacyMember(): Member
+    {
+        return $this->members()->firstOrCreate(['legacy_user_id' => $this->id], [
+            'name' => $this->name, 'first_name' => $this->first_name, 'last_name' => $this->last_name,
+            'birth_date' => $this->birth_date, 'gender' => $this->gender,
+            'has_free_membership' => (bool) $this->has_free_membership,
+        ]);
+    }
+
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class)
@@ -252,6 +266,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             return true;
         }
 
+        if (config('family.enabled') && $this->members()->whereHas('teams', fn ($query) => $query->where('member_team.is_active', true))->exists()) {
+            return true;
+        }
+
         // Any user with a team-scoped role (TEAM_ADMIN, COACH, ATHLETE)
         if ($this->teams()->exists()) {
             return true;
@@ -267,7 +285,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
      */
     public function homePanelId(): string
     {
-        return ($this->isGlobalAdmin() || $this->teams()->exists()) ? 'admin' : 'customer';
+        return ($this->isGlobalAdmin() || $this->teams()->exists() || (config('family.enabled') && $this->members()->whereHas('teams', fn ($query) => $query->where('member_team.is_active', true))->exists())) ? 'admin' : 'customer';
     }
 
     public function getTenants(Panel $panel): Collection
@@ -275,6 +293,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         // Global admins can switch into any team's context, even teams they don't belong to.
         if ($this->isGlobalAdmin()) {
             return Team::query()->orderBy('name')->get();
+        }
+
+        if (config('family.enabled')) {
+            return Team::query()->where(fn ($query) => $query->whereIn('id', $this->teams()->select('teams.id'))
+                ->orWhereHas('enrolledMembers', fn ($members) => $members->where('members.user_id', $this->id)->where('member_team.is_active', true)))
+                ->orderBy('name')->get();
         }
 
         return $this->teams;
@@ -286,7 +310,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             return true;
         }
 
-        return $this->teams()->whereKey($tenant)->exists();
+        return $this->teams()->whereKey($tenant)->exists() || (config('family.enabled') && $this->members()->whereHas('teams', fn ($query) => $query->whereKey($tenant)->where('member_team.is_active', true))->exists());
     }
 
     /**
@@ -380,6 +404,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
      */
     public function hasActiveMembershipForTeam(string $teamId, ?TeamSeason $season = null): bool
     {
+        if (config('family.enabled')) {
+            return $this->members()->where('legacy_user_id', $this->id)->first()
+                ?->hasActiveMembershipForTeam($teamId, $season) ?? false;
+        }
+
         if ($season?->isFuture()) {
             return $this->memberships()
                 ->where('team_season_id', $season->id)

@@ -37,10 +37,13 @@ class CancelExpiredRegistrations extends Command
         $trainingsToCheck = collect();
 
         foreach ($expiredRegistrations as $registration) {
-            $registration->update([
-                'status' => RegistrationStatusEnum::Cancelled,
+            $cancelled = TrainingRegistration::whereKey($registration->id)->where('status', RegistrationStatusEnum::Pending)->update([
+                'status' => RegistrationStatusEnum::Cancelled->value,
                 'cancellation_reason' => 'Automaticky zrušená — platba nebola prijatá v stanovenej lehote.',
             ]);
+            if (! $cancelled) {
+                continue;
+            }
             // GoPay payments are left alone: the gateway may still complete them.
             $registration->payments()
                 ->where('status', PaymentStatusEnum::PENDING)

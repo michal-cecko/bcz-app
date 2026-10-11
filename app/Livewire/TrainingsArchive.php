@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Enums\GenderEnum;
 use App\Enums\RegistrationStatusEnum;
+use App\Filament\Concerns\HasFamilyMemberSelection;
 use App\Models\City;
 use App\Models\Setting;
 use App\Models\SportCategory;
@@ -16,6 +17,7 @@ use Livewire\WithPagination;
 
 class TrainingsArchive extends Component
 {
+    use HasFamilyMemberSelection;
     use WithPagination;
 
     #[Url(as: 'kategoria')]
@@ -102,7 +104,7 @@ class TrainingsArchive extends Component
             ->current()
             ->with(['media', 'sportCategory.media', 'coaches', 'team', 'city', 'schedules', 'registrations' => function ($q) {
                 if (auth()->check()) {
-                    $q->where('user_id', auth()->id())
+                    $q->managedBy(auth()->user())->when(config('family.enabled'), fn ($query) => $query->where('member_id', $this->familyMember()?->id))
                         ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
                         ->with('payments');
                 } else {

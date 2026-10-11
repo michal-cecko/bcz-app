@@ -3,7 +3,9 @@
 namespace App\Policies;
 
 use App\Enums\RoleEnum;
+use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\TrainingRegistration;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -37,6 +39,12 @@ class PaymentPolicy
     {
         if ($payment->user_id === $user->id) {
             return true;
+        }
+
+        if ($payment->payable instanceof Membership || $payment->payable instanceof TrainingRegistration) {
+            if ($payment->payable->member?->user_id === $user->id) {
+                return true;
+            }
         }
 
         if (! $user->can('View:Payment')) {

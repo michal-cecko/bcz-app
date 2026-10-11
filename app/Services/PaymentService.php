@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\EventRegistration;
+use App\Models\Member;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\Team;
@@ -23,6 +24,7 @@ use App\Notifications\TrainingPaymentConfirmed;
 use App\Notifications\TrainingRegistrationPaymentDue;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class PaymentService
 {
@@ -90,7 +92,7 @@ class PaymentService
         $notification = match (true) {
             $payable instanceof Membership => $payable->status === MembershipStatusEnum::PENDING
                 && ! $payable->is_free
-                && $user?->isMembershipPayer($payable->team)
+                && ($payable->member ?? $user)?->isMembershipPayer($payable->team)
                     ? new MembershipPaymentDue($payable)
                     : null,
             $payable instanceof TrainingRegistration => $payable->status === RegistrationStatusEnum::Pending
@@ -229,23 +231,26 @@ class PaymentService
 
         $state = $response->json['state'] ?? null;
 
-        if ($state === 'PAID' && $payment->status !== PaymentStatusEnum::COMPLETED) {
-            $payment->update([
-                'status' => PaymentStatusEnum::COMPLETED,
-                'paid_at' => now(),
-            ]);
+        return DB::transaction(function () use ($payment, $state): Payment {
+            $payment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+            if ($state === 'PAID' && $payment->status !== PaymentStatusEnum::COMPLETED) {
+                $payment->update([
+                    'status' => PaymentStatusEnum::COMPLETED,
+                    'paid_at' => now(),
+                ]);
 
-            $this->processPaymentCompleted($payment);
-        }
+                $this->processPaymentCompleted($payment);
+            }
 
-        if ($state === 'REFUNDED') {
-            $payment->update([
-                'status' => PaymentStatusEnum::REFUNDED,
-                'refunded_at' => now(),
-            ]);
-        }
+            if ($state === 'REFUNDED') {
+                $payment->update([
+                    'status' => PaymentStatusEnum::REFUNDED,
+                    'refunded_at' => now(),
+                ]);
+            }
 
-        return $payment;
+            return $payment;
+        }, 3);
     }
 
     /**
@@ -262,33 +267,70 @@ class PaymentService
             return;
         }
 
+        if ($payable instanceof Membership) {
+            DB::transaction(function () use ($payable, $payment, $notify): void {
+                $participant = $payable->member ?? $payable->user;
+                $participant->newQuery()->whereKey($participant->id)->lockForUpdate()->firstOrFail();
+                $membership = Membership::whereKey($payable->id)->lockForUpdate()->firstOrFail();
+                $payment->setRelation('payable', $membership);
+                $this->settleOpenPayments($membership, $payment);
+
+                if (! $this->isFullyPaid($membership) || $membership->status === MembershipStatusEnum::ACTIVE) {
+                    return;
+                }
+
+                if ($membership->member_id) {
+                    $current = Membership::forSameMemberAndSeason($membership)->whereKeyNot($membership->id)
+                        ->whereIn('status', [MembershipStatusEnum::ACTIVE, MembershipStatusEnum::PENDING])
+                        ->lockForUpdate()->first();
+                    if ($current?->status === MembershipStatusEnum::ACTIVE) {
+                        return;
+                    }
+                    if ($current) {
+                        // Keep payments on their original membership and retire the unpaid renewal.
+                        $current->update(['status' => MembershipStatusEnum::CANCELLED]);
+                        $current->payments()->where('status', PaymentStatusEnum::PENDING)->whereNull('gopay_payment_id')
+                            ->update(['status' => PaymentStatusEnum::CANCELLED]);
+                    }
+                }
+
+                $membership->update(['status' => MembershipStatusEnum::ACTIVE]);
+                $this->autoApprovePendingRegistrationsForMembership($membership, $notify);
+            });
+
+            if ($notify && $payment->user) {
+                $payment->user->notify((new PaymentConfirmed($payment))->afterCommit());
+            }
+
+            return;
+        }
+
         $isFullyPaid = $payable instanceof Payable && $this->isFullyPaid($payable);
 
         if ($payable instanceof Payable) {
             $this->settleOpenPayments($payable, $payment);
         }
 
-        if ($payable instanceof Membership) {
-            if ($isFullyPaid && $payable->status !== MembershipStatusEnum::ACTIVE) {
-                $payable->update(['status' => MembershipStatusEnum::ACTIVE]);
-                $this->autoApprovePendingRegistrationsForMembership($payable, $notify);
+        if ($payable instanceof TrainingRegistration) {
+            if ($isFullyPaid && $payable->status !== RegistrationStatusEnum::Approved) {
+                if ($payable->member_id) {
+                    DB::transaction(function () use ($payable): void {
+                        $training = $payable->training()->lockForUpdate()->first();
+                        $registration = TrainingRegistration::whereKey($payable->id)->lockForUpdate()->firstOrFail();
+                        if ($registration->status === RegistrationStatusEnum::Cancelled && (! $training || $training->isFull()
+                            || TrainingRegistration::where('training_id', $registration->training_id)->where('member_id', $registration->member_id)
+                                ->whereKeyNot($registration->id)->where('status', '!=', RegistrationStatusEnum::Cancelled)->exists())) {
+                            return;
+                        }
+                        $registration->update(['status' => RegistrationStatusEnum::Approved, 'payment_due_at' => null]);
+                    });
+                } else {
+                    $payable->update(['status' => RegistrationStatusEnum::Approved, 'payment_due_at' => null]);
+                }
             }
 
             if ($notify && $payment->user) {
-                $payment->user->notify(new PaymentConfirmed($payment));
-            }
-        }
-
-        if ($payable instanceof TrainingRegistration) {
-            if ($isFullyPaid && $payable->status !== RegistrationStatusEnum::Approved) {
-                $payable->update([
-                    'status' => RegistrationStatusEnum::Approved,
-                    'payment_due_at' => null,
-                ]);
-            }
-
-            if ($notify && $payable->user) {
-                $payable->user->notify(new PaymentConfirmed($payment));
+                $payment->user->notify((new PaymentConfirmed($payment))->afterCommit());
             }
         }
 
@@ -298,7 +340,7 @@ class PaymentService
             }
 
             if ($notify && $payment->user) {
-                $payment->user->notify(new PaymentConfirmed($payment));
+                $payment->user->notify((new PaymentConfirmed($payment))->afterCommit());
             }
         }
     }
@@ -391,7 +433,7 @@ class PaymentService
     protected function autoApprovePendingRegistrationsForMembership(Membership $membership, bool $notify = true): void
     {
         $pendingRegistrations = TrainingRegistration::query()
-            ->where('user_id', $membership->user_id)
+            ->where($membership->member_id ? 'member_id' : 'user_id', $membership->member_id ?? $membership->user_id)
             ->where('status', RegistrationStatusEnum::Pending)
             ->whereHas('training', function ($query) use ($membership) {
                 $query->where('team_id', $membership->team_id)
@@ -401,10 +443,18 @@ class PaymentService
             ->get();
 
         foreach ($pendingRegistrations as $registration) {
-            $registration->update(['status' => RegistrationStatusEnum::Approved]);
+            if ($membership->member_id && ! $membership->member->hasActiveMembershipForTeam($membership->team_id, $registration->training->membershipSeason())) {
+                continue;
+            }
+            $approved = TrainingRegistration::whereKey($registration->id)->where('status', RegistrationStatusEnum::Pending)->update([
+                'status' => RegistrationStatusEnum::Approved->value, 'payment_due_at' => null,
+            ]);
+            if (! $approved) {
+                continue;
+            }
 
             if ($notify && $registration->user) {
-                $registration->user->notify(new TrainingPaymentConfirmed($registration->training));
+                $registration->user->notify((new TrainingPaymentConfirmed($registration->training, member: $registration->member))->afterCommit());
             }
         }
     }
@@ -446,28 +496,31 @@ class PaymentService
         float $amount,
         string $currency = 'EUR',
     ): Payment {
-        if ($payable instanceof Payable) {
-            $amount = $this->amountStillOwed($payable);
-        }
-
-        // Any open payment on the payable counts, also one recorded for a guest.
-        $existing = Payment::query()
-            ->where('payable_type', $payable->getMorphClass())
-            ->where('payable_id', $payable->getKey())
-            ->where('status', PaymentStatusEnum::PENDING)
-            ->latest('created_at')
-            ->first();
-
-        if ($existing) {
-            if ($payable instanceof Payable && ! $existing->gopay_payment_id && $amount > 0
-                && $existing->currency === $currency && (float) $existing->amount !== $amount) {
-                $existing->update(['amount' => $amount]);
+        return DB::transaction(function () use ($user, $team, $payable, $amount, $currency): Payment {
+            $payable->newQuery()->whereKey($payable->getKey())->lockForUpdate()->firstOrFail();
+            if ($payable instanceof Payable) {
+                $amount = $this->amountStillOwed($payable);
             }
 
-            return $existing;
-        }
+            // Any open payment on the payable counts, also one recorded for a guest.
+            $existing = Payment::query()
+                ->where('payable_type', $payable->getMorphClass())
+                ->where('payable_id', $payable->getKey())
+                ->where('status', PaymentStatusEnum::PENDING)
+                ->latest('created_at')
+                ->first();
 
-        return $this->createPendingPayment($user, $team, $payable, $amount, $currency);
+            if ($existing) {
+                if ($payable instanceof Payable && ! $existing->gopay_payment_id && $amount > 0
+                    && $existing->currency === $currency && (float) $existing->amount !== $amount) {
+                    $existing->update(['amount' => $amount]);
+                }
+
+                return $existing;
+            }
+
+            return $this->createPendingPayment($user, $team, $payable, $amount, $currency);
+        });
     }
 
     /**
@@ -498,8 +551,11 @@ class PaymentService
      * The payment always charges the membership's own fee, which decides when the
      * membership counts as paid; see {@see SeasonService::findOrCreateMembership()}.
      */
-    public function ensurePendingMembershipPayment(User $user, Team $team, TeamSeason $season): ?Payment
+    public function ensurePendingMembershipPayment(User|Member $user, Team $team, TeamSeason $season): ?Payment
     {
+        if ($season->team_id !== $team->id) {
+            throw new \InvalidArgumentException('Membership season must belong to the team.');
+        }
         $membership = app(SeasonService::class)->findOrCreateMembership($season, $user);
 
         if (! $membership || $membership->is_free || $membership->status === MembershipStatusEnum::ACTIVE
@@ -508,7 +564,7 @@ class PaymentService
         }
 
         return $this->ensurePendingPaymentFor(
-            user: $user,
+            user: $user instanceof Member ? $user->user : $user,
             team: $team,
             payable: $membership,
             amount: $membership->getTotalPriceAmount(),

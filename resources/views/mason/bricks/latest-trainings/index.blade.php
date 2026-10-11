@@ -152,7 +152,7 @@
  $brickIsMembershipRequired = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED;
  $brickIsPaid = $training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID;
  $regNeedsPayment = ($regIsPending && ($brickIsMembershipRequired || $brickIsPaid))
- || ($regIsApproved && $brickIsMembershipRequired && ! auth()->user()?->hasActiveMembershipForTeam($training->team_id))
+ || ($regIsApproved && $brickIsMembershipRequired && ! ($userRegistration?->member ?? auth()->user())?->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason()))
  || ($regIsApproved && $brickIsPaid && $training->price_amount > 0 && $userRegistration->payments->where('status', \App\Enums\PaymentStatusEnum::COMPLETED)->isEmpty());
  $regNeedsApproval = $regIsPending && ! $brickIsMembershipRequired && ! $brickIsPaid;
  @endphp

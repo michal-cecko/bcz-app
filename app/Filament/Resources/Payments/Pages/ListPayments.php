@@ -44,10 +44,13 @@ class ListPayments extends ListRecords
                 ->schema([
                     Select::make('user_id')
                         ->label('Používateľ')
-                        ->options(fn (): array => Filament::getTenant()
-                            ->members()
-                            ->pluck('name', 'users.id')
-                            ->toArray())
+                        ->options(fn (): array => User::query()
+                            ->where(function (Builder $query): void {
+                                $query->whereHas('teams', fn (Builder $teams) => $teams->whereKey(Filament::getTenant()->id))
+                                    ->when(config('family.enabled'), fn (Builder $owners) => $owners->orWhereHas('members.teams',
+                                        fn (Builder $teams) => $teams->whereKey(Filament::getTenant()->id)));
+                            })
+                            ->pluck('name', 'id')->toArray())
                         ->searchable()
                         ->required(),
                     Select::make('payable_type')
@@ -73,13 +76,13 @@ class ListPayments extends ListRecords
                                 'membership' => Membership::where('user_id', $userId)
                                     ->where('team_id', Filament::getTenant()->id)
                                     ->get()
-                                    ->mapWithKeys(fn ($m) => [$m->id => $m->period->getLabel().' ('.$m->starts_at->format('d.m.Y').' - '.$m->ends_at->format('d.m.Y').')'])
+                                    ->mapWithKeys(fn ($m) => [$m->id => $m->getPaymentDescription().' ('.$m->starts_at->format('d.m.Y').' - '.$m->ends_at->format('d.m.Y').')'])
                                     ->toArray(),
                                 'training_registration' => TrainingRegistration::where('user_id', $userId)
                                     ->whereHas('training', fn ($q) => $q->where('team_id', Filament::getTenant()->id))
                                     ->with('training')
                                     ->get()
-                                    ->mapWithKeys(fn ($r) => [$r->id => $r->training->getTranslation('title', 'sk').' ('.$r->registered_at?->format('d.m.Y').')'])
+                                    ->mapWithKeys(fn ($r) => [$r->id => $r->getPaymentDescription().' ('.$r->registered_at?->format('d.m.Y').')'])
                                     ->toArray(),
                                 'competition_registration', 'event_registration' => EventRegistration::where('user_id', $userId)
                                     ->whereHas('event', fn ($q) => $q->where('team_id', Filament::getTenant()->id))

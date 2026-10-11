@@ -83,7 +83,7 @@ class MembersRelationManager extends RelationManager
                     ->label('Pripojený')
                     ->date()
                     ->placeholder('-'),
-                TextColumn::make('membership_status')
+                TextColumn::make('membership_status')->hidden(fn () => config('family.enabled'))
                     ->label('Členstvo')
                     ->badge()
                     ->state(function (User $record, RelationManager $livewire): ?MembershipStatusEnum {
@@ -95,7 +95,7 @@ class MembersRelationManager extends RelationManager
 
                         return $membership?->status;
                     }),
-                TextColumn::make('membership_expires_at')
+                TextColumn::make('membership_expires_at')->hidden(fn () => config('family.enabled'))
                     ->label('Členstvo do')
                     ->state(function (User $record, RelationManager $livewire): ?string {
                         $team = $livewire->getOwnerRecord();
@@ -180,7 +180,7 @@ class MembersRelationManager extends RelationManager
                             ],
                         ];
                     }),
-                Action::make('addMembership')
+                Action::make('addMembership')->hidden(fn () => config('family.enabled'))
                     ->label('Pridať členstvo')
                     ->modalHeading('Pridať členstvo')
                     ->icon('heroicon-o-identification')

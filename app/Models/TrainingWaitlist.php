@@ -14,6 +14,7 @@ class TrainingWaitlist extends Model
     protected $fillable = [
         'training_id',
         'user_id',
+        'member_id',
         'created_at',
     ];
 
@@ -27,6 +28,11 @@ class TrainingWaitlist extends Model
     public function training(): BelongsTo
     {
         return $this->belongsTo(Training::class);
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
     }
 
     public function user(): BelongsTo

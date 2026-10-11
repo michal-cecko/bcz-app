@@ -5,6 +5,7 @@ namespace App\Filament\Pages\Auth;
 use App\Enums\GenderEnum;
 use App\Enums\ProfileTypeEnum;
 use App\Enums\RoleEnum;
+use App\Filament\Pages\MyFamily;
 use App\Filament\Schemas\PublicProfileSchema;
 use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
@@ -145,6 +146,9 @@ class UserSetupWizard extends SimplePage
         $user = auth()->user();
 
         foreach ($user->getProfileableRoles() as $profileType) {
+            if (config('family.enabled') && $profileType === ProfileTypeEnum::Athlete) {
+                continue;
+            }
             $steps[] = $this->getPublicProfileStep($profileType);
         }
 
@@ -301,7 +305,7 @@ class UserSetupWizard extends SimplePage
             $service->saveDraft($profile, $draftData);
         }
 
-        if (! empty($state['has_public_profile_athlete'])) {
+        if (! config('family.enabled') && ! empty($state['has_public_profile_athlete'])) {
             $profile = $this->getOrCreateProfile($user, ProfileTypeEnum::Athlete);
             $draftData = array_filter([
                 'date_started_working_out' => $state['date_started_working_out'] ?? null,
@@ -315,7 +319,7 @@ class UserSetupWizard extends SimplePage
             ->title('Profil bol úspešne nastavený')
             ->send();
 
-        redirect($this->panelHomeUrl());
+        redirect(config('family.enabled') ? MyFamily::getUrl(panel: 'customer') : $this->panelHomeUrl());
     }
 
     /**

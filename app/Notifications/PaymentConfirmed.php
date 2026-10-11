@@ -3,7 +3,9 @@
 namespace App\Notifications;
 
 use App\Enums\PaymentMethodEnum;
+use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\TrainingRegistration;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -66,6 +68,10 @@ class PaymentConfirmed extends Notification implements ShouldQueue
 
         if (! $payable) {
             return 'Platba #'.$this->payment->id;
+        }
+
+        if ($payable instanceof Membership || $payable instanceof TrainingRegistration) {
+            return $payable->getPaymentDescription();
         }
 
         return match ($this->payment->payable_type) {

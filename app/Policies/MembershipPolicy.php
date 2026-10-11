@@ -35,7 +35,7 @@ class MembershipPolicy
 
     public function view(User $user, Membership $membership): bool
     {
-        if ($membership->user_id === $user->id) {
+        if (($membership->member_id ? $membership->member?->user_id : $membership->user_id) === $user->id) {
             return true;
         }
 

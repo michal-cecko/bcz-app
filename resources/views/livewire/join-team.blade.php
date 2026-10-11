@@ -30,6 +30,10 @@
     {{-- Right Panel --}}
     <div class="flex-1 flex flex-col justify-center px-6 py-12 lg:px-20">
         <div class="max-w-lg mx-auto w-full space-y-8">
+            @if(config('family.enabled') && auth()->check())
+                @include('filament.components.family-member-selector')
+                <a href="{{ \App\Filament\Pages\MyFamily::getUrl(panel: 'customer') }}" class="text-white underline">{{ __('family.add') }}</a>
+            @endif
             <div>
                 <h1 class="font-display text-4xl font-bold text-white tracking-wide">PRIPOJIŤ SA K TÍMU</h1>
                 <p class="text-bcz-muted text-sm mt-2">Vyhľadaj tím podľa názvu alebo zadaj pozývací kód</p>

@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Member;
 use App\Models\Payment;
 use App\Models\Training;
 use Illuminate\Bus\Queueable;
@@ -16,6 +17,7 @@ class TrainingPaymentConfirmed extends Notification implements ShouldQueue
     public function __construct(
         public Training $training,
         public ?Payment $payment = null,
+        public ?Member $member = null,
     ) {}
 
     /** @return list<string> */
@@ -30,6 +32,7 @@ class TrainingPaymentConfirmed extends Notification implements ShouldQueue
         $trainingTitle = $this->training->getTranslation('title', $user->locale ?? 'sk')
             ?: $this->training->getTranslation('title', 'sk');
 
+        $trainingTitle = ($this->member?->name ? $this->member->name.' — ' : '').$trainingTitle;
         $team = $this->training->team;
 
         return (new MailMessage)
@@ -54,6 +57,8 @@ class TrainingPaymentConfirmed extends Notification implements ShouldQueue
     {
         return [
             'training_id' => $this->training->id,
+            'member_id' => $this->member?->id,
+            'member_name' => $this->member?->name,
             'training_title' => $this->training->getTranslation('title', 'sk'),
             'type' => 'training_payment_confirmed',
         ];
