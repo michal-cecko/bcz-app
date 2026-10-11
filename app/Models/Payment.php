@@ -6,6 +6,7 @@ use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Models\Concerns\HasCreator;
 use App\Models\Concerns\HasUuidV7;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,6 +35,13 @@ class Payment extends Model
         'paid_at',
         'refunded_at',
     ];
+
+    public function scopeManagedBy(Builder $query, User $user): void
+    {
+        $query->where(fn ($query) => $query->where('user_id', $user->id)
+            ->orWhereHasMorph('payable', [Membership::class, TrainingRegistration::class],
+                fn ($payable) => $payable->whereHas('member', fn ($member) => $member->where('user_id', $user->id))));
+    }
 
     protected function casts(): array
     {

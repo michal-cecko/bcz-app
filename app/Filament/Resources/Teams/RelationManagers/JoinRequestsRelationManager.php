@@ -32,6 +32,7 @@ class JoinRequestsRelationManager extends RelationManager
     {
         return $table
             ->columns([
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
                 TextColumn::make('name')
                     ->label('Meno')
                     ->searchable(),
@@ -72,6 +73,18 @@ class JoinRequestsRelationManager extends RelationManager
                     ->visible(fn (TeamJoinRequest $record): bool => $record->isPending())
                     ->action(function (TeamJoinRequest $record): void {
                         $team = $this->getOwnerRecord();
+
+                        if (config('family.enabled')) {
+                            if (! $record->member || $record->member->user_id !== $record->user_id) {
+                                Notification::make()->danger()->title(__('family.choose'))->send();
+
+                                return;
+                            }
+                            $record->member->enroll($team);
+                            $record->update(['status' => JoinRequestStatusEnum::Approved, 'processed_at' => now()]);
+
+                            return;
+                        }
 
                         if ($record->user_id && $team->members()->where('users.id', $record->user_id)->exists()) {
                             Notification::make()

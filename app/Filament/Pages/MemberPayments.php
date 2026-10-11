@@ -4,7 +4,9 @@ namespace App\Filament\Pages;
 
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\TrainingRegistration;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\TextEntry;
@@ -45,7 +47,7 @@ class MemberPayments extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->isMemberLevel() ?? false;
+        return (auth()->user()?->isMemberLevel() ?? false) || (config('family.enabled') && (auth()->user()?->members()->exists() ?? false));
     }
 
     public function table(Table $table): Table
@@ -55,7 +57,7 @@ class MemberPayments extends Page implements HasTable
         return $table
             ->query(
                 Payment::query()
-                    ->where('user_id', auth()->id())
+                    ->managedBy(auth()->user())
                     // Customer panel is tenant-free: scoping to a null team_id
                     // hid the customer's payments. Only filter by team when a
                     // tenant is present (admin panel).
@@ -63,6 +65,7 @@ class MemberPayments extends Page implements HasTable
                     ->with('payable')
             )
             ->columns([
+                TextColumn::make('family_member')->label(__('family.member'))->state(fn ($record) => ($record->payable instanceof Membership || $record->payable instanceof TrainingRegistration) ? $record->payable->member?->name : null)->visible(fn () => config('family.enabled')),
                 TextColumn::make('payable_name')
                     ->label(__('member.payments.subject'))
                     ->state(fn (Payment $record): string => $record->payable_name),

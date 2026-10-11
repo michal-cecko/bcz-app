@@ -37,7 +37,7 @@ class UpcomingTrainingsWidget extends TableWidget
             ])
             ->query(
                 TrainingRegistration::query()
-                    ->where('user_id', auth()->id())
+                    ->managedBy(auth()->user())
                     ->whereIn('status', [RegistrationStatusEnum::Approved, RegistrationStatusEnum::Pending])
                     // Customer panel is tenant-free; only scope to a team in the
                     // admin panel, otherwise a null team_id hid the customer's
@@ -48,6 +48,7 @@ class UpcomingTrainingsWidget extends TableWidget
                     ->limit(5)
             )
             ->columns([
+                TextColumn::make('family_member')->label(__('family.member'))->state(fn ($record) => $record->member?->name)->visible(fn () => config('family.enabled')),
                 TextColumn::make('training.title')
                     ->label('Tréning')
                     ->formatStateUsing(fn ($record): string => $record->training->getTranslation('title', app()->getLocale()) ?: $record->training->getTranslation('title', 'sk'))

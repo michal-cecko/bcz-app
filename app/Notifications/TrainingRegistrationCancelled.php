@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Member;
 use App\Models\Training;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,6 +16,7 @@ class TrainingRegistrationCancelled extends Notification implements ShouldQueue
     public function __construct(
         public Training $training,
         public ?string $reason = null,
+        public ?Member $member = null,
     ) {}
 
     /** @return list<string> */
@@ -28,6 +30,8 @@ class TrainingRegistrationCancelled extends Notification implements ShouldQueue
         $user = $notifiable;
         $trainingTitle = $this->training->getTranslation('title', $user->locale ?? 'sk')
             ?: $this->training->getTranslation('title', 'sk');
+
+        $trainingTitle = ($this->member?->name ? $this->member->name.' — ' : '').$trainingTitle;
 
         return (new MailMessage)
             ->subject('Zrušenie registrácie na tréning — '.$trainingTitle)
@@ -51,6 +55,7 @@ class TrainingRegistrationCancelled extends Notification implements ShouldQueue
     {
         return [
             'training_id' => $this->training->id,
+            'member_id' => $this->member?->id,
             'training_title' => $this->training->getTranslation('title', 'sk'),
             'reason' => $this->reason,
             'type' => 'training_registration_cancelled',

@@ -4,7 +4,9 @@ namespace App\Filament\Widgets;
 
 use App\Enums\PaymentStatusEnum;
 use App\Filament\Pages\MemberPayments;
+use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\TrainingRegistration;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Infolists\Components\TextEntry;
@@ -43,7 +45,7 @@ class RecentPaymentsWidget extends TableWidget
             ])
             ->query(
                 Payment::query()
-                    ->where('user_id', auth()->id())
+                    ->managedBy(auth()->user())
                     // Customer panel is tenant-free: scoping to a null team_id
                     // left the dashboard "recent payments" empty even though the
                     // customer has payments. Only filter by team in the admin panel.
@@ -53,6 +55,7 @@ class RecentPaymentsWidget extends TableWidget
                     ->limit(5)
             )
             ->columns([
+                TextColumn::make('family_member')->label(__('family.member'))->state(fn ($record) => ($record->payable instanceof Membership || $record->payable instanceof TrainingRegistration) ? $record->payable->member?->name : null)->visible(fn () => config('family.enabled')),
                 TextColumn::make('payable_name')
                     ->label(__('member.payments.subject'))
                     ->state(fn (Payment $record): string => $record->payable_name),

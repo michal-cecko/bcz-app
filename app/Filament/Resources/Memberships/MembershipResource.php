@@ -39,7 +39,7 @@ class MembershipResource extends Resource
         $query = parent::getEloquentQuery();
 
         if (auth()->user()?->isMemberLevel()) {
-            $query->where('user_id', auth()->id());
+            $query->managedBy(auth()->user());
         }
 
         return $query;

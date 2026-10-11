@@ -6,6 +6,7 @@ use App\Filament\Resources\Teams\Pages\CreateTeam;
 use App\Filament\Resources\Teams\Pages\EditTeam;
 use App\Filament\Resources\Teams\Pages\ListTeams;
 use App\Filament\Resources\Teams\Pages\ViewTeam;
+use App\Filament\Resources\Teams\RelationManagers\EnrolledMembersRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\InvitationsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\JoinRequestsRelationManager;
 use App\Filament\Resources\Teams\RelationManagers\MembersRelationManager;
@@ -170,6 +171,7 @@ class TeamResource extends Resource
     {
         return [
             MembersRelationManager::class,
+            EnrolledMembersRelationManager::class,
             SeasonsRelationManager::class,
             PaymentMethodsRelationManager::class,
             PaymentsRelationManager::class,

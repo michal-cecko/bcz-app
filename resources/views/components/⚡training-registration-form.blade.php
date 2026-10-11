@@ -6,6 +6,7 @@ use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Models\Training;
+use App\Models\Member;
 use App\Models\TrainingRegistration;
 use App\Models\User;
 use App\Notifications\WelcomeToApp;
@@ -24,6 +25,64 @@ new class extends Component
 
     public array $fields = [];
 
+    #[\Livewire\Attributes\Url(as: 'member')]
+    public ?string $memberId = null;
+
+    public string $contactName = '';
+
+    public string $contactEmail = '';
+
+    public string $contactPhone = '';
+
+    public function selectedMember(): ?Member
+    {
+        return $this->memberId ? auth()->user()?->members()->whereKey($this->memberId)->firstOrFail() : null;
+    }
+
+    public function requestFamilyLogin(): void
+    {
+        abort_unless(config('family.enabled') && ! auth()->check(), 403);
+        $this->validate(['contactName' => 'required|string|max:255', 'contactEmail' => 'required|email|max:255', 'contactPhone' => 'nullable|string|max:30']);
+        $email = mb_strtolower(trim($this->contactEmail));
+        $ipKey = 'family-login-ip:'.hash('sha256', request()->ip());
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($ipKey, 10)) {
+            $this->addError('contactEmail', __('auth.throttle', ['seconds' => 600]));
+            return;
+        }
+        \Illuminate\Support\Facades\RateLimiter::hit($ipKey, 600);
+        $key = 'family-login:'.hash('sha256', request()->ip().'|'.$email);
+        if (! \Illuminate\Support\Facades\RateLimiter::attempt($key, 3, function () use ($email): void {
+            $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+            if (! $user) {
+                $parts = explode(' ', trim($this->contactName), 2);
+                $user = User::firstOrCreate(['email' => $email], ['first_name' => $parts[0], 'last_name' => $parts[1] ?? '',
+                    'phone' => $this->contactPhone ?: null, 'password' => \Illuminate\Support\Str::random(32)]);
+                if ($user->wasRecentlyCreated) {
+                    $user->assignRole(RoleEnum::CUSTOMER);
+                }
+            }
+            $path = route('team.training.show', [$this->training->team, $this->training], absolute: false);
+            $user->notify(new \App\Notifications\FamilyLoginLink($path));
+        }, 600)) {
+            $this->addError('contactEmail', __('auth.throttle', ['seconds' => 600]));
+            return;
+        }
+        session()->put('family.training.'.$this->training->id, array_filter($this->fields, fn ($value) => ! $value instanceof TemporaryUploadedFile));
+        $this->registrationState = 'login_sent';
+    }
+
+    public function updatedMemberId(): void
+    {
+        $this->selectedMember();
+        $this->registrationId = null;
+        $this->pendingPaymentId = null;
+        $this->selectedPaymentMethod = null;
+        $this->fields = [];
+        $this->gdprAgreed = false;
+        $this->registrationState = 'form';
+        $this->mount($this->training);
+    }
+
     public bool $gdprAgreed = false;
 
     #[Locked]
@@ -40,6 +99,9 @@ new class extends Component
     public function mount(Training $training): void
     {
         $this->training = $training;
+        if (config('family.enabled') && auth()->check()) {
+            $this->fields = session()->pull('family.training.'.$training->id, $this->fields);
+        }
 
         // Check if returning from GoPay payment success
         if (request()->query('payment') === 'success') {
@@ -56,11 +118,16 @@ new class extends Component
         }
 
         $user = auth()->user();
+        if (config('family.enabled') && $user && ! $this->memberId) {
+            $members = $user->members()->get();
+            $this->memberId = $members->count() === 1 ? $members->first()->id : null;
+        }
+        $participant = config('family.enabled') ? $this->selectedMember() : $user;
 
         // Check if already registered (logged-in users)
-        if ($user) {
+        if ($user && (! config('family.enabled') || $participant)) {
             $registration = TrainingRegistration::where('training_id', $this->training->id)
-                ->where('user_id', $user->id)
+                ->where(config('family.enabled') ? 'member_id' : 'user_id', $participant?->id)
                 ->whereNotIn('status', [RegistrationStatusEnum::Cancelled->value])
                 ->first();
 
@@ -69,7 +136,7 @@ new class extends Component
 
                 if ($registration->status === RegistrationStatusEnum::Pending) {
                     // Show payment info for pending registrations
-                    $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $user);
+                    $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $participant);
                     $this->autoSelectPaymentMethod();
                     $this->pendingPaymentId = $registration->payments()
                         ->where('status', \App\Enums\PaymentStatusEnum::PENDING)
@@ -77,7 +144,7 @@ new class extends Component
                 } elseif ($registration->status === RegistrationStatusEnum::Approved) {
                     // Re-check: membership-required training where membership expired/unpaid
                     $needsMembership = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED
-                        && ! $user->hasActiveMembershipForTeam($this->training->team_id, $this->training->membershipSeason());
+                        && ! $participant?->hasActiveMembershipForTeam($this->training->team_id, $this->training->membershipSeason());
 
                     // Re-check: paid training with no completed payment
                     $needsPayment = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID
@@ -85,7 +152,7 @@ new class extends Component
                         && $registration->payments()->where('status', \App\Enums\PaymentStatusEnum::COMPLETED)->doesntExist();
 
                     $this->registrationState = ($needsMembership || $needsPayment)
-                        ? RegistrationService::determinePostRegistrationState($this->training, $user)
+                        ? RegistrationService::determinePostRegistrationState($this->training, $participant)
                         : 'already_registered';
 
                     if ($needsMembership || $needsPayment) {
@@ -114,21 +181,29 @@ new class extends Component
             $type = $field['type'] ?? 'text_input';
             $prefillValue = $user ? match ($type) {
                 'email' => $user->email,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'full_name' => $user->name,
+                'first_name' => $participant?->first_name,
+                'last_name' => $participant?->last_name,
+                'full_name' => $participant?->name,
                 'phone' => $user->phone,
-                'birth_date' => $user->birth_date?->format('Y-m-d'),
-                'gender' => $user->gender?->value,
+                'birth_date' => $participant?->birth_date?->format('Y-m-d'),
+                'gender' => $participant?->gender?->value,
                 default => null,
             } : null;
 
-            $this->fields[$field['name']] = $prefillValue ?? '';
+            $this->fields[$field['name']] = $prefillValue ?? ($this->fields[$field['name']] ?? '');
         }
     }
 
     public function submit(): void
     {
+        if (config('family.enabled')) {
+            if (! auth()->check()) {
+                $this->requestFamilyLogin();
+                return;
+            }
+            $this->validate(['memberId' => 'required|uuid']);
+            $this->selectedMember();
+        }
         $rules = [];
         $attributes = [];
         $locale = app()->getLocale();
@@ -190,6 +265,16 @@ new class extends Component
             if ($value instanceof TemporaryUploadedFile) {
                 $this->fields[$field['name']] = $value->store('registrations', 'public');
             }
+        }
+
+        if (config('family.enabled')) {
+            $member = $this->selectedMember();
+            $registration = RegistrationService::registerTraining($this->training, auth()->user(), $member, $this->fields);
+            $this->registrationId = $registration->id;
+            $this->pendingPaymentId = $registration->payments()->where('status', \App\Enums\PaymentStatusEnum::PENDING)->value('id');
+            $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $member);
+            $this->autoSelectPaymentMethod();
+            return;
         }
 
         $authUser = auth()->user();
@@ -488,7 +573,35 @@ new class extends Component
 @endphp
 
 <div>
-    @if($registrationState === 'not_eligible')
+    @if(config('family.enabled') && auth()->check())
+        <div class="mb-6">
+            <label for="family-member" class="block text-sm text-white">{{ __('family.member') }}</label>
+            <select id="family-member" wire:model.live="memberId" class="mt-2 w-full rounded border border-gray-600 bg-gray-900 text-white">
+                <option value="">{{ __('family.choose') }}</option>
+                @foreach(auth()->user()->members()->orderBy('name')->get() as $member)
+                    <option value="{{ $member->id }}">{{ $member->name }}</option>
+                @endforeach
+            </select>
+            @error('memberId') <p class="text-red-500">{{ $message }}</p> @enderror
+            <a href="{{ \App\Filament\Pages\MyFamily::getUrl(panel: 'customer') }}" class="mt-2 inline-block text-white underline">{{ __('family.add') }}</a>
+        </div>
+    @endif
+    @if(config('family.enabled') && ! auth()->check())
+        <form wire:submit="requestFamilyLogin" class="space-y-4 rounded border border-gray-700 bg-gray-900 p-6 text-white">
+            @if($registrationState === 'login_sent')
+                <p>{{ __('family.link_sent') }}</p>
+            @else
+                <p>{{ __('family.login_help') }}</p>
+                <label class="block">{{ __('family.contact_name') }}<input wire:model="contactName" autocomplete="name" class="block w-full bg-gray-800" required></label>
+                <label class="block">{{ __('family.contact_email') }}<input wire:model="contactEmail" type="email" autocomplete="email" class="block w-full bg-gray-800" required></label>
+                <label class="block">{{ __('family.contact_phone') }}<input wire:model="contactPhone" type="tel" autocomplete="tel" class="block w-full bg-gray-800"></label>
+                @error('contactName') <p>{{ $message }}</p> @enderror
+                @error('contactEmail') <p>{{ $message }}</p> @enderror
+                @error('contactPhone') <p>{{ $message }}</p> @enderror
+                <button type="submit" class="rounded bg-red-700 px-4 py-2">{{ __('family.login') }}</button>
+            @endif
+        </form>
+    @elseif($registrationState === 'not_eligible')
         <div class="bg-[#111111] rounded-2xl border border-[#222222] p-10 flex flex-col items-center gap-4 text-center">
             <svg class="w-12 h-12 text-[#555555]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -608,7 +721,7 @@ new class extends Component
                 @php
                     $user = auth()->user();
                     $reg = $user ? \App\Models\TrainingRegistration::where('training_id', $training->id)->where('user_id', $user->id)->first() : null;
-                    $hasMembership = $user && $user->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason());
+                    $hasMembership = (config('family.enabled') ? $this->selectedMember() : $user)?->hasActiveMembershipForTeam($training->team_id, $training->membershipSeason());
                 @endphp
                 <div class="flex justify-between w-full">
                     <span class="text-[#888888] text-[13px]">{{ __('training_detail.dr_membership') }}</span>
@@ -657,7 +770,7 @@ new class extends Component
             $membershipPayment = null;
             if ($payer && $season) {
                 $membershipPayment = app(\App\Services\PaymentService::class)->ensurePendingMembershipPayment(
-                    user: $payer,
+                    user: config('family.enabled') ? $registration?->member : $payer,
                     team: $team,
                     season: $season,
                 );

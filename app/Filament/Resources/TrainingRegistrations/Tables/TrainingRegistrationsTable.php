@@ -17,6 +17,7 @@ class TrainingRegistrationsTable
         return $table
             ->defaultSort('registered_at', 'desc')
             ->columns([
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
                 TextColumn::make('training.title')
                     ->label('Tréning')
                     ->searchable()

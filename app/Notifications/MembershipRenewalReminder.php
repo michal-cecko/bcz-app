@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Member;
 use App\Models\TeamSeason;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,6 +16,7 @@ class MembershipRenewalReminder extends Notification implements ShouldQueue
     public function __construct(
         public TeamSeason $season,
         public string $paymentUrl,
+        public ?Member $member = null,
     ) {}
 
     /** @return list<string> */
@@ -36,6 +38,7 @@ class MembershipRenewalReminder extends Notification implements ShouldQueue
             ->view('emails.membership-renewal-reminder', [
                 'user' => $user,
                 'season' => $this->season,
+                'member' => $this->member,
                 'paymentUrl' => $this->paymentUrl,
                 'teamName' => $teamName,
                 'seasonName' => $seasonName,
@@ -55,6 +58,8 @@ class MembershipRenewalReminder extends Notification implements ShouldQueue
     {
         return [
             'team_season_id' => $this->season->id,
+            'member_id' => $this->member?->id,
+            'member_name' => $this->member?->name,
             'season_name' => $this->season->name,
             'team_name' => $this->season->team->getTranslation('name', 'sk'),
             'fee_amount' => $this->season->fee_amount,

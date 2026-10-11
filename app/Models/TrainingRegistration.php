@@ -8,6 +8,7 @@ use App\Enums\RegistrationStatusEnum;
 use App\Models\Concerns\HasUuidV7;
 use App\Models\Concerns\PurgesPaymentsOnDelete;
 use App\Services\RegistrationService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class TrainingRegistration extends Model implements Payable
     protected $fillable = [
         'training_id',
         'user_id',
+        'member_id',
         'form_data',
         'status',
         'locale',
@@ -50,9 +52,27 @@ class TrainingRegistration extends Model implements Payable
         return $this->belongsTo(Training::class);
     }
 
+    public function scopeManagedBy(Builder $query, User $user): void
+    {
+        $query->where(function ($query) use ($user): void {
+            $query->whereHas('member', fn ($member) => $member->where('user_id', $user->id))
+                ->orWhere(fn ($legacy) => $legacy->whereNull('member_id')->where('user_id', $user->id));
+        });
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function bookingContact(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function payments(): MorphMany
@@ -61,34 +81,27 @@ class TrainingRegistration extends Model implements Payable
     }
 
     /**
-     * The athlete's own name as entered on THIS registration's form.
-     *
-     * One account (matched by e-mail) can register many different athletes — a
-     * parent or coach reusing a single address — so the per-registration form
-     * data, not the shared linked user, is the source of truth for who this is.
-     * Falls back to the linked account holder's name when the form carried no
-     * name fields. Mirrors EventRegistration::athleteName(), which reads the
-     * event side's field-value rows instead of this side's form_data JSON.
+     * Saved form names take priority over later profile edits.
      */
     public function athleteName(): ?string
     {
-        $name = trim(($this->athleteFirstName() ?? '').' '.($this->athleteLastName() ?? ''));
+        $name = trim(($this->formFieldValueOfType(RegistrationFieldTypeEnum::FIRST_NAME) ?? '').' '.($this->formFieldValueOfType(RegistrationFieldTypeEnum::LAST_NAME) ?? ''));
 
         if ($name === '') {
             $name = $this->formFieldValueOfType(RegistrationFieldTypeEnum::FULL_NAME) ?? '';
         }
 
-        return $name !== '' ? $name : $this->user?->name;
+        return $name !== '' ? $name : ($this->member?->name ?? $this->user?->name);
     }
 
     public function athleteFirstName(): ?string
     {
-        return $this->formFieldValueOfType(RegistrationFieldTypeEnum::FIRST_NAME);
+        return $this->formFieldValueOfType(RegistrationFieldTypeEnum::FIRST_NAME) ?? $this->member?->first_name;
     }
 
     public function athleteLastName(): ?string
     {
-        return $this->formFieldValueOfType(RegistrationFieldTypeEnum::LAST_NAME);
+        return $this->formFieldValueOfType(RegistrationFieldTypeEnum::LAST_NAME) ?? $this->member?->last_name;
     }
 
     /**
@@ -128,8 +141,8 @@ class TrainingRegistration extends Model implements Payable
     {
         return $this->training?->renderQrPaymentNote(
             $this->user,
-            $this->athleteFirstName(),
-            $this->athleteLastName(),
+            $this->athleteFirstName() ?? ($this->member_id ? '' : null),
+            $this->athleteLastName() ?? ($this->member_id ? '' : null),
         );
     }
 

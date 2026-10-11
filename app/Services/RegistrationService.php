@@ -7,20 +7,79 @@ use App\Enums\RegistrationStatusEnum;
 use App\Enums\TrainingPricingTypeEnum;
 use App\Mail\RegistrationConfirmationMail;
 use App\Models\EventRegistration;
+use App\Models\Member;
 use App\Models\Payment;
 use App\Models\Team;
 use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Throwable;
 
 class RegistrationService
 {
+    public static function registerTraining(Training $training, User $actor, Member $member, array $fields, bool $notify = true, ?RegistrationStatusEnum $status = null): TrainingRegistration
+    {
+        abort_unless(config('family.enabled'), 404);
+
+        return DB::transaction(function () use ($training, $actor, $member, $fields, $notify, $status): TrainingRegistration {
+            $training = Training::whereKey($training->id)->lockForUpdate()->firstOrFail();
+            $member = Member::whereKey($member->id)->lockForUpdate()->firstOrFail();
+            $isOwner = $member->user_id === $actor->id;
+            abort_unless($isOwner || (Gate::forUser($actor)->allows('update', $training)
+                && $member->teams()->whereKey($training->team_id)->exists()), 403);
+            if (! $training->isRegistrationOpen()) {
+                throw ValidationException::withMessages(['memberId' => __('family.closed')]);
+            }
+            if (TrainingRegistration::where('training_id', $training->id)->where('member_id', $member->id)
+                ->where('status', '!=', RegistrationStatusEnum::Cancelled)->exists()) {
+                throw ValidationException::withMessages(['memberId' => __('family.duplicate')]);
+            }
+            if ($training->isFull()) {
+                throw ValidationException::withMessages(['memberId' => __('family.full')]);
+            }
+            if ($training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED) {
+                $member->enroll($training->team);
+                if ($season = $training->membershipSeason()) {
+                    app(PaymentService::class)->ensurePendingMembershipPayment($member, $training->team, $season);
+                }
+            }
+            if ($status !== null) {
+                Gate::forUser($actor)->authorize('update', $training);
+            }
+            $status = $status ?? self::determineRegistrationStatus($training, $member);
+            $registration = TrainingRegistration::create([
+                'training_id' => $training->id, 'member_id' => $member->id, 'user_id' => $member->user_id,
+                'form_data' => $fields, 'status' => $status, 'locale' => app()->getLocale(),
+                'registered_at' => now(), 'payment_due_at' => $status === RegistrationStatusEnum::Pending ? now()->addDays(7) : null,
+            ]);
+            $member->waitlistEntries()->where('training_id', $training->id)->delete();
+            $payment = null;
+            if ($status === RegistrationStatusEnum::Pending && $training->pricing_type === TrainingPricingTypeEnum::PAID
+                && $training->price_amount > 0) {
+                $payment = app(PaymentService::class)->ensurePendingPaymentFor($member->user, $training->team, $registration,
+                    $registration->getTotalPriceAmount(), $registration->getPriceCurrency());
+            }
+            if ($notify) {
+                DB::afterCommit(fn () => self::sendConfirmation(
+                    userOrEmail: $member->user, registrationKind: 'training',
+                    registrationTitle: $member->name.' — '.$training->getTranslation('title', $registration->locale),
+                    team: $training->team, customEmailContent: $training->confirmation_email_content,
+                    locale: $registration->locale, attachments: $training->getMedia('email_attachments'), payment: $payment,
+                ));
+            }
+
+            return $registration;
+        });
+    }
+
     /**
      * Resolve an existing user by email or create a new one.
      *
@@ -293,7 +352,7 @@ class RegistrationService
     /**
      * Determine the registration status based on training pricing and user membership.
      */
-    public static function determineRegistrationStatus(Training $training, ?User $user): RegistrationStatusEnum
+    public static function determineRegistrationStatus(Training $training, User|Member|null $user): RegistrationStatusEnum
     {
         if ($training->pricing_type === TrainingPricingTypeEnum::FREE) {
             return RegistrationStatusEnum::Approved;
@@ -311,7 +370,7 @@ class RegistrationService
      *
      * @return 'free_approved'|'membership_valid'|'membership_needed'|'payment_needed'
      */
-    public static function determinePostRegistrationState(Training $training, ?User $user): string
+    public static function determinePostRegistrationState(Training $training, User|Member|null $user): string
     {
         if ($training->pricing_type === TrainingPricingTypeEnum::FREE) {
             return 'free_approved';

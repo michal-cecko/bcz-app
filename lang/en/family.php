@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'birth_date' => 'Date of birth',
+    'first_name' => 'First name',
+    'last_name' => 'Last name',
+    'title' => 'My family',
+    'member' => 'Participant',
+    'add' => 'Add participant',
+    'edit' => 'Edit participant',
+    'empty' => 'Add your first participant',
+    'help' => 'Manage each child’s profile here. Choose their profile when booking a training or paying a membership.',
+    'choose' => 'Choose a participant',
+    'login' => 'Receive a sign-in link',
+    'login_help' => 'Sign in to choose or add a participant.',
+    'link_sent' => 'Check your email for a sign-in link.',
+    'contact_name' => 'Parent or account holder name',
+    'contact_email' => 'Contact email',
+    'contact_phone' => 'Contact phone',
+    'closed' => 'Registration is closed.',
+    'full' => 'This training is full.',
+    'duplicate' => 'This participant is already registered.',
+    'membership_exists' => 'This participant already has a current membership for this team and season.',
+    'renew' => 'Membership renewal',
+    'login_subject' => 'Sign in to manage your family',
+    'login_body' => 'Use this link to continue your training registration.',
+];

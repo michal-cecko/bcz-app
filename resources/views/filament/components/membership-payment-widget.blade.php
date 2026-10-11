@@ -6,7 +6,7 @@
     $membership = $team && auth()->check()
         ? \App\Models\Membership::query()
             ->where('team_id', $team->id)
-            ->where('user_id', auth()->id())
+            ->where(config('family.enabled') ? 'member_id' : 'user_id', config('family.enabled') ? ($member?->id ?? null) : auth()->id())
             ->where('team_season_id', $season->id)
             ->first()
         : null;
@@ -14,9 +14,9 @@
     $feeCurrency = $membership ? $membership->getPriceCurrency() : ($season->fee_currency ?? 'EUR');
 
     $variableSymbol = null;
-    if ($team && auth()->check() && $team->bank_account_iban && in_array('bank_transfer', $enabledMethods)) {
+    if ($team && auth()->check() && (! config('family.enabled') || ($member && $member->user_id === auth()->id())) && $team->bank_account_iban && in_array('bank_transfer', $enabledMethods)) {
         $payment = app(\App\Services\PaymentService::class)->ensurePendingMembershipPayment(
-            user: auth()->user(),
+            user: config('family.enabled') ? $member : auth()->user(),
             team: $team,
             season: $season,
         );

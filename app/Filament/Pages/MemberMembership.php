@@ -6,9 +6,12 @@ use App\Enums\MembershipStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
+use App\Filament\Concerns\HasFamilyMemberSelection;
 use App\Models\Membership;
 use App\Services\PaymentService;
+use App\Services\SeasonService;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
@@ -28,6 +31,7 @@ use Livewire\Attributes\Computed;
 
 class MemberMembership extends Page implements HasTable
 {
+    use HasFamilyMemberSelection;
     use InteractsWithTable;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
@@ -74,18 +78,11 @@ class MemberMembership extends Page implements HasTable
                 return;
             }
 
-            // Auto-create membership for the season
-            $membership = Membership::create([
-                'team_id' => $team->id,
-                'user_id' => auth()->id(),
-                'team_season_id' => $season->id,
-                'status' => MembershipStatusEnum::PENDING,
-                'fee_amount' => $season->proratedFee(),
-                'fee_currency' => $season->fee_currency ?? 'EUR',
-                'is_free' => false,
-                'starts_at' => $season->starts_at,
-                'ends_at' => $season->ends_at,
-            ]);
+            $participant = config('family.enabled') ? $this->familyMember() : auth()->user();
+            $membership = $participant ? app(SeasonService::class)->findOrCreateMembership($season, $participant) : null;
+            if (! $membership || $membership->status !== MembershipStatusEnum::PENDING) {
+                return;
+            }
         }
 
         $team = Filament::getTenant();
@@ -116,19 +113,23 @@ class MemberMembership extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->isMemberLevel() ?? false;
+        return (auth()->user()?->isMemberLevel() ?? false) || (config('family.enabled') && (auth()->user()?->members()->exists() ?? false));
     }
 
     #[Computed]
     public function currentMembership(): ?Membership
     {
+        if (config('family.enabled') && ! $this->familyMember()) {
+            return null;
+        }
+
         $team = Filament::getTenant();
 
-        return Membership::query()
+        return Membership::query()->managedBy(auth()->user())
             ->where('team_id', $team?->id)
-            ->where('user_id', auth()->id())
+            ->where(config('family.enabled') ? 'member_id' : 'user_id', config('family.enabled') ? $this->familyMember()?->id : auth()->id())
             ->whereHas('season', fn ($q) => $q->where('starts_at', '<=', now())->where('ends_at', '>=', today()))
-            ->with(['season', 'payments'])
+            ->with(['season', 'payments'])->orderByRaw("CASE WHEN status IN ('active', 'pending') THEN 0 ELSE 1 END")->latest('created_at')
             ->first();
     }
 
@@ -140,9 +141,9 @@ class MemberMembership extends Page implements HasTable
             return false;
         }
 
-        $pivot = auth()->user()?->teams()
+        $pivot = (config('family.enabled') ? $this->familyMember() : auth()->user())?->teams()
             ->where('teams.id', $team->id)
-            ->wherePivot('role', RoleEnum::ATHLETE->value)
+            ->when(! config('family.enabled'), fn ($query) => $query->where('team_user.role', RoleEnum::ATHLETE->value))
             ->first()?->pivot;
 
         return (bool) ($pivot?->continuous_membership ?? false);
@@ -156,7 +157,7 @@ class MemberMembership extends Page implements HasTable
             return false;
         }
 
-        return auth()->user()?->trainingRegistrations()
+        return (config('family.enabled') ? $this->familyMember() : auth()->user())?->trainingRegistrations()
             ->whereHas('training', fn ($q) => $q
                 ->where('team_id', $team->id)
                 ->where('pricing_type', TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED)
@@ -179,9 +180,9 @@ class MemberMembership extends Page implements HasTable
             return collect();
         }
 
-        return Membership::query()
+        return Membership::query()->managedBy(auth()->user())
             ->where('team_id', $team->id)
-            ->where('user_id', auth()->id())
+            ->where(config('family.enabled') ? 'member_id' : 'user_id', config('family.enabled') ? $this->familyMember()?->id : auth()->id())
             ->where('status', MembershipStatusEnum::PENDING)
             ->with('season')
             ->orderByDesc('created_at')
@@ -248,11 +249,22 @@ class MemberMembership extends Page implements HasTable
             return;
         }
 
+        if (config('family.enabled')) {
+            $member = $this->familyMember();
+            if (! $member) {
+                return;
+            }
+            $member->enroll($team, $newValue);
+            unset($this->continuousMembershipEnabled);
+
+            return;
+        }
+
         $user = auth()->user();
 
         $hasPivot = $user->teams()
             ->where('teams.id', $team->id)
-            ->wherePivot('role', RoleEnum::ATHLETE->value)
+            ->when(! config('family.enabled'), fn ($query) => $query->where('team_user.role', RoleEnum::ATHLETE->value))
             ->exists();
 
         if ($hasPivot) {
@@ -293,6 +305,13 @@ class MemberMembership extends Page implements HasTable
         $continuousLocked = $this->continuousMembershipLocked;
 
         $components = [];
+        if (config('family.enabled')) {
+            $components[] = Select::make('memberId')->label(__('family.member'))
+                ->options($this->familyMemberOptions())->placeholder(__('family.choose'))->live();
+            if (! $this->familyMember()) {
+                return $schema->components($components);
+            }
+        }
 
         $components[] = View::make('filament.components.continuous-membership-toggle')
             ->viewData([
@@ -321,7 +340,7 @@ class MemberMembership extends Page implements HasTable
                             ->label(__('member.membership.season_ends'))
                             ->state($activeSeason->ends_at->format('d.m.Y')),
                         View::make('filament.components.membership-payment-widget')
-                            ->viewData(['season' => $activeSeason, 'paymentMethod' => $this->paymentMethod])
+                            ->viewData(['season' => $activeSeason, 'paymentMethod' => $this->paymentMethod, 'member' => $this->familyMember()])
                             ->columnSpanFull(),
                     ])
                     ->columns(2);
@@ -370,7 +389,7 @@ class MemberMembership extends Page implements HasTable
         // Add inline payment widget for pending memberships
         if ($membership->status === MembershipStatusEnum::PENDING && ! $membership->is_free && $membership->season) {
             $schema[] = View::make('filament.components.membership-payment-widget')
-                ->viewData(['season' => $membership->season, 'paymentMethod' => $this->paymentMethod])
+                ->viewData(['season' => $membership->season, 'paymentMethod' => $this->paymentMethod, 'member' => $this->familyMember()])
                 ->columnSpanFull();
         }
 
@@ -387,9 +406,9 @@ class MemberMembership extends Page implements HasTable
         return $table
             ->heading(__('member.membership.past_seasons'))
             ->query(
-                Membership::query()
+                Membership::query()->managedBy(auth()->user())
                     ->where('team_id', $team?->id)
-                    ->where('user_id', auth()->id())
+                    ->where(config('family.enabled') ? 'member_id' : 'user_id', config('family.enabled') ? $this->familyMember()?->id : auth()->id())
                     ->whereHas('season', fn ($q) => $q->where('ends_at', '<', today()))
                     ->with('season')
                     ->orderByDesc('created_at')

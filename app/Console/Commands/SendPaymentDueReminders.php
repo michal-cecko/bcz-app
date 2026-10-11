@@ -59,11 +59,11 @@ class SendPaymentDueReminders extends Command
                 continue;
             }
 
-            if (! $membership->user->isMembershipPayer($membership->team)) {
+            if (! ($membership->member ?? $membership->user)->isMembershipPayer($membership->team)) {
                 continue;
             }
 
-            $membership->user->notify(new MembershipPaymentDue($membership));
+            ($membership->member?->user ?? $membership->user)->notify(new MembershipPaymentDue($membership));
             $membership->update(['payment_reminder_sent_at' => now()]);
             $sent++;
         }

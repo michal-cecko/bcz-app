@@ -1,6 +1,7 @@
 @extends('emails.layout')
 
 @section('content')
+    @if($member ?? null)<p>{{ __('family.member') }}: {{ $member->name }}</p>@endif
     <h1 class="heading-text" style="font-size: 28px; font-weight: 700; color: #1A1A1A; margin: 0; font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Začína nová sezóna {{ $seasonName }}</h1>
 
     <div style="height: 24px;"></div>

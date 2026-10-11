@@ -41,6 +41,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -64,6 +65,27 @@ class RegistrationsRelationManager extends RelationManager
         return $schema
             ->columns(1)
             ->components([
+                Select::make('member_id')->label(__('family.member'))->visible(fn () => config('family.enabled'))
+                    ->required(fn () => config('family.enabled'))->disabled(fn ($record) => $record?->exists)
+                    ->options(fn () => $this->getOwnerRecord()->team->enrolledMembers()->pluck('members.name', 'members.id'))
+                    ->searchable()->live()
+                    ->afterStateUpdated(function (?string $state, Set $set): void {
+                        if (! $state) {
+                            return;
+                        }
+                        $member = $this->getOwnerRecord()->team->enrolledMembers()->findOrFail($state);
+                        foreach ($this->getTrainingFormSchema() as $field) {
+                            $value = match ($field['type'] ?? '') {
+                                'first_name' => $member->first_name, 'last_name' => $member->last_name,
+                                'full_name' => $member->name, 'birth_date' => $member->birth_date?->format('Y-m-d'),
+                                'gender' => $member->gender?->value, 'email' => $member->user->email, 'phone' => $member->user->phone,
+                                default => null,
+                            };
+                            if ($value !== null) {
+                                $set('form_data.'.$field['name'], $value);
+                            }
+                        }
+                    }),
                 Grid::make(2)
                     ->schema([
                         Select::make('status')
@@ -96,6 +118,7 @@ class RegistrationsRelationManager extends RelationManager
         $emailField = collect($formSchema)->firstWhere('type', RegistrationFieldTypeEnum::EMAIL->value);
 
         $columns = [
+            TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
             TextColumn::make('user.name')
                 ->label('Používateľ')
                 ->sortable()
@@ -144,7 +167,7 @@ class RegistrationsRelationManager extends RelationManager
                     }
 
                     $membership = Membership::where('team_id', $training->team_id)
-                        ->where('user_id', $record->user_id)
+                        ->where($record->member_id ? 'member_id' : 'user_id', $record->member_id ?? $record->user_id)
                         ->where('status', MembershipStatusEnum::ACTIVE)
                         ->where('ends_at', '>=', today())
                         ->first();
@@ -164,6 +187,7 @@ class RegistrationsRelationManager extends RelationManager
         }
 
         $columns = [
+            TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
             ...$columns,
             TextColumn::make('registered_at')
                 ->label('Registrovaný')
@@ -210,6 +234,12 @@ class RegistrationsRelationManager extends RelationManager
                             $data['payment_due_at'] = now()->addDays(7);
                         }
 
+                        if (config('family.enabled')) {
+                            $data['user_id'] = $this->getOwnerRecord()->team->enrolledMembers()->findOrFail($data['member_id'])->user_id;
+
+                            return $data;
+                        }
+
                         // Auto-resolve user from email if user_id not set
                         if (empty($data['user_id'])) {
                             $schema = $this->getTrainingFormSchema();
@@ -224,6 +254,16 @@ class RegistrationsRelationManager extends RelationManager
                         }
 
                         return $data;
+                    })
+                    ->using(function (array $data): TrainingRegistration {
+                        if (config('family.enabled')) {
+                            $member = $this->getOwnerRecord()->team->enrolledMembers()->findOrFail($data['member_id']);
+
+                            return RegistrationService::registerTraining($this->getOwnerRecord(), auth()->user(), $member,
+                                $data['form_data'], false, RegistrationStatusEnum::from($data['status']));
+                        }
+
+                        return $this->getOwnerRecord()->registrations()->create($data);
                     })
                     ->after(function (array $data, TrainingRegistration $record) {
                         $sendNotification = $data['send_notification'] ?? false;
@@ -246,12 +286,12 @@ class RegistrationsRelationManager extends RelationManager
                             && $training->pricing_type === TrainingPricingTypeEnum::PAID
                             && $training->price_amount) {
                             $paymentService = app(PaymentService::class);
-                            $payment = $paymentService->createPendingPayment(
+                            $payment = $paymentService->ensurePendingPaymentFor(
                                 user: $user,
                                 team: $training->team,
                                 payable: $record,
-                                amount: (float) $training->price_amount,
-                                currency: 'EUR',
+                                amount: $record->getTotalPriceAmount(),
+                                currency: $record->getPriceCurrency(),
                             );
                         }
 
@@ -348,7 +388,7 @@ class RegistrationsRelationManager extends RelationManager
                         $season = $this->getOwnerRecord()->membershipSeason();
 
                         $existingMembership = $record->user_id && $season
-                            ? Membership::where('user_id', $record->user_id)
+                            ? Membership::where($record->member_id ? 'member_id' : 'user_id', $record->member_id ?? $record->user_id)
                                 ->where('team_season_id', $season->id)
                                 ->whereIn('status', [MembershipStatusEnum::PENDING, MembershipStatusEnum::ACTIVE])
                                 ->first()
@@ -402,7 +442,7 @@ class RegistrationsRelationManager extends RelationManager
                         $season = $this->getOwnerRecord()->membershipSeason();
                         $user = $record->user;
 
-                        $membership = $season ? app(SeasonService::class)->findOrCreateMembership($season, $user) : null;
+                        $membership = $season ? app(SeasonService::class)->findOrCreateMembership($season, $record->member ?? $user) : null;
 
                         if (! $membership) {
                             Notification::make()
@@ -594,7 +634,7 @@ class RegistrationsRelationManager extends RelationManager
         /** @var Training $training */
         $training = $this->getOwnerRecord();
 
-        $user->notify(new TrainingRegistrationCancelled($training, $reason));
+        $user->notify(new TrainingRegistrationCancelled($training, $reason, $record->member));
     }
 
     /**

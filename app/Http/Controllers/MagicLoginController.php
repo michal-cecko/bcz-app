@@ -21,6 +21,17 @@ class MagicLoginController extends Controller
 
         $request->session()->regenerate();
 
+        $returnPath = $request->query('return');
+        if (config('family.enabled') && is_string($returnPath)
+            && str_starts_with($returnPath, '/') && ! str_starts_with($returnPath, '//')
+            && ! str_contains($returnPath, '\\') && ! preg_match('/[\x00-\x20]/', $returnPath)) {
+            if (! $user->email_verified_at) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
+
+            return redirect($returnPath);
+        }
+
         // Teamless users (e.g. guest registrants) land in the tenant-free
         // customer panel; team members and admins in the tenant admin panel.
         $panelId = $user->homePanelId();

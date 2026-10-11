@@ -2,17 +2,18 @@
 
 namespace App\Services;
 
+use App\Models\Member;
 use App\Models\Training;
 use App\Models\User;
 
 class TrainingFilterService
 {
-    public function matchesUserProfile(Training $training, User $user): bool
+    public function matchesUserProfile(Training $training, User|Member $user): bool
     {
         return $this->matchesAge($training, $user) && $this->matchesGender($training, $user);
     }
 
-    public function matchesAge(Training $training, User $user): bool
+    public function matchesAge(Training $training, User|Member $user): bool
     {
         if ($training->min_age === null && $training->max_age === null) {
             return true;
@@ -34,7 +35,7 @@ class TrainingFilterService
         return true;
     }
 
-    public function matchesGender(Training $training, User $user): bool
+    public function matchesGender(Training $training, User|Member $user): bool
     {
         if (! $training->gender) {
             return true;

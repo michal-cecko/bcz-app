@@ -10,6 +10,7 @@ use App\Filament\Actions\SendEmailBulkAction;
 use App\Models\Membership;
 use App\Services\PaymentService;
 use App\Services\QrPaymentService;
+use App\Services\SeasonService;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
@@ -29,6 +30,7 @@ class MembershipsTable
     {
         return $table
             ->columns([
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
                 TextColumn::make('user.name')
                     ->label('Používateľ')
                     ->searchable()
@@ -88,6 +90,12 @@ class MembershipsTable
                         ];
                     }),
                 EditAction::make()
+                    ->using(function (Membership $record, array $data, Action $action): Membership {
+                        $livewire = $action->getLivewire();
+                        $statePath = $livewire->getSchema($livewire->getMountedActionSchemaName())->getStatePath();
+
+                        return app(SeasonService::class)->saveMembership($record, $data, $statePath.'.status');
+                    })
                     ->visible(fn (): bool => ! auth()->user()?->isMemberLevel()),
                 Action::make('recordPayment')
                     ->label('Zaznamenať platbu')

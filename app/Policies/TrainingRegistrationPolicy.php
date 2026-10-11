@@ -40,7 +40,7 @@ class TrainingRegistrationPolicy
             return true;
         }
 
-        if ($registration->user_id === $user->id) {
+        if (($registration->member_id ? $registration->member?->user_id : $registration->user_id) === $user->id) {
             return true;
         }
 

@@ -70,6 +70,8 @@ class MembershipPaymentDue extends Notification implements ShouldQueue
     {
         return [
             'membership_id' => $this->membership->id,
+            'member_id' => $this->membership->member_id,
+            'member_name' => $this->membership->member?->name,
             'team_name' => $this->membership->team?->getTranslation('name', 'sk'),
             'season_name' => $this->membership->season?->name,
             'fee_amount' => $this->membership->fee_amount,

@@ -22,6 +22,14 @@ class TeamInvitationController extends Controller
 
         $user = User::where('email', $invitation->email)->firstOrFail();
 
+        if (config('family.enabled')) {
+            Auth::login($user);
+            request()->session()->regenerate();
+            session(['pending_invite_code' => $invitation->code]);
+
+            return redirect()->route('pridaj-sa');
+        }
+
         // Attach user to team with ATHLETE role (ignore if already exists)
         $alreadyHasRole = $user->teams()
             ->where('teams.id', $invitation->team_id)
@@ -79,6 +87,14 @@ class TeamInvitationController extends Controller
         ]);
 
         $user->assignRole(RoleEnum::CUSTOMER);
+
+        if (config('family.enabled')) {
+            Auth::login($user);
+            $request->session()->regenerate();
+            session(['pending_invite_code' => $invitation->code]);
+
+            return redirect()->route('pridaj-sa');
+        }
 
         $user->teams()->attach($invitation->team_id, [
             'role' => RoleEnum::ATHLETE->value,

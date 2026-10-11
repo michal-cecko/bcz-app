@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Member;
 use App\Models\Training;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
@@ -14,6 +15,7 @@ class TrainingSpotAvailable extends Notification implements ShouldQueueAfterComm
 
     public function __construct(
         public Training $training,
+        public ?Member $member = null,
     ) {}
 
     /** @return list<string> */
@@ -27,7 +29,8 @@ class TrainingSpotAvailable extends Notification implements ShouldQueueAfterComm
         $user = $notifiable;
         $trainingTitle = $this->training->getTranslation('title', $user->locale ?? 'sk')
             ?: $this->training->getTranslation('title', 'sk');
-        $trainingUrl = url($this->training->getLinkUrl());
+        $trainingTitle = ($this->member?->name ? $this->member->name.' — ' : '').$trainingTitle;
+        $trainingUrl = url($this->training->getLinkUrl()).($this->member ? '?member='.$this->member->id : '');
 
         return (new MailMessage)
             ->subject('Uvoľnilo sa miesto na tréning — '.$trainingTitle)
@@ -51,6 +54,7 @@ class TrainingSpotAvailable extends Notification implements ShouldQueueAfterComm
     {
         return [
             'training_id' => $this->training->id,
+            'member_id' => $this->member?->id,
             'training_title' => $this->training->getTranslation('title', 'sk'),
             'training_url' => $this->training->getLinkUrl(),
             'type' => 'training_spot_available',

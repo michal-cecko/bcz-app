@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'membership_exists' => 'Tento účastník už má aktuálne členstvo v tomto tíme a sezóne.',
+    'birth_date' => 'Dátum narodenia',
+    'first_name' => 'Meno',
+    'last_name' => 'Priezvisko',
+    'title' => 'Moja rodina',
+    'member' => 'Účastník',
+    'add' => 'Pridať účastníka',
+    'edit' => 'Upraviť účastníka',
+    'empty' => 'Pridajte prvého účastníka',
+    'help' => 'Tu spravujete profily detí. Pri registrácii na tréning alebo platbe členstva vyberte ich profil.',
+    'choose' => 'Vyberte účastníka',
+    'login' => 'Poslať odkaz na prihlásenie',
+    'login_help' => 'Prihláste sa a vyberte alebo pridajte účastníka.',
+    'link_sent' => 'Odkaz na prihlásenie nájdete vo svojom e-maile.',
+    'contact_name' => 'Meno rodiča alebo majiteľa účtu',
+    'contact_email' => 'Kontaktný e-mail',
+    'contact_phone' => 'Kontaktný telefón',
+    'closed' => 'Registrácia je zatvorená.',
+    'full' => 'Tréning je plný.',
+    'duplicate' => 'Tento účastník už je registrovaný.',
+    'renew' => 'Obnova členstva',
+    'login_subject' => 'Prihlásenie do rodinného účtu',
+    'login_body' => 'Kliknutím na odkaz môžete pokračovať v registrácii na tréning.',
+];

@@ -53,7 +53,7 @@ class WaitlistRelationManager extends RelationManager
             [
                 'email' => $email,
                 'variables' => [
-                    'meno' => $record->user?->name ?? '',
+                    'meno' => $record->member?->name ?? $record->user?->name ?? '',
                     'email' => $email,
                     'nazov_timu' => $teamName,
                     'nazov_treningu' => $training->getTranslation('title', 'sk'),
@@ -133,6 +133,7 @@ class WaitlistRelationManager extends RelationManager
             ->emptyStateHeading('Žiadni čakajúci')
             ->emptyStateDescription('Nikto zatiaľ nečaká na voľné miesto.')
             ->columns([
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
                 TextColumn::make('user.name')
                     ->label('Používateľ')
                     ->placeholder('Hosť')

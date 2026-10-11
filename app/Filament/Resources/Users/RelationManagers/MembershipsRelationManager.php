@@ -25,7 +25,7 @@ class MembershipsRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return $ownerRecord instanceof User && $ownerRecord->hasRole(RoleEnum::CUSTOMER->value);
+        return $ownerRecord instanceof User && ($ownerRecord->hasRole(RoleEnum::CUSTOMER->value) || (config('family.enabled') && $ownerRecord->members()->exists()));
     }
 
     public function form(Schema $schema): Schema
@@ -37,6 +37,7 @@ class MembershipsRelationManager extends RelationManager
     {
         return $table
             ->columns([
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
                 TextColumn::make('team.name')
                     ->label('Tím')
                     ->formatStateUsing(fn ($record): string => $record->team?->getTranslation('name', 'sk') ?? '-')

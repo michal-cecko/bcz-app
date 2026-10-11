@@ -15,6 +15,7 @@ class TeamJoinRequest extends Model
     protected $fillable = [
         'team_id',
         'user_id',
+        'member_id',
         'name',
         'email',
         'message',
@@ -33,6 +34,11 @@ class TeamJoinRequest extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
     }
 
     public function user(): BelongsTo
