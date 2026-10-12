@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
+use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
 use App\Notifications\WelcomeToApp;
+use App\Services\MemberProfileService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -18,6 +20,10 @@ class CreateUser extends CreateRecord
         // Admin-created users never set their own password here —
         // generate a random one. They reset it via the magic-login flow.
         $data['password'] = Hash::make(Str::random(32));
+        unset($data['participant']);
+        if (config('family.enabled')) {
+            unset($data['has_free_membership']);
+        }
 
         return $data;
     }
@@ -30,6 +36,10 @@ class CreateUser extends CreateRecord
         $roleIds = $this->data['roles'] ?? [];
 
         UserResource::syncTeamScopedRoles($user, $roleIds, $teamIds);
+
+        if ($user->usesMemberProfiles() && ! $user->is_parent) {
+            app(MemberProfileService::class)->saveAccount($user, [], $this->data['participant'] ?? $user->only(['first_name', 'last_name', 'birth_date', 'gender']), UserForm::canEditPrivilegedFields($user));
+        }
 
         if (! empty($this->data['send_welcome_notification'])) {
             $user->notify(new WelcomeToApp);

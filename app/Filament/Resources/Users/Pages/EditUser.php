@@ -10,6 +10,7 @@ use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
 use App\Models\User;
 use App\Notifications\WelcomeToApp;
+use App\Services\MemberProfileService;
 use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -18,6 +19,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Password;
 use STS\FilamentImpersonate\Actions\Impersonate;
 
@@ -26,6 +29,23 @@ class EditUser extends EditRecord
     protected static string $resource = UserResource::class;
 
     public static string|Alignment $formActionsAlignment = Alignment::End;
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        if ($this->record->usesMemberProfiles()) {
+            $member = $this->record->members()->first();
+            $data['participant'] = ($member ?? $this->record)->only(['first_name', 'last_name', 'birth_date', 'gender', 'has_free_membership']);
+        }
+
+        return $data;
+    }
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        $participant = Arr::pull($data, 'participant');
+
+        return app(MemberProfileService::class)->saveAccount($record, $data, $participant, UserForm::canEditPrivilegedFields($record), parentField: 'data.is_parent');
+    }
 
     protected function getHeaderActions(): array
     {

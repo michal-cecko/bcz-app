@@ -6,10 +6,12 @@ use App\Enums\GenderEnum;
 use App\Enums\ProfileTypeEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Pages\MyFamily;
+use App\Filament\Schemas\MemberForm;
 use App\Filament\Schemas\PublicProfileSchema;
 use App\Models\AthleteProfile;
 use App\Models\CoachProfile;
 use App\Models\User;
+use App\Services\MemberProfileService;
 use App\Services\ProfileDraftService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -22,6 +24,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\SimplePage;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard;
@@ -69,12 +72,15 @@ class UserSetupWizard extends SimplePage
         }
 
         $this->isRevisit = $user->password_set_at !== null;
+        $member = config('family.enabled') && ! $user->is_parent ? app(MemberProfileService::class)->resolveMember($user) : null;
 
         $this->form->fill([
             'phone' => $user->phone,
             'birth_date' => $user->birth_date,
             'gender' => $user->gender?->value,
             'locale' => $user->locale ?? 'sk',
+            'is_parent' => $user->is_parent,
+            'participant' => $member?->only(['first_name', 'last_name', 'birth_date', 'gender']),
         ]);
     }
 
@@ -146,7 +152,7 @@ class UserSetupWizard extends SimplePage
         $user = auth()->user();
 
         foreach ($user->getProfileableRoles() as $profileType) {
-            if (config('family.enabled') && $profileType === ProfileTypeEnum::Athlete) {
+            if (config('family.enabled') && $user->is_parent && $profileType === ProfileTypeEnum::Athlete) {
                 continue;
             }
             $steps[] = $this->getPublicProfileStep($profileType);
@@ -201,13 +207,21 @@ class UserSetupWizard extends SimplePage
                 TextInput::make('phone')
                     ->label('Telefón')
                     ->tel(),
+                Toggle::make('is_parent')->label(__('family.is_parent'))->helperText(__('family.parent_help'))
+                    ->default(false)->live()->visible(fn (): bool => config('family.enabled') && auth()->user()->hasRole(RoleEnum::CUSTOMER))
+                    ->dehydrated(fn (): bool => config('family.enabled') && auth()->user()->hasRole(RoleEnum::CUSTOMER)),
                 DatePicker::make('birth_date')
                     ->label('Dátum narodenia')
+                    ->visible(fn (): bool => ! config('family.enabled'))
                     ->native(false)
                     ->maxDate(now()),
                 Select::make('gender')
                     ->label('Pohlavie')
+                    ->visible(fn (): bool => ! config('family.enabled'))
                     ->options(GenderEnum::translations()),
+                Section::make(__('family.member'))->statePath('participant')
+                    ->visible(fn (Get $get): bool => config('family.enabled') && ! $get('is_parent'))
+                    ->schema(MemberForm::fields()),
             ]);
     }
 
@@ -286,12 +300,13 @@ class UserSetupWizard extends SimplePage
         /** @var User $user */
         $user = auth()->user();
 
-        $user->update(array_filter([
+        app(MemberProfileService::class)->saveAccount($user, array_filter([
             'phone' => $state['phone'] ?? null,
             'birth_date' => $state['birth_date'] ?? null,
             'gender' => $state['gender'] ?? null,
             'locale' => $state['locale'] ?? 'sk',
-        ], fn ($value) => $value !== null));
+            'is_parent' => $state['is_parent'] ?? $user->is_parent,
+        ], fn ($value) => $value !== null), $state['participant'] ?? null, parentField: 'data.is_parent');
 
         // Save public profiles as drafts (wizard uses flat state, no ->relationship())
         $service = new ProfileDraftService;
@@ -305,7 +320,7 @@ class UserSetupWizard extends SimplePage
             $service->saveDraft($profile, $draftData);
         }
 
-        if (! config('family.enabled') && ! empty($state['has_public_profile_athlete'])) {
+        if ((! config('family.enabled') || ! $user->is_parent) && ! empty($state['has_public_profile_athlete'])) {
             $profile = $this->getOrCreateProfile($user, ProfileTypeEnum::Athlete);
             $draftData = array_filter([
                 'date_started_working_out' => $state['date_started_working_out'] ?? null,
@@ -319,7 +334,7 @@ class UserSetupWizard extends SimplePage
             ->title('Profil bol úspešne nastavený')
             ->send();
 
-        redirect(config('family.enabled') ? MyFamily::getUrl(panel: 'customer') : $this->panelHomeUrl());
+        redirect(MyFamily::canAccess() ? MyFamily::getUrl(panel: 'customer') : $this->panelHomeUrl());
     }
 
     /**
@@ -340,9 +355,10 @@ class UserSetupWizard extends SimplePage
 
     protected function getOrCreateProfile(User $user, ProfileTypeEnum $type): CoachProfile|AthleteProfile
     {
-        return match ($type) {
-            ProfileTypeEnum::Coach => $user->coachProfile ?? $user->coachProfile()->create(['user_id' => $user->id]),
-            ProfileTypeEnum::Athlete => $user->athleteProfile ?? $user->athleteProfile()->create(['user_id' => $user->id]),
-        };
+        $relation = $type === ProfileTypeEnum::Coach ? 'coachProfile' : 'athleteProfile';
+        $profile = $user->{$relation} ?? $user->{$relation}()->firstOrCreate();
+        $user->setRelation($relation, $profile);
+
+        return $profile;
     }
 }
