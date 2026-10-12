@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Users\Schemas;
 use App\Enums\DraftStatusEnum;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
+use App\Filament\Schemas\MemberForm;
 use App\Filament\Schemas\PublicProfileSchema;
 use App\Models\Team;
 use App\Models\User;
@@ -34,6 +35,7 @@ class UserForm
                 Tabs::make('user_tabs')
                     ->tabs([
                         self::personalInfoTab(),
+                        self::participantTab(),
                         self::passwordTab()->visible(fn (string $operation): bool => $operation === 'edit'),
                         self::publicProfilesTab(),
                         self::passkeysTab()->visible(fn (string $operation, ?User $record): bool => $operation === 'edit' && $record?->id === auth()->id()),
@@ -63,10 +65,10 @@ class UserForm
                             ->columnSpan(['default' => 1, 'lg' => 2])
                             ->schema([
                                 TextInput::make('first_name')
-                                    ->label('Meno')
+                                    ->label(fn (): string => config('family.enabled') ? __('family.account_first_name') : 'Meno')
                                     ->required(),
                                 TextInput::make('last_name')
-                                    ->label('Priezvisko')
+                                    ->label(fn (): string => config('family.enabled') ? __('family.account_last_name') : 'Priezvisko')
                                     ->required(),
                                 TextInput::make('email')
                                     ->label('E-mail')
@@ -149,9 +151,11 @@ class UserForm
                                     }),
                                 Select::make('gender')
                                     ->label('Pohlavie')
+                                    ->visible(fn (?User $record): bool => ! config('family.enabled') || ($record !== null && ! $record->usesMemberProfiles()))
                                     ->options(GenderEnum::translations()),
                                 DatePicker::make('birth_date')
                                     ->label('Dátum narodenia')
+                                    ->visible(fn (?User $record): bool => ! config('family.enabled') || ($record !== null && ! $record->usesMemberProfiles()))
                                     ->native(false)
                                     ->maxDate(now()),
                                 Toggle::make('send_welcome_notification')
@@ -164,8 +168,8 @@ class UserForm
                                     ->label('Oslobodený od platby členstva')
                                     ->helperText('Pri otvorení sezóny dostane bezplatné členstvo bez notifikácie. Automaticky zapnuté pre admina, editora a porotcu.')
                                     ->default(false)
-                                    ->visible(fn (?User $record): bool => self::canEditPrivilegedFields($record))
-                                    ->dehydrated(fn (?User $record): bool => self::canEditPrivilegedFields($record))
+                                    ->visible(fn (?User $record): bool => ! config('family.enabled') && self::canEditPrivilegedFields($record))
+                                    ->dehydrated(fn (?User $record): bool => ! config('family.enabled') && self::canEditPrivilegedFields($record))
                                     ->disabled(fn (Get $get): bool => ! self::hasMembershipEligibleRole($get('roles') ?? []))
                                     ->afterStateHydrated(function (Toggle $component, Get $get, $state) {
                                         if (! self::hasMembershipEligibleRole($get('roles') ?? [])) {
@@ -173,8 +177,26 @@ class UserForm
                                         }
                                     })
                                     ->dehydrateStateUsing(fn (Get $get, $state) => self::hasMembershipEligibleRole($get('roles') ?? []) ? (bool) $state : true),
+                                Toggle::make('is_parent')->label(__('family.is_parent'))->helperText(__('family.parent_help'))
+                                    ->default(false)->live()->visible(fn (?User $record): bool => config('family.enabled')
+                                        && ($record === null || $record->hasRole(RoleEnum::CUSTOMER)))
+                                    ->dehydrated(fn (?User $record): bool => config('family.enabled')
+                                        && ($record === null || $record->hasRole(RoleEnum::CUSTOMER))),
                             ]),
                     ]),
+            ]);
+    }
+
+    protected static function participantTab(): Tab
+    {
+        return Tab::make(__('family.member'))->statePath('participant')
+            ->visible(fn (Get $get, ?User $record): bool => config('family.enabled') && ! $get('is_parent')
+                && ($record?->usesMemberProfiles() ?? self::hasMembershipEligibleRole($get('roles') ?? [])))
+            ->schema([
+                ...MemberForm::fields(),
+                Toggle::make('has_free_membership')->label(__('family.free_membership'))
+                    ->visible(fn (?User $record): bool => self::canEditPrivilegedFields($record))
+                    ->dehydrated(fn (?User $record): bool => self::canEditPrivilegedFields($record)),
             ]);
     }
 

@@ -9,6 +9,7 @@ use App\Enums\ProfileTypeEnum;
 use App\Enums\RoleEnum;
 use App\Models\Concerns\HasUuidV7;
 use App\Notifications\ResetPassword;
+use App\Services\MemberProfileService;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Carbon\Carbon;
 use Database\Factories\UserFactory;
@@ -27,6 +28,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Laravel\Passkeys\Contracts\PasskeyUser;
 use Laravel\Passkeys\PasskeyAuthenticatable;
 use Spatie\MediaLibrary\HasMedia;
@@ -61,6 +63,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         'gender',
         'has_free_membership',
         'password_set_at',
+        'is_parent',
     ];
 
     protected $hidden = [
@@ -87,6 +90,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             'gender' => GenderEnum::class,
             'has_free_membership' => 'boolean',
             'password_set_at' => 'datetime',
+            'is_parent' => 'boolean',
         ];
     }
 
@@ -113,6 +117,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
 
     public function legacyMember(): Member
     {
+        if (config('family.enabled')) {
+            if ($member = $this->members()->where('legacy_user_id', $this->id)->first()) {
+                return $member;
+            }
+
+            return app(MemberProfileService::class)->resolveMember($this)
+                ?? throw ValidationException::withMessages(['memberId' => __('family.choose')]);
+        }
+
         return $this->members()->firstOrCreate(['legacy_user_id' => $this->id], [
             'name' => $this->name, 'first_name' => $this->first_name, 'last_name' => $this->last_name,
             'birth_date' => $this->birth_date, 'gender' => $this->gender,
@@ -555,9 +568,21 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
 
     public function isProfileIncomplete(): bool
     {
+        if ($this->usesMemberProfiles()) {
+            $member = $this->members()->first();
+
+            return $this->phone === null || (! $this->is_parent && ($member?->birth_date === null || $member?->gender === null));
+        }
+
         return $this->phone === null
             || $this->birth_date === null
             || $this->gender === null;
+    }
+
+    public function usesMemberProfiles(): bool
+    {
+        return config('family.enabled') && ($this->hasRole([RoleEnum::CUSTOMER, RoleEnum::ATHLETE])
+            || $this->teams()->wherePivot('role', RoleEnum::ATHLETE->value)->exists());
     }
 
     public function isProfileApproved(ProfileTypeEnum $type): bool

@@ -5,6 +5,7 @@ namespace Tests\Feature\Filament;
 use App\Enums\GenderEnum;
 use App\Enums\RoleEnum;
 use App\Filament\Pages\Auth\UserSetupWizard;
+use App\Filament\Pages\MyFamily;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,6 +21,7 @@ class UserSetupWizardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['family.enabled' => false]);
 
         Filament::setCurrentPanel(Filament::getPanel('customer'));
 
@@ -285,6 +287,34 @@ class UserSetupWizardTest extends TestCase
             ->set('data.locale', 'sk')
             ->call('save')
             ->assertNotified();
+    }
+
+    public function test_family_setup_redirects_customer_to_family_page(): void
+    {
+        config(['family.enabled' => true]);
+        $parent = $this->existingCustomer();
+        $parent->update(['is_parent' => true]);
+        Livewire::actingAs($parent);
+
+        Livewire::test(UserSetupWizard::class)
+            ->set('data.locale', 'sk')
+            ->call('save')
+            ->assertRedirect(MyFamily::getUrl(panel: 'customer'));
+    }
+
+    public function test_family_setup_redirects_athlete_without_customer_role_to_home(): void
+    {
+        config(['family.enabled' => true]);
+        $user = User::factory()->create(['password_set_at' => now(), 'is_parent' => false]);
+        $user->assignRole(RoleEnum::ATHLETE);
+        $this->assertFalse($user->hasRole(RoleEnum::CUSTOMER));
+        $this->assertFalse($user->is_parent);
+        Livewire::actingAs($user);
+
+        Livewire::test(UserSetupWizard::class)
+            ->set('data.locale', 'sk')
+            ->call('save')
+            ->assertRedirect('/customer');
     }
 
     // -------------------------------------------------------------------------
