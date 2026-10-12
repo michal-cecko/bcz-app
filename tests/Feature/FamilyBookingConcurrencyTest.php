@@ -29,6 +29,7 @@ class FamilyBookingConcurrencyTest extends TestCase
         if (DB::getDriverName() !== 'pgsql') {
             $this->markTestSkipped('PostgreSQL is required to verify booking locks.');
         }
+        $this->beforeApplicationDestroyed(fn () => $this->truncateTablesForAllConnections());
     }
 
     public function test_two_simultaneous_bookings_cannot_take_the_last_place(): void
