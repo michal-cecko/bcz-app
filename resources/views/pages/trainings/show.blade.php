@@ -79,7 +79,7 @@
 
         <div class="relative z-10 flex flex-col items-center justify-center h-full px-5 md:px-20 gap-5">
             {{-- Breadcrumb --}}
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 max-w-full text-center">
                 <a href="{{ route('home') }}" class="text-[#666666] text-[11px] font-medium tracking-[2px] hover:text-white transition-colors">{{ __('training_detail.breadcrumb_home') }}</a>
                 <span class="text-[#444444] text-[11px]">/</span>
                 <a href="{{ route('treningy') }}" class="text-[#666666] text-[11px] font-medium tracking-[2px] hover:text-white transition-colors">{{ __('training_detail.breadcrumb_trainings') }}</a>
