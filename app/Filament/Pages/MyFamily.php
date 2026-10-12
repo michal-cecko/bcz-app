@@ -3,8 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Enums\RoleEnum;
+use App\Filament\Actions\DeleteFamilyMemberAction;
 use App\Filament\Schemas\MemberForm;
 use App\Models\Member;
+use App\Services\MemberProfileService;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -12,7 +14,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 
 class MyFamily extends Page implements HasTable
@@ -52,7 +53,8 @@ class MyFamily extends Page implements HasTable
                 Action::make('addMember')->label(__('family.add'))->schema(MemberForm::fields())
                     ->action(function (array $data): void {
                         Gate::authorize('create', Member::class);
-                        auth()->user()->members()->create(Arr::only($data, ['first_name', 'last_name', 'birth_date', 'gender']));
+                        abort_unless(static::canAccess(), 403);
+                        app(MemberProfileService::class)->createMember(auth()->user(), $data);
                     }),
             ])
             ->recordActions([
@@ -60,8 +62,9 @@ class MyFamily extends Page implements HasTable
                     ->fillForm(fn (Member $record): array => $record->only(['first_name', 'last_name', 'birth_date', 'gender']))
                     ->action(function (Member $record, array $data): void {
                         Gate::authorize('update', $record);
-                        $record->update(Arr::only($data, ['first_name', 'last_name', 'birth_date', 'gender']));
+                        app(MemberProfileService::class)->saveMember($record, $data);
                     }),
+                DeleteFamilyMemberAction::make(),
             ])->emptyStateHeading(__('family.empty'));
     }
 }

@@ -7,12 +7,17 @@ use App\Enums\PaymentStatusEnum;
 use App\Models\Member;
 use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\Team;
+use App\Models\TeamJoinRequest;
 use App\Models\TeamSeason;
 use App\Models\Training;
+use App\Models\User;
+use App\Services\MemberProfileService;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
 use App\Services\SeasonService;
 use Closure;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +59,106 @@ class FamilyBookingConcurrencyTest extends TestCase
         sort($results);
         $this->assertSame(['booked', 'full'], $results);
         $this->assertSame(1, Training::findOrFail($trainingId)->spotHoldingRegistrations()->count());
+    }
+
+    public function test_two_simultaneous_profile_creations_keep_one_member_for_a_normal_account(): void
+    {
+        $userId = User::factory()->create()->id;
+        $task = static function () use ($userId): string {
+            config(['family.enabled' => true]);
+            try {
+                app(MemberProfileService::class)->createMember(User::findOrFail($userId), ['first_name' => 'Participant']);
+
+                return 'created';
+            } catch (ValidationException $exception) {
+                return array_key_exists('is_parent', $exception->errors()) ? 'limited' : 'unexpected';
+            }
+        };
+        $results = $this->runConcurrently([$task, $task]);
+        sort($results);
+        $this->assertSame(['created', 'limited'], $results);
+        $this->assertSame(1, Member::where('user_id', $userId)->count());
+    }
+
+    public function test_deleting_a_profile_racing_with_a_join_request_keeps_history_intact(): void
+    {
+        $ownerId = User::factory()->create(['is_parent' => true])->id;
+        $memberId = Member::factory()->create(['user_id' => $ownerId])->id;
+        $teamId = Team::factory()->create()->id;
+        $results = $this->runConcurrently([
+            static function () use ($memberId): string {
+                config(['family.enabled' => true]);
+
+                return app(MemberProfileService::class)->deleteMember(Member::findOrFail($memberId)) ? 'deleted' : 'kept';
+            },
+            static function () use ($memberId, $ownerId, $teamId): string {
+                try {
+                    TeamJoinRequest::create(['member_id' => $memberId, 'user_id' => $ownerId, 'team_id' => $teamId,
+                        'name' => 'Child', 'email' => 'family-race@example.test']);
+
+                    return 'history_created';
+                } catch (QueryException $exception) {
+                    if ($exception->getCode() !== '23503') {
+                        throw $exception;
+                    }
+
+                    return 'profile_removed';
+                }
+            },
+        ]);
+
+        $this->assertContains($results, [['deleted', 'profile_removed'], ['kept', 'history_created']]);
+        $this->assertSame($results[0] === 'kept', Member::whereKey($memberId)->exists());
+        $this->assertSame($results[0] === 'kept', TeamJoinRequest::where('member_id', $memberId)->exists());
+    }
+
+    public function test_two_simultaneous_single_member_resolutions_reuse_the_same_profile(): void
+    {
+        $userId = User::factory()->create()->id;
+        $task = static function () use ($userId): string {
+            config(['family.enabled' => true]);
+
+            return app(MemberProfileService::class)->resolveMember(User::findOrFail($userId))->id;
+        };
+        $results = $this->runConcurrently([$task, $task]);
+        $this->assertSame($results[0], $results[1]);
+        $this->assertSame(1, Member::where('user_id', $userId)->count());
+    }
+
+    public function test_disabling_parent_mode_racing_with_a_second_profile_keeps_a_valid_account(): void
+    {
+        $userId = User::factory()->create(['is_parent' => true])->id;
+        Member::factory()->create(['user_id' => $userId]);
+        $results = $this->runConcurrently([
+            static function () use ($userId): string {
+                config(['family.enabled' => true]);
+                try {
+                    app(MemberProfileService::class)->createMember(User::findOrFail($userId), ['first_name' => 'Second']);
+
+                    return 'created';
+                } catch (ValidationException $exception) {
+                    return 'limited';
+                }
+            },
+            static function () use ($userId): string {
+                config(['family.enabled' => true]);
+                try {
+                    app(MemberProfileService::class)->saveAccount(User::findOrFail($userId), ['is_parent' => false]);
+
+                    return 'disabled';
+                } catch (ValidationException $exception) {
+                    return 'kept_parent';
+                }
+            },
+        ]);
+        $user = User::findOrFail($userId);
+        if ($user->is_parent) {
+            $this->assertSame(['created', 'kept_parent'], $results);
+            $this->assertSame(2, $user->members()->count());
+        } else {
+            $this->assertSame(['limited', 'disabled'], $results);
+            $this->assertSame(1, $user->members()->count());
+        }
     }
 
     public function test_two_simultaneous_payment_requests_create_one_membership_and_one_payment(): void
