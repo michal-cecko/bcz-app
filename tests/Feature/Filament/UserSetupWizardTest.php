@@ -305,8 +305,10 @@ class UserSetupWizardTest extends TestCase
     public function test_family_setup_redirects_athlete_without_customer_role_to_home(): void
     {
         config(['family.enabled' => true]);
-        $user = User::factory()->create(['password_set_at' => now()]);
+        $user = User::factory()->create(['password_set_at' => now(), 'is_parent' => false]);
         $user->assignRole(RoleEnum::ATHLETE);
+        $this->assertFalse($user->hasRole(RoleEnum::CUSTOMER));
+        $this->assertFalse($user->is_parent);
         Livewire::actingAs($user);
 
         Livewire::test(UserSetupWizard::class)
