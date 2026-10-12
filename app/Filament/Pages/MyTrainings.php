@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\GenderEnum;
 use App\Enums\RegistrationStatusEnum;
+use App\Enums\RoleEnum;
 use App\Filament\Concerns\HasFamilyMemberSelection;
 use App\Models\City;
 use App\Models\SportCategory;
@@ -77,7 +78,7 @@ class MyTrainings extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return (auth()->user()?->isMemberLevel() ?? false) || (config('family.enabled') && (auth()->user()?->members()->exists() ?? false));
+        return (auth()->user()?->isMemberLevel() ?? false) || (auth()->user()?->hasRole(RoleEnum::CUSTOMER) ?? false);
     }
 
     public function table(Table $table): Table
@@ -99,7 +100,7 @@ class MyTrainings extends Page implements HasTable
                     ->with(['training.sportCategory', 'training.coaches', 'training.city', 'training.season'])
             )
             ->columns([
-                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled')),
+                TextColumn::make('member.name')->label(__('family.member'))->visible(fn () => config('family.enabled') && (auth()->user()?->is_parent ?? false)),
                 TextColumn::make('training.title')
                     ->label('Tréning')
                     ->formatStateUsing(fn ($record): string => $record->training->getTranslation('title', app()->getLocale()) ?: $record->training->getTranslation('title', 'sk'))
@@ -195,7 +196,7 @@ class MyTrainings extends Page implements HasTable
         $trainings = $paginated->getCollection();
 
         $components = [
-            Select::make('memberId')->label(__('family.member'))->options(fn () => $this->familyMemberOptions())->live()->visible(fn () => config('family.enabled')),
+            Select::make('memberId')->label(__('family.member'))->options(fn () => $this->familyMemberOptions())->live()->visible(fn () => $this->showFamilyMemberSelector()),
             $this->buildFilters($team, $locale),
         ];
 

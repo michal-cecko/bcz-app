@@ -113,7 +113,7 @@ class MemberMembership extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return (auth()->user()?->isMemberLevel() ?? false) || (config('family.enabled') && (auth()->user()?->members()->exists() ?? false));
+        return auth()->user()?->hasRole(RoleEnum::CUSTOMER) ?? false;
     }
 
     #[Computed]
@@ -307,7 +307,8 @@ class MemberMembership extends Page implements HasTable
         $components = [];
         if (config('family.enabled')) {
             $components[] = Select::make('memberId')->label(__('family.member'))
-                ->options($this->familyMemberOptions())->placeholder(__('family.choose'))->live();
+                ->options($this->familyMemberOptions())->placeholder(__('family.choose'))->live()
+                ->visible(fn (): bool => $this->showFamilyMemberSelector());
             if (! $this->familyMember()) {
                 return $schema->components($components);
             }
