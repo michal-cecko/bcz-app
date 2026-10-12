@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\RoleEnum;
 use App\Filament\Schemas\MemberForm;
 use App\Models\Member;
 use Filament\Actions\Action;
@@ -26,7 +27,8 @@ class MyFamily extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return auth()->check() && (bool) config('family.enabled');
+        return (bool) config('family.enabled') && (auth()->user()?->hasRole(RoleEnum::CUSTOMER) ?? false)
+            && (auth()->user()?->is_parent ?? false);
     }
 
     public static function getNavigationLabel(): string

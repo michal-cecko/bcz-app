@@ -148,7 +148,8 @@ class FamilyMembershipTest extends TestCase
 
     public function test_family_page_creates_a_profile_without_a_child_login_or_fee(): void
     {
-        $parent = User::factory()->create();
+        $parent = User::factory()->create(['is_parent' => true]);
+        $parent->assignRole(RoleEnum::CUSTOMER);
         Livewire::actingAs($parent)->test(MyFamily::class)
             ->callAction(TestAction::make('addMember')->table(), [
                 'first_name' => 'Anna', 'last_name' => 'Child', 'birth_date' => '2018-01-01',
@@ -230,7 +231,8 @@ class FamilyMembershipTest extends TestCase
     public function test_member_details_and_free_flags_are_hidden_from_another_family(): void
     {
         $child = Member::factory()->create();
-        $other = User::factory()->create();
+        $other = User::factory()->create(['is_parent' => true]);
+        $other->assignRole(RoleEnum::CUSTOMER);
         Livewire::actingAs($other)->test(MyFamily::class)->assertCanNotSeeTableRecords([$child]);
         $this->assertFalse(Gate::forUser($other)->allows('view', $child));
     }
