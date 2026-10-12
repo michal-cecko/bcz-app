@@ -67,7 +67,7 @@ class UserResource extends Resource
 
     /**
      * Platform admins see every user (including those on other teams or no team).
-     * Everyone else stays scoped to the current tenant.
+     * Everyone else stays scoped to the current tenant, with self-access in family mode.
      */
     public static function scopeEloquentQueryToTenant(Builder $query, ?Model $tenant): Builder
     {
@@ -76,6 +76,11 @@ class UserResource extends Resource
 
         if ($actor?->isGlobalAdmin()) {
             return $query;
+        }
+
+        if (config('family.enabled') && $actor) {
+            return $query->where(fn (Builder $scoped): Builder => parent::scopeEloquentQueryToTenant($scoped, $tenant)
+                ->orWhere('users.id', $actor->id));
         }
 
         return parent::scopeEloquentQueryToTenant($query, $tenant);
@@ -134,9 +139,10 @@ class UserResource extends Resource
                                                     })
                                                     ->formatStateUsing(fn (string $state): string => RoleEnum::tryFrom($state)?->getLabel() ?? $state),
                                                 TextEntry::make('gender')
-                                                    ->label('Pohlavie'),
+                                                    ->label('Pohlavie')->visible(fn (User $record): bool => ! $record->usesMemberProfiles()),
                                                 TextEntry::make('birth_date')
                                                     ->label('Dátum narodenia')
+                                                    ->visible(fn (User $record): bool => ! $record->usesMemberProfiles())
                                                     ->date(),
                                                 TextEntry::make('email_verified_at')
                                                     ->label('E-mail overený')
@@ -258,6 +264,7 @@ class UserResource extends Resource
     {
         return [
             RelationManagers\MembershipsRelationManager::class,
+            RelationManagers\MembersRelationManager::class,
         ];
     }
 

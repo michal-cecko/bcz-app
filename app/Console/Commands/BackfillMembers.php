@@ -160,6 +160,8 @@ class BackfillMembers extends Command
                     unset($data['member_id'], $data['team_id']);
                     $member->teams()->syncWithoutDetaching([$teamId => $data]);
                 }
+                DB::table('users')->where('is_parent', false)->whereIn('id', DB::table('members')->select('user_id')
+                    ->groupBy('user_id')->havingRaw('COUNT(*) > 1'))->update(['is_parent' => true]);
                 if (Membership::whereNotNull('member_id')->whereDoesntHave('member.teams',
                     fn ($query) => $query->whereColumn('teams.id', 'memberships.team_id'))->exists()) {
                     throw new RuntimeException('Membership enrolments are missing. Add them to the reviewed mapping. All changes rolled back.');

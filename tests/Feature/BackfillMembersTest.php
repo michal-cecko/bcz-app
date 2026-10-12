@@ -88,4 +88,18 @@ class BackfillMembersTest extends TestCase
         Membership::factory()->create();
         $this->artisan('members:check')->assertFailed();
     }
+
+    public function test_backfill_marks_an_existing_shared_account_as_parent_without_creating_another_profile(): void
+    {
+        config(['family.enabled' => true]);
+        $user = User::factory()->create();
+        $first = $user->legacyMember();
+        Member::factory()->create(['user_id' => $user->id]);
+        $this->artisan('members:backfill', ['--apply' => true])->assertSuccessful();
+        $this->assertTrue($user->fresh()->is_parent);
+        $this->assertSame(2, $user->members()->count());
+        $this->assertSame($first->id, $user->legacyMember()->id);
+        $this->artisan('members:backfill', ['--apply' => true])->assertSuccessful();
+        $this->assertSame(2, $user->members()->count());
+    }
 }
