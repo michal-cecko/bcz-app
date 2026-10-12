@@ -32,7 +32,9 @@
         <div class="max-w-lg mx-auto w-full space-y-8">
             @if(config('family.enabled') && auth()->check())
                 @include('filament.components.family-member-selector')
+                @if(\App\Filament\Pages\MyFamily::canAccess())
                 <a href="{{ \App\Filament\Pages\MyFamily::getUrl(panel: 'customer') }}" class="text-white underline">{{ __('family.add') }}</a>
+                @endif
             @endif
             <div>
                 <h1 class="font-display text-4xl font-bold text-white tracking-wide">PRIPOJIŤ SA K TÍMU</h1>

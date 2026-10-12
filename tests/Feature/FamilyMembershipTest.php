@@ -161,12 +161,15 @@ class FamilyMembershipTest extends TestCase
 
     public function test_changing_child_resets_registration_state_and_prefills_child_details(): void
     {
-        $parent = User::factory()->create();
+        $parent = User::factory()->create(['is_parent' => true]);
+        $parent->assignRole(RoleEnum::CUSTOMER);
         $children = Member::factory()->count(2)->create(['user_id' => $parent->id]);
         $training = Training::factory()->free()->create();
         RegistrationService::registerTraining($training, $parent, $children[0], []);
         Livewire::actingAs($parent)->test('training-registration-form', ['training' => $training])
+            ->call('submit')->assertHasErrors(['memberId' => 'required'])
             ->set('memberId', $children[0]->id)->assertSet('registrationState', 'already_registered')
+            ->assertHasNoErrors()
             ->set('memberId', $children[1]->id)->assertSet('registrationState', 'form')
             ->assertSet('registrationId', null)->assertSet('fields.meno', $children[1]->first_name)
             ->assertSet('fields.email', $parent->email);
@@ -189,6 +192,7 @@ class FamilyMembershipTest extends TestCase
         Livewire::test('training-registration-form', ['training' => $training])
             ->assertDontSee($child->name)
             ->set('contactName', 'Someone')->set('contactEmail', $child->user->email)
+            ->set('registrationFor', 'parent')
             ->call('requestFamilyLogin')->assertSet('registrationState', 'login_sent');
         Notification::assertSentTo($child->user, FamilyLoginLink::class);
         $this->assertSame(0, TrainingRegistration::count());
@@ -201,9 +205,12 @@ class FamilyMembershipTest extends TestCase
         $training = Training::factory()->free()->create();
         Livewire::test('training-registration-form', ['training' => $training])
             ->set('contactName', 'Parent One')->set('contactEmail', 'family@example.test')
+            ->set('registrationFor', 'parent')
             ->call('requestFamilyLogin')->assertSet('registrationState', 'login_sent');
         $parent = User::where('email', 'family@example.test')->firstOrFail();
         $this->assertSame('Parent One', $parent->name);
+        $this->assertTrue($parent->is_parent);
+        $this->assertTrue($parent->hasRole(RoleEnum::CUSTOMER));
         $this->assertNull($parent->email_verified_at);
         $this->assertSame(0, Member::count());
         $returnPath = route('team.training.show', [$training->team, $training], absolute: false);

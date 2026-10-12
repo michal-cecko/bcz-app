@@ -47,7 +47,9 @@
         <div class="max-w-lg mx-auto w-full space-y-8">
             @if(config('family.enabled') && auth()->check())
                 @include('filament.components.family-member-selector')
+                @if(\App\Filament\Pages\MyFamily::canAccess())
                 <a href="{{ \App\Filament\Pages\MyFamily::getUrl(panel: 'customer') }}" class="text-white underline">{{ __('family.add') }}</a>
+                @endif
             @endif
             @if(! $team)
                 <div class="bg-bcz-red/10 border border-bcz-red/30 rounded-xl p-4 text-center">

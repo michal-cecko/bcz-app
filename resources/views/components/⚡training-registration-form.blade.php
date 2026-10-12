@@ -1,17 +1,23 @@
 <?php
 
 use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\RegistrationFieldTypeEnum;
 use App\Enums\RegistrationStatusEnum;
 use App\Enums\RoleEnum;
 use App\Enums\TrainingPricingTypeEnum;
-use App\Models\Training;
+use App\Filament\Concerns\HasFamilyMemberSelection;
 use App\Models\Member;
+use App\Models\Training;
 use App\Models\TrainingRegistration;
 use App\Models\User;
+use App\Notifications\FamilyLoginLink;
 use App\Notifications\WelcomeToApp;
+use App\Services\MemberProfileService;
 use App\Services\PaymentService;
 use App\Services\RegistrationService;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -19,14 +25,14 @@ use Livewire\WithFileUploads;
 
 new class extends Component
 {
+    use HasFamilyMemberSelection;
     use WithFileUploads;
 
     public Training $training;
 
     public array $fields = [];
 
-    #[\Livewire\Attributes\Url(as: 'member')]
-    public ?string $memberId = null;
+    public ?string $registrationFor = null;
 
     public string $contactName = '';
 
@@ -36,35 +42,45 @@ new class extends Component
 
     public function selectedMember(): ?Member
     {
-        return $this->memberId ? auth()->user()?->members()->whereKey($this->memberId)->firstOrFail() : null;
+        return $this->familyMember();
     }
 
     public function requestFamilyLogin(): void
     {
         abort_unless(config('family.enabled') && ! auth()->check(), 403);
-        $this->validate(['contactName' => 'required|string|max:255', 'contactEmail' => 'required|email|max:255', 'contactPhone' => 'nullable|string|max:30']);
+        $this->validate([
+            'contactName' => 'required|string|max:255',
+            'contactEmail' => 'required|email|max:255',
+            'contactPhone' => 'nullable|string|max:30',
+            'registrationFor' => 'required|in:parent,self',
+        ], [], ['registrationFor' => __('family.registration_for')]);
         $email = mb_strtolower(trim($this->contactEmail));
         $ipKey = 'family-login-ip:'.hash('sha256', request()->ip());
-        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($ipKey, 10)) {
+        if (RateLimiter::tooManyAttempts($ipKey, 10)) {
             $this->addError('contactEmail', __('auth.throttle', ['seconds' => 600]));
+
             return;
         }
-        \Illuminate\Support\Facades\RateLimiter::hit($ipKey, 600);
+        RateLimiter::hit($ipKey, 600);
         $key = 'family-login:'.hash('sha256', request()->ip().'|'.$email);
-        if (! \Illuminate\Support\Facades\RateLimiter::attempt($key, 3, function () use ($email): void {
+        if (! RateLimiter::attempt($key, 3, function () use ($email): void {
             $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
             if (! $user) {
                 $parts = explode(' ', trim($this->contactName), 2);
                 $user = User::firstOrCreate(['email' => $email], ['first_name' => $parts[0], 'last_name' => $parts[1] ?? '',
-                    'phone' => $this->contactPhone ?: null, 'password' => \Illuminate\Support\Str::random(32)]);
+                    'phone' => $this->contactPhone ?: null, 'password' => Str::random(32), 'is_parent' => $this->registrationFor === 'parent']);
                 if ($user->wasRecentlyCreated) {
                     $user->assignRole(RoleEnum::CUSTOMER);
+                    if (! $user->is_parent) {
+                        app(MemberProfileService::class)->resolveMember($user);
+                    }
                 }
             }
             $path = route('team.training.show', [$this->training->team, $this->training], absolute: false);
-            $user->notify(new \App\Notifications\FamilyLoginLink($path));
+            $user->notify(new FamilyLoginLink($path));
         }, 600)) {
             $this->addError('contactEmail', __('auth.throttle', ['seconds' => 600]));
+
             return;
         }
         session()->put('family.training.'.$this->training->id, array_filter($this->fields, fn ($value) => ! $value instanceof TemporaryUploadedFile));
@@ -74,6 +90,7 @@ new class extends Component
     public function updatedMemberId(): void
     {
         $this->selectedMember();
+        $this->resetValidation();
         $this->registrationId = null;
         $this->pendingPaymentId = null;
         $this->selectedPaymentMethod = null;
@@ -118,10 +135,7 @@ new class extends Component
         }
 
         $user = auth()->user();
-        if (config('family.enabled') && $user && ! $this->memberId) {
-            $members = $user->members()->get();
-            $this->memberId = $members->count() === 1 ? $members->first()->id : null;
-        }
+        $this->mountHasFamilyMemberSelection();
         $participant = config('family.enabled') ? $this->selectedMember() : $user;
 
         // Check if already registered (logged-in users)
@@ -139,17 +153,17 @@ new class extends Component
                     $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $participant);
                     $this->autoSelectPaymentMethod();
                     $this->pendingPaymentId = $registration->payments()
-                        ->where('status', \App\Enums\PaymentStatusEnum::PENDING)
+                        ->where('status', PaymentStatusEnum::PENDING)
                         ->latest('created_at')->value('id');
                 } elseif ($registration->status === RegistrationStatusEnum::Approved) {
                     // Re-check: membership-required training where membership expired/unpaid
-                    $needsMembership = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED
+                    $needsMembership = $this->training->pricing_type === TrainingPricingTypeEnum::MEMBERSHIP_REQUIRED
                         && ! $participant?->hasActiveMembershipForTeam($this->training->team_id, $this->training->membershipSeason());
 
                     // Re-check: paid training with no completed payment
-                    $needsPayment = $this->training->pricing_type === \App\Enums\TrainingPricingTypeEnum::PAID
+                    $needsPayment = $this->training->pricing_type === TrainingPricingTypeEnum::PAID
                         && $this->training->price_amount > 0
-                        && $registration->payments()->where('status', \App\Enums\PaymentStatusEnum::COMPLETED)->doesntExist();
+                        && $registration->payments()->where('status', PaymentStatusEnum::COMPLETED)->doesntExist();
 
                     $this->registrationState = ($needsMembership || $needsPayment)
                         ? RegistrationService::determinePostRegistrationState($this->training, $participant)
@@ -158,7 +172,7 @@ new class extends Component
                     if ($needsMembership || $needsPayment) {
                         $this->autoSelectPaymentMethod();
                         $this->pendingPaymentId = $registration->payments()
-                            ->where('status', \App\Enums\PaymentStatusEnum::PENDING)
+                            ->where('status', PaymentStatusEnum::PENDING)
                             ->latest('created_at')->value('id');
                     }
                 } else {
@@ -199,9 +213,10 @@ new class extends Component
         if (config('family.enabled')) {
             if (! auth()->check()) {
                 $this->requestFamilyLogin();
+
                 return;
             }
-            $this->validate(['memberId' => 'required|uuid']);
+            $this->validate(['memberId' => 'required|uuid'], [], ['memberId' => __('family.member')]);
             $this->selectedMember();
         }
         $rules = [];
@@ -209,7 +224,7 @@ new class extends Component
         $locale = app()->getLocale();
 
         foreach ($this->training->registration_form_schema ?? [] as $field) {
-            $key = 'fields.' . $field['name'];
+            $key = 'fields.'.$field['name'];
             $fieldRules = [];
 
             $type = RegistrationFieldTypeEnum::tryFrom($field['type'] ?? '');
@@ -271,9 +286,10 @@ new class extends Component
             $member = $this->selectedMember();
             $registration = RegistrationService::registerTraining($this->training, auth()->user(), $member, $this->fields);
             $this->registrationId = $registration->id;
-            $this->pendingPaymentId = $registration->payments()->where('status', \App\Enums\PaymentStatusEnum::PENDING)->value('id');
+            $this->pendingPaymentId = $registration->payments()->where('status', PaymentStatusEnum::PENDING)->value('id');
             $this->registrationState = RegistrationService::determinePostRegistrationState($this->training, $member);
             $this->autoSelectPaymentMethod();
+
             return;
         }
 
@@ -302,14 +318,14 @@ new class extends Component
 
             // Duplicate phone check for guests (block when phone is registered to a *different* email — fraud prevention).
             if ($phone && $email && User::where('phone', $phone)->where('email', '!=', $email)->exists()) {
-                $this->addError('fields.' . $this->getPhoneFieldName($schema), __('training_detail.error_phone_exists'));
+                $this->addError('fields.'.$this->getPhoneFieldName($schema), __('training_detail.error_phone_exists'));
 
                 return;
             }
 
             // One registration per email per training.
             if ($email && RegistrationService::emailAlreadyRegisteredForTraining($email, $this->training->id)) {
-                $this->addError('fields.' . $this->getEmailFieldName($schema), __('training_detail.error_email_already_registered'));
+                $this->addError('fields.'.$this->getEmailFieldName($schema), __('training_detail.error_email_already_registered'));
 
                 return;
             }
@@ -535,7 +551,7 @@ new class extends Component
                 );
 
                 $this->redirect($result['url']);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 session()->flash('error', 'Platba sa nepodarila. Skúste to znova.');
             }
         }
@@ -569,6 +585,7 @@ new class extends Component
     $locale = app()->getLocale();
     $schema = $training->registration_form_schema ?? [];
     $isLoggedIn = auth()->check();
+    $memberOptions = config('family.enabled') && $isLoggedIn ? $this->familyMemberOptions() : [];
     $prefillableTypes = ['email', 'first_name', 'last_name', 'full_name', 'phone', 'birth_date', 'gender'];
 @endphp
 
@@ -578,12 +595,17 @@ new class extends Component
             <label for="family-member" class="block text-sm text-white">{{ __('family.member') }}</label>
             <select id="family-member" wire:model.live="memberId" class="mt-2 w-full rounded border border-gray-600 bg-gray-900 text-white">
                 <option value="">{{ __('family.choose') }}</option>
-                @foreach(auth()->user()->members()->orderBy('name')->get() as $member)
-                    <option value="{{ $member->id }}">{{ $member->name }}</option>
+                @foreach($memberOptions as $id => $name)
+                    <option value="{{ $id }}">{{ $name }}</option>
                 @endforeach
             </select>
             @error('memberId') <p class="text-red-500">{{ $message }}</p> @enderror
+            @if(empty($memberOptions))
+            <p class="mt-2 text-sm text-white">{{ __('family.empty') }}</p>
+            @endif
+            @if(\App\Filament\Pages\MyFamily::canAccess())
             <a href="{{ \App\Filament\Pages\MyFamily::getUrl(panel: 'customer') }}" class="mt-2 inline-block text-white underline">{{ __('family.add') }}</a>
+            @endif
         </div>
     @endif
     @if(config('family.enabled') && ! auth()->check())
@@ -592,6 +614,18 @@ new class extends Component
                 <p>{{ __('family.link_sent') }}</p>
             @else
                 <p>{{ __('family.login_help') }}</p>
+                <fieldset class="space-y-2">
+                    <legend class="mb-2">{{ __('family.registration_for') }}</legend>
+                    <label class="flex cursor-pointer items-center gap-3 rounded border border-gray-700 p-3">
+                        <input wire:model="registrationFor" name="registrationFor" type="radio" value="parent" class="accent-red-600" required>
+                        {{ __('family.is_parent') }}
+                    </label>
+                    <label class="flex cursor-pointer items-center gap-3 rounded border border-gray-700 p-3">
+                        <input wire:model="registrationFor" name="registrationFor" type="radio" value="self" class="accent-red-600" required>
+                        {{ __('family.register_self') }}
+                    </label>
+                    @error('registrationFor') <p class="text-red-500">{{ $message }}</p> @enderror
+                </fieldset>
                 <label class="block">{{ __('family.contact_name') }}<input wire:model="contactName" autocomplete="name" class="block w-full bg-gray-800" required></label>
                 <label class="block">{{ __('family.contact_email') }}<input wire:model="contactEmail" type="email" autocomplete="email" class="block w-full bg-gray-800" required></label>
                 <label class="block">{{ __('family.contact_phone') }}<input wire:model="contactPhone" type="tel" autocomplete="tel" class="block w-full bg-gray-800"></label>

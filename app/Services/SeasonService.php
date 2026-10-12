@@ -76,7 +76,10 @@ class SeasonService
             if (! $user->participatesInMembershipBilling($season->team)) {
                 return null;
             }
-            $user = $user->legacyMember();
+            $user = app(MemberProfileService::class)->resolveMember($user);
+            if (! $user) {
+                return null;
+            }
             if (! $user->participatesInMembershipBilling($season->team)) {
                 $user->enroll($season->team);
             }

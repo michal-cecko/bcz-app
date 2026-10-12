@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\RoleEnum;
 use App\Models\Membership;
 use App\Models\Payment;
 use App\Models\TrainingRegistration;
@@ -47,7 +48,7 @@ class MemberPayments extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return (auth()->user()?->isMemberLevel() ?? false) || (config('family.enabled') && (auth()->user()?->members()->exists() ?? false));
+        return auth()->user()?->hasRole(RoleEnum::CUSTOMER) ?? false;
     }
 
     public function table(Table $table): Table
@@ -65,7 +66,7 @@ class MemberPayments extends Page implements HasTable
                     ->with('payable')
             )
             ->columns([
-                TextColumn::make('family_member')->label(__('family.member'))->state(fn ($record) => ($record->payable instanceof Membership || $record->payable instanceof TrainingRegistration) ? $record->payable->member?->name : null)->visible(fn () => config('family.enabled')),
+                TextColumn::make('family_member')->label(__('family.member'))->state(fn ($record) => ($record->payable instanceof Membership || $record->payable instanceof TrainingRegistration) ? $record->payable->member?->name : null)->visible(fn () => config('family.enabled') && (auth()->user()?->is_parent ?? false)),
                 TextColumn::make('payable_name')
                     ->label(__('member.payments.subject'))
                     ->state(fn (Payment $record): string => $record->payable_name),
