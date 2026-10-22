@@ -1,5 +1,5 @@
 # ---- Base stage: PHP 8.4 + extensions + composer + node (self-contained, was Dockerfile.base) ----
-FROM php:8.4-cli-alpine AS base
+FROM php:8.4.27-cli-alpine AS base
 
 WORKDIR /var/www
 
@@ -45,7 +45,7 @@ RUN git config --global --add safe.directory /var/www \
     done
 
 # ---- Production stage (lean runtime) ----
-FROM php:8.4-cli-alpine
+FROM php:8.4.27-cli-alpine
 
 WORKDIR /var/www
 
