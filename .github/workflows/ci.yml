@@ -18,14 +18,14 @@ on:
 # bcz-app running a commit older than three merged PRs, while every run reported
 # deploy: success.
 #
-# So the groups are per job, not per run. test and build-image cancel an older run's
-# job in the same step, which skips that run's deploy. Pull-request runs cancel the
-# same way. deploy itself never cancels: it loops over two Dokploy applications (web
-# and worker), and stopping it mid-loop could leave them on different images. A deploy
-# still waiting is replaced by the newer one. An older run can never deploy after a
-# newer one: to do that it would have to finish a step after the newer run entered it,
-# and entering cancels it. A run-wide group would cancel the deploy job too, so there
-# is none.
+# So the groups are per job, not per run. test and build-image cancel the same job of
+# an older run, which skips that run's deploy. Pull-request runs cancel the same way.
+# Every main run goes through test first, so a newer run catches an older one at the
+# first job they share and the older run can't overtake it. deploy itself never
+# cancels: it loops over two Dokploy applications (web and worker), and stopping it
+# mid-loop could leave them on different images. A deploy still waiting is replaced by
+# the newer one. Re-running an old run by hand still deploys its commit. A run-wide
+# group with cancel-in-progress would cancel the deploy job too.
 
 jobs:
   test:
